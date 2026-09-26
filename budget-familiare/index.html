@@ -614,7 +614,7 @@ async function applyNormalization(btn){
     await loadMovementsData();
   }catch(e){msg($('normalizationMsg'),e.message,true)}finally{setBusy(btn,false)}
 }
-function ignoreNormalization(btn){const row=btn.closest('[data-raw-value]');if(!row)return;try{await rpc('dashboard_counterparty_normalization_ignore_v1',{p_raw_value:row.dataset.rawValue,p_ignore:true});await loadMovementsData()}catch(e){msg($('normalizationMsg'),e.message,true)}}
+async function ignoreNormalization(btn){const row=btn.closest('[data-raw-value]');if(!row)return;try{await rpc('dashboard_counterparty_normalization_ignore_v1',{p_raw_value:row.dataset.rawValue,p_ignore:true});await loadMovementsData()}catch(e){msg($('normalizationMsg'),e.message,true)}}
 async function backfillCounterpartyAliases(){const btn=$('backfillCounterpartyAliases');setBusy(btn,true,'Applico');msg($('normalizationMsg'),'');try{const r=await rpc('dashboard_backfill_exact_counterparty_aliases_v1');msg($('normalizationMsg'),`Alias confermati applicati a ${nfmt(r.updated)} movimenti.`);await loadMovementsData()}catch(e){msg($('normalizationMsg'),e.message,true)}finally{setBusy(btn,false)}}
 function renderProjectsCatalog(){
   const q=($('projectSearch')?.value||'').trim().toLowerCase(),type=$('projectTypeFilter')?.value||'',status=$('projectStatusFilter')?.value||'';
