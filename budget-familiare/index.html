@@ -450,7 +450,7 @@ function categoryBranchMovements(cat){
 }
 function normalizationMovements(raw){
   const key=String(raw||'').trim().toLowerCase();
-  return (catData?.movements||[]).filter(x=>String(x.normalization_raw_value||'').trim().toLowerCase()===key);
+  return (catData?.movements||[]).filter(x=>!x.counterparty_id&&['EXPENSE','INCOME','OTHER','FEE','INTEREST'].includes(x.transaction_type)&&String(x.normalization_raw_value||'').trim().toLowerCase()===key);
 }
 
 function bankBadge(bank){const b=String(bank||'');const cls=b.toUpperCase()==='ING'?'bank-ing':b.toUpperCase().includes('TRADE')?'bank-tr':'';return `<span class="bank-pill ${cls}">${esc(b||'—')}</span>`}
