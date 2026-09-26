@@ -35,7 +35,7 @@
 
   <div id="appView" class="hidden">
     <div class="top">
-      <div class="brand"><h1>Dashboard Budget Familiare</h1><small>V22 · Movimenti, categorie, progetti, tag e controllo qualità</small></div>
+      <div class="brand"><h1>Dashboard Budget Familiare</h1><small>V23 · Movimenti, categorie, progetti, tag e controllo qualità</small></div>
       <div class="userbar"><span id="userEmail"></span><button id="refreshBtn" class="btn ghost">Aggiorna</button><button id="logoutBtn" class="btn ghost">Esci</button></div>
     </div>
     <div class="tabs">
@@ -249,7 +249,7 @@
               <div class="catalog-intro" style="margin-bottom:8px">
                 <div>
                   <h3 style="margin:0 0 4px">Suggerimenti normalizzazione</h3>
-                  <div class="muted small">Raggruppa i merchant grezzi nelle Controparti. L'azione crea un alias esatto e collega i movimenti esistenti senza forzare la categoria.</div>
+                  <div class="muted small">Raggruppa i merchant grezzi nelle Controparti e propone anche la categoria. Le due decisioni restano separate: la categoria viene applicata solo ai movimenti che ne sono privi.</div>
                 </div>
                 <button id="backfillCounterpartyAliases" class="btn ghost compact" type="button">Applica alias già confermati</button>
               </div>
@@ -580,17 +580,41 @@ function renderMerchantsCatalog(){
   $('merchantsTable').innerHTML=`<div class="table-wrap"><table class="table"><thead><tr><th>${catalogSortHeader('merchants','Controparte','name')}</th><th>${catalogSortHeader('merchants','Tipo','type')}</th><th>${catalogSortHeader('merchants','Categoria predefinita','category')}</th><th>${catalogSortHeader('merchants','Movimenti','movements')}</th><th>${catalogSortHeader('merchants','Entrate','incoming')}</th><th>${catalogSortHeader('merchants','Uscite','outgoing')}</th><th></th></tr></thead><tbody>${rows.length?rows.map(m=>`<tr><td><strong>${esc(m.name)}</strong><br><span class="muted small">${nfmt(m.aliases)} alias</span></td><td>${esc(counterpartyTypeLabel(m.counterparty_type))}</td><td>${esc(m.default_category_name||'—')}</td><td>${nfmt(m.movements)}</td><td>${euro(m.incoming_total)}</td><td>${euro(m.outgoing_total)}</td><td><button class="btn ghost compact" data-edit-merch="${m.id}">Modifica</button></td></tr>`).join(''):'<tr><td colspan="7" class="muted">Nessuna controparte.</td></tr>'}</tbody></table></div>`;
 }
 function confidenceBadge(v){const n=Number(v||0);const cls=n>=.9?'ok':n>=.75?'warn':'';return `<span class="pill ${cls}">${pct(n*100)}</span>`}
+function categorySuggestionSource(v){return ({MOVIMENTI_ESISTENTI:'storico dello stesso merchant',STORICO_CONTROPARTE:'storico controparte',MCC:'MCC'})[v]||''}
 function renderNormalizationSuggestions(){
   if(!$('normalizationTable'))return;
   const data=catData?.normalization||{},summary=data.summary||{};
   const q=($('normalizationSearch')?.value||'').trim().toLowerCase(),min=Number($('normalizationConfidenceFilter')?.value||0);
-  const rows=(data.suggestions||[]).filter(x=>{const hay=[x.raw_value,x.proposed_merchant_name,x.proposed_new_name,x.mccs,x.banks].join(' ').toLowerCase();return(!q||hay.includes(q))&&Number(x.confidence||0)>=min});
-  $('normalizationSummary').textContent=`${nfmt(summary.unassigned_movements)} movimenti senza controparte · ${nfmt(summary.unique_raw_values)} merchant grezzi · ${nfmt(summary.existing_matches)} match esistenti · ${nfmt(summary.new_candidates)} nuove proposte`;
+  const rows=(data.suggestions||[]).filter(x=>{const hay=[x.raw_value,x.proposed_merchant_name,x.proposed_new_name,x.proposed_category_path,x.mccs,x.banks].join(' ').toLowerCase();return(!q||hay.includes(q))&&Number(x.confidence||0)>=min});
+  $('normalizationSummary').textContent=`${nfmt(summary.unassigned_movements)} movimenti senza controparte · ${nfmt(summary.unique_raw_values)} merchant grezzi · ${nfmt(summary.with_category_suggestion)} con categoria proposta · ${nfmt(summary.missing_category_movements)} movimenti senza categoria`;
   const merchants=[...(catData?.counterparties||[])].sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'it',{sensitivity:'base'}));
-  $('normalizationTable').innerHTML=`<div class="table-wrap"><table class="table"><thead><tr><th>Merchant originale</th><th>Mov.</th><th>MCC</th><th>Proposta</th><th>Affidabilità</th><th>Azioni</th></tr></thead><tbody>${rows.length?rows.map(x=>{const opts='<option value="">— crea nuova —</option>'+merchants.map(m=>`<option value="${m.id}" ${m.id===x.proposed_merchant_id?'selected':''}>${esc(m.name)}</option>`).join('');return `<tr data-raw-value="${esc(x.raw_value)}"><td><strong>${esc(x.raw_value)}</strong><br><span class="muted small">${esc(x.banks||'—')} · ${esc(x.first_date||'—')} → ${esc(x.last_date||'—')}</span></td><td>${nfmt(x.movements)}</td><td><span class="mcc-code">${esc(x.mccs||'—')}</span></td><td><select class="select" data-norm-merchant style="width:100%">${opts}</select><input class="input" data-norm-name style="width:100%;margin-top:5px" value="${esc(x.proposed_new_name||x.raw_value||'')}" placeholder="Nome nuova controparte" /></td><td>${confidenceBadge(x.confidence)}</td><td><button class="btn compact" data-apply-normalization type="button">Applica</button> <button class="btn ghost compact" data-ignore-normalization type="button">Ignora</button></td></tr>`}).join(''):'<tr><td colspan="6" class="muted">Nessun suggerimento con questi filtri.</td></tr>'}</tbody></table></div>`;
+  const categories=[...(catData?.categories||[])];
+  $('normalizationTable').innerHTML=`<div class="table-wrap"><table class="table"><thead><tr><th>Merchant originale</th><th>Mov.</th><th>Controparte proposta</th><th>Categoria proposta</th><th>Affidabilità</th><th>Azioni</th></tr></thead><tbody>${rows.length?rows.map(x=>{
+    const merchantOpts='<option value="">— crea nuova —</option>'+merchants.map(m=>`<option value="${m.id}" ${m.id===x.proposed_merchant_id?'selected':''}>${esc(m.name)}</option>`).join('');
+    const categoryOpts='<option value="">— nessuna categoria —</option>'+categories.map(cat=>`<option value="${cat.id}" ${cat.id===x.proposed_category_id?'selected':''}>${esc(categoryLabel(cat))}</option>`).join('');
+    const catConfidence=Number(x.category_confidence||0),autoCategory=!!x.proposed_category_id&&catConfidence>=.9&&Number(x.missing_category||0)>0;
+    return `<tr data-raw-value="${esc(x.raw_value)}">
+      <td><strong>${esc(x.raw_value)}</strong><br><span class="muted small">${esc(x.banks||'—')} · MCC ${esc(x.mccs||'—')} · ${esc(x.first_date||'—')} → ${esc(x.last_date||'—')}</span></td>
+      <td>${nfmt(x.movements)}<br><span class="muted small">${nfmt(x.missing_category||0)} senza categoria</span></td>
+      <td><select class="select" data-norm-merchant style="width:100%">${merchantOpts}</select><input class="input" data-norm-name style="width:100%;margin-top:5px" value="${esc(x.proposed_new_name||x.raw_value||'')}" placeholder="Nome nuova controparte" /></td>
+      <td><select class="select" data-norm-category style="width:100%">${categoryOpts}</select><label class="small" style="display:flex;gap:6px;align-items:center;margin-top:6px"><input data-norm-apply-category type="checkbox" ${autoCategory?'checked':''} ${x.proposed_category_id?'':'disabled'} /> applica ai movimenti senza categoria</label><div class="muted small" style="margin-top:4px">${x.proposed_category_id?esc(categorySuggestionSource(x.category_source)):'nessuna proposta affidabile'}</div></td>
+      <td><div>Controparte ${confidenceBadge(x.confidence)}</div><div style="margin-top:5px">Categoria ${x.proposed_category_id?confidenceBadge(x.category_confidence):'<span class="muted">—</span>'}</div></td>
+      <td><button class="btn compact" data-apply-normalization type="button">Applica</button> <button class="btn ghost compact" data-ignore-normalization type="button">Ignora</button></td>
+    </tr>`;
+  }).join(''):'<tr><td colspan="6" class="muted">Nessun suggerimento con questi filtri.</td></tr>'}</tbody></table></div>`;
 }
-async function applyNormalization(btn){const row=btn.closest('[data-raw-value]');if(!row)return;const raw=row.dataset.rawValue,merchant=row.querySelector('[data-norm-merchant]').value||null,name=row.querySelector('[data-norm-name]').value.trim()||null;setBusy(btn,true,'Applico');msg($('normalizationMsg'),'');try{const r=await rpc('dashboard_counterparty_normalization_apply_v1',{p_raw_value:raw,p_merchant_id:merchant,p_new_name:merchant?null:name,p_counterparty_type:'MERCHANT',p_default_category_id:null});msg($('normalizationMsg'),`Controparte “${r.merchant_name}” applicata a ${nfmt(r.updated)} movimenti. Alias esatto salvato.`);await loadMovementsData()}catch(e){msg($('normalizationMsg'),e.message,true)}finally{setBusy(btn,false)}}
-async function ignoreNormalization(btn){const row=btn.closest('[data-raw-value]');if(!row)return;try{await rpc('dashboard_counterparty_normalization_ignore_v1',{p_raw_value:row.dataset.rawValue,p_ignore:true});await loadMovementsData()}catch(e){msg($('normalizationMsg'),e.message,true)}}
+async function applyNormalization(btn){
+  const row=btn.closest('[data-raw-value]');if(!row)return;
+  const raw=row.dataset.rawValue,merchant=row.querySelector('[data-norm-merchant]').value||null,name=row.querySelector('[data-norm-name]').value.trim()||null,category=row.querySelector('[data-norm-category]').value||null,applyCategory=row.querySelector('[data-norm-apply-category]').checked&&!!category;
+  setBusy(btn,true,'Applico');msg($('normalizationMsg'),'');
+  try{
+    const r=await rpc('dashboard_counterparty_normalization_apply_v2',{p_raw_value:raw,p_merchant_id:merchant,p_new_name:merchant?null:name,p_counterparty_type:'MERCHANT',p_category_id:category,p_apply_category:applyCategory});
+    const catMsg=applyCategory?` Categoria aggiunta a ${nfmt(r.category_filled)} movimenti${Number(r.category_conflicts_preserved||0)?`; ${nfmt(r.category_conflicts_preserved)} categorie già presenti sono state conservate`:''}.`:'';
+    msg($('normalizationMsg'),`Controparte “${r.merchant_name}” applicata a ${nfmt(r.merchant_updated)} movimenti. Alias esatto salvato.${catMsg}`);
+    await loadMovementsData();
+  }catch(e){msg($('normalizationMsg'),e.message,true)}finally{setBusy(btn,false)}
+}
+function ignoreNormalization(btn){const row=btn.closest('[data-raw-value]');if(!row)return;try{await rpc('dashboard_counterparty_normalization_ignore_v1',{p_raw_value:row.dataset.rawValue,p_ignore:true});await loadMovementsData()}catch(e){msg($('normalizationMsg'),e.message,true)}}
 async function backfillCounterpartyAliases(){const btn=$('backfillCounterpartyAliases');setBusy(btn,true,'Applico');msg($('normalizationMsg'),'');try{const r=await rpc('dashboard_backfill_exact_counterparty_aliases_v1');msg($('normalizationMsg'),`Alias confermati applicati a ${nfmt(r.updated)} movimenti.`);await loadMovementsData()}catch(e){msg($('normalizationMsg'),e.message,true)}finally{setBusy(btn,false)}}
 function renderProjectsCatalog(){
   const q=($('projectSearch')?.value||'').trim().toLowerCase(),type=$('projectTypeFilter')?.value||'',status=$('projectStatusFilter')?.value||'';
