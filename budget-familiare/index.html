@@ -376,7 +376,7 @@
 const SUPABASE_URL='https://sebqxqwohzhzlejcjxpe.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY='sb_publishable_6vdsPIgKZ-WNc6_iqvmHhA_prkdNR6Y';
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
-let overview=null,catData=null,selectedRow=null,splitData=null,viewMode='list',sortKey='transaction_date',sortDir='desc';
+let overview=null,catData=null,selectedRow=null,splitData=null,viewMode='list',sortKey='transaction_date',sortDir='desc',catalogTab='categories';
 const catalogSort={categories:{key:'label',dir:'asc'},merchants:{key:'name',dir:'asc'},projects:{key:'name',dir:'asc'},tags:{key:'name',dir:'asc'},mcc:{key:'mcc_code',dir:'asc'},rules:{key:'priority',dir:'desc'}};
 const expandedGroups=new Set();
 const $=id=>document.getElementById(id);
