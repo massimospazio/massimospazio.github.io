@@ -35,7 +35,7 @@
 
   <div id="appView" class="hidden">
     <div class="top">
-      <div class="brand"><h1>Dashboard Budget Familiare</h1><small>V24 · Movimenti, categorie, progetti, tag e controllo qualità</small></div>
+      <div class="brand"><h1>Dashboard Budget Familiare</h1><small>V25 · Movimenti, categorie, progetti, tag e controllo qualità</small></div>
       <div class="userbar"><span id="userEmail"></span><button id="refreshBtn" class="btn ghost">Aggiorna</button><button id="logoutBtn" class="btn ghost">Esci</button></div>
     </div>
     <div class="tabs">
@@ -598,7 +598,7 @@ function renderNormalizationSuggestions(){
       <td><strong>${esc(x.raw_value)}</strong><br><span class="muted small">${esc(x.banks||'—')} · MCC ${esc(x.mccs||'—')} · ${esc(x.first_date||'—')} → ${esc(x.last_date||'—')}</span></td>
       <td>${nfmt(x.movements)}<br><span class="muted small">${nfmt(x.missing_category||0)} senza categoria</span></td>
       <td><select class="select" data-norm-merchant style="width:100%">${merchantOpts}</select><input class="input" data-norm-name style="width:100%;margin-top:5px" value="${esc(x.proposed_new_name||x.raw_value||'')}" placeholder="Nome nuova controparte" /></td>
-      <td><select class="select" data-norm-category style="width:100%">${categoryOpts}</select><label class="small" style="display:flex;gap:6px;align-items:center;margin-top:6px"><input data-norm-apply-category type="checkbox" ${autoCategory?'checked':''} ${x.proposed_category_id?'':'disabled'} /> applica ai movimenti senza categoria</label><div class="muted small" style="margin-top:4px">${x.proposed_category_id?esc(categorySuggestionSource(x.category_source)):'nessuna proposta affidabile'}</div></td>
+      <td><select class="select" data-norm-category style="width:100%">${categoryOpts}</select><label class="small" style="display:flex;gap:6px;align-items:center;margin-top:6px"><input data-norm-only-missing type="checkbox" ${autoCategory?'checked':''} ${x.proposed_category_id?'':'disabled'} /> solo movimenti senza categoria</label><div class="muted small">${x.proposed_category_id?(autoCategory?'Se deselezioni, la categoria scelta sostituirà anche categorie già presenti.':'Se lasci deselezionato, la categoria scelta sostituirà anche categorie già presenti.'):'Nessuna categoria da applicare.'}</div><div class="muted small" style="margin-top:4px">${x.proposed_category_id?esc(categorySuggestionSource(x.category_source)):'nessuna proposta affidabile'}</div></td>
       <td><div>Controparte ${confidenceBadge(x.confidence)}</div><div style="margin-top:5px">Categoria ${x.proposed_category_id?confidenceBadge(x.category_confidence):'<span class="muted">—</span>'}</div></td>
       <td><button class="btn compact" data-apply-normalization type="button">Applica</button> <button class="btn ghost compact" data-ignore-normalization type="button">Ignora</button></td>
     </tr>`;
@@ -606,11 +606,11 @@ function renderNormalizationSuggestions(){
 }
 async function applyNormalization(btn){
   const row=btn.closest('[data-raw-value]');if(!row)return;
-  const raw=row.dataset.rawValue,merchant=row.querySelector('[data-norm-merchant]').value||null,name=row.querySelector('[data-norm-name]').value.trim()||null,category=row.querySelector('[data-norm-category]').value||null,applyCategory=row.querySelector('[data-norm-apply-category]').checked&&!!category;
+  const raw=row.dataset.rawValue,merchant=row.querySelector('[data-norm-merchant]').value||null,name=row.querySelector('[data-norm-name]').value.trim()||null,category=row.querySelector('[data-norm-category]').value||null,onlyMissing=row.querySelector('[data-norm-only-missing]').checked;
   setBusy(btn,true,'Applico');msg($('normalizationMsg'),'');
   try{
-    const r=await rpc('dashboard_counterparty_normalization_apply_v2',{p_raw_value:raw,p_merchant_id:merchant,p_new_name:merchant?null:name,p_counterparty_type:'MERCHANT',p_category_id:category,p_apply_category:applyCategory});
-    const catMsg=applyCategory?` Categoria aggiunta a ${nfmt(r.category_filled)} movimenti${Number(r.category_conflicts_preserved||0)?`; ${nfmt(r.category_conflicts_preserved)} categorie già presenti sono state conservate`:''}.`:'';
+    const r=await rpc('dashboard_counterparty_normalization_apply_v3',{p_raw_value:raw,p_merchant_id:merchant,p_new_name:merchant?null:name,p_counterparty_type:'MERCHANT',p_category_id:category,p_only_missing_category:onlyMissing});
+    const catMsg=category?` Categoria aggiornata su ${nfmt(r.category_updated)} movimenti${Number(r.category_overwritten||0)?`, di cui ${nfmt(r.category_overwritten)} con categoria precedente sovrascritta`:''}.`:'';
     msg($('normalizationMsg'),`Controparte “${r.merchant_name}” applicata a ${nfmt(r.merchant_updated)} movimenti. Alias esatto salvato.${catMsg}`);
     await loadMovementsData();
   }catch(e){msg($('normalizationMsg'),e.message,true)}finally{setBusy(btn,false)}
