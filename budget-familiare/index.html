@@ -47,7 +47,7 @@
 
   <div id="appView" class="hidden">
     <div class="top">
-      <div class="brand"><h1>Dashboard Budget Familiare</h1><small>V34 · Movimenti, categorie, progetti, tag e controllo qualità</small></div>
+      <div class="brand"><h1>Dashboard Budget Familiare</h1><small>V35 · Movimenti, categorie, progetti, tag e controllo qualità</small></div>
       <div class="userbar"><span id="userEmail"></span><button id="refreshBtn" class="btn ghost">Aggiorna</button><button id="logoutBtn" class="btn ghost">Esci</button></div>
     </div>
     <div class="tabs">
@@ -138,7 +138,7 @@
           <div class="editor-row four">
             <div class="field"><label>Nome</label><input id="quickCounterpartyName" class="input" placeholder="es. Pfizer Srl" /></div>
             <div class="field"><label>Tipo</label><select id="quickCounterpartyType" class="select"><option value="MERCHANT">Negozio / fornitore</option><option value="EMPLOYER">Datore di lavoro</option><option value="PERSON">Persona</option><option value="ENTITY">Azienda / ente</option><option value="PUBLIC_BODY">Ente pubblico</option><option value="BANK">Banca</option><option value="PLATFORM">Piattaforma</option><option value="OTHER">Altro</option></select></div>
-            <div class="field"><label>Categoria predefinita <span class="help" data-tip="Facoltativa. Se la scegli, verrà proposta automaticamente quando selezioni questa controparte.">?</span></label><select id="quickCounterpartyCategory" class="select"></select></div>
+            <div class="field"><label>Categoria predefinita <span class="help" data-tip="Facoltativa. Se la scegli, verrà proposta automaticamente quando selezioni questa controparte. Se la lasci vuota ma assegni poi una categoria al movimento, quella categoria diventerà il default della nuova controparte.">?</span></label><select id="quickCounterpartyCategory" class="select"></select></div>
             <button id="saveQuickCounterparty" type="button" class="btn">Crea e seleziona</button>
           </div>
           <div id="quickCounterpartyMsg"></div>
@@ -408,7 +408,7 @@
 const SUPABASE_URL='https://sebqxqwohzhzlejcjxpe.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY='sb_publishable_6vdsPIgKZ-WNc6_iqvmHhA_prkdNR6Y';
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
-let overview=null,catData=null,selectedRow=null,splitData=null,viewMode='list',sortKey='transaction_date',sortDir='desc',catalogTab='categories';
+let overview=null,catData=null,selectedRow=null,splitData=null,viewMode='list',sortKey='transaction_date',sortDir='desc',catalogTab='categories',quickCreatedCounterpartyId=null;
 const catalogSort={categories:{key:'label',dir:'asc'},merchants:{key:'name',dir:'asc'},projects:{key:'name',dir:'asc'},tags:{key:'name',dir:'asc'},mcc:{key:'mcc_code',dir:'asc'},rules:{key:'priority',dir:'desc'}};
 const expandedGroups=new Set();
 const expandedCategoryGroups=new Set();
@@ -541,7 +541,7 @@ async function saveSplits(){if(!selectedRow)return;const btn=$('saveSplits');set
 async function clearSplits(){if(!selectedRow)return;const btn=$('clearSplits');setBusy(btn,true,'Rimozione');try{splitData=await rpc('dashboard_replace_transaction_splits_v1',{p_transaction_id:selectedRow.id,p_splits:[]});$('splitRows').innerHTML='';msg($('splitMsg'),'Ripartizione rimossa. Il movimento torna interamente sulla categoria principale.');updateSplitSummary();await loadMovementsData()}catch(e){msg($('splitMsg'),e.message,true)}finally{setBusy(btn,false)}}
 
 function resetClassificationPanel(close=true){
-  clearTimeout(classificationPreviewTimer);selectedRow=null;splitData=null;
+  clearTimeout(classificationPreviewTimer);selectedRow=null;splitData=null;quickCreatedCounterpartyId=null;
   $('selectedDescription').textContent='';$('splitRows').innerHTML='';$('splitEditor').classList.add('hidden');$('toggleSplitEditor').textContent='Dividi movimento';msg($('splitMsg'),'');$('classMerchant').value='';$('classCategory').value='';$('classProject').value='';
   document.querySelectorAll('[data-class-tag]').forEach(cb=>cb.checked=false);
   $('classMode').value='all';$('classificationRuleStyle').value='SIMPLE';$('ruleMode').value='CONTAINS';$('rulePattern').value='';$('classificationRuleName').value='';$('classificationConditions').innerHTML='';$('classificationPreview').innerHTML='<span class="muted">Configura la regola per vedere quanti movimenti saranno coinvolti.</span>';
@@ -593,12 +593,26 @@ function openClassify(row){
   $('onlyUnreviewed').checked=true;updateRuleUi();updateTransferDecisionHint();$('classifyBox').classList.remove('hidden');$('classifyBox').scrollIntoView({behavior:'smooth',block:'start'});msg($('classMsg'),'');$('splitEditor').classList.add('hidden');$('toggleSplitEditor').textContent=Number(row.split_count||0)>0?`Ripartizione (${nfmt(row.split_count)})`:'Dividi movimento';loadSplitsForMovement(row.id);scheduleClassificationPreview();
 }
 async function saveMovementContext(){if(!selectedRow)return;const projectId=$('classProject').value||null;const tagIds=[...document.querySelectorAll('[data-class-tag]:checked')].map(x=>x.value);await rpc('dashboard_set_transaction_project_v1',{p_transaction_id:selectedRow.id,p_project_id:projectId});await rpc('dashboard_set_transaction_tags_v1',{p_transaction_id:selectedRow.id,p_tag_ids:tagIds})}
+async function persistQuickCreatedCounterpartyDefault(merchantId,categoryId){
+  if(!merchantId||!categoryId||quickCreatedCounterpartyId!==merchantId)return;
+  const m=(catData?.counterparties||[]).find(x=>x.id===merchantId);
+  if(!m||m.default_category_id)return;
+  await rpc('dashboard_upsert_counterparty_v3',{
+    p_id:m.id,
+    p_name:m.name,
+    p_counterparty_type:m.counterparty_type||'OTHER',
+    p_default_category_id:categoryId,
+    p_apply_to_existing:false
+  });
+  m.default_category_id=categoryId;
+}
+
 async function saveClassification(){
   if(!selectedRow)return;const btn=$('saveClassification');setBusy(btn,true,'Salvataggio');msg($('classMsg'),'');
   try{
     const merchant=$('classMerchant').value||null,category=$('classCategory').value||null,target=selectedRow.is_bank_transfer?$('transferTarget').value:selectedRow.transaction_type,single=$('classMode').value==='single';
     if(target!=='TRANSFER'&&!category&&!merchant)throw new Error('Per una spesa o entrata seleziona una categoria oppure una controparte con categoria predefinita.');
-    if(single){await rpc('dashboard_update_movement_v1',{p_transaction_id:selectedRow.id,p_target_type:target,p_merchant_id:merchant,p_category_id:category,p_is_reviewed:true});await saveMovementContext();await loadMovementsData();resetClassificationPanel(true);return}
+    if(single){await rpc('dashboard_update_movement_v1',{p_transaction_id:selectedRow.id,p_target_type:target,p_merchant_id:merchant,p_category_id:category,p_is_reviewed:true});await persistQuickCreatedCounterpartyDefault(merchant,category);await saveMovementContext();await loadMovementsData();resetClassificationPanel(true);return}
     const advanced=$('classificationRuleStyle').value==='ADVANCED';let updated=0;
     if(advanced){
       const conditions=getClassificationConditions(),name=$('classificationRuleName').value.trim();
@@ -612,7 +626,7 @@ async function saveClassification(){
       if(selectedRow.transaction_type==='TRANSFER'){const result=await rpc('dashboard_classify_transfer_v1',{p_raw_description:selectedRow.description,p_target_type:target,p_merchant_id:merchant,p_category_id:category,p_rule_mode:ruleMode==='NONE'?'EXACT':ruleMode,p_rule_pattern:rulePattern||selectedRow.description,p_only_unreviewed:$('onlyUnreviewed').checked});updated=result?.updated??0}
       else{const result=await rpc('dashboard_apply_description_classification_v3',{p_raw_description:selectedRow.description,p_transaction_type:selectedRow.transaction_type,p_merchant_id:merchant,p_category_id:category,p_rule_mode:ruleMode,p_rule_pattern:rulePattern,p_only_unreviewed:$('onlyUnreviewed').checked});updated=result?.updated??0}
     }
-    await saveMovementContext();await loadMovementsData();resetClassificationPanel(true);
+    await persistQuickCreatedCounterpartyDefault(merchant,category);await saveMovementContext();await loadMovementsData();resetClassificationPanel(true);
   }catch(e){msg($('classMsg'),e.message,true)}finally{setBusy(btn,false)}
 }
 async function applyBulkCategory(){
@@ -954,7 +968,7 @@ async function deleteCatalogEntity(btn){
   }
 }
 function openQuickCounterparty(){const income=(selectedRow?.is_bank_transfer?$('transferTarget').value:selectedRow?.transaction_type)==='INCOME';$('quickCounterpartyName').value='';$('quickCounterpartyType').value=income?'EMPLOYER':'MERCHANT';$('quickCounterpartyCategory').value=$('classCategory').value||'';msg($('quickCounterpartyMsg'),'');$('quickCounterpartyBox').classList.remove('hidden');$('quickCounterpartyName').focus()}
-async function saveQuickCounterparty(){const btn=$('saveQuickCounterparty');setBusy(btn,true,'Creazione');msg($('quickCounterpartyMsg'),'');try{const created=await rpc('dashboard_upsert_counterparty_v1',{p_id:null,p_name:$('quickCounterpartyName').value,p_counterparty_type:$('quickCounterpartyType').value||'OTHER',p_default_category_id:$('quickCounterpartyCategory').value||null});const selectedCategory=$('classCategory').value;catData.counterparties=await rpc('dashboard_counterparties_read_v1')||[];fillClassificationSelects();$('classMerchant').value=created.id;$('classCategory').value=selectedCategory;if($('ruleMode').value==='CONTAINS'&&!$('rulePattern').value.trim())$('rulePattern').value=created.name;updateRuleUi();$('quickCounterpartyBox').classList.add('hidden');msg($('classMsg'),`Controparte “${created.name}” creata e selezionata.`)}catch(e){msg($('quickCounterpartyMsg'),e.message,true)}finally{setBusy(btn,false)}}
+async function saveQuickCounterparty(){const btn=$('saveQuickCounterparty');setBusy(btn,true,'Creazione');msg($('quickCounterpartyMsg'),'');try{const created=await rpc('dashboard_upsert_counterparty_v1',{p_id:null,p_name:$('quickCounterpartyName').value,p_counterparty_type:$('quickCounterpartyType').value||'OTHER',p_default_category_id:$('quickCounterpartyCategory').value||null});quickCreatedCounterpartyId=created.id;const selectedCategory=$('classCategory').value;catData.counterparties=await rpc('dashboard_counterparties_read_v1')||[];fillClassificationSelects();$('classMerchant').value=created.id;$('classCategory').value=selectedCategory;if($('ruleMode').value==='CONTAINS'&&!$('rulePattern').value.trim())$('rulePattern').value=created.name;updateRuleUi();$('quickCounterpartyBox').classList.add('hidden');msg($('classMsg'),`Controparte “${created.name}” creata e selezionata.`)}catch(e){msg($('quickCounterpartyMsg'),e.message,true)}finally{setBusy(btn,false)}}
 function clearMovementFilters(){['movementSearch','movementStatus','movementBank','movementKind','movementDirection','movementCounterparty','movementCategory','movementProject','movementTag','movementDateFrom','movementDateTo'].forEach(id=>$(id).value='');renderMovements()}
 $('loginBtn').onclick=async()=>{const b=$('loginBtn');setBusy(b,true,'Accesso');msg($('loginMsg'),'');const {data,error}=await sb.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});setBusy(b,false);if(error)return msg($('loginMsg'),error.message,true);showApp(data.user)};
 $('logoutBtn').onclick=async()=>{await sb.auth.signOut();showLogin()};$('refreshBtn').onclick=loadAll;$('toggleSplitEditor').onclick=()=>{if($('splitEditor').classList.contains('hidden'))openSplitEditor();else{$('splitEditor').classList.add('hidden');$('toggleSplitEditor').textContent=Number(selectedRow?.split_count||0)>0?`Ripartizione (${nfmt(selectedRow.split_count)})`:'Dividi movimento'}};$('addSplitRow').onclick=()=>addSplitRow({});$('saveSplits').onclick=saveSplits;$('clearSplits').onclick=clearSplits;$('splitRows').addEventListener('click',e=>{const b=e.target.closest('[data-remove-split]');if(b){b.closest('.split-row')?.remove();updateSplitSummary()}});$('addCondition').onclick=()=>addConditionRow();$('previewCompoundRule').onclick=previewCompoundRule;$('saveCompoundRule').onclick=saveCompoundRule;$('compoundRuleApplyScope').onchange=()=>{updateCompoundApplyHint();previewCompoundRule()};$('compoundConditions').addEventListener('click',e=>{const b=e.target.closest('[data-remove-condition]');if(b){b.closest('.rule-condition')?.remove();if(!document.querySelector('#compoundConditions .rule-condition'))addConditionRow()}});$('saveClassification').onclick=saveClassification;$('closeClassify').onclick=()=>resetClassificationPanel(true);$('addClassificationCondition').onclick=()=>{addClassificationConditionRow();scheduleClassificationPreview()};$('refreshClassificationPreview').onclick=()=>previewClassificationImpact(true);$('classificationConditions').addEventListener('click',e=>{const b=e.target.closest('[data-remove-class-condition]');if(b){b.closest('.rule-condition')?.remove();if(!document.querySelector('#classificationConditions .rule-condition'))addClassificationConditionRow();scheduleClassificationPreview()}});$('saveCategory').onclick=saveCategory;$('saveMerchant').onclick=saveMerchant;$('saveProject').onclick=saveProject;$('saveTag').onclick=saveTag;$('newCounterpartyBtn').onclick=openQuickCounterparty;$('cancelQuickCounterparty').onclick=()=>{$('quickCounterpartyBox').classList.add('hidden');msg($('quickCounterpartyMsg'),'')};$('saveQuickCounterparty').onclick=saveQuickCounterparty;$('classMode').onchange=updateRuleUi;$('classificationRuleStyle').onchange=()=>{if($('classificationRuleStyle').value==='SIMPLE'&&selectedRow&&!$('rulePattern').value.trim())$('rulePattern').value=selectedRow.description||'';updateRuleUi()};$('ruleMode').onchange=()=>{if(($('ruleMode').value==='CONTAINS'||$('ruleMode').value==='EXACT')&&selectedRow&&!$('rulePattern').value.trim())$('rulePattern').value=selectedRow.description||'';if($('ruleMode').value==='EXACT'&&selectedRow)$('rulePattern').value=selectedRow.description||'';updateRuleUi()};$('rulePattern').oninput=updateRuleUi;$('onlyUnreviewed').onchange=scheduleClassificationPreview;$('classMerchant').onchange=updateRuleUi;$('transferTarget').onchange=()=>{updateTransferDecisionHint();scheduleClassificationPreview()};
