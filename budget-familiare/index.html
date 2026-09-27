@@ -47,7 +47,7 @@
 
   <div id="appView" class="hidden">
     <div class="top">
-      <div class="brand"><h1>Dashboard Budget Familiare</h1><small>V36 · Movimenti, categorie, progetti, tag e controllo qualità</small></div>
+      <div class="brand"><h1>Dashboard Budget Familiare</h1><small>V37 · Movimenti, categorie, progetti, tag e controllo qualità</small></div>
       <div class="userbar"><span id="userEmail"></span><button id="refreshBtn" class="btn ghost">Aggiorna</button><button id="logoutBtn" class="btn ghost">Esci</button></div>
     </div>
     <div class="tabs">
@@ -346,11 +346,11 @@
 
         <div class="catalog-panel" data-catalog-panel="mcc">
           <div class="card stack catalog-card">
-            <div class="catalog-intro"><div><h2 style="margin:0 0 4px">Codici MCC</h2><div class="muted small">Il codice MCC descrive il settore dell’esercente. Mostriamo sempre codice, descrizione leggibile e categoria proposta.</div></div></div>
-            <div class="rule-help">Esempio: <strong>5541 — Distributori di carburante</strong> → Trasporti › Carburante. L'MCC aiuta la categoria, ma non sostituisce il riconoscimento della controparte.</div>
+            <div class="catalog-intro"><div><h2 style="margin:0 0 4px">Codici MCC</h2><div class="muted small">Tutti gli MCC presenti nei movimenti, anche quelli non ancora configurati. Per ogni codice vedi descrizione, numero di movimenti e categoria automatica.</div></div></div>
+            <div class="rule-help">Configura una categoria per un MCC e verrà proposta automaticamente ai nuovi movimenti. I movimenti storici senza controparte e senza categoria vengono aggiornati subito con la categoria MCC, ma restano <strong>Da classificare</strong> finché non riconosci la controparte.</div>
             <div class="catalog-toolbar">
               <input id="mccSearch" class="input" placeholder="Filtra per codice, descrizione o categoria..." />
-              <select id="mccStatusFilter" class="select"><option value="">Tutti</option><option value="ACTIVE">Attivi</option><option value="INACTIVE">Disattivati</option></select>
+              <select id="mccStatusFilter" class="select"><option value="">Tutti</option><option value="MAPPED">Configurati</option><option value="UNMAPPED">Da configurare</option><option value="ACTIVE">Attivi</option><option value="INACTIVE">Disattivati</option></select>
             </div>
             <div id="mccTable"></div>
           </div>
@@ -875,20 +875,37 @@ function operatorLabel(v){return ({EXACT:'uguale a',CONTAINS:'contiene',STARTS_W
 function renderMccCatalog(){
   if(!$('mccTable'))return;
   const q=($('mccSearch')?.value||'').trim().toLowerCase(),status=$('mccStatusFilter')?.value||'',cats=catData?.categories||[];
-  let rows=(catData?.mccRules||[]).filter(r=>(!q||[r.mcc_code,r.description,r.category_path].join(' ').toLowerCase().includes(q))&&(!status||(status==='ACTIVE'?r.is_active:!r.is_active)));
-  rows=genericCatalogSort(rows,'mcc',{mcc_code:x=>x.mcc_code||'',description:x=>x.description||'',category:x=>x.category_path||'',confidence:x=>Number(x.confidence||0),active:x=>x.is_active?1:0});
-  $('mccTable').innerHTML=`<div class="table-wrap"><table class="table"><thead><tr><th>${catalogSortHeader('mcc','MCC','mcc_code')}</th><th>${catalogSortHeader('mcc','Descrizione','description')}</th><th>Categoria</th><th>${catalogSortHeader('mcc','Affidabilità','confidence')}</th><th>${catalogSortHeader('mcc','Stato','active')}</th><th></th></tr></thead><tbody>${rows.length?rows.map(r=>{
-    const opts=cats.map(x=>`<option value="${x.id}" ${x.id===r.category_id?'selected':''}>${esc(categoryLabel(x))}</option>`).join('');
-    return `<tr data-mcc-row="${esc(r.mcc_code)}"><td><span class="mcc-code">${esc(r.mcc_code)}</span></td><td>${esc(r.description)}</td><td><select class="select" data-mcc-category style="width:100%">${opts}</select></td><td>${pct(Number(r.confidence||0)*100)}</td><td>${activeBadge(r.is_active)}</td><td><div class="compact-actions"><button class="btn compact" data-save-mcc type="button">Salva</button><button class="btn danger compact" data-delete-entity="MCC" data-delete-key="${esc(r.mcc_code)}" data-delete-label="MCC ${esc(r.mcc_code)}">Elimina</button></div></td></tr>`;
-  }).join(''):'<tr><td colspan="6" class="muted">Nessuna regola MCC.</td></tr>'}</tbody></table></div>`;
+  let rows=(catData?.mccRules||[]).filter(r=>{
+    const hit=!q||[r.mcc_code,r.description,r.category_path].join(' ').toLowerCase().includes(q);
+    if(!hit)return false;
+    if(status==='MAPPED')return !!r.is_mapped;
+    if(status==='UNMAPPED')return !r.is_mapped;
+    if(status==='ACTIVE')return !!r.is_mapped&&!!r.is_active;
+    if(status==='INACTIVE')return !!r.is_mapped&&!r.is_active;
+    return true;
+  });
+  rows=genericCatalogSort(rows,'mcc',{mcc_code:x=>x.mcc_code||'',description:x=>x.description||'',category:x=>x.category_path||'',movements:x=>Number(x.movement_count||0),confidence:x=>Number(x.confidence||0),active:x=>x.is_mapped?(x.is_active?1:0):-1});
+  $('mccTable').innerHTML=`<div class="table-wrap"><table class="table"><thead><tr><th>${catalogSortHeader('mcc','MCC','mcc_code')}</th><th>${catalogSortHeader('mcc','Descrizione','description')}</th><th>${catalogSortHeader('mcc','Movimenti','movements')}</th><th>Categoria MCC</th><th>${catalogSortHeader('mcc','Affidabilità','confidence')}</th><th>${catalogSortHeader('mcc','Stato','active')}</th><th></th></tr></thead><tbody>${rows.length?rows.map(r=>{
+    const opts='<option value="">— scegli categoria —</option>'+cats.map(x=>`<option value="${x.id}" ${x.id===r.category_id?'selected':''}>${esc(categoryLabel(x))}</option>`).join('');
+    const statusHtml=!r.is_mapped?'<span class="pill warn">Da configurare</span>':activeBadge(r.is_active);
+    const confidenceHtml=r.is_mapped?pct(Number(r.confidence||0)*100):'<span class="muted">—</span>';
+    const missing=Number(r.unclassified_count||0);
+    const action=r.is_mapped
+      ?`<button class="btn compact" data-save-mcc type="button">Salva</button><button class="btn danger compact" data-delete-entity="MCC" data-delete-key="${esc(r.mcc_code)}" data-delete-label="MCC ${esc(r.mcc_code)}">Elimina</button>`
+      :`<button class="btn compact" data-save-mcc type="button">Configura</button>`;
+    return `<tr data-mcc-row="${esc(r.mcc_code)}"><td><span class="mcc-code">${esc(r.mcc_code)}</span></td><td>${esc(r.description||'—')}</td><td><strong>${nfmt(r.movement_count||0)}</strong>${missing?`<br><span class="muted small">${nfmt(missing)} senza controparte/categoria</span>`:''}</td><td><select class="select" data-mcc-category style="width:100%">${opts}</select></td><td>${confidenceHtml}</td><td>${statusHtml}</td><td><div class="compact-actions">${action}</div></td></tr>`;
+  }).join(''):'<tr><td colspan="7" class="muted">Nessun MCC con questi filtri.</td></tr>'}</tbody></table></div>`;
 }
 async function saveMccCategory(btn){
   const row=btn.closest('[data-mcc-row]');if(!row)return;
   const code=row.dataset.mccRow,category=row.querySelector('[data-mcc-category]').value;
   const current=(catData?.mccRules||[]).find(x=>x.mcc_code===code);
-  setBusy(btn,true,'Salvo');
+  if(!category){alert('Scegli una categoria prima di configurare l\'MCC.');return}
+  setBusy(btn,true,current?.is_mapped?'Salvo':'Configuro');
   try{
-    await rpc('dashboard_upsert_mcc_rule_v1',{p_mcc_code:code,p_category_id:category,p_confidence:Number(current?.confidence||.9),p_is_active:current?.is_active!==false});
+    const r=await rpc('dashboard_upsert_mcc_rule_v1',{p_mcc_code:code,p_category_id:category,p_confidence:Number(current?.confidence||.9),p_is_active:true});
+    const updated=Number(r?.updated_existing_movements||0);
+    if(updated)alert(`MCC ${code} configurato. Categoria applicata a ${nfmt(updated)} movimenti senza controparte e categoria, lasciati Da classificare.`);
     await loadMovementsData();setCatalogTab('mcc',false);
   }catch(e){alert(e.message)}finally{setBusy(btn,false)}
 }
