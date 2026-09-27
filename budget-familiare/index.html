@@ -47,7 +47,7 @@
 
   <div id="appView" class="hidden">
     <div class="top">
-      <div class="brand"><h1>Dashboard Budget Familiare</h1><small>V44 · Movimenti, categorie, progetti, tag e controllo qualità</small></div>
+      <div class="brand"><h1>Dashboard Budget Familiare</h1><small>V45 · Movimenti, categorie, progetti, tag e controllo qualità</small></div>
       <div class="userbar"><span id="userEmail"></span><button id="refreshBtn" class="btn ghost">Aggiorna</button><button id="logoutBtn" class="btn ghost">Esci</button></div>
     </div>
     <div class="tabs">
@@ -554,6 +554,65 @@ function syncClassificationCategoryFromMerchant(force=false){
   }
   return false;
 }
+function rememberRuleExists(merchantId,pattern,targetType){
+  const p=String(pattern||'').trim().toLowerCase(),target=String(targetType||'').toUpperCase();
+  return (catData?.compoundRules||[]).some(r=>{
+    if(!r.is_active||r.merchant_id!==merchantId||String(r.target_transaction_type||'').toUpperCase()!==target)return false;
+    const cs=r.conditions||[];
+    return cs.some(x=>x.field_name==='DESCRIPTION'&&x.operator==='CONTAINS'&&String(x.comparison_value||'').trim().toLowerCase()===p);
+  });
+}
+function quickRememberCandidate(){
+  if(!selectedRow)return null;
+  const merchantId=$('classMerchant')?.value||'',categoryId=$('classCategory')?.value||'';
+  if(!merchantId||!categoryId)return null;
+  const merchant=(catData?.counterparties||[]).find(m=>m.id===merchantId);
+  const name=String(merchant?.name||'').trim();
+  if(name.length<4)return null;
+  if(!textSearchMatches(selectedRow.description||'',name))return null;
+  const target=selectedRow.is_bank_transfer?$('transferTarget').value:selectedRow.transaction_type;
+  return {merchantId,categoryId,name,target};
+}
+function renderClassificationSuggestion(){
+  if(!selectedRow)return;
+  const row=selectedRow,st=movementWorkState(row),s=normalizationSuggestionForMovement(row),suggestedName=suggestedCounterpartyName(row),freq=counterpartyOccurrenceCount(row);
+  const suggestionActions=[];
+  if(!row.counterparty_id&&s?.proposed_merchant_id)suggestionActions.push(`<button type="button" class="btn secondary compact" data-use-suggested-counterparty="${esc(s.proposed_merchant_id)}">Usa controparte suggerita</button>`);
+  if(!row.counterparty_id&&!s?.proposed_merchant_id&&suggestedName)suggestionActions.push('<button type="button" class="btn ghost compact" data-create-suggested-counterparty>Crea controparte suggerita</button>');
+  const remember=quickRememberCandidate();
+  if(remember&&!rememberRuleExists(remember.merchantId,remember.name,remember.target)){
+    suggestionActions.push(`<button type="button" class="btn compact" data-remember-counterparty>Ricorda ${esc(remember.name)} per i prossimi movimenti</button>`);
+  }else if(remember){
+    suggestionActions.push(`<span class="pill ok">Riconoscimento futuro già attivo</span>`);
+  }
+  $('classificationSuggestion').innerHTML=`<div class="classification-priority ${st.key==='MISSING_CATEGORY'?'danger':'warn'}">${esc(st.label)}${st.detail?` · ${esc(st.detail)}`:''}</div><div style="margin-top:4px">${row.mcc_code?`MCC <strong>${esc(mccReadable(row.mcc_code))}</strong>`:'MCC non disponibile'}${suggestedName?`<br>Controparte suggerita: <strong>${esc(suggestedName)}</strong> · ${nfmt(freq)} movimenti${s?.confidence!=null?` · affidabilità ${pct(Number(s.confidence)*100)}`:''}`:''}</div>${suggestionActions.length?`<div class="suggestion-actions">${suggestionActions.join('')}</div>`:''}`;
+  $('classificationSuggestion').classList.remove('hidden');
+}
+async function rememberCounterpartyForFuture(btn){
+  const cand=quickRememberCandidate();
+  if(!cand)return msg($('classMsg'),'Per creare il riconoscimento rapido servono controparte e categoria, e il nome della controparte deve comparire chiaramente nella descrizione.',true);
+  if(rememberRuleExists(cand.merchantId,cand.name,cand.target)){renderClassificationSuggestion();return}
+  setBusy(btn,true,'Salvo');
+  try{
+    const conditions=[{field_name:'DESCRIPTION',operator:'CONTAINS',comparison_value:cand.name}];
+    const saved=await rpc('dashboard_upsert_compound_rule_v1',{
+      p_id:null,
+      p_name:`Ricorda ${cand.name}`,
+      p_merchant_id:cand.merchantId,
+      p_category_id:cand.categoryId,
+      p_target_transaction_type:cand.target,
+      p_priority:220,
+      p_confidence:1,
+      p_auto_confirm:true,
+      p_is_active:true,
+      p_conditions:conditions
+    });
+    catData.compoundRules=await rpc('dashboard_rules_read_v1').then(x=>x?.compound_rules||catData.compoundRules||[]);
+    msg($('classMsg'),`Riconoscimento futuro attivato: i prossimi movimenti che contengono “${cand.name}” saranno assegnati automaticamente a questa controparte e categoria.`);
+    renderClassificationSuggestion();
+    return saved;
+  }catch(e){msg($('classMsg'),e.message,true)}finally{setBusy(btn,false)}
+}
 let classificationPreviewTimer=null;
 function mccReadable(code){if(!code)return '—';const r=(catData?.mccRules||[]).find(x=>String(x.mcc_code)===String(code));return r?`${code} — ${r.description}`:String(code)}
 function addClassificationConditionRow(c={field_name:'MERCHANT_NAME',operator:'EXACT',comparison_value:''}){
@@ -637,13 +696,8 @@ function openClassify(row){
   const extra=[row.raw_merchant_name?`Merchant: ${esc(row.raw_merchant_name)}`:'',row.mcc_code?`MCC: ${esc(mccReadable(row.mcc_code))}`:'MCC: —'].filter(Boolean).join(' · ');
   const dateTimeLabel=movementDateTimeLabel(row);
   $('selectedDescription').innerHTML=`${esc(row.description)} &nbsp; ${bankBadge(row.bank_name)} ${movementKindBadge(row)} ${directionBadge(row)} <span class="muted">${esc(dateTimeLabel)}</span>${extra?`<br><span class="muted small">${extra}</span>`:''}`;
-  const st=movementWorkState(row),s=normalizationSuggestionForMovement(row),suggestedName=suggestedCounterpartyName(row),freq=counterpartyOccurrenceCount(row);
-  const suggestionActions=[];
-  if(!row.counterparty_id&&s?.proposed_merchant_id)suggestionActions.push(`<button type="button" class="btn secondary compact" data-use-suggested-counterparty="${esc(s.proposed_merchant_id)}">Usa controparte suggerita</button>`);
-  if(!row.counterparty_id&&!s?.proposed_merchant_id&&suggestedName)suggestionActions.push('<button type="button" class="btn ghost compact" data-create-suggested-counterparty>Crea controparte suggerita</button>');
-  $('classificationSuggestion').innerHTML=`<div class="classification-priority ${st.key==='MISSING_CATEGORY'?'danger':'warn'}">${esc(st.label)}${st.detail?` · ${esc(st.detail)}`:''}</div><div style="margin-top:4px">${row.mcc_code?`MCC <strong>${esc(mccReadable(row.mcc_code))}</strong>`:'MCC non disponibile'}${suggestedName?`<br>Controparte suggerita: <strong>${esc(suggestedName)}</strong> · ${nfmt(freq)} movimenti${s?.confidence!=null?` · affidabilità ${pct(Number(s.confidence)*100)}`:''}`:''}</div>${suggestionActions.length?`<div class="suggestion-actions">${suggestionActions.join('')}</div>`:''}`;
-  $('classificationSuggestion').classList.remove('hidden');
-  $('classMerchant').value=row.counterparty_id||'';$('classCategory').value=row.category_id||'';syncClassificationCategoryFromMerchant(false);$('classProject').value=row.project_id||'';const selectedTags=new Set((row.tags||[]).map(t=>t.id));document.querySelectorAll('[data-class-tag]').forEach(cb=>cb.checked=selectedTags.has(cb.value));
+  renderClassificationSuggestion();
+  $('classMerchant').value=row.counterparty_id||'';$('classCategory').value=row.category_id||'';syncClassificationCategoryFromMerchant(false);renderClassificationSuggestion();$('classProject').value=row.project_id||'';const selectedTags=new Set((row.tags||[]).map(t=>t.id));document.querySelectorAll('[data-class-tag]').forEach(cb=>cb.checked=selectedTags.has(cb.value));
   $('classMode').value=row.review_status==='CONFERMATO'?'single':'all';$('classificationRuleStyle').value='SIMPLE';
   if(selectedRow.is_bank_transfer){const internalTransfer=row.transaction_type==='TRANSFER'&&String(row.category_path||row.category_name||'').toLowerCase().includes('giroconto interno');$('transferTarget').value=internalTransfer?'TRANSFER':(['EXPENSE','INCOME'].includes(row.transaction_type)?row.transaction_type:(Number(row.amount)>=0?'INCOME':'EXPENSE'));}
   $('ruleMode').value='NONE';$('rulePattern').value=row.description||'';
@@ -1091,10 +1145,10 @@ async function deleteCatalogEntity(btn){
   }
 }
 function openQuickCounterparty(){const income=(selectedRow?.is_bank_transfer?$('transferTarget').value:selectedRow?.transaction_type)==='INCOME';$('quickCounterpartyName').value='';$('quickCounterpartyType').value=income?'EMPLOYER':'MERCHANT';$('quickCounterpartyCategory').value=$('classCategory').value||'';msg($('quickCounterpartyMsg'),'');$('quickCounterpartyBox').classList.remove('hidden');$('quickCounterpartyName').focus()}
-async function saveQuickCounterparty(){const btn=$('saveQuickCounterparty');setBusy(btn,true,'Creazione');msg($('quickCounterpartyMsg'),'');try{const created=await rpc('dashboard_upsert_counterparty_v1',{p_id:null,p_name:$('quickCounterpartyName').value,p_counterparty_type:$('quickCounterpartyType').value||'OTHER',p_default_category_id:$('quickCounterpartyCategory').value||null});quickCreatedCounterpartyId=created.id;const selectedCategory=$('classCategory').value;catData.counterparties=await rpc('dashboard_counterparties_read_v1')||[];fillClassificationSelects();$('classMerchant').value=created.id;$('classCategory').value=selectedCategory;syncClassificationCategoryFromMerchant(false);if($('ruleMode').value==='CONTAINS'&&!$('rulePattern').value.trim())$('rulePattern').value=created.name;updateRuleUi();$('quickCounterpartyBox').classList.add('hidden');msg($('classMsg'),`Controparte “${created.name}” creata e selezionata.`)}catch(e){msg($('quickCounterpartyMsg'),e.message,true)}finally{setBusy(btn,false)}}
+async function saveQuickCounterparty(){const btn=$('saveQuickCounterparty');setBusy(btn,true,'Creazione');msg($('quickCounterpartyMsg'),'');try{const created=await rpc('dashboard_upsert_counterparty_v1',{p_id:null,p_name:$('quickCounterpartyName').value,p_counterparty_type:$('quickCounterpartyType').value||'OTHER',p_default_category_id:$('quickCounterpartyCategory').value||null});quickCreatedCounterpartyId=created.id;const selectedCategory=$('classCategory').value;catData.counterparties=await rpc('dashboard_counterparties_read_v1')||[];fillClassificationSelects();$('classMerchant').value=created.id;$('classCategory').value=selectedCategory;syncClassificationCategoryFromMerchant(false);if($('ruleMode').value==='CONTAINS'&&!$('rulePattern').value.trim())$('rulePattern').value=created.name;updateRuleUi();renderClassificationSuggestion();$('quickCounterpartyBox').classList.add('hidden');msg($('classMsg'),`Controparte “${created.name}” creata e selezionata.`)}catch(e){msg($('quickCounterpartyMsg'),e.message,true)}finally{setBusy(btn,false)}}
 function clearMovementFilters(){['movementSearch','movementStatus','movementBank','movementKind','movementDirection','movementCounterparty','movementCategory','movementProject','movementTag','movementDateFrom','movementDateTo'].forEach(id=>$(id).value='');renderMovements()}
 $('loginBtn').onclick=async()=>{const b=$('loginBtn');setBusy(b,true,'Accesso');msg($('loginMsg'),'');const {data,error}=await sb.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});setBusy(b,false);if(error)return msg($('loginMsg'),error.message,true);showApp(data.user)};
-$('logoutBtn').onclick=async()=>{await sb.auth.signOut();showLogin()};$('refreshBtn').onclick=loadAll;$('toggleSplitEditor').onclick=()=>{if($('splitEditor').classList.contains('hidden'))openSplitEditor();else{$('splitEditor').classList.add('hidden');$('toggleSplitEditor').textContent=Number(selectedRow?.split_count||0)>0?`Ripartizione (${nfmt(selectedRow.split_count)})`:'Dividi movimento'}};$('addSplitRow').onclick=()=>addSplitRow({});$('saveSplits').onclick=saveSplits;$('clearSplits').onclick=clearSplits;$('splitRows').addEventListener('click',e=>{const b=e.target.closest('[data-remove-split]');if(b){b.closest('.split-row')?.remove();updateSplitSummary()}});$('addCondition').onclick=()=>addConditionRow();$('previewCompoundRule').onclick=previewCompoundRule;$('saveCompoundRule').onclick=saveCompoundRule;$('compoundRuleApplyScope').onchange=()=>{updateCompoundApplyHint();previewCompoundRule()};$('compoundConditions').addEventListener('click',e=>{const b=e.target.closest('[data-remove-condition]');if(b){b.closest('.rule-condition')?.remove();if(!document.querySelector('#compoundConditions .rule-condition'))addConditionRow()}});$('saveClassificationNoRule').onclick=()=>saveClassification(false);$('saveClassificationWithRule').onclick=()=>saveClassification(true);$('closeClassify').onclick=()=>resetClassificationPanel(true);$('addClassificationCondition').onclick=()=>{addClassificationConditionRow();scheduleClassificationPreview()};$('refreshClassificationPreview').onclick=()=>previewClassificationImpact(true);$('classificationConditions').addEventListener('click',e=>{const b=e.target.closest('[data-remove-class-condition]');if(b){b.closest('.rule-condition')?.remove();if(!document.querySelector('#classificationConditions .rule-condition'))addClassificationConditionRow();scheduleClassificationPreview()}});$('saveCategory').onclick=saveCategory;$('saveMerchant').onclick=saveMerchant;$('saveProject').onclick=saveProject;$('saveTag').onclick=saveTag;$('newCounterpartyBtn').onclick=openQuickCounterparty;$('classificationSuggestion').addEventListener('click',e=>{const use=e.target.closest('[data-use-suggested-counterparty]');if(use){$('classMerchant').value=use.dataset.useSuggestedCounterparty;syncClassificationCategoryFromMerchant(false);updateRuleUi();return}const create=e.target.closest('[data-create-suggested-counterparty]');if(create){const s=normalizationSuggestionForMovement(selectedRow),name=s?.proposed_new_name||s?.raw_value||selectedRow?.raw_merchant_name||'';openQuickCounterparty();$('quickCounterpartyName').value=name;$('quickCounterpartyCategory').value=$('classCategory').value||s?.proposed_category_id||'';}});$('cancelQuickCounterparty').onclick=()=>{$('quickCounterpartyBox').classList.add('hidden');msg($('quickCounterpartyMsg'),'')};$('saveQuickCounterparty').onclick=saveQuickCounterparty;$('classMode').onchange=updateRuleUi;$('classificationRuleStyle').onchange=()=>{if($('classificationRuleStyle').value==='SIMPLE'&&selectedRow&&!$('rulePattern').value.trim())$('rulePattern').value=selectedRow.description||'';updateRuleUi()};$('ruleMode').onchange=()=>{if(($('ruleMode').value==='CONTAINS'||$('ruleMode').value==='EXACT')&&selectedRow&&!$('rulePattern').value.trim())$('rulePattern').value=selectedRow.description||'';if($('ruleMode').value==='EXACT'&&selectedRow)$('rulePattern').value=selectedRow.description||'';updateRuleUi()};$('rulePattern').oninput=updateRuleUi;$('onlyUnreviewed').onchange=scheduleClassificationPreview;$('classMerchant').onchange=()=>{syncClassificationCategoryFromMerchant(false);updateRuleUi()};$('transferTarget').onchange=()=>{updateTransferDecisionHint();scheduleClassificationPreview()};
+$('logoutBtn').onclick=async()=>{await sb.auth.signOut();showLogin()};$('refreshBtn').onclick=loadAll;$('toggleSplitEditor').onclick=()=>{if($('splitEditor').classList.contains('hidden'))openSplitEditor();else{$('splitEditor').classList.add('hidden');$('toggleSplitEditor').textContent=Number(selectedRow?.split_count||0)>0?`Ripartizione (${nfmt(selectedRow.split_count)})`:'Dividi movimento'}};$('addSplitRow').onclick=()=>addSplitRow({});$('saveSplits').onclick=saveSplits;$('clearSplits').onclick=clearSplits;$('splitRows').addEventListener('click',e=>{const b=e.target.closest('[data-remove-split]');if(b){b.closest('.split-row')?.remove();updateSplitSummary()}});$('addCondition').onclick=()=>addConditionRow();$('previewCompoundRule').onclick=previewCompoundRule;$('saveCompoundRule').onclick=saveCompoundRule;$('compoundRuleApplyScope').onchange=()=>{updateCompoundApplyHint();previewCompoundRule()};$('compoundConditions').addEventListener('click',e=>{const b=e.target.closest('[data-remove-condition]');if(b){b.closest('.rule-condition')?.remove();if(!document.querySelector('#compoundConditions .rule-condition'))addConditionRow()}});$('saveClassificationNoRule').onclick=()=>saveClassification(false);$('saveClassificationWithRule').onclick=()=>saveClassification(true);$('closeClassify').onclick=()=>resetClassificationPanel(true);$('addClassificationCondition').onclick=()=>{addClassificationConditionRow();scheduleClassificationPreview()};$('refreshClassificationPreview').onclick=()=>previewClassificationImpact(true);$('classificationConditions').addEventListener('click',e=>{const b=e.target.closest('[data-remove-class-condition]');if(b){b.closest('.rule-condition')?.remove();if(!document.querySelector('#classificationConditions .rule-condition'))addClassificationConditionRow();scheduleClassificationPreview()}});$('saveCategory').onclick=saveCategory;$('saveMerchant').onclick=saveMerchant;$('saveProject').onclick=saveProject;$('saveTag').onclick=saveTag;$('newCounterpartyBtn').onclick=openQuickCounterparty;$('classificationSuggestion').addEventListener('click',e=>{const use=e.target.closest('[data-use-suggested-counterparty]');if(use){$('classMerchant').value=use.dataset.useSuggestedCounterparty;syncClassificationCategoryFromMerchant(false);updateRuleUi();renderClassificationSuggestion();return}const create=e.target.closest('[data-create-suggested-counterparty]');if(create){const s=normalizationSuggestionForMovement(selectedRow),name=s?.proposed_new_name||s?.raw_value||selectedRow?.raw_merchant_name||'';openQuickCounterparty();$('quickCounterpartyName').value=name;$('quickCounterpartyCategory').value=$('classCategory').value||s?.proposed_category_id||'';return}const remember=e.target.closest('[data-remember-counterparty]');if(remember){rememberCounterpartyForFuture(remember);}});$('cancelQuickCounterparty').onclick=()=>{$('quickCounterpartyBox').classList.add('hidden');msg($('quickCounterpartyMsg'),'')};$('saveQuickCounterparty').onclick=saveQuickCounterparty;$('classMode').onchange=updateRuleUi;$('classificationRuleStyle').onchange=()=>{if($('classificationRuleStyle').value==='SIMPLE'&&selectedRow&&!$('rulePattern').value.trim())$('rulePattern').value=selectedRow.description||'';updateRuleUi()};$('ruleMode').onchange=()=>{if(($('ruleMode').value==='CONTAINS'||$('ruleMode').value==='EXACT')&&selectedRow&&!$('rulePattern').value.trim())$('rulePattern').value=selectedRow.description||'';if($('ruleMode').value==='EXACT'&&selectedRow)$('rulePattern').value=selectedRow.description||'';updateRuleUi()};$('rulePattern').oninput=updateRuleUi;$('onlyUnreviewed').onchange=scheduleClassificationPreview;$('classMerchant').onchange=()=>{syncClassificationCategoryFromMerchant(false);updateRuleUi();renderClassificationSuggestion()};$('classCategory').onchange=()=>renderClassificationSuggestion();$('transferTarget').onchange=()=>{updateTransferDecisionHint();scheduleClassificationPreview();renderClassificationSuggestion()};
 ['movementSearch','movementStatus','movementBank','movementKind','movementDirection','movementCounterparty','movementCategory','movementProject','movementTag','movementDateFrom','movementDateTo'].forEach(id=>$(id).addEventListener(id==='movementSearch'?'input':'change',renderMovements));$('clearMovementFilters').onclick=clearMovementFilters;$('viewList').onclick=()=>{viewMode='list';renderMovements()};$('viewGrouped').onclick=()=>{viewMode='grouped';renderMovements()};$('bulkSelectVisible').onclick=selectVisibleMovements;$('bulkClearSelection').onclick=clearSelectedMovements;$('bulkApplyCategory').onclick=applyBulkCategory;
 $('movementsTable').addEventListener('click',e=>{const sort=e.target.closest('[data-sort]');if(sort){setSort(sort.dataset.sort);return}const edit=e.target.closest('[data-edit-movement]');if(edit){const row=(catData?.movements||[]).find(x=>x.id===edit.dataset.editMovement);if(row)openClassify(row);return}const tg=e.target.closest('[data-toggle-group]');if(tg){const g=(window.__groupRows||[])[Number(tg.dataset.toggleGroup)];if(!g)return;if(expandedGroups.has(g.key))expandedGroups.delete(g.key);else expandedGroups.add(g.key);renderMovements()}});
 $('movementsTable').addEventListener('change',e=>{const cb=e.target.closest('[data-select-movement]');if(!cb)return;cb.checked?selectedMovementIds.add(cb.dataset.selectMovement):selectedMovementIds.delete(cb.dataset.selectMovement);syncBulkSelectionUi()});
