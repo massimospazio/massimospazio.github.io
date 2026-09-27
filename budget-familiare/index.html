@@ -47,7 +47,7 @@
 
   <div id="appView" class="hidden">
     <div class="top">
-      <div class="brand"><h1>Dashboard Budget Familiare</h1><small>V30 · Movimenti, categorie, progetti, tag e controllo qualità</small></div>
+      <div class="brand"><h1>Dashboard Budget Familiare</h1><small>V31 · Movimenti, categorie, progetti, tag e controllo qualità</small></div>
       <div class="userbar"><span id="userEmail"></span><button id="refreshBtn" class="btn ghost">Aggiorna</button><button id="logoutBtn" class="btn ghost">Esci</button></div>
     </div>
     <div class="tabs">
@@ -744,6 +744,25 @@ function categorySuggestionSource(v){return ({MOVIMENTI_ESISTENTI:'storico dello
 function researchForNormalization(x){return (catData?.researchSuggestions||[]).find(r=>r.normalized_key===(x.normalized_key||''))||null}
 function researchStatusBadge(v){const map={SUGGESTED:['Da verificare','warn'],CONFIRMED:['Confermato','ok'],REJECTED:['Scartato','']},m=map[v]||[v||'—',''];return `<span class="pill ${m[1]}">${esc(m[0])}</span>`}
 function researchSourcesHtml(r){const urls=r?.source_urls||[];return urls.length?urls.map((u,i)=>`<a href="${esc(u)}" target="_blank" rel="noopener noreferrer" class="small">Fonte ${i+1}</a>`).join(' · '):'<span class="muted small">nessuna fonte</span>'}
+function normMerchantDefaults(merchantId){
+  const m=(catData?.counterparties||[]).find(x=>x.id===merchantId);
+  return {projectId:m?.default_project_id||'',tagIds:(m?.default_tags||[]).map(t=>t.id)};
+}
+function normContextHtml(x){
+  const projects=[...(catData?.projects||[])].filter(p=>p.is_active).sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'it',{sensitivity:'base'}));
+  const tags=[...(catData?.tags||[])].filter(t=>t.is_active).sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'it',{sensitivity:'base'}));
+  const d=normMerchantDefaults(x.proposed_merchant_id);
+  const projectOpts='<option value="">— nessun progetto —</option>'+projects.map(p=>`<option value="${p.id}" ${p.id===d.projectId?'selected':''}>${esc(p.name)}</option>`).join('');
+  const tagChecks=tags.length?tags.map(t=>`<label class="small" style="display:inline-flex;gap:5px;align-items:center;margin:3px 8px 3px 0"><input type="checkbox" data-norm-tag value="${t.id}" ${d.tagIds.includes(t.id)?'checked':''}/> ${esc(t.name)}</label>`).join(''):'<span class="muted small">Nessun tag attivo.</span>';
+  return `<div style="margin-top:8px;padding-top:7px;border-top:1px solid var(--line)"><div class="muted small" style="margin-bottom:4px">Default futuri della controparte</div><select class="select" data-norm-project style="width:100%;margin-bottom:4px">${projectOpts}</select><div data-norm-tags>${tagChecks}</div><div class="muted small">Su nuovi movimenti riconosciuti: progetto solo se assente; tag aggiunti senza rimuovere quelli già presenti.</div></div>`;
+}
+function syncNormalizationContextFromMerchant(row){
+  const merchantId=row.querySelector('[data-norm-merchant]')?.value||'';
+  const d=normMerchantDefaults(merchantId);
+  const project=row.querySelector('[data-norm-project]');if(project)project.value=d.projectId||'';
+  row.querySelectorAll('[data-norm-tag]').forEach(cb=>cb.checked=d.tagIds.includes(cb.value));
+}
+
 
 function renderNormalizationSuggestions(){
   if(!$('normalizationTable'))return;
@@ -764,7 +783,7 @@ function renderNormalizationSuggestions(){
       <td><button class="btn secondary compact" data-toggle-normalization-movements="${esc(key)}">${nfmt(x.movements)} movimenti</button><br><span class="muted small">${nfmt(x.missing_category||0)} senza categoria</span></td>
       <td>${researchHtml}</td>
       <td><select class="select" data-norm-merchant style="width:100%">${merchantOpts}</select><input class="input" data-norm-name style="width:100%;margin-top:5px" value="${esc(x.proposed_new_name||x.raw_value||'')}" placeholder="Nome nuova controparte" /></td>
-      <td><select class="select" data-norm-category style="width:100%">${categoryOpts}</select><label class="small" style="display:flex;gap:6px;align-items:center;margin-top:6px"><input data-norm-only-missing type="checkbox" ${autoCategory?'checked':''} ${x.proposed_category_id?'':'disabled'} /> solo movimenti senza categoria</label><div class="muted small">${x.proposed_category_id?(autoCategory?'Se deselezioni, la categoria scelta sostituirà anche categorie già presenti.':'Se lasci deselezionato, la categoria scelta sostituirà anche categorie già presenti.'):'Nessuna categoria da applicare.'}</div><div class="muted small" style="margin-top:4px">${x.proposed_category_id?esc(categorySuggestionSource(x.category_source)):'nessuna proposta affidabile'}</div></td>
+      <td><select class="select" data-norm-category style="width:100%">${categoryOpts}</select><label class="small" style="display:flex;gap:6px;align-items:center;margin-top:6px"><input data-norm-only-missing type="checkbox" ${autoCategory?'checked':''} ${x.proposed_category_id?'':'disabled'} /> solo movimenti senza categoria</label><div class="muted small">${x.proposed_category_id?(autoCategory?'Se deselezioni, la categoria scelta sostituirà anche categorie già presenti.':'Se lasci deselezionato, la categoria scelta sostituirà anche categorie già presenti.'):'Nessuna categoria da applicare.'}</div><div class="muted small" style="margin-top:4px">${x.proposed_category_id?esc(categorySuggestionSource(x.category_source)):'nessuna proposta affidabile'}</div>${normContextHtml(x)}</td>
       <td><div>Controparte ${confidenceBadge(x.confidence)}</div><div style="margin-top:5px">Categoria ${x.proposed_category_id?confidenceBadge(x.category_confidence):'<span class="muted">—</span>'}</div></td>
       <td><button class="btn compact" data-apply-normalization type="button">Applica</button> <button class="btn ghost compact" data-ignore-normalization type="button">Ignora</button></td>
     </tr>${open?`<tr><td colspan="7" style="padding:0">${catalogMovementDetailTable(detail)}</td></tr>`:''}`;
@@ -784,16 +803,19 @@ function useResearchSuggestion(btn){
   const row=btn.closest('[data-raw-value]');if(!row)return;
   const key=row.dataset.normalizationKey,r=(catData?.researchSuggestions||[]).find(x=>x.normalized_key===key);
   if(!r?.proposed_name)return;
-  const name=row.querySelector('[data-norm-name]');if(name)name.value=r.proposed_name;
+  const existing=(catData?.counterparties||[]).find(m=>String(m.name||'').trim().toLowerCase()===String(r.proposed_name).trim().toLowerCase());
+  const sel=row.querySelector('[data-norm-merchant]'),name=row.querySelector('[data-norm-name]');
+  if(existing&&sel){sel.value=existing.id;if(name)name.value=r.proposed_name;syncNormalizationContextFromMerchant(row)}
+  else if(name)name.value=r.proposed_name;
 }
 async function applyNormalization(btn){
   const row=btn.closest('[data-raw-value]');if(!row)return;
-  const raw=row.dataset.rawValue,merchant=row.querySelector('[data-norm-merchant]').value||null,name=row.querySelector('[data-norm-name]').value.trim()||null,category=row.querySelector('[data-norm-category]').value||null,onlyMissing=row.querySelector('[data-norm-only-missing]').checked;
+  const raw=row.dataset.rawValue,merchant=row.querySelector('[data-norm-merchant]').value||null,name=row.querySelector('[data-norm-name]').value.trim()||null,category=row.querySelector('[data-norm-category]').value||null,onlyMissing=row.querySelector('[data-norm-only-missing]').checked,project=row.querySelector('[data-norm-project]')?.value||null,tags=[...row.querySelectorAll('[data-norm-tag]:checked')].map(x=>x.value);
   setBusy(btn,true,'Applico');msg($('normalizationMsg'),'');
   try{
-    const r=await rpc('dashboard_counterparty_normalization_apply_v3',{p_raw_value:raw,p_merchant_id:merchant,p_new_name:merchant?null:name,p_counterparty_type:'MERCHANT',p_category_id:category,p_only_missing_category:onlyMissing});
+    const r=await rpc('dashboard_counterparty_normalization_apply_v4',{p_raw_value:raw,p_merchant_id:merchant,p_new_name:merchant?null:name,p_counterparty_type:'MERCHANT',p_category_id:category,p_only_missing_category:onlyMissing,p_project_id:project,p_tag_ids:tags});
     const catMsg=category?` Categoria aggiornata su ${nfmt(r.category_updated)} movimenti${Number(r.category_overwritten||0)?`, di cui ${nfmt(r.category_overwritten)} con categoria precedente sovrascritta`:''}.`:'';
-    msg($('normalizationMsg'),`Controparte “${r.merchant_name}” applicata a ${nfmt(r.merchant_updated)} movimenti. Alias esatto salvato.${catMsg}`);
+    msg($('normalizationMsg'),`Controparte “${r.merchant_name}” applicata a ${nfmt(r.merchant_updated)} movimenti. Alias esatto salvato.${catMsg} Default futuri salvati: ${project?'progetto selezionato':'nessun progetto'} · ${nfmt(tags.length)} tag.`);
     await loadMovementsData();
   }catch(e){msg($('normalizationMsg'),e.message,true)}finally{setBusy(btn,false)}
 }
@@ -893,7 +915,7 @@ $('logoutBtn').onclick=async()=>{await sb.auth.signOut();showLogin()};$('refresh
 ['movementSearch','movementStatus','movementBank','movementKind','movementDirection','movementCounterparty','movementCategory','movementProject','movementTag','movementDateFrom','movementDateTo'].forEach(id=>$(id).addEventListener(id==='movementSearch'?'input':'change',renderMovements));$('clearMovementFilters').onclick=clearMovementFilters;$('viewList').onclick=()=>{viewMode='list';renderMovements()};$('viewGrouped').onclick=()=>{viewMode='grouped';renderMovements()};$('bulkSelectVisible').onclick=selectVisibleMovements;$('bulkClearSelection').onclick=clearSelectedMovements;$('bulkApplyCategory').onclick=applyBulkCategory;
 $('movementsTable').addEventListener('click',e=>{const sort=e.target.closest('[data-sort]');if(sort){setSort(sort.dataset.sort);return}const edit=e.target.closest('[data-edit-movement]');if(edit){const row=(catData?.movements||[]).find(x=>x.id===edit.dataset.editMovement);if(row)openClassify(row);return}const tg=e.target.closest('[data-toggle-group]');if(tg){const g=(window.__groupRows||[])[Number(tg.dataset.toggleGroup)];if(!g)return;if(expandedGroups.has(g.key))expandedGroups.delete(g.key);else expandedGroups.add(g.key);renderMovements()}});
 $('movementsTable').addEventListener('change',e=>{const cb=e.target.closest('[data-select-movement]');if(!cb)return;cb.checked?selectedMovementIds.add(cb.dataset.selectMovement):selectedMovementIds.delete(cb.dataset.selectMovement);syncBulkSelectionUi()});
-['categorySearch','merchantSearch','merchantTypeFilter','merchantCategoryFilter','projectSearch','projectTypeFilter','projectStatusFilter','tagSearch','tagStatusFilter','mccSearch','mccStatusFilter','compoundRuleSearch','compoundRuleStatusFilter','normalizationSearch','normalizationConfidenceFilter'].forEach(id=>$(id)?.addEventListener(id.endsWith('Search')?'input':'change',renderCatalogs));$('normalizationShowIgnored').onchange=loadMovementsData;$('backfillCounterpartyAliases').onclick=backfillCounterpartyAliases;$('expandAllCategories').onclick=()=>{(catData?.categories||[]).filter(x=>Number(x.depth)===1).forEach(x=>expandedCategoryGroups.add(x.level1_name||x.name));renderCategoriesCatalog()};$('collapseAllCategories').onclick=()=>{expandedCategoryGroups.clear();renderCategoriesCatalog()};
+['categorySearch','merchantSearch','merchantTypeFilter','merchantCategoryFilter','projectSearch','projectTypeFilter','projectStatusFilter','tagSearch','tagStatusFilter','mccSearch','mccStatusFilter','compoundRuleSearch','compoundRuleStatusFilter','normalizationSearch','normalizationConfidenceFilter'].forEach(id=>$(id)?.addEventListener(id.endsWith('Search')?'input':'change',renderCatalogs));$('normalizationShowIgnored').onchange=loadMovementsData;$('backfillCounterpartyAliases').onclick=backfillCounterpartyAliases;$('normalizationTable').addEventListener('change',e=>{const sel=e.target.closest('[data-norm-merchant]');if(sel){const row=sel.closest('[data-raw-value]');if(row)syncNormalizationContextFromMerchant(row)}});$('expandAllCategories').onclick=()=>{(catData?.categories||[]).filter(x=>Number(x.depth)===1).forEach(x=>expandedCategoryGroups.add(x.level1_name||x.name));renderCategoriesCatalog()};$('collapseAllCategories').onclick=()=>{expandedCategoryGroups.clear();renderCategoriesCatalog()};
 $('tab-catalogs').addEventListener('click',e=>{const ct=e.target.closest('[data-catalog-tab]');if(ct){setCatalogTab(ct.dataset.catalogTab);return}const cm=e.target.closest('[data-toggle-category-movements]');if(cm){const k=cm.dataset.toggleCategoryMovements;expandedCategoryMovementDetails.has(k)?expandedCategoryMovementDetails.delete(k):expandedCategoryMovementDetails.add(k);renderCategoriesCatalog();return}const cpm=e.target.closest('[data-toggle-counterparty-movements]');if(cpm){const k=cpm.dataset.toggleCounterpartyMovements;expandedCounterpartyMovementDetails.has(k)?expandedCounterpartyMovementDetails.delete(k):expandedCounterpartyMovementDetails.add(k);renderMerchantsCatalog();return}const nm=e.target.closest('[data-toggle-normalization-movements]');if(nm){const k=nm.dataset.toggleNormalizationMovements;expandedNormalizationMovementDetails.has(k)?expandedNormalizationMovementDetails.delete(k):expandedNormalizationMovementDetails.add(k);renderNormalizationSuggestions();return}const ur=e.target.closest('[data-use-research]');if(ur){useResearchSuggestion(ur);return}const rs=e.target.closest('[data-research-status]');if(rs){setResearchStatus(rs,rs.dataset.researchStatus);return}const cg=e.target.closest('[data-toggle-category-group]');if(cg){const k=cg.dataset.toggleCategoryGroup;expandedCategoryGroups.has(k)?expandedCategoryGroups.delete(k):expandedCategoryGroups.add(k);renderCategoriesCatalog();return}const mg=e.target.closest('[data-toggle-counterparty-group]');if(mg){const k=mg.dataset.toggleCounterpartyGroup;expandedCounterpartyGroups.has(k)?expandedCounterpartyGroups.delete(k):expandedCounterpartyGroups.add(k);renderMerchantsCatalog();return}const sm=e.target.closest('[data-save-mcc]');if(sm){saveMccCategory(sm);return}const sh=e.target.closest('[data-catalog-sort]');if(sh){setCatalogSort(sh.dataset.catalogSort,sh.dataset.catalogKey);return}const del=e.target.closest('[data-delete-entity]');if(del){deleteCatalogEntity(del);return}const ap=e.target.closest('[data-apply-normalization]');if(ap){applyNormalization(ap);return}const ig=e.target.closest('[data-ignore-normalization]');if(ig){ignoreNormalization(ig);return}const cc=e.target.closest('[data-edit-cat]');if(cc){editCategory(cc.dataset.editCat);return}const m=e.target.closest('[data-edit-merch]');if(m){editMerchant(m.dataset.editMerch);return}const p=e.target.closest('[data-edit-project]');if(p){editProject(p.dataset.editProject);return}const t=e.target.closest('[data-edit-tag]');if(t){editTag(t.dataset.editTag);return}const rr=e.target.closest('[data-edit-rule]');if(rr){editCompoundRule(rr.dataset.editRule);return}});
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');['overview','categorization','catalogs'].forEach(t=>$(`tab-${t}`).classList.toggle('hidden',t!==b.dataset.tab))});
 addConditionRow();
