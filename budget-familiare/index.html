@@ -47,7 +47,7 @@
 
   <div id="appView" class="hidden">
     <div class="top">
-      <div class="brand"><h1>Dashboard Budget Familiare</h1><small>V52 · Movimenti, categorie, progetti, tag e controllo qualità</small></div>
+      <div class="brand"><h1>Dashboard Budget Familiare</h1><small>V53 · Movimenti, categorie, progetti, tag e controllo qualità</small></div>
       <div class="userbar"><span id="userEmail"></span><button id="refreshBtn" class="btn ghost">Aggiorna</button><button id="logoutBtn" class="btn ghost">Esci</button></div>
     </div>
     <div class="tabs">
@@ -202,8 +202,8 @@
             <option value="">Tutta l'automazione</option>
             <option value="PROTECTED">Manuale protetto</option>
             <option value="RULE">Automatico · Regola</option>
-            <option value="ALIAS_AUTO">Automatico · Alias</option>
-            <option value="ALIAS_PARTIAL">Parzialmente automatico · Alias</option>
+            <option value="ALIAS_AUTO">Automatico · Alias + categoria</option>
+            <option value="ALIAS_PARTIAL">Alias senza categoria predefinita</option>
             <option value="MCC">Fallback MCC</option>
             <option value="NONE">Non automatizzato</option>
           </select>
@@ -692,14 +692,11 @@ function futureAutomationInfo(row){
   if(row?.matching_rule_id){
     return {key:'RULE',label:'Automatico · Regola',cls:'automation-auto',target:'RULE',id:row.matching_rule_id,title:`Regola attiva: ${row.matching_rule_name||'regola di categorizzazione'}. Clicca per modificarla.`};
   }
-  if(row?.has_matching_alias&&row?.mcc_fallback_matches&&row?.mcc_code){
-    return {key:'ALIAS_MCC',label:'Automatico · Alias + MCC',cls:'automation-auto',target:'MCC',id:String(row.mcc_code),title:'L’alias riconosce la controparte; non avendo una categoria predefinita/regola vincente, il fallback MCC assegna la categoria. Clicca per aprire il MCC.'};
-  }
   if(row?.has_matching_alias){
     return {key:'ALIAS_PARTIAL',label:'Parzialmente automatico · Alias',cls:'automation-partial',target:'MERCHANT',id:row.counterparty_id,title:'L’alias riconosce la controparte, ma la categoria non è automatizzata. Clicca per impostare o correggere la categoria predefinita.'};
   }
   if(row?.mcc_fallback_matches&&row?.mcc_code){
-    return {key:'MCC',label:'Fallback MCC',cls:'automation-fallback',target:'MCC',id:String(row.mcc_code),title:'Con la configurazione attuale, in assenza di alias/regole che assegnano una categoria, questo MCC fornisce la stessa categoria. Clicca per aprire la configurazione MCC.'};
+    return {key:'MCC',label:'Fallback MCC',cls:'automation-fallback',target:'MCC',id:String(row.mcc_code),title:'Fallback usato solo quando non è stata riconosciuta alcuna controparte e la categoria è assente. Clicca per aprire la configurazione MCC.'};
   }
   return {key:'NONE',label:'Non automatizzato',cls:'automation-none',target:null,id:null,title:'La categoria di questo movimento non è attualmente riproducibile da alias/categoria predefinita, regola o fallback MCC.'};
 }
@@ -709,8 +706,8 @@ function automationBadgeHtml(row){
   return `<${tag} type="${a.target?'button':''}" class="pill ${a.cls} ${a.target?'automation-link':''}" title="${esc(a.title)}"${attrs}>${esc(a.label)}</${tag}>`;
 }
 function categoryCellHtml(row){
-  if(!row?.category_path)return '<span class="muted">—</span>';
-  return `<div>${esc(row.category_path)}</div><div class="category-meta">${automationBadgeHtml(row)}</div>${Number(row.split_count||0)>0?`<span class="split-badge">${nfmt(row.split_count)} quote · residuo ${euro(row.split_remaining||0)}</span>`:''}`;
+  const category=row?.category_path?`<div>${esc(row.category_path)}</div>`:'<div><span class="muted">— categoria mancante</span></div>';
+  return `${category}<div class="category-meta">${automationBadgeHtml(row)}</div>${Number(row.split_count||0)>0?`<span class="split-badge">${nfmt(row.split_count)} quote · residuo ${euro(row.split_remaining||0)}</span>`:''}`;
 }
 function counterpartyCellHtml(row){
   if(row.counterparty_name)return `<strong>${esc(row.counterparty_name)}</strong>`;
@@ -723,7 +720,7 @@ function populateMovementFilters(){const rows=catData?.movements||[];const keep=
 function movementAutomationMatches(row,filter){
   if(!filter)return true;
   const key=futureAutomationInfo(row).key;
-  if(filter==='ALIAS_AUTO')return key==='ALIAS'||key==='ALIAS_MCC';
+  if(filter==='ALIAS_AUTO')return key==='ALIAS';
   return key===filter;
 }
 function filteredMovements(){const q=$('movementSearch').value.trim().toLowerCase(),status=$('movementStatus').value,automation=$('movementAutomation').value,bank=$('movementBank').value,kind=$('movementKind').value,dir=$('movementDirection').value,cp=$('movementCounterparty').value,cat=$('movementCategory').value,project=$('movementProject').value,tag=$('movementTag').value,from=$('movementDateFrom').value,to=$('movementDateTo').value;let rows=(catData?.movements||[]).filter(x=>{const hay=[x.description,x.counterparty_name,x.category_path,x.raw_causale,x.project_name,futureAutomationInfo(x).label,...(x.tags||[]).map(t=>t.name)].join(' ').toLowerCase();if(q&&!textSearchMatches(hay,q))return false;if(status&&x.review_status!==status)return false;if(automation&&!movementAutomationMatches(x,automation))return false;if(bank&&x.bank_name!==bank)return false;if(kind&&x.movement_kind!==kind)return false;if(dir&&movementDirection(x).key!==dir)return false;if(cp==='__NONE__'&&x.counterparty_id)return false;if(cp&&cp!=='__NONE__'&&x.counterparty_id!==cp)return false;if(cat==='__NONE__'&&x.category_id)return false;if(cat&&cat!=='__NONE__'&&x.category_id!==cat)return false;if(project==='__NONE__'&&x.project_id)return false;if(project&&project!=='__NONE__'&&x.project_id!==project)return false;const tagIds=(x.tags||[]).map(t=>t.id);if(tag==='__NONE__'&&tagIds.length)return false;if(tag&&tag!=='__NONE__'&&!tagIds.includes(tag))return false;if(from&&String(x.transaction_date)<from)return false;if(to&&String(x.transaction_date)>to)return false;return true});return sortMovements(rows)}
