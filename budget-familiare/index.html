@@ -47,7 +47,7 @@
 
   <div id="appView" class="hidden">
     <div class="top">
-      <div class="brand"><h1>Dashboard Budget Familiare</h1><small>V41 · Movimenti, categorie, progetti, tag e controllo qualità</small></div>
+      <div class="brand"><h1>Dashboard Budget Familiare</h1><small>V42 · Movimenti, categorie, progetti, tag e controllo qualità</small></div>
       <div class="userbar"><span id="userEmail"></span><button id="refreshBtn" class="btn ghost">Aggiorna</button><button id="logoutBtn" class="btn ghost">Esci</button></div>
     </div>
     <div class="tabs">
@@ -161,7 +161,7 @@
               </select>
             </div>
             <div class="field" id="rulePatternField">
-              <label>Testo da cercare <span class="help" data-tip="Inserisci solo la parte stabile della descrizione. Esempio: EasyPark, Netflix, CONAD. Evita codici, date o numeri che cambiano.">?</span></label>
+              <label>Testo da cercare <span class="help" data-tip="Inserisci la parte stabile della descrizione. Più parole separate devono essere tutte presenti; * è un jolly tra parti del testo. Esempio: amazon prime oppure amazon*prime.">?</span></label>
               <input id="rulePattern" class="input" placeholder="es. EasyPark" />
             </div>
           </div>
@@ -190,7 +190,7 @@
           <div class="view-toggle"><button id="viewList" class="btn secondary compact">Elenco</button><button id="viewGrouped" class="btn ghost compact">Raggruppa per controparte</button></div>
         </div>
         <div class="movement-filters">
-          <input id="movementSearch" class="input" placeholder="Cerca descrizione, controparte, categoria, progetto o tag..." />
+          <input id="movementSearch" class="input" placeholder="Cerca movimenti: più parole = tutte presenti, * = jolly..." />
           <select id="movementStatus" class="select"><option value="">Tutti gli stati</option><option value="DA_CLASSIFICARE">Da classificare</option><option value="DA_REVISIONARE">Da revisionare</option><option value="CONFERMATO">Confermati</option></select>
           <select id="movementBank" class="select"><option value="">Tutte le banche</option></select>
           <select id="movementKind" class="select"><option value="">Tutti i tipi</option><option value="CARTA">Carta</option><option value="BONIFICO">Bonifico</option><option value="ADDEBITO">Addebito</option><option value="ALTRO">Altro</option></select>
@@ -424,6 +424,18 @@ const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const euro=n=>new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR'}).format(Number(n||0));
 const pct=n=>`${Number(n||0).toLocaleString('it-IT',{maximumFractionDigits:1})}%`;
 const nfmt=n=>Number(n||0).toLocaleString('it-IT');
+function textSearchMatches(actual,query){
+  const hay=String(actual??'').toLowerCase(),q=String(query??'').trim().toLowerCase();
+  if(!q)return true;
+  if(q.includes('*')){
+    const parts=q.split(/\*+/).map(x=>x.trim()).filter(Boolean);
+    if(!parts.length)return true;
+    let pos=0;
+    for(const part of parts){const found=hay.indexOf(part,pos);if(found<0)return false;pos=found+part.length}
+    return true;
+  }
+  return q.split(/\s+/).filter(Boolean).every(part=>hay.includes(part));
+}
 function msg(el,text,error=false){el.innerHTML=text?`<div class="msg ${error?'error':''}">${esc(text)}</div>`:''}
 function setBusy(btn,busy,label){if(!btn.dataset.label)btn.dataset.label=btn.textContent;btn.disabled=busy;btn.innerHTML=busy?`<span class="spinner"></span>${esc(label||'Attendere')}`:esc(btn.dataset.label)}
 async function rpc(name,args={}){const {data,error}=await sb.rpc(name,args);if(error)throw error;return data}
@@ -482,7 +494,7 @@ function statusLabel(s){return ({DA_CLASSIFICARE:'Da classificare',DA_REVISIONAR
 function statusBadge(s){const cls=s==='DA_CLASSIFICARE'?'status-classify':s==='DA_REVISIONARE'?'status-review':'status-ok';return `<span class="pill ${cls}">${esc(statusLabel(s))}</span>`}
 function renderMovementsPage(){const rows=catData?.movements||[],k=catData?.kpi||{},tr=catData?.transfers||{};$('kAll').textContent=nfmt(rows.length);$('kCategorize').textContent=nfmt(rows.filter(x=>x.review_status==='DA_CLASSIFICARE').length);$('kReview').textContent=nfmt(rows.filter(x=>x.review_status==='DA_REVISIONARE').length);$('kReviewed').textContent=nfmt(rows.filter(x=>x.review_status==='CONFERMATO').length);$('kInternalTransfers').textContent=nfmt(tr?.internal_kpi?.movements||0);$('kCategory').textContent=pct(k.category_coverage_pct);populateMovementFilters();fillClassificationSelects();renderMovements()}
 function populateMovementFilters(){const rows=catData?.movements||[];const keep=(id)=>$(id)?.value||'';const vals={bank:keep('movementBank'),cp:keep('movementCounterparty'),cat:keep('movementCategory'),project:keep('movementProject'),tag:keep('movementTag')};const banks=[...new Set(rows.map(x=>x.bank_name).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'it'));$('movementBank').innerHTML='<option value="">Tutte le banche</option>'+banks.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');const cps=[...(catData?.counterparties||[])].sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'it',{sensitivity:'base'}));$('movementCounterparty').innerHTML='<option value="">Tutte le controparti</option><option value="__NONE__">Senza controparte</option>'+cps.map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('');const cats=[...(catData?.categories||[])];$('movementCategory').innerHTML='<option value="">Tutte le categorie</option><option value="__NONE__">Senza categoria</option>'+cats.map(c=>`<option value="${c.id}">${esc(categoryLabel(c))}</option>`).join('');const projects=[...(catData?.projects||[])].filter(x=>x.is_active).sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'it',{sensitivity:'base'}));$('movementProject').innerHTML='<option value="">Tutti i progetti</option><option value="__NONE__">Senza progetto</option>'+projects.map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('');const tags=[...(catData?.tags||[])].filter(x=>x.is_active).sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'it',{sensitivity:'base'}));$('movementTag').innerHTML='<option value="">Tutti i tag</option><option value="__NONE__">Senza tag</option>'+tags.map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('');$('movementBank').value=vals.bank;$('movementCounterparty').value=vals.cp;$('movementCategory').value=vals.cat;$('movementProject').value=vals.project;$('movementTag').value=vals.tag}
-function filteredMovements(){const q=$('movementSearch').value.trim().toLowerCase(),status=$('movementStatus').value,bank=$('movementBank').value,kind=$('movementKind').value,dir=$('movementDirection').value,cp=$('movementCounterparty').value,cat=$('movementCategory').value,project=$('movementProject').value,tag=$('movementTag').value,from=$('movementDateFrom').value,to=$('movementDateTo').value;let rows=(catData?.movements||[]).filter(x=>{const hay=[x.description,x.counterparty_name,x.category_path,x.raw_causale,x.project_name,...(x.tags||[]).map(t=>t.name)].join(' ').toLowerCase();if(q&&!hay.includes(q))return false;if(status&&x.review_status!==status)return false;if(bank&&x.bank_name!==bank)return false;if(kind&&x.movement_kind!==kind)return false;if(dir&&movementDirection(x).key!==dir)return false;if(cp==='__NONE__'&&x.counterparty_id)return false;if(cp&&cp!=='__NONE__'&&x.counterparty_id!==cp)return false;if(cat==='__NONE__'&&x.category_id)return false;if(cat&&cat!=='__NONE__'&&x.category_id!==cat)return false;if(project==='__NONE__'&&x.project_id)return false;if(project&&project!=='__NONE__'&&x.project_id!==project)return false;const tagIds=(x.tags||[]).map(t=>t.id);if(tag==='__NONE__'&&tagIds.length)return false;if(tag&&tag!=='__NONE__'&&!tagIds.includes(tag))return false;if(from&&String(x.transaction_date)<from)return false;if(to&&String(x.transaction_date)>to)return false;return true});return sortMovements(rows)}
+function filteredMovements(){const q=$('movementSearch').value.trim().toLowerCase(),status=$('movementStatus').value,bank=$('movementBank').value,kind=$('movementKind').value,dir=$('movementDirection').value,cp=$('movementCounterparty').value,cat=$('movementCategory').value,project=$('movementProject').value,tag=$('movementTag').value,from=$('movementDateFrom').value,to=$('movementDateTo').value;let rows=(catData?.movements||[]).filter(x=>{const hay=[x.description,x.counterparty_name,x.category_path,x.raw_causale,x.project_name,...(x.tags||[]).map(t=>t.name)].join(' ').toLowerCase();if(q&&!textSearchMatches(hay,q))return false;if(status&&x.review_status!==status)return false;if(bank&&x.bank_name!==bank)return false;if(kind&&x.movement_kind!==kind)return false;if(dir&&movementDirection(x).key!==dir)return false;if(cp==='__NONE__'&&x.counterparty_id)return false;if(cp&&cp!=='__NONE__'&&x.counterparty_id!==cp)return false;if(cat==='__NONE__'&&x.category_id)return false;if(cat&&cat!=='__NONE__'&&x.category_id!==cat)return false;if(project==='__NONE__'&&x.project_id)return false;if(project&&project!=='__NONE__'&&x.project_id!==project)return false;const tagIds=(x.tags||[]).map(t=>t.id);if(tag==='__NONE__'&&tagIds.length)return false;if(tag&&tag!=='__NONE__'&&!tagIds.includes(tag))return false;if(from&&String(x.transaction_date)<from)return false;if(to&&String(x.transaction_date)>to)return false;return true});return sortMovements(rows)}
 function sortMovements(rows){const mult=sortDir==='asc'?1:-1;return [...rows].sort((a,b)=>{let av=a[sortKey],bv=b[sortKey];if(sortKey==='amount'){av=Math.abs(Number(a.amount||0));bv=Math.abs(Number(b.amount||0))}if(sortKey==='counterparty_name'){av=a.counterparty_name||'';bv=b.counterparty_name||''}if(sortKey==='category_path'){av=a.category_path||'';bv=b.category_path||''}if(sortKey==='description'){av=a.description||'';bv=b.description||''}if(typeof av==='number'||typeof bv==='number')return (Number(av||0)-Number(bv||0))*mult;return String(av||'').localeCompare(String(bv||''),'it',{numeric:true,sensitivity:'base'})*mult})}
 function sortHeader(label,key){const arrow=sortKey===key?(sortDir==='asc'?' ↑':' ↓'):'';return `<button class="sortbtn" data-sort="${key}">${esc(label)}${arrow}</button>`}
 function renderMovements(){const rows=filteredMovements();$('movementSummary').textContent=`${nfmt(rows.length)} movimenti visualizzati · volume ${euro(rows.reduce((s,x)=>s+Math.abs(Number(x.amount||0)),0))}`;$('viewList').className=`btn ${viewMode==='list'?'secondary':'ghost'} compact`;$('viewGrouped').className=`btn ${viewMode==='grouped'?'secondary':'ghost'} compact`;if(viewMode==='grouped')renderGrouped(rows);else renderMovementList(rows)}
@@ -569,7 +581,7 @@ function updateRuleUi(){
   $('ruleMode').disabled=single||advanced;$('rulePattern').disabled=single||advanced||mode==='NONE';
   if(single){$('ruleHint').textContent='Stai modificando solo questo movimento: nessuna regola verrà creata o applicata ad altri movimenti.';scheduleClassificationPreview();return}
   if(advanced){$('ruleHint').textContent='Regola avanzata: tutte le condizioni indicate devono essere vere (AND). Controlla sempre l’anteprima prima di salvare.';scheduleClassificationPreview();return}
-  if(mode==='CONTAINS')$('ruleHint').textContent=`La classificazione verrà applicata agli ${income?'altri movimenti in entrata':'altri movimenti dello stesso tipo'} la cui descrizione contiene “${$('rulePattern').value||'…'}”.`;
+  if(mode==='CONTAINS')$('ruleHint').textContent=`La classificazione verrà applicata agli ${income?'altri movimenti in entrata':'altri movimenti dello stesso tipo'} compatibili con “${$('rulePattern').value||'…'}”. Più parole = tutte presenti; * = jolly in ordine.`;
   else if(mode==='EXACT')$('ruleHint').textContent=`La classificazione verrà applicata agli altri movimenti dello stesso tipo con descrizione uguale a “${$('rulePattern').value||'…'}”.`;
   else $('ruleHint').textContent='Nessuna regola verrà salvata. La classificazione riguarda solo i movimenti esistenti previsti da “Applica a”; i movimenti futuri non verranno classificati automaticamente.';
   scheduleClassificationPreview();
@@ -723,7 +735,7 @@ function renderCategoriesCatalog(){
     const g=groups.get(l1);
     if(Number(x.depth)===1)g.root=x;else g.children.push(x);
   }
-  let list=[...groups.values()].filter(g=>!q||g.name.toLowerCase().includes(q)||g.children.some(x=>categoryLabel(x).toLowerCase().includes(q)));
+  let list=[...groups.values()].filter(g=>!q||textSearchMatches(g.name,q)||g.children.some(x=>textSearchMatches(categoryLabel(x),q)));
   list.sort((a,b)=>a.name.localeCompare(b.name,'it',{sensitivity:'base'}));
   const html=list.map(g=>{
     const expanded=q||expandedCategoryGroups.has(g.name);
@@ -756,7 +768,7 @@ function renderMerchantsCatalog(){
   const q=($('merchantSearch')?.value||'').trim().toLowerCase(),type=$('merchantTypeFilter')?.value||'',cat=$('merchantCategoryFilter')?.value||'';
   let rows=(catData?.counterparties||[]).filter(m=>{
     const label=counterpartyCategoryLabel(m);
-    if(q&&![m.name,label,counterpartyTypeLabel(m.counterparty_type)].join(' ').toLowerCase().includes(q))return false;
+    if(q&&!textSearchMatches([m.name,label,counterpartyTypeLabel(m.counterparty_type)].join(' '),q))return false;
     if(type&&m.counterparty_type!==type)return false;
     if(cat==='__NONE__'&&m.default_category_id)return false;
     if(cat&&cat!=='__NONE__'&&m.default_category_id!==cat)return false;
@@ -818,7 +830,7 @@ function renderNormalizationSuggestions(){
   if(!$('normalizationTable'))return;
   const data=catData?.normalization||{},summary=data.summary||{};
   const q=($('normalizationSearch')?.value||'').trim().toLowerCase(),min=Number($('normalizationConfidenceFilter')?.value||0);
-  const rows=(data.suggestions||[]).filter(x=>{const r=researchForNormalization(x);const hay=[x.raw_value,x.proposed_merchant_name,x.proposed_new_name,x.proposed_category_path,x.mccs,x.banks,r?.proposed_name,r?.proposed_address].join(' ').toLowerCase();return(!q||hay.includes(q))&&Number(x.confidence||0)>=min});
+  const rows=(data.suggestions||[]).filter(x=>{const r=researchForNormalization(x);const hay=[x.raw_value,x.proposed_merchant_name,x.proposed_new_name,x.proposed_category_path,x.mccs,x.banks,r?.proposed_name,r?.proposed_address].join(' ').toLowerCase();return(!q||textSearchMatches(hay,q))&&Number(x.confidence||0)>=min});
   $('normalizationSummary').textContent=`${nfmt(summary.unassigned_movements)} movimenti senza controparte · ${nfmt(summary.unique_raw_values)} merchant grezzi · ${nfmt(summary.with_category_suggestion)} con categoria proposta · ${nfmt(summary.missing_category_movements)} movimenti senza categoria · ${nfmt((catData?.researchSuggestions||[]).length)} ricerche web salvate`;
   const merchants=[...(catData?.counterparties||[])].sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'it',{sensitivity:'base'}));
   const categories=[...(catData?.categories||[])];
@@ -887,13 +899,13 @@ async function ignoreNormalization(btn){const row=btn.closest('[data-raw-value]'
 async function backfillCounterpartyAliases(){const btn=$('backfillCounterpartyAliases');setBusy(btn,true,'Applico');msg($('normalizationMsg'),'');try{const r=await rpc('dashboard_backfill_exact_counterparty_aliases_v1');msg($('normalizationMsg'),`Alias confermati applicati a ${nfmt(r.updated)} movimenti.`);await loadMovementsData()}catch(e){msg($('normalizationMsg'),e.message,true)}finally{setBusy(btn,false)}}
 function renderProjectsCatalog(){
   const q=($('projectSearch')?.value||'').trim().toLowerCase(),type=$('projectTypeFilter')?.value||'',status=$('projectStatusFilter')?.value||'';
-  let rows=(catData?.projects||[]).filter(p=>{if(q&&![p.name,p.notes,projectTypeLabel(p.project_type)].join(' ').toLowerCase().includes(q))return false;if(type&&p.project_type!==type)return false;if(status==='INACTIVE'&&p.is_active)return false;if(status&&status!=='INACTIVE'&&p.status!==status)return false;return true});
+  let rows=(catData?.projects||[]).filter(p=>{if(q&&!textSearchMatches([p.name,p.notes,projectTypeLabel(p.project_type)].join(' '),q))return false;if(type&&p.project_type!==type)return false;if(status==='INACTIVE'&&p.is_active)return false;if(status&&status!=='INACTIVE'&&p.status!==status)return false;return true});
   rows=genericCatalogSort(rows,'projects',{name:x=>x.name||'',type:x=>projectTypeLabel(x.project_type),status:x=>projectStatusLabel(x.status),budget:x=>Number(x.budget_amount||0),spent:x=>Number(x.spent||0),movements:x=>Number(x.movements||0),start:x=>x.start_date||'',end:x=>x.end_date||''});
   $('projectsTable').innerHTML=`<div class="table-wrap"><table class="table"><thead><tr><th>${catalogSortHeader('projects','Progetto','name')}</th><th>${catalogSortHeader('projects','Tipo','type')}</th><th>${catalogSortHeader('projects','Stato','status')}</th><th>${catalogSortHeader('projects','Periodo','start')}</th><th>${catalogSortHeader('projects','Budget','budget')}</th><th>${catalogSortHeader('projects','Speso','spent')}</th><th>${catalogSortHeader('projects','Mov.','movements')}</th><th></th></tr></thead><tbody>${rows.length?rows.map(p=>`<tr><td><strong>${esc(p.name)}</strong><br>${activeBadge(p.is_active)}</td><td>${esc(projectTypeLabel(p.project_type))}</td><td>${projectStatusBadge(p.status)}</td><td>${esc(p.start_date||'—')} → ${esc(p.end_date||'—')}</td><td>${p.budget_amount==null?'—':euro(p.budget_amount)}</td><td>${euro(p.spent)}</td><td>${nfmt(p.movements)}</td><td><button class="btn ghost compact" data-edit-project="${p.id}">Modifica</button> <button class="btn danger compact" data-delete-entity="PROJECT" data-delete-key="${p.id}" data-delete-label="${esc(p.name)}">Elimina</button></td></tr>`).join(''):'<tr><td colspan="8" class="muted">Nessun progetto.</td></tr>'}</tbody></table></div>`;
 }
 function renderTagsCatalog(){
   const q=($('tagSearch')?.value||'').trim().toLowerCase(),status=$('tagStatusFilter')?.value||'';
-  let rows=(catData?.tags||[]).filter(t=>(!q||[t.name,t.description].join(' ').toLowerCase().includes(q))&&(!status||(status==='ACTIVE'?t.is_active:!t.is_active)));
+  let rows=(catData?.tags||[]).filter(t=>(!q||textSearchMatches([t.name,t.description].join(' '),q))&&(!status||(status==='ACTIVE'?t.is_active:!t.is_active)));
   rows=genericCatalogSort(rows,'tags',{name:x=>x.name||'',description:x=>x.description||'',movements:x=>Number(x.movements||0),active:x=>x.is_active?1:0});
   $('tagsTable').innerHTML=`<div class="table-wrap"><table class="table"><thead><tr><th>${catalogSortHeader('tags','Tag','name')}</th><th>${catalogSortHeader('tags','Descrizione','description')}</th><th>${catalogSortHeader('tags','Movimenti','movements')}</th><th>${catalogSortHeader('tags','Stato','active')}</th><th></th></tr></thead><tbody>${rows.length?rows.map(t=>`<tr><td><strong>${esc(t.name)}</strong></td><td>${esc(t.description||'—')}</td><td>${nfmt(t.movements)}</td><td>${activeBadge(t.is_active)}</td><td><button class="btn ghost compact" data-edit-tag="${t.id}">Modifica</button> <button class="btn danger compact" data-delete-entity="TAG" data-delete-key="${t.id}" data-delete-label="${esc(t.name)}">Elimina</button></td></tr>`).join(''):'<tr><td colspan="5" class="muted">Nessun tag.</td></tr>'}</tbody></table></div>`;
 }
@@ -904,7 +916,7 @@ function renderMccCatalog(){
   if(!$('mccTable'))return;
   const q=($('mccSearch')?.value||'').trim().toLowerCase(),status=$('mccStatusFilter')?.value||'',cats=catData?.categories||[];
   let rows=(catData?.mccRules||[]).filter(r=>{
-    const hit=!q||[r.mcc_code,r.description,r.category_path].join(' ').toLowerCase().includes(q);
+    const hit=!q||textSearchMatches([r.mcc_code,r.description,r.category_path].join(' '),q);
     if(!hit)return false;
     if(status==='MAPPED')return !!r.is_mapped;
     if(status==='UNMAPPED')return !r.is_mapped;
@@ -964,7 +976,7 @@ function formatRuleLastUse(r){
 function renderCompoundRulesCatalog(){
   if(!$('compoundRulesTable'))return;
   const q=($('compoundRuleSearch')?.value||'').trim().toLowerCase(),status=$('compoundRuleStatusFilter')?.value||'';
-  let rows=(catData?.compoundRules||[]).filter(r=>{const hay=[r.name,ruleKindLabel(r.rule_kind),r.merchant_name,r.category_path,conditionSummary(r.conditions),ruleActionSummary(r)].join(' ').toLowerCase();return(!q||hay.includes(q))&&(!status||(status==='ACTIVE'?r.is_active:!r.is_active))});
+  let rows=(catData?.compoundRules||[]).filter(r=>{const hay=[r.name,ruleKindLabel(r.rule_kind),r.merchant_name,r.category_path,conditionSummary(r.conditions),ruleActionSummary(r)].join(' ').toLowerCase();return(!q||textSearchMatches(hay,q))&&(!status||(status==='ACTIVE'?r.is_active:!r.is_active))});
   rows=genericCatalogSort(rows,'rules',{name:x=>x.name||'',kind:x=>ruleKindLabel(x.rule_kind),priority:x=>Number(x.priority||0),action:x=>ruleActionSummary(x),active:x=>x.is_active?1:0,current:x=>Number(x.current_match_count||0),usage:x=>Number(x.affected_movements_count||0)});
   $('compoundRulesTable').innerHTML=`<div class="table-wrap"><table class="table"><thead><tr><th>${catalogSortHeader('rules','Regola','name')}</th><th>${catalogSortHeader('rules','Tipo','kind')}</th><th>Condizioni (AND)</th><th>${catalogSortHeader('rules','Risultato','action')}</th><th>${catalogSortHeader('rules','Priorità','priority')}</th><th>${catalogSortHeader('rules','Corrispondenti ora','current')}</th><th>${catalogSortHeader('rules','Mov. aggiornati','usage')}</th><th>Ultimo uso</th><th>${catalogSortHeader('rules','Stato','active')}</th><th></th></tr></thead><tbody>${rows.length?rows.map(r=>`<tr><td><strong>${esc(r.name)}</strong><br><span class="muted small">${r.auto_confirm?'Conferma automatica':'Da revisionare'} · affidabilità ${pct(Number(r.confidence||0)*100)}</span></td><td><span class="pill">${esc(ruleKindLabel(r.rule_kind))}</span></td><td>${esc(conditionSummary(r.conditions))}</td><td>${esc(ruleActionSummary(r))}</td><td>${nfmt(r.priority)}</td><td><strong>${nfmt(r.current_match_count||0)}</strong></td><td><strong>${nfmt(r.affected_movements_count||0)}</strong><br><span class="muted small">${nfmt(r.invocation_count||0)} invocazioni · statistiche da V29</span></td><td>${formatRuleLastUse(r)}</td><td>${activeBadge(r.is_active)}</td><td><div class="compact-actions"><button class="btn ghost compact" data-edit-rule="${r.id}">Modifica</button><button class="btn danger compact" data-delete-entity="RULE" data-delete-key="${r.id}" data-delete-label="${esc(r.name)}">Elimina</button></div></td></tr>`).join(''):'<tr><td colspan="10" class="muted">Nessuna regola.</td></tr>'}</tbody></table></div>`;
 }
