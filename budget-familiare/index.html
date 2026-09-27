@@ -47,7 +47,7 @@
 
   <div id="appView" class="hidden">
     <div class="top">
-      <div class="brand"><h1>Dashboard Budget Familiare</h1><small>V39 · Movimenti, categorie, progetti, tag e controllo qualità</small></div>
+      <div class="brand"><h1>Dashboard Budget Familiare</h1><small>V40 · Movimenti, categorie, progetti, tag e controllo qualità</small></div>
       <div class="userbar"><span id="userEmail"></span><button id="refreshBtn" class="btn ghost">Aggiorna</button><button id="logoutBtn" class="btn ghost">Esci</button></div>
     </div>
     <div class="tabs">
@@ -146,18 +146,18 @@
         <div id="ruleArea" class="rule-box">
           <div class="rule-grid">
             <div class="field">
-              <label>Tipo di regola <span class="help" data-tip="Semplice usa solo la descrizione. Avanzata permette più condizioni tutte obbligatorie, ad esempio nome merchant + MCC.">?</span></label>
+              <label>Regola automatica (facoltativa) <span class="help" data-tip="Per impostazione predefinita non viene creata alcuna regola. Attiva una regola solo se vuoi riconoscere automaticamente anche movimenti futuri.">?</span></label>
               <select id="classificationRuleStyle" class="select">
                 <option value="SIMPLE">Semplice — descrizione</option>
                 <option value="ADVANCED">Avanzata — condizioni multiple</option>
               </select>
             </div>
             <div id="simpleRuleControls" class="field">
-              <label>Come riconoscere movimenti simili <span class="help" data-tip="Per regole semplici scegli una parte stabile della descrizione. Usa la regola avanzata quando vuoi combinare merchant, MCC, banca o altri campi.">?</span></label>
+              <label>Automazione <span class="help" data-tip="Nessuna regola: classifica solo i movimenti esistenti scelti. Le altre opzioni creano una regola riutilizzabile anche per i movimenti futuri.">?</span></label>
               <select id="ruleMode" class="select">
-                <option value="CONTAINS">La descrizione contiene...</option>
-                <option value="EXACT">La descrizione è uguale a...</option>
-                <option value="NONE">Non salvare una regola</option>
+                <option value="NONE">Nessuna regola — solo classificazione</option>
+                <option value="CONTAINS">Crea regola — la descrizione contiene...</option>
+                <option value="EXACT">Crea regola — la descrizione è uguale a...</option>
               </select>
             </div>
             <div class="field" id="rulePatternField">
@@ -558,7 +558,7 @@ function resetClassificationPanel(close=true){
   clearTimeout(classificationPreviewTimer);selectedRow=null;splitData=null;quickCreatedCounterpartyId=null;
   $('selectedDescription').textContent='';$('splitRows').innerHTML='';$('splitEditor').classList.add('hidden');$('toggleSplitEditor').textContent='Dividi movimento';msg($('splitMsg'),'');$('classMerchant').value='';$('classCategory').value='';$('classProject').value='';
   document.querySelectorAll('[data-class-tag]').forEach(cb=>cb.checked=false);
-  $('classMode').value='all';$('classificationRuleStyle').value='SIMPLE';$('ruleMode').value='CONTAINS';$('rulePattern').value='';$('classificationRuleName').value='';$('classificationConditions').innerHTML='';$('classificationPreview').innerHTML='<span class="muted">Configura la regola per vedere quanti movimenti saranno coinvolti.</span>';
+  $('classMode').value='all';$('classificationRuleStyle').value='SIMPLE';$('ruleMode').value='NONE';$('rulePattern').value='';$('classificationRuleName').value='';$('classificationConditions').innerHTML='';$('classificationPreview').innerHTML='<span class="muted">Configura la regola per vedere quanti movimenti saranno coinvolti.</span>';
   $('onlyUnreviewed').checked=true;$('quickCounterpartyBox').classList.add('hidden');$('transferTarget').value='EXPENSE';$('transferDecision').classList.add('hidden');$('transferDecisionHint').textContent='';msg($('classMsg'),'');
   if(close)$('classifyBox').classList.add('hidden');
 }
@@ -571,7 +571,7 @@ function updateRuleUi(){
   if(advanced){$('ruleHint').textContent='Regola avanzata: tutte le condizioni indicate devono essere vere (AND). Controlla sempre l’anteprima prima di salvare.';scheduleClassificationPreview();return}
   if(mode==='CONTAINS')$('ruleHint').textContent=`La classificazione verrà applicata agli ${income?'altri movimenti in entrata':'altri movimenti dello stesso tipo'} la cui descrizione contiene “${$('rulePattern').value||'…'}”.`;
   else if(mode==='EXACT')$('ruleHint').textContent=`La classificazione verrà applicata agli altri movimenti dello stesso tipo con descrizione uguale a “${$('rulePattern').value||'…'}”.`;
-  else $('ruleHint').textContent='La scelta verrà applicata ai movimenti con la descrizione selezionata senza salvare una regola riutilizzabile.';
+  else $('ruleHint').textContent='Nessuna regola verrà salvata. La classificazione riguarda solo i movimenti esistenti previsti da “Applica a”; i movimenti futuri non verranno classificati automaticamente.';
   scheduleClassificationPreview();
 }
 function movementDateTimeLabel(row){
@@ -598,7 +598,7 @@ function openClassify(row){
   $('classMerchant').value=row.counterparty_id||'';$('classCategory').value=row.category_id||'';syncClassificationCategoryFromMerchant(false);$('classProject').value=row.project_id||'';const selectedTags=new Set((row.tags||[]).map(t=>t.id));document.querySelectorAll('[data-class-tag]').forEach(cb=>cb.checked=selectedTags.has(cb.value));
   $('classMode').value=row.review_status==='CONFERMATO'?'single':'all';$('classificationRuleStyle').value='SIMPLE';
   if(selectedRow.is_bank_transfer){const internalTransfer=row.transaction_type==='TRANSFER'&&String(row.category_path||row.category_name||'').toLowerCase().includes('giroconto interno');$('transferTarget').value=internalTransfer?'TRANSFER':(['EXPENSE','INCOME'].includes(row.transaction_type)?row.transaction_type:(Number(row.amount)>=0?'INCOME':'EXPENSE'));}
-  $('ruleMode').value=selectedRow.is_bank_transfer?'EXACT':'CONTAINS';$('rulePattern').value=row.description||'';
+  $('ruleMode').value='NONE';$('rulePattern').value=row.description||'';
   $('classificationRuleName').value=[row.counterparty_name||row.raw_merchant_name||'Regola',row.mcc_code?`MCC ${row.mcc_code}`:''].filter(Boolean).join(' - ');
   $('classificationConditions').innerHTML='';
   if(row.raw_merchant_name)addClassificationConditionRow({field_name:'MERCHANT_NAME',operator:'EXACT',comparison_value:row.raw_merchant_name});
@@ -637,7 +637,8 @@ async function saveClassification(){
       const applied=await rpc('dashboard_apply_compound_rule_existing_v1',{p_rule_id:saved.id,p_only_unreviewed:$('onlyUnreviewed').checked});updated=applied?.updated??0;
     }else{
       const ruleMode=$('ruleMode').value,rulePattern=ruleMode==='NONE'?null:$('rulePattern').value.trim();if(ruleMode!=='NONE'&&!rulePattern)throw new Error('Inserisci il testo da cercare nella descrizione.');
-      if(selectedRow.transaction_type==='TRANSFER'){const result=await rpc('dashboard_classify_transfer_v1',{p_raw_description:selectedRow.description,p_target_type:target,p_merchant_id:merchant,p_category_id:category,p_rule_mode:ruleMode==='NONE'?'EXACT':ruleMode,p_rule_pattern:rulePattern||selectedRow.description,p_only_unreviewed:$('onlyUnreviewed').checked});updated=result?.updated??0}
+      if(selectedRow.transaction_type==='TRANSFER'&&ruleMode!=='NONE'){const result=await rpc('dashboard_classify_transfer_v1',{p_raw_description:selectedRow.description,p_target_type:target,p_merchant_id:merchant,p_category_id:category,p_rule_mode:ruleMode,p_rule_pattern:rulePattern||selectedRow.description,p_only_unreviewed:$('onlyUnreviewed').checked});updated=result?.updated??0}
+      else if(selectedRow.transaction_type==='TRANSFER'&&ruleMode==='NONE'){await rpc('dashboard_update_movement_v1',{p_transaction_id:selectedRow.id,p_target_type:target,p_merchant_id:merchant,p_category_id:category,p_is_reviewed:true});updated=1}
       else{const result=await rpc('dashboard_apply_description_classification_v3',{p_raw_description:selectedRow.description,p_transaction_type:selectedRow.transaction_type,p_merchant_id:merchant,p_category_id:category,p_rule_mode:ruleMode,p_rule_pattern:rulePattern,p_only_unreviewed:$('onlyUnreviewed').checked});updated=result?.updated??0}
     }
     await persistQuickCreatedCounterpartyDefault(merchant,category);await saveMovementContext();await loadMovementsData();resetClassificationPanel(true);
