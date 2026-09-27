@@ -47,7 +47,7 @@
 
   <div id="appView" class="hidden">
     <div class="top">
-      <div class="brand"><h1>Dashboard Budget Familiare</h1><small>V43 · Movimenti, categorie, progetti, tag e controllo qualità</small></div>
+      <div class="brand"><h1>Dashboard Budget Familiare</h1><small>V44 · Movimenti, categorie, progetti, tag e controllo qualità</small></div>
       <div class="userbar"><span id="userEmail"></span><button id="refreshBtn" class="btn ghost">Aggiorna</button><button id="logoutBtn" class="btn ghost">Esci</button></div>
     </div>
     <div class="tabs">
@@ -927,7 +927,7 @@ async function applyNormalization(btn){
   try{
     const r=await rpc('dashboard_counterparty_normalization_apply_v4',{p_raw_value:raw,p_merchant_id:merchant,p_new_name:merchant?null:name,p_counterparty_type:'MERCHANT',p_category_id:category,p_only_missing_category:onlyMissing,p_project_id:project,p_tag_ids:tags});
     const catMsg=category?` Categoria aggiornata su ${nfmt(r.category_updated)} movimenti${Number(r.category_overwritten||0)?`, di cui ${nfmt(r.category_overwritten)} con categoria precedente sovrascritta`:''}.`:'';
-    msg($('normalizationMsg'),`Controparte “${r.merchant_name}” applicata a ${nfmt(r.merchant_updated)} movimenti. Alias esatto salvato.${catMsg} Default futuri salvati: ${project?'progetto selezionato':'nessun progetto'} · ${nfmt(tags.length)} tag.`);
+    msg($('normalizationMsg'),`Controparte “${r.merchant_name}” applicata a ${nfmt(r.merchant_updated)} movimenti. Alias esatto salvato.${catMsg}${r.manual_confirmed?' I movimenti con categoria sono stati confermati.':''} Default futuri salvati: ${project?'progetto selezionato':'nessun progetto'} · ${nfmt(tags.length)} tag.`);
     await loadMovementsData();
   }catch(e){msg($('normalizationMsg'),e.message,true)}finally{setBusy(btn,false)}
 }
