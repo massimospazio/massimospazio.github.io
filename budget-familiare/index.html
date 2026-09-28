@@ -32,6 +32,9 @@
 
 .rule-condition{display:grid;grid-template-columns:180px 160px minmax(220px,1fr) auto;gap:8px;align-items:end;margin-top:8px}.rule-condition .field{min-width:0}.rule-help{padding:10px 12px;border-radius:10px;background:#f8fafc;border:1px solid var(--line);font-size:12px;color:var(--muted)}.mcc-code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:700}.condition-list{margin-top:8px}.rule-preview{margin-top:10px}.rule-preview .table-wrap{max-height:320px;overflow:auto}@media(max-width:900px){.rule-condition{grid-template-columns:1fr}.rule-condition .btn{width:100%}}
 .split-box{margin-top:12px;padding:12px;border:1px solid #dbeafe;border-radius:10px;background:#fff}.split-summary{display:grid;grid-template-columns:repeat(3,minmax(130px,1fr));gap:8px;margin:8px 0}.split-kpi{padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:#f8fafc}.split-kpi .k{font-size:11px;color:var(--muted)}.split-kpi .v{font-weight:750;margin-top:2px}.split-row{border:1px solid var(--line);border-radius:10px;padding:10px;margin-top:8px;background:#fafafa}.split-row-grid{display:grid;grid-template-columns:130px minmax(180px,1.2fr) minmax(170px,1fr) minmax(180px,1fr) auto;gap:8px;align-items:end}.split-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.split-tags label{display:inline-flex;gap:5px;align-items:center;font-size:11px;background:#fff;border:1px solid #e2e8f0;border-radius:999px;padding:4px 7px}.split-over{color:#b91c1c}.split-ok{color:#166534}.split-badge{display:inline-flex;align-items:center;border-radius:999px;padding:3px 7px;font-size:10px;background:#ede9fe;color:#6d28d9;margin-top:4px}@media(max-width:950px){.split-row-grid{grid-template-columns:1fr 1fr}.split-row-grid .btn{width:100%}.split-summary{grid-template-columns:1fr 1fr 1fr}}@media(max-width:650px){.split-row-grid,.split-summary{grid-template-columns:1fr}}
+
+.pipeline-flow{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:10px 0 12px}.pipeline-nav-btn{border:1px solid var(--line);background:#fff;color:#475569;border-radius:999px;padding:7px 10px;display:inline-flex;gap:6px;align-items:center;cursor:pointer;font-weight:650}.pipeline-nav-btn strong{display:inline-flex;width:20px;height:20px;border-radius:50%;align-items:center;justify-content:center;background:#eef2f7;color:#475569;font-size:11px}.pipeline-nav-btn.active{border-color:#93c5fd;background:#eff6ff;color:#1d4ed8}.pipeline-nav-btn.active strong{background:#2563eb;color:#fff}.pipeline-arrow{color:#94a3b8}.pipeline-step{border:1px solid var(--line);border-radius:12px;background:#fff;margin-top:9px;overflow:hidden}.pipeline-step>summary{list-style:none;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;padding:11px 12px;cursor:pointer;background:#f8fafc}.pipeline-step>summary::-webkit-details-marker{display:none}.pipeline-step[open]>summary{background:#eff6ff;border-bottom:1px solid #bfdbfe}.pipeline-step-no{display:inline-flex;width:28px;height:28px;border-radius:50%;align-items:center;justify-content:center;background:#e2e8f0;color:#475569;font-weight:800}.pipeline-step[open] .pipeline-step-no{background:#2563eb;color:#fff}.pipeline-step summary small{display:block;color:#64748b;font-weight:400;margin-top:2px}.pipeline-step-state{font-size:11px;color:#475569;background:#fff;border:1px solid #e2e8f0;border-radius:999px;padding:4px 8px;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pipeline-step-body{padding:12px}.pipeline-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:12px}.pipeline-savebar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;padding:12px;border:1px solid #bfdbfe;background:#eff6ff;border-radius:12px}.pipeline-savebar .btn{min-width:160px}@media(max-width:750px){.pipeline-arrow{display:none}.pipeline-nav-btn{flex:1 1 calc(50% - 8px);justify-content:center}.pipeline-step>summary{grid-template-columns:auto 1fr}.pipeline-step-state{grid-column:2;justify-self:start}.pipeline-savebar{align-items:stretch;flex-direction:column}.pipeline-savebar .btn{width:100%}}
+
 </style>
 </head>
 <body>
@@ -47,7 +50,7 @@
 
   <div id="appView" class="hidden">
     <div class="top">
-      <div class="brand"><h1>Dashboard Budget Familiare</h1><small>V57 · Movimenti, categorie, progetti, tag e controllo qualità</small></div>
+      <div class="brand"><h1>Dashboard Budget Familiare</h1><small>V59 · Movimenti, categorie, progetti, tag e controllo qualità</small></div>
       <div class="userbar"><span id="userEmail"></span><button id="refreshBtn" class="btn ghost">Aggiorna</button><button id="logoutBtn" class="btn ghost">Esci</button></div>
     </div>
     <div class="tabs">
@@ -74,122 +77,131 @@
       <div class="grid kpis movement-kpis">
         <div class="card kpi"><div class="label">Tutti i movimenti</div><div id="kAll" class="value">—</div><div class="sub">Registro completo</div></div>
         <div class="card kpi"><div class="label">Da classificare</div><div id="kCategorize" class="value">—</div><div class="sub">Categoria mancante · priorità alta</div></div>
-        <div class="card kpi"><div class="label">Da rivedere</div><div id="kReview" class="value">—</div><div class="sub">Fallback MCC da confermare</div></div>
+        <div class="card kpi"><div class="label">Da rivedere</div><div id="kReview" class="value">—</div><div class="sub">Eccezioni MCC non automatizzabili</div></div>
         <div class="card kpi"><div class="label">Confermati</div><div id="kReviewed" class="value">—</div><div class="sub">Sempre riapribili</div></div>
         <div class="card kpi"><div class="label">Giroconti</div><div id="kInternalTransfers" class="value">—</div><div class="sub">Esclusi da entrate e spese</div></div>
         <div class="card kpi"><div class="label">Copertura categorie</div><div id="kCategory" class="value">—</div></div>
       </div>
 
       <div id="classifyBox" class="classify-box hidden">
-        <div class="section-title"><div><h2>Classifica descrizione</h2><p id="selectedDescription" class="mono"></p></div><button id="closeClassify" class="btn ghost">Chiudi</button></div>
+        <div class="section-title"><div><h2>Classifica movimento — pipeline</h2><p id="selectedDescription" class="mono"></p></div><button id="closeClassify" class="btn ghost">Chiudi</button></div>
         <div id="classificationSuggestion" class="classification-suggestion hidden"></div>
-        <div id="transferDecision" class="rule-box hidden" style="margin-top:0;margin-bottom:12px">
-          <div class="field">
-            <label>Che tipo di bonifico è? <span class="help" data-tip="Giroconto interno: spostamento tra conti della famiglia, non è né spesa né entrata. Spesa reale: pagamento a una persona/azienda. Entrata reale: denaro ricevuto da un soggetto esterno.">?</span></label>
-            <select id="transferTarget" class="select" style="max-width:420px">
-              <option value="TRANSFER">Giroconto interno — spostamento tra miei conti</option>
-              <option value="EXPENSE">Spesa reale — pagamento a terzi</option>
-              <option value="INCOME">Entrata reale — denaro ricevuto</option>
-            </select>
-            <div id="transferDecisionHint" class="note"></div>
-          </div>
-        </div>
-        <div class="editor-row">
-          <div class="field"><label><span id="partyLabel">Controparte</span> <span class="help" id="partyHelp" data-tip="Se la selezioni, al salvataggio del movimento il valore grezzo viene ricordato automaticamente come alias della controparte.">?</span></label><div class="inline-select"><select id="classMerchant" class="select"></select><button id="newCounterpartyBtn" type="button" class="btn ghost compact">＋ Nuova</button></div></div>
-          <div class="field"><label>Categoria <span class="help" data-tip="Obbligatoria per spese ed entrate. Puoi scegliere se usarla anche come categoria predefinita della controparte per i movimenti futuri.">?</span></label><select id="classCategory" class="select"></select></div>
-          <button id="saveClassificationNoRule" class="btn" type="button">Salva movimento</button>
-        </div>
-        <input id="classMode" type="hidden" value="all" />
-        <div id="movementAliasBox" class="movement-alias-box"></div>
-        <div id="futureAutomationBox" class="future-automation-box"></div>
-        <div class="rule-box" id="movementContextBox" style="margin-top:12px">
-          <div class="context-grid">
-            <div class="field">
-              <label>Progetto <span class="help" data-tip="Facoltativo. Un movimento può appartenere a un solo progetto, ad esempio Giappone 2027. Se il progetto è una vacanza, viene aggiunto automaticamente anche il tag Vacanze.">?</span></label>
-              <select id="classProject" class="select"></select>
-            </div>
-            <div class="field">
-              <label>Tag <span class="help" data-tip="Puoi assegnare più tag allo stesso movimento. Servono per analisi trasversali, ad esempio Vacanze, Famiglia o Straordinario.">?</span></label>
-              <div id="classTags" class="tag-picker"></div>
-            </div>
-          </div>
-          <div class="note">Progetto e tag vengono applicati solo al movimento aperto, anche se la classificazione economica viene estesa ad altri movimenti simili.</div>
-        </div>
-        <div id="splitBox" class="split-box">
-          <div class="section-title" style="margin-bottom:6px">
-            <div><h2 style="font-size:15px">Ripartizione movimento</h2><p>Dividi Amazon, supermercati o altri movimenti in più categorie senza modificare il movimento bancario originale.</p></div>
-            <button id="toggleSplitEditor" type="button" class="btn ghost compact">Dividi movimento</button>
-          </div>
-          <div id="splitEditor" class="hidden">
-            <div class="split-summary">
-              <div class="split-kpi"><div class="k">Totale movimento</div><div id="splitTotal" class="v">—</div></div>
-              <div class="split-kpi"><div class="k">Ripartito</div><div id="splitAllocated" class="v">—</div></div>
-              <div class="split-kpi"><div class="k">Residuo sulla categoria principale</div><div id="splitRemaining" class="v">—</div></div>
-            </div>
-            <div class="note">Puoi ripartire tutto o solo una parte. Il residuo resta attribuito alla categoria principale del movimento.</div>
-            <div id="splitRows"></div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
-              <button id="addSplitRow" type="button" class="btn ghost compact">＋ Aggiungi quota</button>
-              <button id="saveSplits" type="button" class="btn compact">Salva ripartizione</button>
-              <button id="clearSplits" type="button" class="btn danger compact">Rimuovi ripartizione</button>
-            </div>
-            <div id="splitMsg"></div>
-          </div>
+
+        <div id="classificationPipelineNav" class="pipeline-flow">
+          <button type="button" class="pipeline-nav-btn active" data-pipeline-step="counterparty"><strong>1</strong><span>Controparte</span></button>
+          <span class="pipeline-arrow">→</span>
+          <button type="button" class="pipeline-nav-btn" data-pipeline-step="category"><strong>2</strong><span>Categoria</span></button>
+          <span class="pipeline-arrow">→</span>
+          <button type="button" class="pipeline-nav-btn" data-pipeline-step="rules"><strong>3</strong><span>Regole</span></button>
+          <span class="pipeline-arrow">→</span>
+          <button type="button" class="pipeline-nav-btn" data-pipeline-step="context"><strong>4</strong><span>Dettagli</span></button>
         </div>
 
-        <div id="quickCounterpartyBox" class="rule-box hidden">
-          <div class="section-title"><div><h2 style="font-size:15px">Nuova controparte</h2><p>Crea il soggetto e selezionalo subito nel movimento.</p></div><button id="cancelQuickCounterparty" type="button" class="btn ghost compact">Annulla</button></div>
-          <div class="editor-row four">
-            <div class="field"><label>Nome</label><input id="quickCounterpartyName" class="input" placeholder="es. Pfizer Srl" /></div>
-            <div class="field"><label>Tipo</label><select id="quickCounterpartyType" class="select"><option value="MERCHANT">Negozio / fornitore</option><option value="EMPLOYER">Datore di lavoro</option><option value="PERSON">Persona</option><option value="ENTITY">Azienda / ente</option><option value="PUBLIC_BODY">Ente pubblico</option><option value="BANK">Banca</option><option value="PLATFORM">Piattaforma</option><option value="OTHER">Altro</option></select></div>
-            <div class="field"><label>Categoria predefinita <span class="help" data-tip="Facoltativa. Se la scegli, verrà proposta automaticamente quando selezioni questa controparte. Se la lasci vuota ma assegni poi una categoria al movimento, quella categoria diventerà il default della nuova controparte.">?</span></label><select id="quickCounterpartyCategory" class="select"></select></div>
-            <button id="saveQuickCounterparty" type="button" class="btn">Crea e seleziona</button>
-          </div>
-          <div id="quickCounterpartyMsg"></div>
-        </div>
-        <details id="advancedAutomation" class="advanced-automation">
-          <summary>Automazione avanzata — crea una regola solo se alias + categoria predefinita non bastano</summary>
-          <div id="ruleArea" class="rule-box">
-            <div class="rule-grid">
+        <details id="pipelineStepCounterparty" class="pipeline-step" open>
+          <summary><span class="pipeline-step-no">1</span><span><strong>Controparte e alias</strong><small>Prima riconosci chi c'è dall'altra parte del movimento.</small></span><span id="pipelineCounterpartyState" class="pipeline-step-state">Da verificare</span></summary>
+          <div class="pipeline-step-body">
+            <div id="transferDecision" class="rule-box hidden" style="margin-top:0;margin-bottom:12px">
               <div class="field">
-                <label>Tipo regola</label>
-                <select id="classificationRuleStyle" class="select">
-                  <option value="SIMPLE">Semplice — descrizione</option>
-                  <option value="ADVANCED">Avanzata — condizioni multiple</option>
+                <label>Che tipo di bonifico è? <span class="help" data-tip="Giroconto interno: spostamento tra conti della famiglia, non è né spesa né entrata. Spesa reale: pagamento a una persona/azienda. Entrata reale: denaro ricevuto da un soggetto esterno.">?</span></label>
+                <select id="transferTarget" class="select" style="max-width:420px">
+                  <option value="TRANSFER">Giroconto interno — spostamento tra miei conti</option>
+                  <option value="EXPENSE">Spesa reale — pagamento a terzi</option>
+                  <option value="INCOME">Entrata reale — denaro ricevuto</option>
                 </select>
-              </div>
-              <div id="simpleRuleControls" class="field">
-                <label>Corrispondenza</label>
-                <select id="ruleMode" class="select">
-                  <option value="CONTAINS">La descrizione contiene...</option>
-                  <option value="EXACT">La descrizione è uguale a...</option>
-                </select>
-              </div>
-              <div class="field" id="rulePatternField">
-                <label>Testo da cercare <span class="help" data-tip="Usa solo la parte stabile. Più parole separate devono essere tutte presenti; * è un jolly tra parti del testo.">?</span></label>
-                <input id="rulePattern" class="input" placeholder="es. NOWATECH" />
+                <div id="transferDecisionHint" class="note"></div>
               </div>
             </div>
-            <div id="advancedClassificationRule" class="hidden" style="margin-top:10px">
-              <div class="rule-grid">
-                <div class="field"><label>Nome regola</label><input id="classificationRuleName" class="input" placeholder="es. Q8 - carburante" /></div>
-                <div class="field"><label>Condizioni</label><button id="addClassificationCondition" type="button" class="btn ghost compact">＋ Aggiungi condizione</button></div>
+
+            <div class="field">
+              <label><span id="partyLabel">Controparte</span> <span class="help" id="partyHelp" data-tip="Il valore grezzo del movimento viene usato come alias esatto della controparte selezionata.">?</span></label>
+              <div class="inline-select"><select id="classMerchant" class="select"></select><button id="newCounterpartyBtn" type="button" class="btn ghost compact">＋ Nuova</button></div>
+            </div>
+            <div id="movementAliasBox" class="movement-alias-box"></div>
+
+            <div id="quickCounterpartyBox" class="rule-box hidden">
+              <div class="section-title"><div><h2 style="font-size:15px">Nuova controparte</h2><p>Crea il soggetto e selezionalo subito nel movimento.</p></div><button id="cancelQuickCounterparty" type="button" class="btn ghost compact">Annulla</button></div>
+              <div class="editor-row four">
+                <div class="field"><label>Nome</label><input id="quickCounterpartyName" class="input" placeholder="es. Pfizer Srl" /></div>
+                <div class="field"><label>Tipo</label><select id="quickCounterpartyType" class="select"><option value="MERCHANT">Negozio / fornitore</option><option value="EMPLOYER">Datore di lavoro</option><option value="PERSON">Persona</option><option value="ENTITY">Azienda / ente</option><option value="PUBLIC_BODY">Ente pubblico</option><option value="BANK">Banca</option><option value="PLATFORM">Piattaforma</option><option value="OTHER">Altro</option></select></div>
+                <div class="field"><label>Categoria predefinita</label><select id="quickCounterpartyCategory" class="select"></select></div>
+                <button id="saveQuickCounterparty" type="button" class="btn">Crea e seleziona</button>
               </div>
-              <div id="classificationConditions" class="condition-list" style="margin-top:8px"></div>
+              <div id="quickCounterpartyMsg"></div>
             </div>
-            <div id="ruleHint" class="note strong-note"></div>
-            <div class="preview-box" style="margin-top:10px">
-              <div class="section-title" style="margin-bottom:6px"><div><strong>Anteprima impatto</strong><p class="muted small">Controlla i movimenti che la regola intercetterà.</p></div><button id="refreshClassificationPreview" type="button" class="btn ghost compact">Aggiorna anteprima</button></div>
-              <div id="classificationPreview"><span class="muted">Apri e configura la regola per vedere l’impatto.</span></div>
-            </div>
-            <input id="onlyUnreviewed" type="hidden" checked />
-            <div style="margin-top:10px"><button id="saveClassificationWithRule" class="btn" type="button">Crea regola e salva movimento</button></div>
+
+            <div class="pipeline-actions"><button type="button" class="btn secondary compact" data-pipeline-next="category">Avanti: categoria →</button></div>
           </div>
         </details>
-        <div class="note" id="classificationNote">Se selezioni una controparte, alla conferma il sistema ricorda automaticamente l’alias del movimento. Le regole avanzate servono solo nei casi in cui alias + categoria predefinita non sono sufficienti.</div>
+
+        <details id="pipelineStepCategory" class="pipeline-step">
+          <summary><span class="pipeline-step-no">2</span><span><strong>Categoria</strong><small>Default controparte e regole; MCC interviene solo se manca la controparte.</small></span><span id="pipelineCategoryState" class="pipeline-step-state">Da verificare</span></summary>
+          <div class="pipeline-step-body">
+            <div class="field">
+              <label>Categoria <span class="help" data-tip="Per spese ed entrate è obbligatoria. La pipeline usa prima la categoria predefinita della controparte e le regole; MCC interviene solo se non esiste una controparte.">?</span></label>
+              <select id="classCategory" class="select"></select>
+            </div>
+            <div id="futureAutomationBox" class="future-automation-box"></div>
+            <div class="pipeline-actions"><button type="button" class="btn ghost compact" data-pipeline-next="counterparty">← Controparte</button><button type="button" class="btn secondary compact" data-pipeline-next="rules">Avanti: regole →</button></div>
+          </div>
+        </details>
+
+        <details id="advancedAutomation" class="pipeline-step">
+          <summary><span class="pipeline-step-no">3</span><span><strong>Regole — solo eccezioni</strong><small>Usale soltanto quando alias + categoria predefinita non bastano.</small></span><span id="pipelineRulesState" class="pipeline-step-state">Opzionale</span></summary>
+          <div class="pipeline-step-body">
+            <div id="ruleArea" class="rule-box" style="margin-top:0">
+              <div class="rule-grid">
+                <div class="field"><label>Tipo regola</label><select id="classificationRuleStyle" class="select"><option value="SIMPLE">Semplice — descrizione</option><option value="ADVANCED">Avanzata — condizioni multiple</option></select></div>
+                <div id="simpleRuleControls" class="field"><label>Corrispondenza</label><select id="ruleMode" class="select"><option value="CONTAINS">La descrizione contiene...</option><option value="EXACT">La descrizione è uguale a...</option></select></div>
+                <div class="field" id="rulePatternField"><label>Testo da cercare <span class="help" data-tip="Usa solo la parte stabile. Più parole separate devono essere tutte presenti; * è un jolly tra parti del testo.">?</span></label><input id="rulePattern" class="input" placeholder="es. NOWATECH" /></div>
+              </div>
+              <div id="advancedClassificationRule" class="hidden" style="margin-top:10px">
+                <div class="rule-grid"><div class="field"><label>Nome regola</label><input id="classificationRuleName" class="input" placeholder="es. Q8 - carburante" /></div><div class="field"><label>Condizioni</label><button id="addClassificationCondition" type="button" class="btn ghost compact">＋ Aggiungi condizione</button></div></div>
+                <div id="classificationConditions" class="condition-list" style="margin-top:8px"></div>
+              </div>
+              <div id="ruleHint" class="note strong-note"></div>
+              <div class="preview-box" style="margin-top:10px">
+                <div class="section-title" style="margin-bottom:6px"><div><strong>Anteprima impatto</strong><p class="muted small">Controlla i movimenti che la regola intercetterà.</p></div><button id="refreshClassificationPreview" type="button" class="btn ghost compact">Aggiorna anteprima</button></div>
+                <div id="classificationPreview"><span class="muted">Configura una regola per vedere l’impatto.</span></div>
+              </div>
+              <input id="onlyUnreviewed" type="hidden" checked />
+              <div style="margin-top:10px"><button id="saveClassificationWithRule" class="btn" type="button">Crea regola e salva movimento</button></div>
+            </div>
+            <div class="pipeline-actions"><button type="button" class="btn ghost compact" data-pipeline-next="category">← Categoria</button><button type="button" class="btn secondary compact" data-pipeline-next="context">Nessuna regola / avanti →</button></div>
+          </div>
+        </details>
+
+        <details id="pipelineStepContext" class="pipeline-step">
+          <summary><span class="pipeline-step-no">4</span><span><strong>Dettagli facoltativi</strong><small>Progetto, tag e ripartizione non cambiano la pipeline di classificazione.</small></span><span id="pipelineContextState" class="pipeline-step-state">Facoltativo</span></summary>
+          <div class="pipeline-step-body">
+            <div class="rule-box" id="movementContextBox" style="margin-top:0">
+              <div class="context-grid">
+                <div class="field"><label>Progetto</label><select id="classProject" class="select"></select></div>
+                <div class="field"><label>Tag</label><div id="classTags" class="tag-picker"></div></div>
+              </div>
+              <div class="note">Progetto e tag vengono applicati solo al movimento aperto.</div>
+            </div>
+
+            <div id="splitBox" class="split-box">
+              <div class="section-title" style="margin-bottom:6px"><div><h2 style="font-size:15px">Ripartizione movimento</h2><p>Dividi supermercati, Amazon o altri movimenti in più categorie senza modificare il movimento bancario originale.</p></div><button id="toggleSplitEditor" type="button" class="btn ghost compact">Dividi movimento</button></div>
+              <div id="splitEditor" class="hidden">
+                <div class="split-summary"><div class="split-kpi"><div class="k">Totale movimento</div><div id="splitTotal" class="v">—</div></div><div class="split-kpi"><div class="k">Ripartito</div><div id="splitAllocated" class="v">—</div></div><div class="split-kpi"><div class="k">Residuo sulla categoria principale</div><div id="splitRemaining" class="v">—</div></div></div>
+                <div class="note">Puoi ripartire tutto o solo una parte. Il residuo resta attribuito alla categoria principale del movimento.</div>
+                <div id="splitRows"></div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button id="addSplitRow" type="button" class="btn ghost compact">＋ Aggiungi quota</button><button id="saveSplits" type="button" class="btn compact">Salva ripartizione</button><button id="clearSplits" type="button" class="btn danger compact">Rimuovi ripartizione</button></div>
+                <div id="splitMsg"></div>
+              </div>
+            </div>
+            <div class="pipeline-actions"><button type="button" class="btn ghost compact" data-pipeline-next="rules">← Regole</button></div>
+          </div>
+        </details>
+
+        <input id="classMode" type="hidden" value="all" />
+        <div class="pipeline-savebar">
+          <div><strong>Esito</strong><div id="classificationNote" class="muted small">La pipeline salva controparte/alias, categoria e gli eventuali dettagli del movimento.</div></div>
+          <button id="saveClassificationNoRule" class="btn" type="button">Salva movimento</button>
+        </div>
         <div id="classMsg"></div>
       </div>
-
 
       <div class="card">
         <div class="section-title movement-head">
@@ -205,7 +217,7 @@
             <option value="RULE">Automatico · Regola</option>
             <option value="ALIAS_AUTO">Automatico · Alias + categoria</option>
             <option value="ALIAS_PARTIAL">Alias senza categoria predefinita</option>
-            <option value="MCC">Fallback MCC</option>
+            <option value="MCC">Fallback MCC residuo</option>
             <option value="NONE">Non automatizzato</option>
           </select>
           <select id="movementBank" class="select"><option value="">Tutte le banche</option></select>
@@ -313,28 +325,7 @@
             </div>
             <div id="merchantsTable"></div>
 
-            <div class="catalog-form" style="margin-top:10px">
-              <div class="catalog-intro" style="margin-bottom:8px">
-                <div>
-                  <h3 style="margin:0 0 4px">Suggerimenti normalizzazione</h3>
-                  <div class="muted small">Raggruppa i merchant grezzi nelle Controparti e propone anche la categoria. Le due decisioni restano separate: la categoria viene applicata solo ai movimenti che ne sono privi.</div>
-                </div>
-                <button id="backfillCounterpartyAliases" class="btn ghost compact" type="button">Applica alias già confermati</button>
-              </div>
-              <div class="catalog-toolbar" style="margin-top:0">
-                <input id="normalizationSearch" class="input" placeholder="Filtra suggerimenti..." />
-                <select id="normalizationConfidenceFilter" class="select">
-                  <option value="">Tutte le affidabilità</option>
-                  <option value="0.9">≥ 90%</option>
-                  <option value="0.8">≥ 80%</option>
-                  <option value="0.7">≥ 70%</option>
-                </select>
-                <label class="small" style="display:inline-flex;gap:6px;align-items:center"><input id="normalizationShowIgnored" type="checkbox" /> Mostra ignorati</label>
-              </div>
-              <div id="normalizationSummary" class="note"></div>
-              <div id="normalizationTable"></div>
-              <div id="normalizationMsg"></div>
-            </div>
+
           </div>
         </div>
 
@@ -481,7 +472,7 @@ function showLogin(){$('loginView').classList.remove('hidden');$('appView').clas
 async function showApp(user){$('loginView').classList.add('hidden');$('appView').classList.remove('hidden');$('userEmail').textContent=user.email||user.id;await loadAll()}
 async function loadAll(){await Promise.all([loadOverview(),loadMovementsData()])}
 async function loadOverview(){try{overview=await rpc('dashboard_read_v1');renderOverview()}catch(e){console.error(e);$('accountsTable').innerHTML=`<div class="msg error">${esc(e.message)}</div>`}}
-async function loadMovementsData(){try{const [base,counterparties,aliases,movements,transfers,projectsTags,rulesData,normalization,research]=await Promise.all([rpc('dashboard_categorization_read_v1'),rpc('dashboard_counterparties_read_v1'),rpc('dashboard_counterparty_aliases_read_v1'),rpc('dashboard_movements_read_v2'),rpc('dashboard_transfers_read_v1'),rpc('dashboard_projects_tags_read_v1'),rpc('dashboard_rules_read_v1'),rpc('dashboard_counterparty_normalization_read_v1',{p_include_ignored:$('normalizationShowIgnored')?.checked||false}),rpc('dashboard_counterparty_research_read_v1')]);catData=base||{};catData.counterparties=counterparties||[];catData.aliases=aliases||[];catData.movements=movements||[];catData.transfers=transfers||{};catData.projects=projectsTags?.projects||[];catData.tags=projectsTags?.tags||[];catData.mccRules=rulesData?.mcc_rules||[];catData.compoundRules=rulesData?.compound_rules||[];catData.normalization=normalization||{};catData.researchSuggestions=research||[];renderMovementsPage();renderCatalogs()}catch(e){console.error(e);$('movementsTable').innerHTML=`<div class="msg error">${esc(e.message)}</div>`}}
+async function loadMovementsData(){try{const [base,counterparties,aliases,movements,transfers,projectsTags,rulesData]=await Promise.all([rpc('dashboard_categorization_read_v1'),rpc('dashboard_counterparties_read_v1'),rpc('dashboard_counterparty_aliases_read_v1'),rpc('dashboard_movements_read_v2'),rpc('dashboard_transfers_read_v1'),rpc('dashboard_projects_tags_read_v1'),rpc('dashboard_rules_read_v1')]);catData=base||{};catData.counterparties=counterparties||[];catData.aliases=aliases||[];catData.movements=movements||[];catData.transfers=transfers||{};catData.projects=projectsTags?.projects||[];catData.tags=projectsTags?.tags||[];catData.mccRules=rulesData?.mcc_rules||[];catData.compoundRules=rulesData?.compound_rules||[];renderMovementsPage();renderCatalogs()}catch(e){console.error(e);$('movementsTable').innerHTML=`<div class="msg error">${esc(e.message)}</div>`}}
 function categoryPathById(id){
   if(!id)return '—';
   const cat=(catData?.categories||[]).find(x=>x.id===id);
@@ -691,18 +682,9 @@ function normalizationMovements(raw){
 
 function bankBadge(bank){const b=String(bank||'');const cls=b.toUpperCase()==='ING'?'bank-ing':b.toUpperCase().includes('TRADE')?'bank-tr':'';return `<span class="bank-pill ${cls}">${esc(b||'—')}</span>`}
 function counterpartyRawKey(row){return String(row?.normalization_raw_value||row?.raw_merchant_name||'').trim().toLowerCase()}
-function normalizationSuggestionForMovement(row){
-  if(!row||row.counterparty_id)return null;
-  const key=counterpartyRawKey(row);if(!key)return null;
-  return (catData?.normalization?.suggestions||[]).find(s=>String(s.raw_value||'').trim().toLowerCase()===key)||null;
-}
 function counterpartyOccurrenceCount(row){
   const key=counterpartyRawKey(row);if(!key)return 1;
   return Math.max(1,(catData?.movements||[]).filter(x=>counterpartyRawKey(x)===key).length);
-}
-function suggestedCounterpartyName(row){
-  const s=normalizationSuggestionForMovement(row);
-  return s?.proposed_merchant_name||s?.proposed_new_name||null;
 }
 function movementWorkState(row){
   const key=row?.review_status||(!row?.category_id?'DA_CLASSIFICARE':'CONFERMATO');
@@ -743,7 +725,7 @@ function futureAutomationInfo(row){
     return {key:'ALIAS_PARTIAL',label:'Parzialmente automatico · Alias',cls:'automation-partial',target:'MERCHANT',id:row.counterparty_id,title:'L’alias riconosce la controparte, ma la categoria non è automatizzata. Clicca per impostare o correggere la categoria predefinita.'};
   }
   if(row?.mcc_fallback_matches&&row?.mcc_code){
-    return {key:'MCC',label:'Fallback MCC',cls:'automation-fallback',target:'MCC',id:String(row.mcc_code),title:'Fallback usato solo quando non è stata riconosciuta alcuna controparte e la categoria è assente. Clicca per aprire la configurazione MCC.'};
+    return {key:'MCC',label:'Fallback MCC',cls:'automation-fallback',target:'MCC',id:String(row.mcc_code),title:'Fallback MCC residuo: la creazione automatica di controparte/alias non è stata applicata, ad esempio per un conflitto tra categorie. Clicca per aprire la configurazione MCC.'};
   }
   return {key:'NONE',label:'Non automatizzato',cls:'automation-none',target:null,id:null,title:'La categoria di questo movimento non è attualmente riproducibile da alias/categoria predefinita, regola o fallback MCC.'};
 }
@@ -759,9 +741,8 @@ function categoryCellHtml(row){
 }
 function counterpartyCellHtml(row){
   if(row.counterparty_name)return `<strong>${esc(row.counterparty_name)}</strong>`;
-  const s=normalizationSuggestionForMovement(row),name=suggestedCounterpartyName(row),n=counterpartyOccurrenceCount(row);
-  const conf=s?.confidence!=null?` · ${pct(Number(s.confidence)*100)}`:'';
-  return `<span class="muted">—</span>${name?`<div class="suggestion-line">Suggerita: <strong>${esc(name)}</strong><br>${n} mov.${conf}</div>`:''}`;
+  const raw=String(row?.normalization_raw_value||row?.raw_merchant_name||'').trim(),n=counterpartyOccurrenceCount(row),source=aliasSourceLabel(row?.normalization_source);
+  return `<span class="muted">—</span>${raw?`<div class="suggestion-line">Alias candidato: <strong>${esc(raw)}</strong><br>${esc(source)} · ${n} mov.</div>`:''}`;
 }
 function renderMovementsPage(){const rows=catData?.movements||[],k=catData?.kpi||{},tr=catData?.transfers||{};$('kAll').textContent=nfmt(rows.length);$('kCategorize').textContent=nfmt(rows.filter(x=>x.review_status==='DA_CLASSIFICARE').length);$('kReview').textContent=nfmt(rows.filter(x=>x.review_status==='DA_REVISIONARE').length);$('kReviewed').textContent=nfmt(rows.filter(x=>x.review_status==='CONFERMATO').length);$('kInternalTransfers').textContent=nfmt(tr?.internal_kpi?.movements||0);$('kCategory').textContent=pct(k.category_coverage_pct);populateMovementFilters();fillClassificationSelects();renderMovements()}
 function populateMovementFilters(){const rows=catData?.movements||[];const keep=(id)=>$(id)?.value||'';const vals={bank:keep('movementBank'),cp:keep('movementCounterparty'),cat:keep('movementCategory'),project:keep('movementProject'),tag:keep('movementTag')};const banks=[...new Set(rows.map(x=>x.bank_name).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'it'));$('movementBank').innerHTML='<option value="">Tutte le banche</option>'+banks.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');const cps=[...(catData?.counterparties||[])].sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'it',{sensitivity:'base'}));$('movementCounterparty').innerHTML='<option value="">Tutte le controparti</option><option value="__NONE__">Senza controparte</option>'+cps.map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('');const cats=[...(catData?.categories||[])];$('movementCategory').innerHTML='<option value="">Tutte le categorie</option><option value="__NONE__">Senza categoria</option>'+cats.map(c=>`<option value="${c.id}">${esc(categoryLabel(c))}</option>`).join('');const projects=[...(catData?.projects||[])].filter(x=>x.is_active).sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'it',{sensitivity:'base'}));$('movementProject').innerHTML='<option value="">Tutti i progetti</option><option value="__NONE__">Senza progetto</option>'+projects.map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('');const tags=[...(catData?.tags||[])].filter(x=>x.is_active).sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'it',{sensitivity:'base'}));$('movementTag').innerHTML='<option value="">Tutti i tag</option><option value="__NONE__">Senza tag</option>'+tags.map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('');$('movementBank').value=vals.bank;$('movementCounterparty').value=vals.cp;$('movementCategory').value=vals.cat;$('movementProject').value=vals.project;$('movementTag').value=vals.tag}
@@ -788,13 +769,9 @@ function movementGroupIdentity(row){
   if(row?.counterparty_id){
     return {key:'merchant:'+row.counterparty_id,name:row.counterparty_name||'Controparte',kind:'ACTUAL',raw:null,confidence:null};
   }
-  const s=normalizationSuggestionForMovement(row),suggested=suggestedCounterpartyName(row);
-  if(suggested){
-    const key=s?.proposed_merchant_id?'suggested-id:'+s.proposed_merchant_id:'suggested-name:'+String(suggested).trim().toLowerCase();
-    return {key,name:suggested,kind:'SUGGESTED',raw:String(row.normalization_raw_value||row.raw_merchant_name||row.description||'').trim(),confidence:Number(s?.confidence||0)};
-  }
-  const raw=String(row?.normalization_raw_value||row?.raw_merchant_name||row?.description||'Senza controparte').trim();
-  return {key:'none:'+raw.toLowerCase(),name:'Senza controparte',kind:'NONE',raw,confidence:null};
+  const raw=String(row?.normalization_raw_value||row?.raw_merchant_name||'').trim();
+  if(raw)return {key:'raw:'+raw.toLowerCase(),name:raw,kind:'RAW',raw,confidence:null};
+  return {key:'none',name:'Senza controparte',kind:'NONE',raw:null,confidence:null};
 }
 function renderGrouped(rows){
   const map=new Map();
@@ -819,8 +796,8 @@ function renderGrouped(rows){
   $('movementsTable').innerHTML=groups.length?groups.map((g,i)=>{
     const kind=g.kind==='ACTUAL'
       ?'<span class="pill group-actual">Controparte</span>'
-      :g.kind==='SUGGESTED'
-        ?`<span class="pill group-suggested">Controparte suggerita${g.confidence?` · ${pct(g.confidence*100)}`:''}</span>`
+      :g.kind==='RAW'
+        ?'<span class="pill group-suggested">Alias non associato</span>'
         :'<span class="pill automation-none">Non riconosciuta</span>';
     const raw=[...g.rawValues];
     const rawHtml=raw.length?`<div class="muted small mono">${esc(raw.slice(0,3).join(' · '))}${raw.length>3?` · +${raw.length-3}`:''}</div>`:'';
@@ -829,7 +806,7 @@ function renderGrouped(rows){
 }
 function groupDetailTable(rows){return `<div class="table-wrap"><table class="table nested-table"><thead><tr><th style="width:3%"></th><th style="width:7%">Data</th><th style="width:7%">Banca</th><th style="width:6%">Tipo</th><th style="width:27%">Descrizione</th><th style="width:12%">Controparte</th><th style="width:13%">Categoria</th><th style="width:7%">Progetto / Tag</th><th style="width:7%">Importo</th><th style="width:6%">Stato</th><th style="width:5%"></th></tr></thead><tbody>${sortMovements(rows).map(x=>`<tr><td><input class="movement-select" type="checkbox" data-select-movement="${x.id}" ${selectedMovementIds.has(x.id)?'checked':''} /></td><td>${esc(x.transaction_date)}</td><td>${bankBadge(x.bank_name)}</td><td>${movementKindBadge(x)}</td><td class="mono">${esc(x.description)}${x.mcc_code?`<span class="mcc-help">MCC ${esc(mccReadable(x.mcc_code))}</span>`:'<span class="mcc-help">MCC —</span>'}</td><td>${counterpartyCellHtml(x)}</td><td>${categoryCellHtml(x)}</td><td>${movementContextHtml(x)}</td><td><strong>${euro(x.amount)}</strong></td><td>${statusBadgeForMovement(x)}</td><td><button class="btn ghost compact" data-edit-movement="${x.id}">${esc(movementWorkState(x).action)}</button></td></tr>`).join('')}</tbody></table></div>`}
 function setSort(key){if(sortKey===key)sortDir=sortDir==='asc'?'desc':'asc';else{sortKey=key;sortDir=key==='transaction_date'||key==='amount'?'desc':'asc'}renderMovements()}
-function fillClassificationSelects(){const cats=catData?.categories||[],parties=[...(catData?.counterparties||[])].sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'it',{sensitivity:'base'}));$('classMerchant').innerHTML='<option value="">— nessuna controparte —</option>'+parties.map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('');const catOpts='<option value="">— nessuna categoria —</option>'+cats.map(c=>`<option value="${c.id}">${esc(categoryLabel(c))}</option>`).join('');$('classCategory').innerHTML=catOpts;if($('bulkCategory'))$('bulkCategory').innerHTML='<option value="">— scegli categoria —</option>'+cats.map(c=>`<option value="${c.id}">${esc(categoryLabel(c))}</option>`).join('');if($('quickCounterpartyCategory'))$('quickCounterpartyCategory').innerHTML=catOpts;const projects=[...(catData?.projects||[])].filter(p=>p.is_active).sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'it',{sensitivity:'base'}));$('classProject').innerHTML='<option value="">— nessun progetto —</option>'+projects.map(p=>`<option value="${p.id}">${esc(p.name)} · ${esc(projectTypeLabel(p.project_type))}</option>`).join('');const tags=[...(catData?.tags||[])].filter(t=>t.is_active).sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'it',{sensitivity:'base'}));$('classTags').innerHTML=tags.length?tags.map(t=>`<label><input type="checkbox" value="${t.id}" data-class-tag /> ${esc(t.name)}</label>`).join(''):'<span class="muted small">Nessun tag attivo.</span>';if($('partyLabel'))$('partyLabel').textContent='Controparte';if($('classificationNote'))$('classificationNote').textContent='Se selezioni una controparte, al salvataggio il sistema può ricordare l’alias del movimento. Lo stato qui sotto indica chiaramente se l’automazione futura è già attiva oppure verrà attivata al salvataggio.'}
+function fillClassificationSelects(){const cats=catData?.categories||[],parties=[...(catData?.counterparties||[])].sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'it',{sensitivity:'base'}));$('classMerchant').innerHTML='<option value="">— nessuna controparte —</option>'+parties.map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('');const catOpts='<option value="">— nessuna categoria —</option>'+cats.map(c=>`<option value="${c.id}">${esc(categoryLabel(c))}</option>`).join('');$('classCategory').innerHTML=catOpts;if($('bulkCategory'))$('bulkCategory').innerHTML='<option value="">— scegli categoria —</option>'+cats.map(c=>`<option value="${c.id}">${esc(categoryLabel(c))}</option>`).join('');if($('quickCounterpartyCategory'))$('quickCounterpartyCategory').innerHTML=catOpts;const projects=[...(catData?.projects||[])].filter(p=>p.is_active).sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'it',{sensitivity:'base'}));$('classProject').innerHTML='<option value="">— nessun progetto —</option>'+projects.map(p=>`<option value="${p.id}">${esc(p.name)} · ${esc(projectTypeLabel(p.project_type))}</option>`).join('');const tags=[...(catData?.tags||[])].filter(t=>t.is_active).sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'it',{sensitivity:'base'}));$('classTags').innerHTML=tags.length?tags.map(t=>`<label><input type="checkbox" value="${t.id}" data-class-tag /> ${esc(t.name)}</label>`).join(''):'<span class="muted small">Nessun tag attivo.</span>';if($('partyLabel'))$('partyLabel').textContent='Controparte';if($('classificationNote'))$('classificationNote').textContent='Sequenza: controparte/alias → categoria → eventuale regola → dettagli. MCC interviene solo quando manca la controparte; nei casi affidabili V59 crea automaticamente controparte, alias e categoria predefinita.'}
 function selectedMerchantName(){const s=$('classMerchant');return s&&s.selectedIndex>=0?s.options[s.selectedIndex].text.trim():''}
 function syncClassificationCategoryFromMerchant(force=false){
   const merchantId=$('classMerchant')?.value||'';
@@ -919,7 +896,7 @@ function renderFutureAutomationBox(){
   if(!merchantId||!merchant){
     el.classList.add('state-none');
     const mcc=selectedRow.mcc_fallback_matches
-      ?'<div class="future-action-note">Resta disponibile il fallback MCC corrente, se applicabile.</div>'
+      ?'<div class="future-action-note">Fallback MCC residuo: il caso richiede verifica perché non è stato possibile trasformarlo automaticamente in controparte + alias.</div>'
       :'';
     el.innerHTML='<div class="future-title"><span>Automazione futura</span><span class="pill future-state-none">NON CONFIGURATA</span></div><div class="future-main">Nessuna controparte selezionata: non verrà creato alcun alias.</div><div class="future-action-note"><strong>Salva movimento</strong> salva solo questo movimento.</div>'+mcc;
     return;
@@ -992,13 +969,13 @@ function renderClassificationSuggestion(){
   if(st.key==='CONFERMATO'){
     el.classList.add('hidden');el.innerHTML='';return;
   }
-  const s=normalizationSuggestionForMovement(row),suggestedName=suggestedCounterpartyName(row),freq=counterpartyOccurrenceCount(row),actions=[];
-  if(!row.counterparty_id&&s?.proposed_merchant_id)actions.push('<button type="button" class="btn secondary compact" data-use-suggested-counterparty="'+esc(s.proposed_merchant_id)+'">Usa controparte suggerita</button>');
-  if(!row.counterparty_id&&!s?.proposed_merchant_id&&suggestedName)actions.push('<button type="button" class="btn ghost compact" data-create-suggested-counterparty>Crea controparte suggerita</button>');
-  const title=st.key==='DA_CLASSIFICARE'?'Da classificare — categoria obbligatoria':'Da rivedere — categoria proposta dal fallback MCC';
-  let detail=row.mcc_code?'MCC <strong>'+esc(mccReadable(row.mcc_code))+'</strong>':'MCC non disponibile';
-  if(suggestedName)detail+='<br>Controparte suggerita: <strong>'+esc(suggestedName)+'</strong> · '+nfmt(freq)+' movimenti';
-  el.innerHTML='<div class="classification-priority '+(st.key==='DA_CLASSIFICARE'?'danger':'warn')+'">'+esc(title)+'</div><div style="margin-top:4px">'+detail+'</div>'+(actions.length?'<div class="suggestion-actions">'+actions.join('')+'</div>':'');
+  const alias=classificationAliasValue(row),source=aliasSourceLabel(row.normalization_source);
+  const title=st.key==='DA_CLASSIFICARE'?'Da classificare — completa la pipeline':'Da rivedere — fallback MCC residuo';
+  const parts=[];
+  if(alias)parts.push('Alias candidato: <strong>'+esc(alias)+'</strong> · '+esc(source));
+  parts.push(row.mcc_code?'MCC <strong>'+esc(mccReadable(row.mcc_code))+'</strong>':'MCC non disponibile');
+  if(st.key==='DA_REVISIONARE')parts.push('<strong>V59:</strong> i fallback MCC affidabili creano automaticamente controparte + alias + categoria predefinita. Questo caso è rimasto in review perché non è automatizzabile in sicurezza, ad esempio per categorie MCC in conflitto.');
+  el.innerHTML='<div class="classification-priority '+(st.key==='DA_CLASSIFICARE'?'danger':'warn')+'">'+esc(title)+'</div><div style="margin-top:4px">'+parts.join('<br>')+'</div>';
   el.classList.toggle('danger',st.key==='DA_CLASSIFICARE');el.classList.remove('hidden');
 }
 
@@ -1074,7 +1051,7 @@ function resetClassificationPanel(close=true){
   clearTimeout(classificationPreviewTimer);selectedRow=null;splitData=null;quickCreatedCounterpartyId=null;
   $('classificationSuggestion')?.classList.add('hidden');if($('classificationSuggestion'))$('classificationSuggestion').innerHTML='';
   if($('movementAliasBox')){$('movementAliasBox').innerHTML='';$('movementAliasBox').classList.add('hidden')}if($('futureAutomationBox'))$('futureAutomationBox').innerHTML='';
-  if($('advancedAutomation'))$('advancedAutomation').open=false;
+  if($('advancedAutomation'))$('advancedAutomation').open=false;if($('pipelineStepCounterparty'))$('pipelineStepCounterparty').open=true;if($('pipelineStepCategory'))$('pipelineStepCategory').open=false;if($('pipelineStepContext'))$('pipelineStepContext').open=false;syncClassificationPipelineNav();
   $('selectedDescription').textContent='';$('splitRows').innerHTML='';$('splitEditor').classList.add('hidden');$('toggleSplitEditor').textContent='Dividi movimento';msg($('splitMsg'),'');$('classMerchant').value='';$('classCategory').value='';$('classProject').value='';
   document.querySelectorAll('[data-class-tag]').forEach(cb=>cb.checked=false);
   $('classMode').value='all';$('classificationRuleStyle').value='SIMPLE';$('ruleMode').value='CONTAINS';$('rulePattern').value='';$('classificationRuleName').value='';$('classificationConditions').innerHTML='';$('classificationPreview').innerHTML='<span class="muted">Apri e configura la regola per vedere l’impatto.</span>';
@@ -1095,6 +1072,31 @@ function updateRuleUi(){
   if($('advancedAutomation')?.open)scheduleClassificationPreview();
 }
 
+function classificationPipelineMap(){return {counterparty:'pipelineStepCounterparty',category:'pipelineStepCategory',rules:'advancedAutomation',context:'pipelineStepContext'}}
+function syncClassificationPipelineNav(){
+  const map=classificationPipelineMap();
+  let active='counterparty';
+  for(const [key,id] of Object.entries(map)){if($(id)?.open){active=key;break}}
+  document.querySelectorAll('[data-pipeline-step]').forEach(b=>b.classList.toggle('active',b.dataset.pipelineStep===active));
+}
+function setClassificationPipelineStep(step,scroll=true){
+  const map=classificationPipelineMap(),target=map[step]||map.counterparty;
+  for(const id of Object.values(map)){if($(id))$(id).open=id===target}
+  syncClassificationPipelineNav();
+  if(scroll&&$(target))$(target).scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function updateClassificationPipelineState(){
+  const merchantId=$('classMerchant')?.value||'',merchant=(catData?.counterparties||[]).find(x=>x.id===merchantId);
+  const categoryId=$('classCategory')?.value||'';
+  const cpState=$('pipelineCounterpartyState'),catState=$('pipelineCategoryState'),ruleState=$('pipelineRulesState'),ctxState=$('pipelineContextState');
+  if(cpState)cpState.textContent=merchant?.name||'Nessuna controparte';
+  if(catState)catState.textContent=categoryId?categoryNameById(categoryId):'Categoria mancante';
+  if(ruleState)ruleState.textContent=selectedRow?.matching_rule_id?'Regola attiva':'Opzionale';
+  if(ctxState){
+    const project=$('classProject')?.value||'',tags=document.querySelectorAll('[data-class-tag]:checked').length,splits=Number(selectedRow?.split_count||0);
+    ctxState.textContent=(project||tags||splits)?[project?'progetto':null,tags?tags+' tag':null,splits?splits+' quote':null].filter(Boolean).join(' · '):'Facoltativo';
+  }
+}
 function movementDateTimeLabel(row){
   const dateStr=row?.transaction_date||'';
   let weekday='';
@@ -1126,7 +1128,7 @@ function openClassify(row){
   if(row.raw_merchant_name)addClassificationConditionRow({field_name:'MERCHANT_NAME',operator:'EXACT',comparison_value:row.raw_merchant_name});
   if(row.mcc_code)addClassificationConditionRow({field_name:'MCC',operator:'EXACT',comparison_value:row.mcc_code});
   addClassificationConditionRow({field_name:'TRANSACTION_TYPE',operator:'EXACT',comparison_value:row.base_transaction_type||row.transaction_type});
-  $('onlyUnreviewed').checked=true;updateRuleUi();updateTransferDecisionHint();$('classifyBox').classList.remove('hidden');$('classifyBox').scrollIntoView({behavior:'smooth',block:'start'});msg($('classMsg'),'');$('splitEditor').classList.add('hidden');$('toggleSplitEditor').textContent=Number(row.split_count||0)>0?`Ripartizione (${nfmt(row.split_count)})`:'Dividi movimento';loadSplitsForMovement(row.id);scheduleClassificationPreview();
+  $('onlyUnreviewed').checked=true;updateRuleUi();updateTransferDecisionHint();$('classifyBox').classList.remove('hidden');$('classifyBox').scrollIntoView({behavior:'smooth',block:'start'});msg($('classMsg'),'');$('splitEditor').classList.add('hidden');$('toggleSplitEditor').textContent=Number(row.split_count||0)>0?`Ripartizione (${nfmt(row.split_count)})`:'Dividi movimento';loadSplitsForMovement(row.id);scheduleClassificationPreview();updateClassificationPipelineState();setClassificationPipelineStep('counterparty',false);
 }
 async function saveMovementContext(){if(!selectedRow)return;const projectId=$('classProject').value||null;const tagIds=[...document.querySelectorAll('[data-class-tag]:checked')].map(x=>x.value);await rpc('dashboard_set_transaction_project_v1',{p_transaction_id:selectedRow.id,p_project_id:projectId});await rpc('dashboard_set_transaction_tags_v1',{p_transaction_id:selectedRow.id,p_tag_ids:tagIds})}
 async function saveClassification(createRule=false){
@@ -1258,7 +1260,7 @@ function renderCatalogs(){
   if($('compoundRuleMerchant'))$('compoundRuleMerchant').innerHTML='<option value="">— nessuna —</option>'+parties.map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('');
   if($('mccOptions'))$('mccOptions').innerHTML=(catData?.mccRules||[]).map(r=>`<option value="${esc(r.mcc_code)}">${esc(r.mcc_code+' — '+r.description)}</option>`).join('');
   if($('quickCounterpartyCategory'))$('quickCounterpartyCategory').innerHTML='<option value="">— nessuna —</option>'+cats.map(c=>`<option value="${c.id}">${esc(categoryLabel(c))}</option>`).join('');
-  renderCategoriesCatalog();renderMerchantsCatalog();renderNormalizationSuggestions();renderProjectsCatalog();renderTagsCatalog();renderMccCatalog();renderCompoundRulesCatalog();fillClassificationSelects();updateCatalogCounts();setCatalogTab(catalogTab,false);
+  renderCategoriesCatalog();renderMerchantsCatalog();renderProjectsCatalog();renderTagsCatalog();renderMccCatalog();renderCompoundRulesCatalog();fillClassificationSelects();updateCatalogCounts();setCatalogTab(catalogTab,false);
 }
 function renderCategoriesCatalog(){
   const q=($('categorySearch')?.value||'').trim().toLowerCase();
@@ -1312,7 +1314,7 @@ function aliasSourceLabel(source){
   })[source]||source||'—';
 }
 function aliasSourcesHtml(alias){
-  const sources=(alias?.source_types||[]);
+  const sources=[...new Set(alias?.source_types||[])];
   if(!sources.length)return '<span class="pill">Manuale / non ancora osservato</span>';
   return '<div class="alias-source-list">'+sources.map(s=>`<span class="pill">${esc(aliasSourceLabel(s))}</span>`).join('')+'</div>';
 }
@@ -1324,18 +1326,21 @@ function counterpartyAliasesHtml(m){
     :'';
   const rows=aliases.map(a=>{
     const targets=parties.filter(p=>p.id!==m.id).map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');
-    const usage=Number(a.movements||0)
-      ?`<strong>${nfmt(a.movements)}</strong><br><span class="muted small">${esc((a.banks||[]).join(' · ')||'—')}</span>`
-      :'<span class="muted">mai osservato</span>';
-    const period=Number(a.movements||0)?`${esc(a.first_date||'—')} → ${esc(a.last_date||'—')}`:'—';
+    const movementCount=Number(a.movements||0);
+    const usage=movementCount
+      ?`<strong>${nfmt(movementCount)} ${movementCount===1?'movimento':'movimenti'}</strong><br><span class="muted small">${esc((a.banks||[]).join(' · ')||'—')}</span>`
+      :'<span class="muted">mai utilizzato</span>';
+    const period=movementCount
+      ?(a.first_date===a.last_date?esc(a.first_date||'—'):`${esc(a.first_date||'—')} → ${esc(a.last_date||'—')}`)
+      :'—';
     return `<tr data-alias-id="${a.id}"><td><strong class="mono">${esc(a.pattern)}</strong></td><td>${aliasSourcesHtml(a)}</td><td>${usage}</td><td>${period}</td><td><div class="compact-actions"><select class="select" data-alias-move-target><option value="">— sposta a —</option>${targets}</select><button class="btn ghost compact" data-move-alias="${a.id}" type="button">Sposta</button><button class="btn danger compact" data-delete-alias="${a.id}" type="button">Elimina</button></div></td></tr>`;
   }).join('');
   return `<div class="alias-panel">
-    <div class="alias-panel-head"><div><strong>Alias di riconoscimento</strong><div class="muted small">Valori grezzi che identificano ${esc(m.name)}. L’origine indica se arrivano da un campo strutturato della banca oppure dal parsing della descrizione.</div></div><div class="compact-actions"><span class="pill">${nfmt(aliases.length)} alias</span><button class="btn ghost compact" data-cancel-alias-panel="${m.id}" type="button">Annulla</button></div></div>
+    <div class="alias-panel-head"><div><strong>Alias di riconoscimento</strong><div class="muted small">Valori grezzi che identificano ${esc(m.name)}. L’origine segue il campo effettivamente usato dal parser; il conteggio considera solo i movimenti in cui l’alias è realmente associato a questa controparte.</div></div><div class="compact-actions"><span class="pill">${nfmt(aliases.length)} alias</span><button class="btn ghost compact" data-cancel-alias-panel="${m.id}" type="button">Annulla</button></div></div>
     ${warning}
     <div class="alias-add-row"><input class="input" data-new-alias-for="${m.id}" placeholder="Aggiungi alias esatto..." /><button class="btn compact" data-add-alias="${m.id}" type="button">Aggiungi alias</button></div>
     <div class="note">Le modifiche agli alias cambiano il riconoscimento futuro. Se il motore automatico è disattivato, lo storico non viene riallineato subito ma le differenze compaiono in Coerenza.</div>
-    <div class="table-wrap alias-table" style="margin-top:10px"><table class="table"><thead><tr><th>Alias</th><th>Origine osservata</th><th>Utilizzo / banche</th><th>Periodo</th><th>Azioni</th></tr></thead><tbody>${rows||'<tr><td colspan="5" class="muted">Nessun alias associato. Puoi aggiungerne uno sopra.</td></tr>'}</tbody></table></div>
+    <div class="table-wrap alias-table" style="margin-top:10px"><table class="table"><thead><tr><th>Alias</th><th>Origine osservata</th><th>Movimenti / banche</th><th>Periodo utilizzo</th><th>Azioni</th></tr></thead><tbody>${rows||'<tr><td colspan="5" class="muted">Nessun alias associato. Puoi aggiungerne uno sopra.</td></tr>'}</tbody></table></div>
   </div>`;
 }
 async function addCounterpartyAlias(btn){
@@ -1411,102 +1416,6 @@ function renderMerchantsCatalog(){
   }).join('');
   $('merchantsTable').innerHTML=sections||'<div class="muted">Nessuna controparte.</div>';
 }
-function confidenceBadge(v){const n=Number(v||0);const cls=n>=.9?'ok':n>=.75?'warn':'';return `<span class="pill ${cls}">${pct(n*100)}</span>`}
-function categorySuggestionSource(v){return ({MOVIMENTI_ESISTENTI:'storico dello stesso merchant',STORICO_CONTROPARTE:'storico controparte',MCC:'MCC'})[v]||''}
-function researchForNormalization(x){return (catData?.researchSuggestions||[]).find(r=>r.normalized_key===(x.normalized_key||''))||null}
-function researchStatusBadge(v){const map={SUGGESTED:['Da verificare','warn'],CONFIRMED:['Confermato','ok'],REJECTED:['Scartato','']},m=map[v]||[v||'—',''];return `<span class="pill ${m[1]}">${esc(m[0])}</span>`}
-function researchSourcesHtml(r){const urls=r?.source_urls||[];return urls.length?urls.map((u,i)=>`<a href="${esc(u)}" target="_blank" rel="noopener noreferrer" class="small">Fonte ${i+1}</a>`).join(' · '):'<span class="muted small">nessuna fonte</span>'}
-function normMerchantDefaults(merchantId){
-  const m=(catData?.counterparties||[]).find(x=>x.id===merchantId);
-  return {projectId:m?.default_project_id||'',tagIds:(m?.default_tags||[]).map(t=>t.id)};
-}
-function normContextHtml(x){
-  const projects=[...(catData?.projects||[])].filter(p=>p.is_active).sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'it',{sensitivity:'base'}));
-  const tags=[...(catData?.tags||[])].filter(t=>t.is_active).sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'it',{sensitivity:'base'}));
-  const d=normMerchantDefaults(x.proposed_merchant_id);
-  const projectOpts='<option value="">— nessun progetto —</option>'+projects.map(p=>`<option value="${p.id}" ${p.id===d.projectId?'selected':''}>${esc(p.name)}</option>`).join('');
-  const tagChecks=tags.length?tags.map(t=>`<label class="small" style="display:inline-flex;gap:5px;align-items:center;margin:3px 8px 3px 0"><input type="checkbox" data-norm-tag value="${t.id}" ${d.tagIds.includes(t.id)?'checked':''}/> ${esc(t.name)}</label>`).join(''):'<span class="muted small">Nessun tag attivo.</span>';
-  return `<div style="margin-top:8px;padding-top:7px;border-top:1px solid var(--line)"><div class="muted small" style="margin-bottom:4px">Default futuri della controparte</div><select class="select" data-norm-project style="width:100%;margin-bottom:4px">${projectOpts}</select><div data-norm-tags>${tagChecks}</div><div class="muted small">Su nuovi movimenti riconosciuti: progetto solo se assente; tag aggiunti senza rimuovere quelli già presenti.</div></div>`;
-}
-function syncNormalizationContextFromMerchant(row){
-  const merchantId=row.querySelector('[data-norm-merchant]')?.value||'';
-  const d=normMerchantDefaults(merchantId);
-  const project=row.querySelector('[data-norm-project]');if(project)project.value=d.projectId||'';
-  row.querySelectorAll('[data-norm-tag]').forEach(cb=>cb.checked=d.tagIds.includes(cb.value));
-}
-
-
-function renderNormalizationSuggestions(){
-  if(!$('normalizationTable'))return;
-  const data=catData?.normalization||{},summary=data.summary||{};
-  const q=($('normalizationSearch')?.value||'').trim().toLowerCase(),min=Number($('normalizationConfidenceFilter')?.value||0);
-  const rows=(data.suggestions||[]).filter(x=>{const r=researchForNormalization(x);const hay=[x.raw_value,x.proposed_merchant_name,x.proposed_new_name,x.proposed_category_path,x.mccs,x.banks,r?.proposed_name,r?.proposed_address].join(' ').toLowerCase();return(!q||textSearchMatches(hay,q))&&Number(x.confidence||0)>=min});
-  $('normalizationSummary').textContent=`${nfmt(summary.unassigned_movements)} movimenti senza controparte · ${nfmt(summary.unique_raw_values)} merchant grezzi · ${nfmt(summary.with_category_suggestion)} con categoria proposta · ${nfmt(summary.missing_category_movements)} movimenti senza categoria · ${nfmt((catData?.researchSuggestions||[]).length)} ricerche web salvate`;
-  const merchants=[...(catData?.counterparties||[])].sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'it',{sensitivity:'base'}));
-  const categories=[...(catData?.categories||[])];
-  $('normalizationTable').innerHTML=`<div class="table-wrap"><table class="table"><thead><tr><th>Merchant originale</th><th>Mov.</th><th>Ricerca web</th><th>Controparte proposta</th><th>Categoria proposta</th><th>Affidabilità</th><th>Azioni</th></tr></thead><tbody>${rows.length?rows.map(x=>{
-    const merchantOpts='<option value="">— crea nuova —</option>'+merchants.map(m=>`<option value="${m.id}" ${m.id===x.proposed_merchant_id?'selected':''}>${esc(m.name)}</option>`).join('');
-    const categoryOpts='<option value="">— nessuna categoria —</option>'+categories.map(cat=>`<option value="${cat.id}" ${cat.id===x.proposed_category_id?'selected':''}>${esc(categoryLabel(cat))}</option>`).join('');
-    const catConfidence=Number(x.category_confidence||0),autoCategory=!!x.proposed_category_id&&catConfidence>=.9&&Number(x.missing_category||0)>0;
-    const key=x.normalized_key||String(x.raw_value||'').toLowerCase(),open=expandedNormalizationMovementDetails.has(key),detail=normalizationMovements(x.raw_value),r=researchForNormalization(x);
-    const searchButton=`<button class="btn ghost compact" data-search-web type="button" title="Apre una ricerca web gratuita in una nuova scheda">🔎 Cerca web</button>`;
-    const researchHtml=r?`<div><strong>${esc(r.proposed_name||'—')}</strong> ${researchStatusBadge(r.status)}</div><div class="small" style="margin-top:4px">${esc(r.proposed_address||'indirizzo non definito')}</div><div style="margin-top:5px">Affidabilità ${confidenceBadge(r.confidence)}</div><div class="muted small" style="margin-top:4px">${esc(r.note||'')}</div><div style="margin-top:5px">${researchSourcesHtml(r)}</div><div class="compact-actions" style="margin-top:7px"><button class="btn secondary compact" data-use-research type="button">Usa nome</button><button class="btn ghost compact" data-research-status="CONFIRMED" type="button">Conferma</button><button class="btn ghost compact" data-research-status="REJECTED" type="button">Scarta</button>${searchButton}</div>`:`<span class="muted small">Non ancora ricercato</span><div class="compact-actions" style="margin-top:7px">${searchButton}</div>`;
-    return `<tr data-raw-value="${esc(x.raw_value)}" data-normalization-key="${esc(key)}">
-      <td><strong>${esc(x.raw_value)}</strong><br><span class="muted small">${esc(x.banks||'—')} · MCC ${esc(x.mccs||'—')} · ${esc(x.first_date||'—')} → ${esc(x.last_date||'—')}</span></td>
-      <td><button class="btn secondary compact" data-toggle-normalization-movements="${esc(key)}">${nfmt(x.movements)} movimenti</button><br><span class="muted small">${nfmt(x.missing_category||0)} senza categoria</span></td>
-      <td>${researchHtml}</td>
-      <td><select class="select" data-norm-merchant style="width:100%">${merchantOpts}</select><input class="input" data-norm-name style="width:100%;margin-top:5px" value="${esc(x.proposed_new_name||x.raw_value||'')}" placeholder="Nome nuova controparte" /></td>
-      <td><select class="select" data-norm-category style="width:100%">${categoryOpts}</select><label class="small" style="display:flex;gap:6px;align-items:center;margin-top:6px"><input data-norm-only-missing type="checkbox" ${autoCategory?'checked':''} ${x.proposed_category_id?'':'disabled'} /> solo movimenti senza categoria</label><div class="muted small">${x.proposed_category_id?(autoCategory?'Se deselezioni, la categoria scelta sostituirà anche categorie già presenti.':'Se lasci deselezionato, la categoria scelta sostituirà anche categorie già presenti.'):'Nessuna categoria da applicare.'}</div><div class="muted small" style="margin-top:4px">${x.proposed_category_id?esc(categorySuggestionSource(x.category_source)):'nessuna proposta affidabile'}</div>${normContextHtml(x)}</td>
-      <td><div>Controparte ${confidenceBadge(x.confidence)}</div><div style="margin-top:5px">Categoria ${x.proposed_category_id?confidenceBadge(x.category_confidence):'<span class="muted">—</span>'}</div></td>
-      <td><button class="btn compact" data-apply-normalization type="button">Applica</button> <button class="btn ghost compact" data-ignore-normalization type="button">Ignora</button></td>
-    </tr>${open?`<tr><td colspan="7" style="padding:0">${catalogMovementDetailTable(detail)}</td></tr>`:''}`;
-  }).join(''):'<tr><td colspan="7" class="muted">Nessun suggerimento con questi filtri.</td></tr>'}</tbody></table></div>`;
-}
-async function setResearchStatus(btn,status){
-  const row=btn.closest('[data-raw-value]');if(!row)return;
-  const raw=row.dataset.rawValue,key=row.dataset.normalizationKey,r=(catData?.researchSuggestions||[]).find(x=>x.normalized_key===key);
-  if(!r)return;
-  setBusy(btn,true,'Salvo');
-  try{
-    await rpc('dashboard_counterparty_research_upsert_v1',{p_raw_label:raw,p_proposed_name:r.proposed_name,p_proposed_address:r.proposed_address,p_confidence:r.confidence,p_status:status,p_note:r.note,p_source_urls:r.source_urls||[]});
-    await loadMovementsData();
-  }catch(e){msg($('normalizationMsg'),e.message,true)}finally{setBusy(btn,false)}
-}
-function useResearchSuggestion(btn){
-  const row=btn.closest('[data-raw-value]');if(!row)return;
-  const key=row.dataset.normalizationKey,r=(catData?.researchSuggestions||[]).find(x=>x.normalized_key===key);
-  if(!r?.proposed_name)return;
-  const existing=(catData?.counterparties||[]).find(m=>String(m.name||'').trim().toLowerCase()===String(r.proposed_name).trim().toLowerCase());
-  const sel=row.querySelector('[data-norm-merchant]'),name=row.querySelector('[data-norm-name]');
-  if(existing&&sel){sel.value=existing.id;if(name)name.value=r.proposed_name;syncNormalizationContextFromMerchant(row)}
-  else if(name)name.value=r.proposed_name;
-}
-function searchNormalizationOnWeb(btn){
-  const row=btn.closest('[data-raw-value]');if(!row)return;
-  const raw=row.dataset.rawValue||'';
-  const key=row.dataset.normalizationKey;
-  const suggestion=(catData?.normalization?.suggestions||[]).find(x=>(x.normalized_key||String(x.raw_value||'').toLowerCase())===key);
-  const parts=['"'+raw+'"'];
-  if(suggestion?.mccs)parts.push('MCC '+suggestion.mccs);
-  if(suggestion?.banks)parts.push(suggestion.banks);
-  parts.push('negozio OR azienda OR merchant OR punto vendita');
-  const url='https://www.google.com/search?q='+encodeURIComponent(parts.join(' '));
-  window.open(url,'_blank','noopener,noreferrer');
-}
-
-async function applyNormalization(btn){
-  const row=btn.closest('[data-raw-value]');if(!row)return;
-  const raw=row.dataset.rawValue,merchant=row.querySelector('[data-norm-merchant]').value||null,name=row.querySelector('[data-norm-name]').value.trim()||null,category=row.querySelector('[data-norm-category]').value||null,onlyMissing=row.querySelector('[data-norm-only-missing]').checked,project=row.querySelector('[data-norm-project]')?.value||null,tags=[...row.querySelectorAll('[data-norm-tag]:checked')].map(x=>x.value);
-  setBusy(btn,true,'Applico');msg($('normalizationMsg'),'');
-  try{
-    const r=await rpc('dashboard_counterparty_normalization_apply_v4',{p_raw_value:raw,p_merchant_id:merchant,p_new_name:merchant?null:name,p_counterparty_type:'MERCHANT',p_category_id:category,p_only_missing_category:onlyMissing,p_project_id:project,p_tag_ids:tags});
-    const catMsg=category?` Categoria aggiornata su ${nfmt(r.category_updated)} movimenti${Number(r.category_overwritten||0)?`, di cui ${nfmt(r.category_overwritten)} con categoria precedente sovrascritta`:''}.`:'';
-    msg($('normalizationMsg'),`Controparte “${r.merchant_name}” applicata a ${nfmt(r.merchant_updated)} movimenti. Alias esatto salvato.${catMsg}${r.manual_confirmed?' I movimenti con categoria sono stati confermati.':''} Default futuri salvati: ${project?'progetto selezionato':'nessun progetto'} · ${nfmt(tags.length)} tag.`);
-    await loadMovementsData();
-  }catch(e){msg($('normalizationMsg'),e.message,true)}finally{setBusy(btn,false)}
-}
-async function ignoreNormalization(btn){const row=btn.closest('[data-raw-value]');if(!row)return;try{await rpc('dashboard_counterparty_normalization_ignore_v1',{p_raw_value:row.dataset.rawValue,p_ignore:true});await loadMovementsData()}catch(e){msg($('normalizationMsg'),e.message,true)}}
-async function backfillCounterpartyAliases(){const btn=$('backfillCounterpartyAliases');setBusy(btn,true,'Applico');msg($('normalizationMsg'),'');try{const r=await rpc('dashboard_backfill_exact_counterparty_aliases_v1');msg($('normalizationMsg'),`Alias confermati applicati a ${nfmt(r.updated)} movimenti.`);await loadMovementsData()}catch(e){msg($('normalizationMsg'),e.message,true)}finally{setBusy(btn,false)}}
 function renderProjectsCatalog(){
   const q=($('projectSearch')?.value||'').trim().toLowerCase(),type=$('projectTypeFilter')?.value||'',status=$('projectStatusFilter')?.value||'';
   let rows=(catData?.projects||[]).filter(p=>{if(q&&!textSearchMatches([p.name,p.notes,projectTypeLabel(p.project_type)].join(' '),q))return false;if(type&&p.project_type!==type)return false;if(status==='INACTIVE'&&p.is_active)return false;if(status&&status!=='INACTIVE'&&p.status!==status)return false;return true});
@@ -1695,12 +1604,16 @@ async function saveQuickCounterparty(){
     catData.counterparties=await rpc('dashboard_counterparties_read_v1')||[];
     catData.aliases=await rpc('dashboard_counterparty_aliases_read_v1')||[];
     fillClassificationSelects();$('classMerchant').value=created.id;$('classCategory').value=selectedCategory||defaultCategory||'';syncClassificationCategoryFromMerchant(false);
-    updateRuleUi();renderClassificationSuggestion();renderMovementAliasBox();renderFutureAutomationBox();$('quickCounterpartyBox').classList.add('hidden');
+    updateRuleUi();renderClassificationSuggestion();renderMovementAliasBox();renderFutureAutomationBox();updateClassificationPipelineState();$('quickCounterpartyBox').classList.add('hidden');
     msg($('classMsg'),'Controparte “'+created.name+'” creata e selezionata.'+(alias?' Alias “'+alias+'” salvato automaticamente.':''));
   }catch(e){msg($('quickCounterpartyMsg'),e.message,true)}finally{setBusy(btn,false)}
 }
 
-function clearMovementFilters(){['movementSearch','movementStatus','movementAutomation','movementBank','movementKind','movementDirection','movementCounterparty','movementCategory','movementProject','movementTag','movementDateFrom','movementDateTo'].forEach(id=>$(id).value='');renderMovements()}
+function clearMovementFilters(){document.querySelectorAll('[data-pipeline-step]').forEach(b=>b.addEventListener('click',()=>setClassificationPipelineStep(b.dataset.pipelineStep)));
+document.querySelectorAll('[data-pipeline-next]').forEach(b=>b.addEventListener('click',()=>setClassificationPipelineStep(b.dataset.pipelineNext)));
+['pipelineStepCounterparty','pipelineStepCategory','advancedAutomation','pipelineStepContext'].forEach(id=>$(id)?.addEventListener('toggle',()=>{if($(id)?.open){for(const other of Object.values(classificationPipelineMap()))if(other!==id&&$(other))$(other).open=false}syncClassificationPipelineNav()}));
+$('classProject')?.addEventListener('change',updateClassificationPipelineState);$('classTags')?.addEventListener('change',updateClassificationPipelineState);
+['movementSearch','movementStatus','movementAutomation','movementBank','movementKind','movementDirection','movementCounterparty','movementCategory','movementProject','movementTag','movementDateFrom','movementDateTo'].forEach(id=>$(id).value='');renderMovements()}
 $('coherenceRefresh').onclick=loadCoherence;
 $('coherenceEnable').onclick=enableClassificationEngine;
 $('coherenceDisable').onclick=disableClassificationEngine;
@@ -1734,12 +1647,12 @@ $('futureAutomationBox').addEventListener('click',async e=>{
     if(row)openClassify(row);else resetClassificationPanel(true);
   }catch(err){msg($('classMsg'),err.message,true)}finally{setBusy(unlock,false)}
 });
-$('classificationSuggestion').addEventListener('click',e=>{const use=e.target.closest('[data-use-suggested-counterparty]');if(use){$('classMerchant').value=use.dataset.useSuggestedCounterparty;syncClassificationCategoryFromMerchant(false);updateRuleUi();renderClassificationSuggestion();renderMovementAliasBox();renderFutureAutomationBox();return}const create=e.target.closest('[data-create-suggested-counterparty]');if(create){const s=normalizationSuggestionForMovement(selectedRow),name=s?.proposed_new_name||s?.raw_value||selectedRow?.raw_merchant_name||'';openQuickCounterparty();$('quickCounterpartyName').value=name;$('quickCounterpartyCategory').value=$('classCategory').value||s?.proposed_category_id||'';return}});$('cancelQuickCounterparty').onclick=()=>{$('quickCounterpartyBox').classList.add('hidden');msg($('quickCounterpartyMsg'),'')};$('saveQuickCounterparty').onclick=saveQuickCounterparty;$('classificationRuleStyle').onchange=()=>{if($('classificationRuleStyle').value==='SIMPLE'&&selectedRow&&!$('rulePattern').value.trim())$('rulePattern').value=selectedRow.raw_merchant_name||selectedRow.description||'';updateRuleUi()};$('ruleMode').onchange=()=>{if(selectedRow&&!$('rulePattern').value.trim())$('rulePattern').value=selectedRow.raw_merchant_name||selectedRow.description||'';if($('ruleMode').value==='EXACT'&&selectedRow)$('rulePattern').value=selectedRow.description||'';updateRuleUi()};$('rulePattern').oninput=updateRuleUi;$('onlyUnreviewed').onchange=scheduleClassificationPreview;$('classMerchant').onchange=()=>{syncClassificationCategoryFromMerchant(false);updateRuleUi();renderClassificationSuggestion();renderMovementAliasBox();renderFutureAutomationBox()};$('classCategory').onchange=()=>{renderClassificationSuggestion();renderFutureAutomationBox()};$('transferTarget').onchange=()=>{updateTransferDecisionHint();scheduleClassificationPreview();renderClassificationSuggestion();renderFutureAutomationBox()};$('advancedAutomation').addEventListener('toggle',()=>{if($('advancedAutomation').open){updateRuleUi();scheduleClassificationPreview()}});
+$('cancelQuickCounterparty').onclick=()=>{$('quickCounterpartyBox').classList.add('hidden');msg($('quickCounterpartyMsg'),'')};$('saveQuickCounterparty').onclick=saveQuickCounterparty;$('classificationRuleStyle').onchange=()=>{if($('classificationRuleStyle').value==='SIMPLE'&&selectedRow&&!$('rulePattern').value.trim())$('rulePattern').value=selectedRow.raw_merchant_name||selectedRow.description||'';updateRuleUi()};$('ruleMode').onchange=()=>{if(selectedRow&&!$('rulePattern').value.trim())$('rulePattern').value=selectedRow.raw_merchant_name||selectedRow.description||'';if($('ruleMode').value==='EXACT'&&selectedRow)$('rulePattern').value=selectedRow.description||'';updateRuleUi()};$('rulePattern').oninput=updateRuleUi;$('onlyUnreviewed').onchange=scheduleClassificationPreview;$('classMerchant').onchange=()=>{syncClassificationCategoryFromMerchant(false);updateRuleUi();renderClassificationSuggestion();renderMovementAliasBox();renderFutureAutomationBox();updateClassificationPipelineState()};$('classCategory').onchange=()=>{renderClassificationSuggestion();renderFutureAutomationBox();updateClassificationPipelineState()};$('transferTarget').onchange=()=>{updateTransferDecisionHint();scheduleClassificationPreview();renderClassificationSuggestion();renderFutureAutomationBox();updateClassificationPipelineState()};$('advancedAutomation').addEventListener('toggle',()=>{if($('advancedAutomation').open){updateRuleUi();scheduleClassificationPreview()}});
 ['movementSearch','movementStatus','movementAutomation','movementBank','movementKind','movementDirection','movementCounterparty','movementCategory','movementProject','movementTag','movementDateFrom','movementDateTo'].forEach(id=>$(id).addEventListener(id==='movementSearch'?'input':'change',renderMovements));$('clearMovementFilters').onclick=clearMovementFilters;$('viewList').onclick=()=>{viewMode='list';renderMovements()};$('viewGrouped').onclick=()=>{viewMode='grouped';renderMovements()};$('bulkSelectVisible').onclick=selectVisibleMovements;$('bulkClearSelection').onclick=clearSelectedMovements;$('bulkApplyCategory').onclick=applyBulkCategory;
 $('movementsTable').addEventListener('click',e=>{const auto=e.target.closest('[data-automation-target]');if(auto){openAutomationTarget(auto.dataset.automationTarget,auto.dataset.automationId);return}const sort=e.target.closest('[data-sort]');if(sort){setSort(sort.dataset.sort);return}const edit=e.target.closest('[data-edit-movement]');if(edit){const row=(catData?.movements||[]).find(x=>x.id===edit.dataset.editMovement);if(row)openClassify(row);return}const tg=e.target.closest('[data-toggle-group]');if(tg){const g=(window.__groupRows||[])[Number(tg.dataset.toggleGroup)];if(!g)return;if(expandedGroups.has(g.key))expandedGroups.delete(g.key);else expandedGroups.add(g.key);renderMovements()}});
 $('movementsTable').addEventListener('change',e=>{const cb=e.target.closest('[data-select-movement]');if(!cb)return;cb.checked?selectedMovementIds.add(cb.dataset.selectMovement):selectedMovementIds.delete(cb.dataset.selectMovement);syncBulkSelectionUi()});
-['categorySearch','merchantSearch','merchantTypeFilter','merchantCategoryFilter','merchantConfigFilter','projectSearch','projectTypeFilter','projectStatusFilter','tagSearch','tagStatusFilter','mccSearch','mccStatusFilter','compoundRuleSearch','compoundRuleStatusFilter','normalizationSearch','normalizationConfidenceFilter'].forEach(id=>$(id)?.addEventListener(id.endsWith('Search')?'input':'change',renderCatalogs));$('normalizationShowIgnored').onchange=loadMovementsData;$('backfillCounterpartyAliases').onclick=backfillCounterpartyAliases;$('normalizationTable').addEventListener('change',e=>{const sel=e.target.closest('[data-norm-merchant]');if(sel){const row=sel.closest('[data-raw-value]');if(row)syncNormalizationContextFromMerchant(row)}});$('expandAllCategories').onclick=()=>{(catData?.categories||[]).filter(x=>Number(x.depth)===1).forEach(x=>expandedCategoryGroups.add(x.level1_name||x.name));renderCategoriesCatalog()};$('collapseAllCategories').onclick=()=>{expandedCategoryGroups.clear();renderCategoriesCatalog()};
-$('tab-catalogs').addEventListener('click',e=>{const ct=e.target.closest('[data-catalog-tab]');if(ct){setCatalogTab(ct.dataset.catalogTab);return}const cm=e.target.closest('[data-toggle-category-movements]');if(cm){const k=cm.dataset.toggleCategoryMovements;expandedCategoryMovementDetails.has(k)?expandedCategoryMovementDetails.delete(k):expandedCategoryMovementDetails.add(k);renderCategoriesCatalog();return}const cpm=e.target.closest('[data-toggle-counterparty-movements]');if(cpm){const k=cpm.dataset.toggleCounterpartyMovements;expandedCounterpartyMovementDetails.has(k)?expandedCounterpartyMovementDetails.delete(k):expandedCounterpartyMovementDetails.add(k);renderMerchantsCatalog();return}const cpa=e.target.closest('[data-toggle-counterparty-aliases]');if(cpa){const k=cpa.dataset.toggleCounterpartyAliases;expandedCounterpartyAliasDetails.has(k)?expandedCounterpartyAliasDetails.delete(k):expandedCounterpartyAliasDetails.add(k);renderMerchantsCatalog();return}const cap=e.target.closest('[data-cancel-alias-panel]');if(cap){expandedCounterpartyAliasDetails.delete(cap.dataset.cancelAliasPanel);renderMerchantsCatalog();return}const emv=e.target.closest('[data-edit-movement]');if(emv){const row=(catData?.movements||[]).find(x=>x.id===emv.dataset.editMovement);if(row){activateMainTab('categorization');openClassify(row)}return}const aa=e.target.closest('[data-add-alias]');if(aa){addCounterpartyAlias(aa);return}const ma=e.target.closest('[data-move-alias]');if(ma){moveCounterpartyAlias(ma);return}const da=e.target.closest('[data-delete-alias]');if(da){deleteCounterpartyAlias(da);return}const nm=e.target.closest('[data-toggle-normalization-movements]');if(nm){const k=nm.dataset.toggleNormalizationMovements;expandedNormalizationMovementDetails.has(k)?expandedNormalizationMovementDetails.delete(k):expandedNormalizationMovementDetails.add(k);renderNormalizationSuggestions();return}const sw=e.target.closest('[data-search-web]');if(sw){searchNormalizationOnWeb(sw);return}const ur=e.target.closest('[data-use-research]');if(ur){useResearchSuggestion(ur);return}const rs=e.target.closest('[data-research-status]');if(rs){setResearchStatus(rs,rs.dataset.researchStatus);return}const cg=e.target.closest('[data-toggle-category-group]');if(cg){const k=cg.dataset.toggleCategoryGroup;expandedCategoryGroups.has(k)?expandedCategoryGroups.delete(k):expandedCategoryGroups.add(k);renderCategoriesCatalog();return}const mg=e.target.closest('[data-toggle-counterparty-group]');if(mg){const k=mg.dataset.toggleCounterpartyGroup;expandedCounterpartyGroups.has(k)?expandedCounterpartyGroups.delete(k):expandedCounterpartyGroups.add(k);renderMerchantsCatalog();return}const mm=e.target.closest('[data-toggle-mcc-movements]');if(mm){const row=mm.closest('[data-mcc-row]'),k=row?.dataset.mccRow;if(k){expandedMccMovementDetails.has(k)?expandedMccMovementDetails.delete(k):expandedMccMovementDetails.add(k);renderMccCatalog()}return}const em=e.target.closest('[data-edit-mcc]');if(em){editMccCategory(em);return}const cmc=e.target.closest('[data-cancel-mcc-edit]');if(cmc){cancelMccEdit(cmc);return}const sm=e.target.closest('[data-save-mcc]');if(sm){saveMccCategory(sm);return}const sh=e.target.closest('[data-catalog-sort]');if(sh){setCatalogSort(sh.dataset.catalogSort,sh.dataset.catalogKey);return}const del=e.target.closest('[data-delete-entity]');if(del){deleteCatalogEntity(del);return}const ap=e.target.closest('[data-apply-normalization]');if(ap){applyNormalization(ap);return}const ig=e.target.closest('[data-ignore-normalization]');if(ig){ignoreNormalization(ig);return}const cc=e.target.closest('[data-edit-cat]');if(cc){editCategory(cc.dataset.editCat);return}const m=e.target.closest('[data-edit-merch]');if(m){editMerchant(m.dataset.editMerch);return}const p=e.target.closest('[data-edit-project]');if(p){editProject(p.dataset.editProject);return}const t=e.target.closest('[data-edit-tag]');if(t){editTag(t.dataset.editTag);return}const rr=e.target.closest('[data-edit-rule]');if(rr){editCompoundRule(rr.dataset.editRule);return}});
+['categorySearch','merchantSearch','merchantTypeFilter','merchantCategoryFilter','merchantConfigFilter','projectSearch','projectTypeFilter','projectStatusFilter','tagSearch','tagStatusFilter','mccSearch','mccStatusFilter','compoundRuleSearch','compoundRuleStatusFilter'].forEach(id=>$(id)?.addEventListener(id.endsWith('Search')?'input':'change',renderCatalogs));$('expandAllCategories').onclick=()=>{(catData?.categories||[]).filter(x=>Number(x.depth)===1).forEach(x=>expandedCategoryGroups.add(x.level1_name||x.name));renderCategoriesCatalog()};$('collapseAllCategories').onclick=()=>{expandedCategoryGroups.clear();renderCategoriesCatalog()};
+$('tab-catalogs').addEventListener('click',e=>{const ct=e.target.closest('[data-catalog-tab]');if(ct){setCatalogTab(ct.dataset.catalogTab);return}const cm=e.target.closest('[data-toggle-category-movements]');if(cm){const k=cm.dataset.toggleCategoryMovements;expandedCategoryMovementDetails.has(k)?expandedCategoryMovementDetails.delete(k):expandedCategoryMovementDetails.add(k);renderCategoriesCatalog();return}const cpm=e.target.closest('[data-toggle-counterparty-movements]');if(cpm){const k=cpm.dataset.toggleCounterpartyMovements;expandedCounterpartyMovementDetails.has(k)?expandedCounterpartyMovementDetails.delete(k):expandedCounterpartyMovementDetails.add(k);renderMerchantsCatalog();return}const cpa=e.target.closest('[data-toggle-counterparty-aliases]');if(cpa){const k=cpa.dataset.toggleCounterpartyAliases;expandedCounterpartyAliasDetails.has(k)?expandedCounterpartyAliasDetails.delete(k):expandedCounterpartyAliasDetails.add(k);renderMerchantsCatalog();return}const cap=e.target.closest('[data-cancel-alias-panel]');if(cap){expandedCounterpartyAliasDetails.delete(cap.dataset.cancelAliasPanel);renderMerchantsCatalog();return}const emv=e.target.closest('[data-edit-movement]');if(emv){const row=(catData?.movements||[]).find(x=>x.id===emv.dataset.editMovement);if(row){activateMainTab('categorization');openClassify(row)}return}const aa=e.target.closest('[data-add-alias]');if(aa){addCounterpartyAlias(aa);return}const ma=e.target.closest('[data-move-alias]');if(ma){moveCounterpartyAlias(ma);return}const da=e.target.closest('[data-delete-alias]');if(da){deleteCounterpartyAlias(da);return}const cg=e.target.closest('[data-toggle-category-group]');if(cg){const k=cg.dataset.toggleCategoryGroup;expandedCategoryGroups.has(k)?expandedCategoryGroups.delete(k):expandedCategoryGroups.add(k);renderCategoriesCatalog();return}const mg=e.target.closest('[data-toggle-counterparty-group]');if(mg){const k=mg.dataset.toggleCounterpartyGroup;expandedCounterpartyGroups.has(k)?expandedCounterpartyGroups.delete(k):expandedCounterpartyGroups.add(k);renderMerchantsCatalog();return}const mm=e.target.closest('[data-toggle-mcc-movements]');if(mm){const row=mm.closest('[data-mcc-row]'),k=row?.dataset.mccRow;if(k){expandedMccMovementDetails.has(k)?expandedMccMovementDetails.delete(k):expandedMccMovementDetails.add(k);renderMccCatalog()}return}const em=e.target.closest('[data-edit-mcc]');if(em){editMccCategory(em);return}const cmc=e.target.closest('[data-cancel-mcc-edit]');if(cmc){cancelMccEdit(cmc);return}const sm=e.target.closest('[data-save-mcc]');if(sm){saveMccCategory(sm);return}const sh=e.target.closest('[data-catalog-sort]');if(sh){setCatalogSort(sh.dataset.catalogSort,sh.dataset.catalogKey);return}const del=e.target.closest('[data-delete-entity]');if(del){deleteCatalogEntity(del);return}const cc=e.target.closest('[data-edit-cat]');if(cc){editCategory(cc.dataset.editCat);return}const m=e.target.closest('[data-edit-merch]');if(m){editMerchant(m.dataset.editMerch);return}const p=e.target.closest('[data-edit-project]');if(p){editProject(p.dataset.editProject);return}const t=e.target.closest('[data-edit-tag]');if(t){editTag(t.dataset.editTag);return}const rr=e.target.closest('[data-edit-rule]');if(rr){editCompoundRule(rr.dataset.editRule);return}});
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>activateMainTab(b.dataset.tab));
 addConditionRow();
 init();
