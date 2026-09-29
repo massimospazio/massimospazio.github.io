@@ -21,7 +21,7 @@ button,input,select{font:inherit}
 .tab.active{background:var(--text);color:#fff;border-color:var(--text)}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:16px}
 .grid{display:grid;gap:14px}
-.kpis{grid-template-columns:repeat(5,minmax(150px,1fr));margin-bottom:14px}
+.kpis{grid-template-columns:repeat(6,minmax(145px,1fr));margin-bottom:14px}
 .kpi .label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
 .kpi .value{font-size:25px;font-weight:750;margin-top:6px}
 .kpi .sub{font-size:12px;color:var(--muted);margin-top:4px}
@@ -68,6 +68,7 @@ button,input,select{font:inherit}
 .projection-table th,.projection-table td{padding:8px 9px;border-bottom:1px solid var(--line);text-align:right;font-size:12px}
 .projection-table th:first-child,.projection-table td:first-child{text-align:left}
 .projection-table th{color:var(--muted);background:#fafafa}
+.extra-table{width:100%;border-collapse:collapse}.extra-table th,.extra-table td{padding:8px 9px;border-bottom:1px solid var(--line);font-size:12px;text-align:left}.extra-table th{color:var(--muted);background:#fafafa}.extra-table .amount{text-align:right;font-weight:700}.extra-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.extra-block h3{font-size:14px;margin:0 0 8px}.extra-block{min-width:0}@media(max-width:900px){.extra-grid{grid-template-columns:1fr}}
 .positive{color:var(--ok)}.negative{color:var(--danger)}
 .legend-note{font-size:11px;color:var(--muted);margin-top:8px}
 .spinner{display:inline-block;width:16px;height:16px;border:2px solid #ddd;border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;vertical-align:-3px;margin-right:6px}@keyframes spin{to{transform:rotate(360deg)}}
@@ -88,7 +89,7 @@ button,input,select{font:inherit}
 
   <div id="appView" class="hidden">
     <div class="top">
-      <div class="brand"><h1>Reporting Budget Familiare</h1><small>V66 · Andamento, pianificazione e liquidità</small></div>
+      <div class="brand"><h1>Reporting Budget Familiare</h1><small>V67 · Vista Massimo, ordinarie/straordinarie e previsione robusta</small></div>
       <div class="userbar"><span id="userEmail"></span><button id="refreshBtn" class="btn ghost">Aggiorna</button><button id="logoutBtn" class="btn ghost">Esci</button></div>
     </div>
     <div class="tabs">
@@ -99,7 +100,8 @@ button,input,select{font:inherit}
     <div id="reportMsg"></div>
 
     <section class="grid kpis">
-      <div class="card kpi"><div class="label">Spese ultimi 12 mesi</div><div id="kExpense12" class="value">—</div><div class="sub">Solo EXPENSE, esclusi investimenti e giroconti</div></div>
+      <div class="card kpi"><div class="label">Spese ordinarie 12 mesi</div><div id="kExpense12" class="value">—</div><div class="sub">Base per medie e previsioni</div></div>
+      <div class="card kpi"><div class="label">Straordinarie 12 mesi</div><div id="kExtra12" class="value">—</div><div class="sub">Escluse dalle medie automatiche</div></div>
       <div class="card kpi"><div class="label">Media mensile</div><div id="kExpenseAvg" class="value">—</div><div class="sub">Sui 12 mesi visualizzati</div></div>
       <div class="card kpi"><div class="label">Saldo netto 12 mesi</div><div id="kNet12" class="value">—</div><div class="sub">Entrate − uscite, investimenti inclusi</div></div>
       <div class="card kpi"><div class="label">Copertura categorie</div><div id="kCoverage" class="value">—</div><div class="sub">Spese con categoria</div></div>
@@ -108,16 +110,19 @@ button,input,select{font:inherit}
 
     <section class="card section">
       <div class="section-title">
-        <div><h2>Spese mensili per categoria</h2><p>Ultimi 12 mesi, stratificati per categoria di livello 1.</p></div>
-        <label class="small" style="display:flex;gap:7px;align-items:center"><input id="toggleYoY" type="checkbox" checked /> Confronta totale stesso mese anno precedente</label>
+        <div><h2>Spese mensili per categoria</h2><p>Vista Massimo · ultimi 12 mesi, stratificati per categoria L1.</p></div>
+        <div class="toolbar">
+          <label class="small" style="display:flex;gap:7px;align-items:center"><input id="onlyOrdinary" type="checkbox" checked /> Solo ordinarie</label>
+          <label class="small" style="display:flex;gap:7px;align-items:center"><input id="toggleYoY" type="checkbox" checked /> Confronta anno precedente</label>
+        </div>
       </div>
       <div class="chart-box"><canvas id="expenseChart"></canvas></div>
-      <div id="yoyNote" class="legend-note"></div>
+      <div id="yoyNote" class="legend-note"></div><div id="extraordinaryList" style="margin-top:12px"></div>
     </section>
 
     <section class="grid two section">
       <div class="card">
-        <div class="section-title"><div><h2>Saldo netto mensile</h2><p>Entrate − uscite. I giroconti sono esclusi; gli investimenti assorbono liquidità.</p></div></div>
+        <div class="section-title"><div><h2>Saldo netto mensile</h2><p>Vista Massimo · Entrate − Uscite reali. I trasferimenti interni Massimo ING↔Trade Republic sono esclusi; straordinarie e investimenti restano nel cash flow.</p></div></div>
         <div class="chart-box compact"><canvas id="cashflowChart"></canvas></div>
         <div class="legend-note">Barra sopra zero = liquidità generata nel mese. Sotto zero = liquidità consumata. La linea mostra il cumulato dei 12 mesi.</div>
       </div>
@@ -132,17 +137,27 @@ button,input,select{font:inherit}
 
     <section class="card section">
       <div class="section-title">
-        <div><h2>Pianificazione prossimi 6 mesi</h2><p>I totali L1 sono calcolati dalle sottocategorie: si modificano i dettagli, non il totale, per evitare incoerenze.</p></div>
-        <div class="toolbar"><button id="expandAll" class="btn ghost compact">Espandi tutte</button><button id="collapseAll" class="btn ghost compact">Comprimi tutte</button></div>
+        <div><h2>Pianificazione prossimi 6 mesi</h2><p>Le medie di spesa usano solo movimenti ordinari. Le entrate usano una base robusta che esclude gli eventi straordinari.</p></div>
+        <div class="toolbar">
+          <label class="small">Margine imprevisti <input id="marginPct" class="input" type="number" min="0" max="100" step="0.5" style="width:82px" /> %</label>
+          <button id="saveMargin" class="btn ghost compact">Salva margine</button>
+          <button id="expandAll" class="btn ghost compact">Espandi tutte</button><button id="collapseAll" class="btn ghost compact">Comprimi tutte</button>
+        </div>
       </div>
-      <div class="notice" style="margin-bottom:10px"><strong>Metodo suggerito:</strong> Media 6 mesi per la spesa ordinaria; Media 12 mesi per una base più stabile; Stesso mese anno scorso per categorie stagionali come luce/gas/acqua. Ogni mese resta modificabile manualmente. In questa V1 non viene creato un motore separato di scadenze ricorrenti.</div>
+      <div class="notice" style="margin-bottom:10px"><strong>Regole V67:</strong> le spese straordinarie restano nei totali storici e nel cash flow, ma non entrano nelle medie 6/12 mesi. Per le entrate il suggerimento usa la <strong>mediana degli ultimi 12 mesi</strong>, dopo aver escluso le entrate straordinarie. Il margine imprevisti è separato dalle categorie e viene aggiunto solo alla proiezione futura.</div>
       <div id="planMsg"></div>
       <div class="plan-wrap"><table class="plan-table"><thead id="planHead"></thead><tbody id="planBody"></tbody></table></div>
-      <div class="legend-note">I valori grigi sono suggerimenti; un valore inserito manualmente viene evidenziato in azzurro. Svuotando la cella si torna al suggerimento automatico.</div>
+      <div class="legend-note">I valori grigi sono suggerimenti calcolati solo sui movimenti ordinari; un valore inserito manualmente viene evidenziato in azzurro. Svuotando la cella si torna al suggerimento automatico.</div>
     </section>
 
     <section class="card section">
-      <div class="section-title"><div><h2>Proiezione liquidità</h2><p>Saldo attuale + entrate previste − spese previste − investimenti previsti.</p></div></div>
+      <div class="section-title"><div><h2>Movimenti straordinari</h2><p>Classificazione analitica: non cambia categoria o tipo movimento; decide solo se il movimento entra nelle medie e nel forecast ordinario.</p></div></div>
+      <div id="extraordinaryContent"></div>
+      <div id="extraordinaryMsg"></div>
+    </section>
+
+    <section class="card section">
+      <div class="section-title"><div><h2>Proiezione liquidità</h2><p>Saldo Massimo + entrate previste − spese ordinarie previste − margine imprevisti − investimenti previsti.</p></div></div>
       <div id="projectionContent"></div>
     </section>
   </div>
@@ -182,7 +197,7 @@ async function loadReport(){
   setBusy(btn,true,'Aggiorno');
   msg($('reportMsg'),'');
   try{
-    report=await rpc('dashboard_reporting_read_v2');
+    report=await rpc('dashboard_reporting_read_v3');
     renderAll();
   }catch(e){
     console.error(e);
@@ -192,31 +207,33 @@ async function loadReport(){
 
 function chartMonths(){return (report&&report.cashflow_monthly||[]).map(function(x){return x.month_start})}
 
-function expenseMatrix(){
+function expenseMatrix(ordinaryOnly){
   const months=chartMonths();
+  const rows=ordinaryOnly?(report.expense_monthly_ordinary||[]):(report.expense_monthly||[]);
   const categories=[];
   const seen=new Set();
-  (report.expense_monthly||[]).forEach(function(x){
+  rows.forEach(function(x){
     if(!seen.has(x.l1_id)){seen.add(x.l1_id);categories.push({id:x.l1_id,name:x.l1_name})}
   });
   categories.sort(function(a,b){return a.name.localeCompare(b.name,'it')});
   const map=new Map();
-  (report.expense_monthly||[]).forEach(function(x){map.set(x.month_start+'|'+x.l1_id,num(x.amount))});
+  rows.forEach(function(x){map.set(x.month_start+'|'+x.l1_id,num(x.amount))});
   return {months:months,categories:categories,map:map};
 }
 
 function renderKpis(){
-  const em=expenseMatrix();
-  let total=0;
-  em.map.forEach(function(v){total+=v});
-  const net=(report.cashflow_monthly||[]).reduce(function(s,x){return s+num(x.net)},0);
+  const all=expenseMatrix(false),ord=expenseMatrix(true);
+  let total=0,ordinary=0;
+  all.map.forEach(function(v){total+=v});
+  ord.map.forEach(function(v){ordinary+=v});
+  const extraordinary=Math.max(total-ordinary,0);
   $('kExpense12').textContent=money(total);
-  $('kExpenseAvg').textContent=money(total/Math.max(em.months.length,1));
-  $('kNet12').textContent=money(net);
-  $('kNet12').className='value '+(net>=0?'positive':'negative');
+  $('kOrdinary12').textContent=money(ordinary);
+  $('kExtra12').textContent=money(extraordinary);
+  $('kExpenseAvg').textContent=money(ordinary/Math.max(ord.months.length,1));
   $('kCoverage').textContent=num(report.meta&&report.meta.category_coverage_pct).toLocaleString('it-IT',{maximumFractionDigits:1})+'%';
-  $('kLatest').textContent=dateLabel(report.meta&&report.meta.data_max_date);
-  $('kRange').textContent='Storico dal '+dateLabel(report.meta&&report.meta.data_min_date);
+  $('kRange').textContent='Vista '+(report.meta&&report.meta.scope_owner_name||'—')+' · dati al '+dateLabel(report.meta&&report.meta.data_max_date);
+  $('marginPct').value=num(report.meta&&report.meta.unexpected_margin_pct).toFixed(1);
 }
 
 function palette(i,total){
@@ -225,14 +242,19 @@ function palette(i,total){
 }
 
 function renderExpenseChart(){
-  const em=expenseMatrix();
-  const previous=new Map((report.expense_previous_totals||[]).map(function(x){return [x.month,x.previous_total===null?null:num(x.previous_total)]}));
+  const ordinaryOnly=$('onlyOrdinary').checked;
+  const em=expenseMatrix(ordinaryOnly);
+  const previous=new Map((report.expense_previous_totals||[]).map(function(x){
+    const v=ordinaryOnly?x.previous_ordinary_total:x.previous_total;
+    return [x.month,v===null?null:num(v)];
+  }));
   const datasets=em.categories.map(function(c,i){
     return {type:'bar',label:c.name,data:em.months.map(function(m){return em.map.get(m+'|'+c.id)||0}),backgroundColor:palette(i,em.categories.length),borderWidth:0,stack:'spese'};
   });
+  datasets.push({type:'bar',label:'Straordinarie',data:em.months.map(function(m){return extra.get(m)||0}),backgroundColor:'#334155',borderWidth:0,stack:'spese'});
   if($('toggleYoY').checked){
     datasets.push({
-      type:'line',label:'Totale stesso mese anno precedente',
+      type:'line',label:(ordinaryOnly?'Ordinarie':'Totale')+' stesso mese anno precedente',
       data:em.months.map(function(m){return previous.has(m)?previous.get(m):null}),
       borderColor:'#111827',backgroundColor:'#111827',borderWidth:2.5,pointRadius:3,pointHoverRadius:4,spanGaps:false,tension:.25,stack:'yoy'
     });
@@ -254,9 +276,22 @@ function renderExpenseChart(){
       }
     }
   });
-  const missing=(report.expense_previous_totals||[]).filter(function(x){return x.previous_total===null}).length;
+  const missing=(report.expense_previous_totals||[]).filter(function(x){
+    return (ordinaryOnly?x.previous_ordinary_total:x.previous_total)===null;
+  }).length;
+  const extraMap=new Map((report.expense_extraordinary_monthly||[]).map(function(x){return [x.month_start,num(x.amount)]}));
+  const extraMonths=em.months.filter(function(m){return (extraMap.get(m)||0)>0}).map(function(m){return monthLabel(m)+': '+money(extraMap.get(m))});
   const latest=report.meta&&report.meta.data_max_date;
-  $('yoyNote').textContent='Dati correnti disponibili fino al '+dateLabel(latest)+'. '+(missing?'Il confronto YoY è parziale: '+missing+' mesi non hanno ancora lo stesso mese dell’anno precedente nello storico.':'Confronto YoY disponibile per tutti i 12 mesi.');
+  $('yoyNote').textContent=(ordinaryOnly?'Vista ordinaria: le straordinarie sono escluse dal grafico e dalle medie. ':'Vista totale: include anche le straordinarie. ')+(extraMonths.length?'Straordinarie nel periodo: '+extraMonths.join(' · ')+'. ':'')+(missing?'Confronto YoY parziale per '+missing+' mesi.':'Confronto YoY disponibile per tutti i 12 mesi.')+' Dati al '+dateLabel(latest)+'.';
+}
+
+function renderExtraordinary(){
+  const rows=report.extraordinary_transactions||[];
+  const box=$('extraordinaryList');
+  if(!rows.length){box.innerHTML='<div class="notice"><strong>Straordinarie:</strong> nessun movimento marcato nel periodo.</div>';return}
+  box.innerHTML='<div class="notice"><strong>Movimenti marcati Straordinario</strong> — esclusi da medie e previsioni automatiche, ma inclusi nel cash flow reale.<div style="margin-top:8px;overflow:auto"><table class="projection-table"><thead><tr><th>Data</th><th>Tipo</th><th>Controparte</th><th>Categoria</th><th>Importo</th></tr></thead><tbody>'+
+    rows.map(function(r){return '<tr><td>'+dateLabel(r.transaction_date)+'</td><td>'+esc(r.transaction_type)+'</td><td>'+esc(r.counterparty||'—')+'</td><td>'+esc(r.category||'—')+'</td><td class="right"><strong>'+money2(r.amount)+'</strong></td></tr>'}).join('')+
+    '</tbody></table></div><div class="legend-note">Per aggiungere o rimuovere questa classificazione usa il tag <strong>Straordinario</strong> nel movimento.</div></div>';
 }
 
 function renderCashflowChart(){
@@ -310,10 +345,13 @@ function effectiveCell(c){return c&&c.override_amount!==null&&c.override_amount!
 function overrideMap(section){
   return new Map(((section&&section.overrides)||[]).map(function(x){return [x.month,x.amount]}));
 }
+function specialBase(section){
+  return num(section&&section.suggested!==undefined?section.suggested:section&&section.avg6);
+}
 function effectiveSpecial(section,month){
   const m=overrideMap(section);
   const v=m.get(month);
-  return v!==null&&v!==undefined?num(v):num(section&&section.avg6);
+  return v!==null&&v!==undefined?num(v):specialBase(section);
 }
 function methodLabel(v){return v==='AVG12'?'Media 12 mesi':v==='SAME_MONTH_LAST_YEAR'?'Stesso mese A-1':'Media 6 mesi'}
 
@@ -340,11 +378,16 @@ function renderPlan(){
     const values=months.map(function(m){
       const ov=overrides.get(m);
       const manual=ov!==null&&ov!==undefined;
-      const effective=manual?num(ov):num(section.avg6);
-      return '<td><input class="plan-input'+(manual?' manual':'')+'" data-'+key+'="'+esc(m)+'" type="number" min="0" step="0.01" value="'+(manual?Number(ov).toFixed(2):'')+'" placeholder="'+Number(effective).toFixed(0)+'" title="'+(manual?'Manuale':'Suggerito da media 6 mesi')+'" /></td>';
+      const effective=manual?num(ov):specialBase(section);
+      const baseTitle=section.method==='MEDIAN12'?'Suggerito da mediana 12 mesi':'Suggerito da media 6 mesi';
+      return '<td><input class="plan-input'+(manual?' manual':'')+'" data-'+key+'="'+esc(m)+'" type="number" min="0" step="0.01" value="'+(manual?Number(ov).toFixed(2):'')+'" placeholder="'+Number(effective).toFixed(0)+'" title="'+(manual?'Manuale':baseTitle)+'" /></td>';
     });
-    const total=months.reduce(function(s,m){const ov=overrides.get(m);return s+(ov!==null&&ov!==undefined?num(ov):num(section.avg6))},0);
-    return '<tr class="special-row"><td><strong>'+esc(label)+'</strong><div class="plan-sub">Media 6m '+money2(section.avg6)+' · 12m '+money2(section.avg12)+'</div></td><td class="muted">Base: media 6m</td>'+values.join('')+'<td class="total-cell">'+money(total)+'</td></tr>';
+    const total=months.reduce(function(s,m){const ov=overrides.get(m);return s+(ov!==null&&ov!==undefined?num(ov):specialBase(section))},0);
+    const info=section.method==='MEDIAN12'
+      ?'Mediana 12m '+money2(section.median12)+' · media 6m '+money2(section.avg6)
+      :'Media 6m '+money2(section.avg6)+' · 12m '+money2(section.avg12);
+    const method=section.method==='MEDIAN12'?'Base: mediana 12m':'Base: media 6m';
+    return '<tr class="special-row"><td><strong>'+esc(label)+'</strong><div class="plan-sub">'+info+'</div></td><td class="muted">'+method+'</td>'+values.join('')+'<td class="total-cell">'+money(total)+'</td></tr>';
   }
 
   html+=specialRow('Entrate previste','income',income,incOverrides);
@@ -377,6 +420,12 @@ function renderPlan(){
       });
     }
   });
+  const expenseByMonth=expenseTotalsByMonth();
+  const marginPct=num(report.meta&&report.meta.unexpected_margin_pct);
+  const marginCells=months.map(function(m){return (expenseByMonth.get(m)||0)*marginPct/100});
+  html+='<tr class="special-row"><td><strong>Margine imprevisti</strong><div class="plan-sub">'+marginPct.toFixed(1)+'% delle spese ordinarie previste</div></td><td class="muted">Buffer separato</td>'+
+    marginCells.map(function(v){return '<td>'+money(v)+'</td>'}).join('')+
+    '<td class="total-cell">'+money(marginCells.reduce(function(a,b){return a+b},0))+'</td></tr>';
   $('planBody').innerHTML=html;
 }
 
@@ -404,6 +453,24 @@ function expenseTotalsByMonth(){
   return out;
 }
 
+function renderExtraordinary(){
+  const flagged=report.extraordinary_transactions||[];
+  const candidates=report.extraordinary_candidates||[];
+  function row(x,flaggedMode){
+    const label=(x.counterparty||x.category||x.transaction_type||'Movimento');
+    const note=flaggedMode?(x.note||'Straordinario'):(x.description||'');
+    return '<tr><td>'+dateLabel(x.transaction_date)+'</td><td>'+esc(label)+'<div class="plan-sub">'+esc(note)+'</div></td><td>'+esc(x.transaction_type)+'</td><td class="amount '+(num(x.amount)>=0?'positive':'negative')+'">'+money2(x.amount)+'</td><td><button class="btn ghost compact" data-extra-id="'+esc(x.id)+'" data-extra-mode="'+(flaggedMode?'remove':'add')+'">'+(flaggedMode?'Rendi ordinario':'Segna straordinario')+'</button></td></tr>';
+  }
+  $('extraordinaryContent').innerHTML='<div class="extra-grid">'+
+    '<div class="extra-block"><h3>Straordinari attivi</h3><div style="overflow:auto"><table class="extra-table"><thead><tr><th>Data</th><th>Movimento</th><th>Tipo</th><th>Importo</th><th></th></tr></thead><tbody>'+
+      (flagged.length?flagged.map(function(x){return row(x,true)}).join(''):'<tr><td colspan="5" class="muted">Nessun movimento marcato.</td></tr>')+
+    '</tbody></table></div></div>'+
+    '<div class="extra-block"><h3>Movimenti grandi da verificare</h3><div class="plan-sub" style="margin-bottom:6px">Solo suggerimenti ≥ €1.500: nessuna classificazione automatica.</div><div style="overflow:auto"><table class="extra-table"><thead><tr><th>Data</th><th>Movimento</th><th>Tipo</th><th>Importo</th><th></th></tr></thead><tbody>'+
+      (candidates.length?candidates.map(function(x){return row(x,false)}).join(''):'<tr><td colspan="5" class="muted">Nessun candidato.</td></tr>')+
+    '</tbody></table></div></div>'+
+  '</div>';
+}
+
 function renderProjection(){
   const box=$('projectionContent');
   if(!balancesComplete()){
@@ -417,10 +484,11 @@ function renderProjection(){
   months.forEach(function(m){
     const income=effectiveSpecial(report.income_forecast,m);
     const expenses=exp.get(m)||0;
+    const margin=expenses*num(report.meta&&report.meta.unexpected_margin_pct)/100;
     const investment=effectiveSpecial(report.investment_forecast,m);
-    const delta=income-expenses-investment;
+    const delta=income-expenses-margin-investment;
     balance+=delta;
-    rows.push({month:m,income:income,expenses:expenses,investment:investment,delta:delta,balance:balance});
+    rows.push({month:m,income:income,expenses:expenses,margin:margin,investment:investment,delta:delta,balance:balance});
   });
   const min=rows.reduce(function(a,r){return Math.min(a,r.balance)},rows.length?rows[0].balance:balance);
   const final=rows.length?rows[rows.length-1].balance:balance;
@@ -430,8 +498,8 @@ function renderProjection(){
       '<div class="card kpi"><div class="label">Minimo previsto</div><div class="value '+(min<0?'negative':'')+'">'+money(min)+'</div></div>'+
       '<div class="card kpi"><div class="label">Dopo 6 mesi</div><div class="value '+(final<currentBalanceTotal()?'negative':'positive')+'">'+money(final)+'</div></div>'+
     '</div>'+
-    '<div style="overflow:auto"><table class="projection-table"><thead><tr><th>Mese</th><th>Entrate</th><th>Spese</th><th>Investimenti</th><th>Delta</th><th>Saldo previsto</th></tr></thead><tbody>'+
-    rows.map(function(r){return '<tr><td>'+esc(monthLabel(r.month))+'</td><td>'+money(r.income)+'</td><td>'+money(r.expenses)+'</td><td>'+money(r.investment)+'</td><td class="'+(r.delta>=0?'positive':'negative')+'">'+money(r.delta)+'</td><td><strong>'+money(r.balance)+'</strong></td></tr>'}).join('')+
+    '<div style="overflow:auto"><table class="projection-table"><thead><tr><th>Mese</th><th>Entrate</th><th>Spese ordinarie</th><th>Margine imprevisti</th><th>Investimenti</th><th>Delta</th><th>Saldo previsto</th></tr></thead><tbody>'+
+    rows.map(function(r){return '<tr><td>'+esc(monthLabel(r.month))+'</td><td>'+money(r.income)+'</td><td>'+money(r.expenses)+'</td><td>'+money(r.margin)+'</td><td>'+money(r.investment)+'</td><td class="'+(r.delta>=0?'positive':'negative')+'">'+money(r.delta)+'</td><td><strong>'+money(r.balance)+'</strong></td></tr>'}).join('')+
     '</tbody></table></div>'+
     '<div class="legend-note">Previsione operativa, non saldo bancario garantito: cambia immediatamente quando modifichi entrate, spese, investimenti o saldi iniziali.</div>';
 }
@@ -439,13 +507,16 @@ function renderProjection(){
 function renderAll(){
   renderKpis();
   renderExpenseChart();
+  renderExtraordinary();
   renderCashflowChart();
   renderBalances();
   renderPlan();
+  renderExtraordinary();
   renderProjection();
 }
 
 $('toggleYoY').onchange=renderExpenseChart;
+$('onlyOrdinary').onchange=renderExpenseChart;
 $('expandAll').onclick=function(){collapsedL1.clear();renderPlan()};
 $('collapseAll').onclick=function(){groupedForecast().forEach(function(g){collapsedL1.add(g.id)});renderPlan()};
 
@@ -502,12 +573,42 @@ $('balanceList').addEventListener('click',async function(e){
   if(!Number.isFinite(amount)){msg($('balanceMsg'),'Inserisci un saldo valido.',true);return}
   setBusy(b,true,'Salvo');
   try{
-    await rpc('dashboard_reporting_set_balance_v1',{p_account_id:id,p_balance:amount});
+    await rpc('dashboard_reporting_set_balance_v2',{p_account_id:id,p_balance:amount});
     const row=(report.balances||[]).find(function(x){return x.account_id===id});
     if(row){row.balance=amount;row.snapshot_date=localDateISO()}
     renderBalances();renderProjection();
     msg($('balanceMsg'),'Saldo aggiornato.');
   }catch(err){console.error(err);msg($('balanceMsg'),err.message||'Errore salvataggio',true)}
+  finally{setBusy(b,false)}
+});
+
+$('saveMargin').onclick=async function(){
+  const b=$('saveMargin');
+  const pct=Number($('marginPct').value);
+  if(!Number.isFinite(pct)||pct<0||pct>100){msg($('planMsg'),'Margine imprevisti non valido.',true);return}
+  setBusy(b,true,'Salvo');
+  try{
+    await rpc('dashboard_reporting_set_margin_v1',{p_unexpected_margin_pct:pct});
+    report.meta.unexpected_margin_pct=pct;
+    renderPlan();renderProjection();
+    msg($('planMsg'),'Margine imprevisti aggiornato.');
+  }catch(e){msg($('planMsg'),e.message||'Errore salvataggio',true)}
+  finally{setBusy(b,false)}
+};
+
+$('extraordinaryContent').addEventListener('click',async function(e){
+  const b=e.target.closest('[data-extra-id]');
+  if(!b)return;
+  const add=b.dataset.extraMode==='add';
+  setBusy(b,true,add?'Segno':'Rimuovo');
+  try{
+    await rpc('dashboard_reporting_set_extraordinary_v1',{
+      p_transaction_id:b.dataset.extraId,
+      p_is_extraordinary:add,
+      p_note:add?'Segnato manualmente dal reporting':null
+    });
+    await loadReport();
+  }catch(err){msg($('extraordinaryMsg'),err.message||'Errore aggiornamento',true)}
   finally{setBusy(b,false)}
 });
 
