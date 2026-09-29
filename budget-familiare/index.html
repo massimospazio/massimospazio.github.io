@@ -2176,12 +2176,15 @@ function bindCounterpartySearch(inputId,selectId){
   const apply=()=>{
     const raw=String(input.value||'').trim();
     const item=counterpartyBySearchLabel(raw);
-    select.value=item?.id||'';
-    select.dispatchEvent(new Event('change',{bubbles:true}));
+    const nextValue=item?.id||'';
+    if(select.value!==nextValue){
+      select.value=nextValue;
+      select.dispatchEvent(new Event('change',{bubbles:true}));
+    }
   };
-  input.addEventListener('change',apply);
   input.addEventListener('input',apply);
-  select.addEventListener('change',()=>syncSearchFromSelect(inputId,selectId));
+  input.addEventListener('change',apply);
+  input.addEventListener('focus',()=>{if(input.value)input.select()});
 }
 function clearMovementFilters(){document.querySelectorAll('[data-pipeline-step]').forEach(b=>b.addEventListener('click',()=>setClassificationPipelineStep(b.dataset.pipelineStep)));
 document.querySelectorAll('[data-pipeline-next]').forEach(b=>b.addEventListener('click',()=>setClassificationPipelineStep(b.dataset.pipelineNext)));
