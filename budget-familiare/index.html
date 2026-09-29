@@ -42,6 +42,15 @@
 .mcc-configured{color:#166534;font-weight:650}.mcc-unmapped{color:#b45309;font-weight:650}
 .parsing-rule-box{border:1px solid #bfdbfe;background:#f8fbff;border-radius:12px;padding:12px;margin-top:10px}.parsing-preview-samples{margin-top:8px}
 .duplicate-card{margin-top:14px}.duplicate-score{font-weight:750}.duplicate-score.high{color:#166534}.duplicate-score.medium{color:#b45309}
+.counterparty-kpis{grid-template-columns:repeat(auto-fit,minmax(135px,1fr));margin:4px 0 14px}.counterparty-kpi{padding:11px 12px;border:1px solid var(--line);border-radius:11px;background:#fafbfc}.counterparty-kpi[data-counterparty-kpi]{cursor:pointer}.counterparty-kpi[data-counterparty-kpi]:hover{border-color:#93c5fd;background:#f8fbff}.counterparty-kpi .k{font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}.counterparty-kpi .v{font-size:21px;font-weight:780;margin-top:3px}.counterparty-kpi .s{font-size:11px;color:var(--muted);margin-top:2px}
+.counterparty-summary{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:2px 0 14px}.counterparty-summary-head{display:grid;grid-template-columns:minmax(240px,1.8fr) repeat(4,minmax(90px,.65fr)) minmax(120px,.8fr);gap:8px;padding:8px 12px;background:#f8fafc;color:var(--muted);font-size:11px;font-weight:700}.counterparty-summary-row{display:grid;grid-template-columns:minmax(240px,1.8fr) repeat(4,minmax(90px,.65fr)) minmax(120px,.8fr);gap:8px;align-items:center;padding:10px 12px;border-top:1px solid var(--line);background:#fff}.counterparty-summary-row.l1{cursor:pointer;background:#fbfcfe}.counterparty-summary-row.l1:hover{background:#f8fbff}.counterparty-summary-row.l2{padding-left:34px;font-size:12px}.counterparty-summary-row .num{text-align:right}.counterparty-summary-row .cat-action{border:0;background:transparent;padding:0;text-align:left;cursor:pointer;color:inherit;font:inherit}.counterparty-summary-row .cat-action:hover{text-decoration:underline}
+.counterparty-registry-title{display:flex;justify-content:space-between;align-items:end;gap:12px;margin:4px 0 4px}.counterparty-registry-title h3{margin:0;font-size:16px}.counterparty-registry-title .muted{font-size:12px}
+.counterparty-filters{display:grid;grid-template-columns:minmax(220px,1.6fr) repeat(5,minmax(145px,1fr)) auto;gap:8px}.counterparty-filters .input,.counterparty-filters .select{width:100%;min-width:0}
+.counterparty-statuses{display:flex;gap:4px;flex-wrap:wrap}.cp-status-issue{background:#fee2e2;color:#991b1b}.cp-status-warn{background:#fef3c7;color:#92400e}.cp-status-info{background:#dbeafe;color:#1d4ed8}.cp-status-stale{background:#f3f4f6;color:#475569}.cp-status-ok{background:#dcfce7;color:#166534}
+.counterparty-detail{padding:12px;background:#fbfdff}.counterparty-detail-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:10px}.counterparty-detail-metrics{display:grid;grid-template-columns:repeat(6,minmax(110px,1fr));gap:8px;margin-bottom:10px}.counterparty-detail-metric{padding:8px 9px;border:1px solid var(--line);border-radius:9px;background:#fff}.counterparty-detail-metric .k{font-size:10px;color:var(--muted);text-transform:uppercase}.counterparty-detail-metric .v{font-size:13px;font-weight:720;margin-top:2px}.counterparty-detail .alias-panel{padding:10px;border:1px solid var(--line);border-radius:10px;background:#fff}.counterparty-detail .alias-panel-head{margin-bottom:8px}.counterparty-merge-note{padding:9px 10px;border:1px solid #fde68a;background:#fffbeb;border-radius:9px;margin:8px 0;font-size:12px}
+.net-negative{color:#991b1b}.net-positive{color:#166534}
+@media(max-width:1150px){.counterparty-filters{grid-template-columns:repeat(3,1fr)}.counterparty-summary-head,.counterparty-summary-row{grid-template-columns:minmax(190px,1.5fr) repeat(4,minmax(75px,.6fr)) minmax(100px,.8fr)}.counterparty-detail-metrics{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:750px){.counterparty-filters{grid-template-columns:1fr}.counterparty-summary-head{display:none}.counterparty-summary-row{grid-template-columns:1fr 1fr}.counterparty-summary-row>div:first-child{grid-column:1/-1}.counterparty-summary-row .num{text-align:left}.counterparty-detail-metrics{grid-template-columns:1fr 1fr}.counterparty-detail-head{flex-direction:column}}
 </style>
 </head>
 <body>
@@ -57,7 +66,7 @@
 
   <div id="appView" class="hidden">
     <div class="top">
-      <div class="brand"><h1>Dashboard Budget Familiare</h1><small>V60 · Pipeline completa, investimenti, parsing affidabile e controllo duplicati</small></div>
+      <div class="brand"><h1>Dashboard Budget Familiare</h1><small>V61 · Revisione controparti e alias per sintesi, qualità e recenza</small></div>
       <div class="userbar"><span id="userEmail"></span><button id="refreshBtn" class="btn ghost">Aggiorna</button><button id="logoutBtn" class="btn ghost">Esci</button></div>
     </div>
     <div class="tabs">
@@ -345,7 +354,7 @@
 
         <div class="catalog-panel" data-catalog-panel="merchants">
           <div class="card stack catalog-card">
-            <div class="catalog-intro"><div><h2 style="margin:0 0 4px">Controparti</h2><div class="muted small">Identità, alias di riconoscimento e default futuri. Gli alias riconoscono la controparte; la categoria predefinita completa l’automazione.</div></div></div>
+            <div class="catalog-intro"><div><h2 style="margin:0 0 4px">Controparti</h2><div class="muted small">Revisione anagrafica V61: sintesi per categoria, registro unico ordinabile, qualità alias e recenza d'uso.</div></div></div>
             <div class="catalog-form">
               <div class="editor-row four">
                 <div class="field"><label>Nome controparte</label><input id="merchantName" class="input" /></div>
@@ -354,19 +363,33 @@
                 <button id="saveMerchant" class="btn">Salva</button>
               </div>
               <input id="merchantApplyExisting" type="hidden" />
-              <div class="note">La categoria predefinita ha priorità <strong>Normale (100)</strong>. Con il motore di coerenza attivo, la modifica viene ricalcolata automaticamente sui movimenti non protetti.</div>
+              <div class="note">La categoria predefinita ha priorità <strong>Normale (100)</strong>. La sintesi sotto usa la categoria predefinita della controparte, non le eventuali categorie eccezione dei singoli movimenti.</div>
               <input id="merchantId" type="hidden" />
               <div id="merchantMsg"></div>
             </div>
-            <div class="catalog-toolbar">
-              <input id="merchantSearch" class="input" placeholder="Filtra controparti..." />
+
+            <div id="counterpartyKpis" class="grid counterparty-kpis"></div>
+
+            <div class="counterparty-registry-title">
+              <div><h3>Sintesi per categoria predefinita</h3><div class="muted">Livello 1 espandibile nel livello 2. Clicca una categoria per filtrare il registro.</div></div>
+              <button id="clearCounterpartyCategorySummary" class="btn ghost compact" type="button">Tutte le categorie</button>
+            </div>
+            <div id="counterpartySummary" class="counterparty-summary"></div>
+
+            <div class="counterparty-registry-title">
+              <div><h3>Registro controparti</h3><div id="counterpartyRegistryInfo" class="muted">—</div></div>
+              <div class="muted">Clicca le intestazioni per ordinare.</div>
+            </div>
+            <div class="catalog-toolbar counterparty-filters">
+              <input id="merchantSearch" class="input" placeholder="Cerca controparte o alias..." />
+              <select id="merchantL1Filter" class="select"><option value="">Tutti i livelli 1</option></select>
+              <select id="merchantL2Filter" class="select"><option value="">Tutti i livelli 2</option></select>
               <select id="merchantTypeFilter" class="select"><option value="">Tutti i tipi</option><option value="MERCHANT">Negozio / fornitore</option><option value="EMPLOYER">Datore di lavoro</option><option value="PERSON">Persona</option><option value="ENTITY">Azienda / ente</option><option value="PUBLIC_BODY">Ente pubblico</option><option value="BANK">Banca</option><option value="PLATFORM">Piattaforma</option><option value="OTHER">Altro</option></select>
-              <select id="merchantCategoryFilter" class="select"><option value="">Tutte le categorie</option></select>
-              <select id="merchantConfigFilter" class="select"><option value="">Tutte le configurazioni</option><option value="INCOMPLETE_ALIAS">Alias senza categoria predefinita</option><option value="WITH_ALIAS">Con alias</option><option value="NO_ALIAS">Senza alias</option></select>
+              <select id="merchantStatusFilter" class="select"><option value="">Tutti gli stati</option><option value="ISSUES">Da controllare</option><option value="NO_CATEGORY">Senza categoria default</option><option value="NO_ALIAS">Senza alias</option><option value="DUPLICATE">Possibile duplicato</option><option value="MCC_BOOTSTRAP">Creata da MCC</option><option value="OK">Configurazione completa</option></select>
+              <select id="merchantRecencyFilter" class="select"><option value="">Qualsiasi recenza</option><option value="RECENT_90">Usata negli ultimi 90 giorni</option><option value="RECENT_365">Usata negli ultimi 12 mesi</option><option value="STALE_365">Non usata da oltre 12 mesi</option><option value="NEVER">Mai utilizzata</option></select>
+              <button id="clearMerchantFilters" class="btn ghost compact" type="button">Azzera</button>
             </div>
             <div id="merchantsTable"></div>
-
-
           </div>
         </div>
 
@@ -507,6 +530,7 @@ const catalogSort={categories:{key:'label',dir:'asc'},merchants:{key:'name',dir:
 const expandedGroups=new Set();
 const expandedCategoryGroups=new Set();
 const expandedCounterpartyGroups=new Set();
+const expandedCounterpartyDetails=new Set();
 const expandedCategoryMovementDetails=new Set();
 const expandedCounterpartyMovementDetails=new Set();
 const expandedCounterpartyAliasDetails=new Set();
@@ -541,7 +565,7 @@ async function loadAll(){await Promise.all([loadOverview(),loadMovementsData()])
 async function loadOverview(){try{overview=await rpc('dashboard_read_v1');renderOverview()}catch(e){console.error(e);$('accountsTable').innerHTML=`<div class="msg error">${esc(e.message)}</div>`}}
 async function loadMovementsData(){
   try{
-    const [base,counterparties,aliases,movements,transfers,projectsTags,rulesData,parsingRules]=await Promise.all([
+    const [base,counterparties,aliases,movements,transfers,projectsTags,rulesData,parsingRules,duplicates]=await Promise.all([
       rpc('dashboard_categorization_read_v1'),
       rpc('dashboard_counterparties_read_v1'),
       rpc('dashboard_counterparty_aliases_read_v1'),
@@ -549,7 +573,8 @@ async function loadMovementsData(){
       rpc('dashboard_transfers_read_v1'),
       rpc('dashboard_projects_tags_read_v1'),
       rpc('dashboard_rules_read_v1'),
-      rpc('dashboard_counterparty_parsing_rules_read_v1')
+      rpc('dashboard_counterparty_parsing_rules_read_v1'),
+      rpc('dashboard_counterparty_duplicate_suggestions_v1').catch(()=>[])
     ]);
     catData=base||{};
     catData.counterparties=counterparties||[];
@@ -561,6 +586,7 @@ async function loadMovementsData(){
     catData.mccRules=rulesData?.mcc_rules||[];
     catData.compoundRules=rulesData?.compound_rules||[];
     catData.parsingRules=parsingRules||[];
+    duplicateSuggestions=duplicates||[];
     renderMovementsPage();
     renderCatalogs();
   }catch(e){
@@ -1539,10 +1565,15 @@ function renderCatalogs(){
   $('categoryParent').innerHTML='<option value="">— nessuna (L1) —</option>'+cats.filter(c=>Number(c.depth)<3).map(c=>`<option value="${c.id}">${esc(categoryLabel(c))}</option>`).join('');
   const catOpts='<option value="">— nessuna —</option>'+cats.map(c=>`<option value="${c.id}">${esc(categoryLabel(c))}</option>`).join('');
   $('merchantCategory').innerHTML=catOpts;
-  if($('merchantCategoryFilter')){
-    const keep=$('merchantCategoryFilter').value||'';
-    $('merchantCategoryFilter').innerHTML='<option value="">Tutte le categorie</option><option value="__NONE__">Senza categoria</option>'+cats.map(x=>`<option value="${x.id}">${esc(categoryLabel(x))}</option>`).join('');
-    $('merchantCategoryFilter').value=keep;
+  if($('merchantL1Filter')){
+    const keepL1=$('merchantL1Filter').value||'',keepL2=$('merchantL2Filter')?.value||'';
+    const l1s=[...new Set(cats.map(x=>x.level1_name||x.name).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'it',{sensitivity:'base'}));
+    $('merchantL1Filter').innerHTML='<option value="">Tutti i livelli 1</option><option value="Senza categoria">Senza categoria</option>'+l1s.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');
+    $('merchantL1Filter').value=[...$('merchantL1Filter').options].some(o=>o.value===keepL1)?keepL1:'';
+    const activeL1=$('merchantL1Filter').value||'';
+    const l2s=[...new Set(cats.filter(x=>!activeL1||(x.level1_name||x.name)===activeL1).map(x=>x.level2_name).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'it',{sensitivity:'base'}));
+    $('merchantL2Filter').innerHTML='<option value="">Tutti i livelli 2</option>'+l2s.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');
+    $('merchantL2Filter').value=[...$('merchantL2Filter').options].some(o=>o.value===keepL2)?keepL2:'';
   }
   if($('compoundRuleCategory'))$('compoundRuleCategory').innerHTML=catOpts;
   if($('compoundRuleMerchant'))$('compoundRuleMerchant').innerHTML='<option value="">— nessuna —</option>'+parties.map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('');
@@ -1625,7 +1656,7 @@ function counterpartyAliasesHtml(m){
     return `<tr data-alias-id="${a.id}"><td><strong class="mono">${esc(a.pattern)}</strong></td><td>${aliasSourcesHtml(a)}</td><td>${usage}</td><td>${period}</td><td><div class="compact-actions"><select class="select" data-alias-move-target><option value="">— sposta a —</option>${targets}</select><button class="btn ghost compact" data-move-alias="${a.id}" type="button">Sposta</button><button class="btn danger compact" data-delete-alias="${a.id}" type="button">Elimina</button></div></td></tr>`;
   }).join('');
   return `<div class="alias-panel">
-    <div class="alias-panel-head"><div><strong>Alias di riconoscimento</strong><div class="muted small">Valori grezzi che identificano ${esc(m.name)}. L’origine segue il campo effettivamente usato dal parser; il conteggio considera solo i movimenti in cui l’alias è realmente associato a questa controparte.</div></div><div class="compact-actions"><span class="pill">${nfmt(aliases.length)} alias</span><button class="btn ghost compact" data-cancel-alias-panel="${m.id}" type="button">Annulla</button></div></div>
+    <div class="alias-panel-head"><div><strong>Alias di riconoscimento</strong><div class="muted small">Valori grezzi che identificano ${esc(m.name)}. L’origine segue il campo effettivamente usato dal parser; il conteggio considera solo i movimenti in cui l’alias è realmente associato a questa controparte.</div></div><div class="compact-actions"><span class="pill">${nfmt(aliases.length)} alias</span></div></div>
     ${warning}
     <div class="alias-add-row"><input class="input" data-new-alias-for="${m.id}" placeholder="Aggiungi alias esatto..." /><button class="btn compact" data-add-alias="${m.id}" type="button">Aggiungi alias</button></div>
     <div class="note">Le modifiche agli alias cambiano il riconoscimento futuro. Se il motore automatico è disattivato, lo storico non viene riallineato subito ma le differenze compaiono in Coerenza.</div>
@@ -1664,46 +1695,159 @@ async function deleteCounterpartyAlias(btn){
     expandedCounterpartyAliasDetails.add(merchantId);coherenceData=null;await loadMovementsData();
   }catch(e){alert(e.message)}finally{setBusy(btn,false)}
 }
+function counterpartyCategoryMeta(m){
+  if(!m?.default_category_id)return {l1:'Senza categoria',l2:'',path:'Senza categoria'};
+  const cat=(catData?.categories||[]).find(x=>x.id===m.default_category_id);
+  if(!cat)return {l1:'Senza categoria',l2:'',path:counterpartyCategoryLabel(m)};
+  return {l1:cat.level1_name||cat.name||'Senza categoria',l2:cat.level2_name||'',path:categoryLabel(cat)};
+}
+function counterpartyDuplicateSuggestion(id){return (duplicateSuggestions||[]).find(x=>String(x.source_id)===String(id))||null}
+function counterpartyStats(m){
+  const movements=(catData?.movements||[]).filter(x=>x.counterparty_id===m.id);
+  const aliases=aliasesForMerchant(m.id);
+  const dates=movements.map(x=>x.transaction_date).filter(Boolean).sort();
+  const total=movements.reduce((s,x)=>s+Number(x.amount||0),0);
+  const volume=movements.reduce((s,x)=>s+Math.abs(Number(x.amount||0)),0);
+  const bootstrap=movements.some(x=>x.automation_origin==='MCC_BOOTSTRAP');
+  return {aliases,alias_count:aliases.length,movements,movement_count:movements.length,total,volume,first_date:dates[0]||'',last_date:dates[dates.length-1]||'',bootstrap,duplicate:counterpartyDuplicateSuggestion(m.id)};
+}
+function counterpartyAgeDays(date){
+  if(!date)return Infinity;
+  const d=new Date(date+'T12:00:00'),now=new Date();
+  return Math.max(0,Math.floor((now-d)/86400000));
+}
+function counterpartyRecencyLabel(date){
+  if(!date)return 'Mai utilizzata';
+  const days=counterpartyAgeDays(date);
+  if(days===0)return 'oggi';
+  if(days===1)return 'ieri';
+  if(days<31)return days+' gg fa';
+  if(days<365)return Math.round(days/30)+' mesi fa';
+  return (days/365).toLocaleString('it-IT',{maximumFractionDigits:1})+' anni fa';
+}
+function counterpartyStatusInfo(m,s){
+  const tags=[];
+  if(!m.default_category_id)tags.push({key:'NO_CATEGORY',label:'Senza categoria',cls:'cp-status-issue'});
+  if(!s.alias_count)tags.push({key:'NO_ALIAS',label:'Senza alias',cls:'cp-status-warn'});
+  if(s.duplicate)tags.push({key:'DUPLICATE',label:'Possibile duplicato',cls:'cp-status-issue'});
+  if(s.bootstrap)tags.push({key:'MCC_BOOTSTRAP',label:'Creata da MCC',cls:'cp-status-info'});
+  if(!s.last_date)tags.push({key:'NEVER',label:'Mai utilizzata',cls:'cp-status-stale'});
+  else if(counterpartyAgeDays(s.last_date)>365)tags.push({key:'STALE',label:'Inattiva >12 mesi',cls:'cp-status-stale'});
+  if(!tags.some(x=>['NO_CATEGORY','NO_ALIAS','DUPLICATE'].includes(x.key)))tags.push({key:'OK',label:'Configurazione completa',cls:'cp-status-ok'});
+  return tags;
+}
+function counterpartyStatusHtml(m,s){
+  return '<div class="counterparty-statuses">'+counterpartyStatusInfo(m,s).map(x=>`<span class="pill ${x.cls}">${esc(x.label)}</span>`).join('')+'</div>';
+}
+function counterpartyNetHtml(s){
+  const cls=s.total<0?'net-negative':s.total>0?'net-positive':'';
+  return `<strong class="${cls}">${euro(s.total)}</strong><br><span class="muted small" title="Somma dei valori assoluti dei movimenti">volume ${euro(s.volume)}</span>`;
+}
+function counterpartyEnriched(){
+  return (catData?.counterparties||[]).map(m=>{
+    const stats=counterpartyStats(m),category=counterpartyCategoryMeta(m),statuses=counterpartyStatusInfo(m,stats);
+    return {...m,_stats:stats,_category:category,_statuses:statuses,_status_priority:statuses.some(x=>x.key==='DUPLICATE')?0:statuses.some(x=>x.key==='NO_CATEGORY')?1:statuses.some(x=>x.key==='NO_ALIAS')?2:statuses.some(x=>x.key==='STALE')?3:8};
+  });
+}
+function renderCounterpartyKpis(all){
+  const aliases=all.reduce((s,x)=>s+x._stats.alias_count,0),movements=all.reduce((s,x)=>s+x._stats.movement_count,0);
+  const noCategory=all.filter(x=>!x.default_category_id).length,noAlias=all.filter(x=>!x._stats.alias_count).length;
+  const dup=all.filter(x=>!!x._stats.duplicate).length,bootstrap=all.filter(x=>x._stats.bootstrap).length;
+  const stale=all.filter(x=>x._stats.last_date&&counterpartyAgeDays(x._stats.last_date)>365).length,never=all.filter(x=>!x._stats.last_date).length;
+  $('counterpartyKpis').innerHTML=[
+    ['ALL','Controparti',all.length,'anagrafica completa'],
+    ['ALIASES','Alias',aliases,'valori di riconoscimento'],
+    ['MOVEMENTS','Movimenti',movements,'assegnati a controparti'],
+    ['NO_CATEGORY','Senza categoria',noCategory,'default mancante'],
+    ['NO_ALIAS','Senza alias',noAlias,'riconoscimento da verificare'],
+    ['DUPLICATE','Possibili duplicati',dup,'suggerimenti euristici'],
+    ['MCC_BOOTSTRAP','Create da MCC',bootstrap,'bootstrap automatico'],
+    ['STALE_365','Inattive >12 mesi',stale,never?never+' mai utilizzate separate':'da rivedere']
+  ].map(x=>{const clickable=['ALL','NO_CATEGORY','NO_ALIAS','DUPLICATE','MCC_BOOTSTRAP','STALE_365'].includes(x[0]);return `<div class="counterparty-kpi"${clickable?` data-counterparty-kpi="${x[0]}"`:''}><div class="k">${esc(x[1])}</div><div class="v">${nfmt(x[2])}</div><div class="s">${esc(x[3])}</div></div>`}).join('');
+}
+function renderCounterpartySummary(all){
+  const groups=new Map();
+  for(const m of all){
+    const {l1,l2}=m._category,key=l1||'Senza categoria',sub=key==='Senza categoria'?'Senza categoria':(l2||'Solo livello 1');
+    if(!groups.has(key))groups.set(key,{l1:key,rows:[],l2:new Map()});
+    const g=groups.get(key);g.rows.push(m);
+    if(!g.l2.has(sub))g.l2.set(sub,[]);g.l2.get(sub).push(m);
+  }
+  const agg=rows=>({
+    counterparties:rows.length,
+    aliases:rows.reduce((s,x)=>s+x._stats.alias_count,0),
+    movements:rows.reduce((s,x)=>s+x._stats.movement_count,0),
+    total:rows.reduce((s,x)=>s+x._stats.total,0),
+    last:rows.map(x=>x._stats.last_date).filter(Boolean).sort().pop()||''
+  });
+  const head='<div class="counterparty-summary-head"><div>Categoria</div><div class="right">Controparti</div><div class="right">Alias</div><div class="right">Movimenti</div><div class="right">Totale netto</div><div>Ultimo movimento</div></div>';
+  const body=[...groups.values()].sort((a,b)=>a.l1.localeCompare(b.l1,'it',{sensitivity:'base'})).map(g=>{
+    const a=agg(g.rows),open=expandedCounterpartyGroups.has(g.l1);
+    const subs=[...g.l2.entries()].sort((x,y)=>x[0].localeCompare(y[0],'it',{sensitivity:'base'})).map(([l2,rows])=>{
+      const z=agg(rows);
+      return `<div class="counterparty-summary-row l2"><div><button class="cat-action" data-counterparty-summary-filter-l1="${esc(g.l1)}" data-counterparty-summary-filter-l2="${esc(l2==='Solo livello 1'?'':l2)}">${esc(l2)}</button></div><div class="num">${nfmt(z.counterparties)}</div><div class="num">${nfmt(z.aliases)}</div><div class="num">${nfmt(z.movements)}</div><div class="num">${euro(z.total)}</div><div>${esc(z.last||'—')}<br><span class="muted small">${esc(counterpartyRecencyLabel(z.last))}</span></div></div>`;
+    }).join('');
+    return `<div class="counterparty-summary-row l1" data-toggle-counterparty-summary="${esc(g.l1)}"><div><span class="group-caret">${open?'▼':'▶'}</span><button class="cat-action" data-counterparty-summary-filter-l1="${esc(g.l1)}">${categoryChip(g.l1)}</button></div><div class="num"><strong>${nfmt(a.counterparties)}</strong></div><div class="num">${nfmt(a.aliases)}</div><div class="num">${nfmt(a.movements)}</div><div class="num"><strong>${euro(a.total)}</strong></div><div>${esc(a.last||'—')}<br><span class="muted small">${esc(counterpartyRecencyLabel(a.last))}</span></div></div>${open?subs:''}`;
+  }).join('');
+  $('counterpartySummary').innerHTML=head+(body||'<div class="note" style="padding:12px">Nessuna controparte.</div>');
+}
+function counterpartyDetailHtml(m){
+  const s=m._stats||counterpartyStats(m),d=s.duplicate;
+  const merge=d?`<div class="counterparty-merge-note"><strong>Possibile duplicato:</strong> ${esc(d.source_name)} → ${esc(d.target_name)} · ${esc(d.reason||'segnale da verificare')} <button class="btn secondary compact" style="margin-left:8px" data-merge-counterparty="${esc(d.source_id)}" data-merge-target="${esc(d.target_id)}" data-source-name="${esc(d.source_name)}" data-target-name="${esc(d.target_name)}">Valuta unione</button></div>`:'';
+  return `<div class="counterparty-detail">
+    <div class="counterparty-detail-head"><div><strong>${esc(m.name)}</strong><div class="muted small">${esc(counterpartyTypeLabel(m.counterparty_type))} · ${esc(m._category?.path||counterpartyCategoryLabel(m))}</div></div><div class="compact-actions"><button class="btn ghost compact" data-edit-merch="${m.id}">Modifica</button><button class="btn ghost compact" data-close-counterparty-detail="${m.id}">Chiudi</button><button class="btn danger compact" data-delete-entity="COUNTERPARTY" data-delete-key="${m.id}" data-delete-label="${esc(m.name)}">Elimina</button></div></div>
+    <div class="counterparty-detail-metrics">
+      <div class="counterparty-detail-metric"><div class="k">Alias</div><div class="v">${nfmt(s.alias_count)}</div></div>
+      <div class="counterparty-detail-metric"><div class="k">Movimenti</div><div class="v">${nfmt(s.movement_count)}</div></div>
+      <div class="counterparty-detail-metric"><div class="k">Totale netto</div><div class="v">${euro(s.total)}</div></div>
+      <div class="counterparty-detail-metric"><div class="k">Volume</div><div class="v">${euro(s.volume)}</div></div>
+      <div class="counterparty-detail-metric"><div class="k">Primo movimento</div><div class="v">${esc(s.first_date||'—')}</div></div>
+      <div class="counterparty-detail-metric"><div class="k">Ultimo movimento</div><div class="v">${esc(s.last_date||'—')}<br><span class="muted small">${esc(counterpartyRecencyLabel(s.last_date))}</span></div></div>
+    </div>
+    ${merge}
+    ${counterpartyAliasesHtml(m)}
+    <div style="margin-top:10px">${counterpartyMovementDetailTable(s.movements)}</div>
+  </div>`;
+}
 function renderMerchantsCatalog(){
-  const q=($('merchantSearch')?.value||'').trim().toLowerCase(),type=$('merchantTypeFilter')?.value||'',cat=$('merchantCategoryFilter')?.value||'',config=$('merchantConfigFilter')?.value||'';
-  let rows=(catData?.counterparties||[]).filter(m=>{
-    const label=counterpartyCategoryLabel(m),aliases=aliasesForMerchant(m.id),aliasText=aliases.map(a=>a.pattern).join(' ');
-    if(q&&!textSearchMatches([m.name,label,counterpartyTypeLabel(m.counterparty_type),aliasText].join(' '),q))return false;
+  const all=counterpartyEnriched();
+  renderCounterpartyKpis(all);renderCounterpartySummary(all);
+
+  const q=($('merchantSearch')?.value||'').trim().toLowerCase(),type=$('merchantTypeFilter')?.value||'';
+  const l1=$('merchantL1Filter')?.value||'',l2=$('merchantL2Filter')?.value||'',status=$('merchantStatusFilter')?.value||'',recency=$('merchantRecencyFilter')?.value||'';
+  let rows=all.filter(m=>{
+    const aliasText=m._stats.aliases.map(a=>a.pattern).join(' ');
+    if(q&&!textSearchMatches([m.name,m._category.path,counterpartyTypeLabel(m.counterparty_type),aliasText].join(' '),q))return false;
     if(type&&m.counterparty_type!==type)return false;
-    if(cat==='__NONE__'&&m.default_category_id)return false;
-    if(cat&&cat!=='__NONE__'&&m.default_category_id!==cat)return false;
-    if(config==='INCOMPLETE_ALIAS'&&!(aliases.length&&!m.default_category_id))return false;
-    if(config==='WITH_ALIAS'&&!aliases.length)return false;
-    if(config==='NO_ALIAS'&&aliases.length)return false;
+    if(l1&&m._category.l1!==l1)return false;
+    if(l2&&m._category.l2!==l2)return false;
+    const keys=new Set(m._statuses.map(x=>x.key));
+    if(status==='ISSUES'&&!(['NO_CATEGORY','NO_ALIAS','DUPLICATE'].some(x=>keys.has(x))))return false;
+    if(status&&status!=='ISSUES'&&!keys.has(status))return false;
+    const age=counterpartyAgeDays(m._stats.last_date);
+    if(recency==='RECENT_90'&&(!m._stats.last_date||age>90))return false;
+    if(recency==='RECENT_365'&&(!m._stats.last_date||age>365))return false;
+    if(recency==='STALE_365'&&(!m._stats.last_date||age<=365))return false;
+    if(recency==='NEVER'&&m._stats.last_date)return false;
     return true;
   });
-  rows=genericCatalogSort(rows,'merchants',{name:x=>x.name||'',type:x=>counterpartyTypeLabel(x.counterparty_type),category:counterpartyCategoryLabel,movements:x=>Number(x.movements||0),incoming:x=>Number(x.incoming_total||0),outgoing:x=>Number(x.outgoing_total||0)});
-  const groups=new Map();
-  for(const m of rows){
-    const label=counterpartyCategoryLabel(m),l1=label==='Senza categoria'?'Senza categoria':label.split(' › ')[0];
-    if(!groups.has(label))groups.set(label,{label,l1,rows:[]});
-    groups.get(label).rows.push(m);
-  }
-  const sections=[...groups.values()].sort((a,b)=>a.label.localeCompare(b.label,'it',{sensitivity:'base'})).map(g=>{
-    const expanded=q||cat||config||expandedCounterpartyGroups.has(g.label);
-    const mov=g.rows.reduce((s,x)=>s+Number(x.movements||0),0),incoming=g.rows.reduce((s,x)=>s+Number(x.incoming_total||0),0),outgoing=g.rows.reduce((s,x)=>s+Number(x.outgoing_total||0),0);
-    const body=g.rows.map(m=>{
-      const key=m.id,openMov=expandedCounterpartyMovementDetails.has(key),openAlias=expandedCounterpartyAliasDetails.has(key),detail=(catData?.movements||[]).filter(x=>x.counterparty_id===m.id),aliases=aliasesForMerchant(m.id);
-      const incomplete=aliases.length&&!m.default_category_id?'<br><span class="pill alias-incomplete">⚠ alias senza categoria predefinita</span>':'';
-      return `<tr><td><strong>${esc(m.name)}</strong>${incomplete}</td><td>${esc(counterpartyTypeLabel(m.counterparty_type))}</td><td>${nfmt(detail.length)}</td><td>${euro(m.incoming_total)}</td><td>${euro(m.outgoing_total)}</td><td><div class="compact-actions"><button class="btn ${aliases.length?'secondary':'ghost'} compact" data-toggle-counterparty-aliases="${m.id}">Alias (${nfmt(aliases.length)})</button><button class="btn secondary compact" data-toggle-counterparty-movements="${m.id}">Movimenti</button><button class="btn ghost compact" data-edit-merch="${m.id}">Modifica</button><button class="btn danger compact" data-delete-entity="COUNTERPARTY" data-delete-key="${m.id}" data-delete-label="${esc(m.name)}">Elimina</button></div></td></tr>${openAlias?`<tr><td colspan="6" style="padding:0">${counterpartyAliasesHtml(m)}</td></tr>`:''}${openMov?`<tr><td colspan="6" style="padding:0">${counterpartyMovementDetailTable(detail)}</td></tr>`:''}`;
-    }).join('');
-    return `<div class="catalog-section">
-      <div class="catalog-section-head" data-toggle-counterparty-group="${esc(g.label)}">
-        <div><span class="group-caret">${expanded?'▼':'▶'}</span>${categoryChip(g.l1)} <span class="group-meta">${esc(g.label===g.l1?'':g.label.replace(g.l1+' › ',''))} · ${nfmt(g.rows.length)} controparti</span></div>
-        <div class="group-stat"><strong>${nfmt(mov)}</strong><br><span class="muted small">movimenti</span></div>
-        <div class="group-stat"><strong>${euro(incoming)}</strong><br><span class="muted small">entrate</span></div>
-        <div class="group-stat"><strong>${euro(outgoing)}</strong><br><span class="muted small">uscite</span></div>
-        <div></div>
-      </div>
-      <div class="catalog-section-body ${expanded?'':'hidden'}"><table class="table"><thead><tr><th>Controparte</th><th>Tipo</th><th>Movimenti</th><th>Entrate</th><th>Uscite</th><th></th></tr></thead><tbody>${body}</tbody></table></div>
-    </div>`;
+  rows=genericCatalogSort(rows,'merchants',{
+    name:x=>x.name||'',
+    type:x=>counterpartyTypeLabel(x.counterparty_type),
+    l1:x=>x._category.l1,
+    category:x=>x._category.path,
+    aliases:x=>x._stats.alias_count,
+    movements:x=>x._stats.movement_count,
+    total:x=>x._stats.total,
+    last:x=>x._stats.last_date||'0000-00-00',
+    status:x=>x._status_priority
+  });
+  $('counterpartyRegistryInfo').textContent=`${nfmt(rows.length)} controparti visualizzate su ${nfmt(all.length)}`;
+  const body=rows.map(m=>{
+    const open=expandedCounterpartyDetails.has(m.id),s=m._stats;
+    return `<tr><td><strong>${esc(m.name)}</strong></td><td>${esc(counterpartyTypeLabel(m.counterparty_type))}</td><td>${esc(m._category.l1)}</td><td>${esc(m._category.path)}</td><td><button class="btn ghost compact" data-toggle-counterparty-detail="${m.id}">${nfmt(s.alias_count)}</button></td><td>${nfmt(s.movement_count)}</td><td>${counterpartyNetHtml(s)}</td><td>${esc(s.last_date||'—')}<br><span class="muted small">${esc(counterpartyRecencyLabel(s.last_date))}</span></td><td>${counterpartyStatusHtml(m,s)}</td><td><button class="btn ${open?'secondary':'ghost'} compact" data-toggle-counterparty-detail="${m.id}">${open?'Chiudi':'Dettagli'}</button></td></tr>${open?`<tr><td colspan="10" style="padding:0">${counterpartyDetailHtml(m)}</td></tr>`:''}`;
   }).join('');
-  $('merchantsTable').innerHTML=sections||'<div class="muted">Nessuna controparte.</div>';
+  $('merchantsTable').innerHTML=`<div class="table-wrap"><table class="table"><thead><tr><th>${catalogSortHeader('merchants','Controparte','name')}</th><th>${catalogSortHeader('merchants','Tipo','type')}</th><th>${catalogSortHeader('merchants','Categoria L1','l1')}</th><th>${catalogSortHeader('merchants','Categoria default','category')}</th><th>${catalogSortHeader('merchants','Alias','aliases')}</th><th>${catalogSortHeader('merchants','Movimenti','movements')}</th><th>${catalogSortHeader('merchants','Totale netto','total')}</th><th>${catalogSortHeader('merchants','Ultimo movimento','last')}</th><th>${catalogSortHeader('merchants','Stato','status')}</th><th></th></tr></thead><tbody>${body||'<tr><td colspan="10" class="muted">Nessuna controparte con i filtri selezionati.</td></tr>'}</tbody></table></div>`;
 }
 function renderProjectsCatalog(){
   const q=($('projectSearch')?.value||'').trim().toLowerCase(),type=$('projectTypeFilter')?.value||'',status=$('projectStatusFilter')?.value||'';
@@ -1952,8 +2096,16 @@ $('cancelQuickCounterparty').onclick=()=>{$('quickCounterpartyBox').classList.ad
 ['movementSearch','movementStatus','movementAutomation','movementBank','movementKind','movementType','movementDirection','movementCounterparty','movementCategory','movementProject','movementTag','movementDateFrom','movementDateTo'].forEach(id=>$(id).addEventListener(id==='movementSearch'?'input':'change',renderMovements));$('clearMovementFilters').onclick=clearMovementFilters;$('viewList').onclick=()=>{viewMode='list';renderMovements()};$('viewGrouped').onclick=()=>{viewMode='grouped';renderMovements()};$('bulkSelectVisible').onclick=selectVisibleMovements;$('bulkClearSelection').onclick=clearSelectedMovements;$('bulkApplyCategory').onclick=applyBulkCategory;
 $('movementsTable').addEventListener('click',e=>{const auto=e.target.closest('[data-automation-target]');if(auto){openAutomationTarget(auto.dataset.automationTarget,auto.dataset.automationId);return}const sort=e.target.closest('[data-sort]');if(sort){setSort(sort.dataset.sort);return}const edit=e.target.closest('[data-edit-movement]');if(edit){const row=(catData?.movements||[]).find(x=>x.id===edit.dataset.editMovement);if(row)openClassify(row);return}const tg=e.target.closest('[data-toggle-group]');if(tg){const g=(window.__groupRows||[])[Number(tg.dataset.toggleGroup)];if(!g)return;if(expandedGroups.has(g.key))expandedGroups.delete(g.key);else expandedGroups.add(g.key);renderMovements()}});
 $('movementsTable').addEventListener('change',e=>{const cb=e.target.closest('[data-select-movement]');if(!cb)return;cb.checked?selectedMovementIds.add(cb.dataset.selectMovement):selectedMovementIds.delete(cb.dataset.selectMovement);syncBulkSelectionUi()});
-['categorySearch','merchantSearch','merchantTypeFilter','merchantCategoryFilter','merchantConfigFilter','projectSearch','projectTypeFilter','projectStatusFilter','tagSearch','tagStatusFilter','mccSearch','mccStatusFilter','compoundRuleSearch','compoundRuleStatusFilter','parsingRuleSearch'].forEach(id=>$(id)?.addEventListener(id.endsWith('Search')?'input':'change',renderCatalogs));$('expandAllCategories').onclick=()=>{(catData?.categories||[]).filter(x=>Number(x.depth)===1).forEach(x=>expandedCategoryGroups.add(x.level1_name||x.name));renderCategoriesCatalog()};$('collapseAllCategories').onclick=()=>{expandedCategoryGroups.clear();renderCategoriesCatalog()};
-$('tab-catalogs').addEventListener('click',e=>{const ct=e.target.closest('[data-catalog-tab]');if(ct){setCatalogTab(ct.dataset.catalogTab);return}const cm=e.target.closest('[data-toggle-category-movements]');if(cm){const k=cm.dataset.toggleCategoryMovements;expandedCategoryMovementDetails.has(k)?expandedCategoryMovementDetails.delete(k):expandedCategoryMovementDetails.add(k);renderCategoriesCatalog();return}const cpm=e.target.closest('[data-toggle-counterparty-movements]');if(cpm){const k=cpm.dataset.toggleCounterpartyMovements;expandedCounterpartyMovementDetails.has(k)?expandedCounterpartyMovementDetails.delete(k):expandedCounterpartyMovementDetails.add(k);renderMerchantsCatalog();return}const cpa=e.target.closest('[data-toggle-counterparty-aliases]');if(cpa){const k=cpa.dataset.toggleCounterpartyAliases;expandedCounterpartyAliasDetails.has(k)?expandedCounterpartyAliasDetails.delete(k):expandedCounterpartyAliasDetails.add(k);renderMerchantsCatalog();return}const cap=e.target.closest('[data-cancel-alias-panel]');if(cap){expandedCounterpartyAliasDetails.delete(cap.dataset.cancelAliasPanel);renderMerchantsCatalog();return}const emv=e.target.closest('[data-edit-movement]');if(emv){const row=(catData?.movements||[]).find(x=>x.id===emv.dataset.editMovement);if(row){activateMainTab('categorization');openClassify(row)}return}const aa=e.target.closest('[data-add-alias]');if(aa){addCounterpartyAlias(aa);return}const ma=e.target.closest('[data-move-alias]');if(ma){moveCounterpartyAlias(ma);return}const da=e.target.closest('[data-delete-alias]');if(da){deleteCounterpartyAlias(da);return}const cg=e.target.closest('[data-toggle-category-group]');if(cg){const k=cg.dataset.toggleCategoryGroup;expandedCategoryGroups.has(k)?expandedCategoryGroups.delete(k):expandedCategoryGroups.add(k);renderCategoriesCatalog();return}const mg=e.target.closest('[data-toggle-counterparty-group]');if(mg){const k=mg.dataset.toggleCounterpartyGroup;expandedCounterpartyGroups.has(k)?expandedCounterpartyGroups.delete(k):expandedCounterpartyGroups.add(k);renderMerchantsCatalog();return}const mm=e.target.closest('[data-toggle-mcc-movements]');if(mm){const row=mm.closest('[data-mcc-row]'),k=row?.dataset.mccRow;if(k){expandedMccMovementDetails.has(k)?expandedMccMovementDetails.delete(k):expandedMccMovementDetails.add(k);renderMccCatalog()}return}const em=e.target.closest('[data-edit-mcc]');if(em){editMccCategory(em);return}const cmc=e.target.closest('[data-cancel-mcc-edit]');if(cmc){cancelMccEdit(cmc);return}const sm=e.target.closest('[data-save-mcc]');if(sm){saveMccCategory(sm);return}const sh=e.target.closest('[data-catalog-sort]');if(sh){setCatalogSort(sh.dataset.catalogSort,sh.dataset.catalogKey);return}const del=e.target.closest('[data-delete-entity]');if(del){deleteCatalogEntity(del);return}const cc=e.target.closest('[data-edit-cat]');if(cc){editCategory(cc.dataset.editCat);return}const m=e.target.closest('[data-edit-merch]');if(m){editMerchant(m.dataset.editMerch);return}const p=e.target.closest('[data-edit-project]');if(p){editProject(p.dataset.editProject);return}const t=e.target.closest('[data-edit-tag]');if(t){editTag(t.dataset.editTag);return}const rr=e.target.closest('[data-edit-rule]');if(rr){editCompoundRule(rr.dataset.editRule);return}const pr=e.target.closest('[data-edit-parsing]');if(pr){editParsingRule(pr.dataset.editParsing);return}});
+['categorySearch','merchantSearch','merchantL1Filter','merchantL2Filter','merchantTypeFilter','merchantStatusFilter','merchantRecencyFilter','projectSearch','projectTypeFilter','projectStatusFilter','tagSearch','tagStatusFilter','mccSearch','mccStatusFilter','compoundRuleSearch','compoundRuleStatusFilter','parsingRuleSearch'].forEach(id=>$(id)?.addEventListener(id.endsWith('Search')?'input':'change',renderCatalogs));$('expandAllCategories').onclick=()=>{(catData?.categories||[]).filter(x=>Number(x.depth)===1).forEach(x=>expandedCategoryGroups.add(x.level1_name||x.name));renderCategoriesCatalog()};$('collapseAllCategories').onclick=()=>{expandedCategoryGroups.clear();renderCategoriesCatalog()};
+$('clearCounterpartyCategorySummary').onclick=()=>{if($('merchantL1Filter'))$('merchantL1Filter').value='';if($('merchantL2Filter'))$('merchantL2Filter').value='';renderCatalogs()};
+$('clearMerchantFilters').onclick=()=>{['merchantSearch','merchantL1Filter','merchantL2Filter','merchantTypeFilter','merchantStatusFilter','merchantRecencyFilter'].forEach(id=>{if($(id))$(id).value=''});renderCatalogs()};
+$('tab-catalogs').addEventListener('click',e=>{const ct=e.target.closest('[data-catalog-tab]');if(ct){setCatalogTab(ct.dataset.catalogTab);return}
+const cpk=e.target.closest('[data-counterparty-kpi]');if(cpk){const k=cpk.dataset.counterpartyKpi;if(k==='ALL'){['merchantSearch','merchantL1Filter','merchantL2Filter','merchantTypeFilter','merchantStatusFilter','merchantRecencyFilter'].forEach(id=>{if($(id))$(id).value=''})}else if(k==='STALE_365'){if($('merchantRecencyFilter'))$('merchantRecencyFilter').value='STALE_365';if($('merchantStatusFilter'))$('merchantStatusFilter').value=''}else{if($('merchantStatusFilter'))$('merchantStatusFilter').value=k;if($('merchantRecencyFilter'))$('merchantRecencyFilter').value=''}renderCatalogs();return}
+const cpf=e.target.closest('[data-counterparty-summary-filter-l1]');if(cpf){if($('merchantL1Filter'))$('merchantL1Filter').value=cpf.dataset.counterpartySummaryFilterL1||'';renderCatalogs();if($('merchantL2Filter'))$('merchantL2Filter').value=cpf.dataset.counterpartySummaryFilterL2||'';renderMerchantsCatalog();return}
+const cps=e.target.closest('[data-toggle-counterparty-summary]');if(cps){const k=cps.dataset.toggleCounterpartySummary;expandedCounterpartyGroups.has(k)?expandedCounterpartyGroups.delete(k):expandedCounterpartyGroups.add(k);renderCounterpartySummary(counterpartyEnriched());return}
+const cpd=e.target.closest('[data-toggle-counterparty-detail]');if(cpd){const k=cpd.dataset.toggleCounterpartyDetail;expandedCounterpartyDetails.has(k)?expandedCounterpartyDetails.delete(k):expandedCounterpartyDetails.add(k);renderMerchantsCatalog();return}
+const cpc=e.target.closest('[data-close-counterparty-detail]');if(cpc){expandedCounterpartyDetails.delete(cpc.dataset.closeCounterpartyDetail);renderMerchantsCatalog();return}
+const cpmg=e.target.closest('[data-merge-counterparty]');if(cpmg){mergeSuggestedCounterparty(cpmg);return}const cm=e.target.closest('[data-toggle-category-movements]');if(cm){const k=cm.dataset.toggleCategoryMovements;expandedCategoryMovementDetails.has(k)?expandedCategoryMovementDetails.delete(k):expandedCategoryMovementDetails.add(k);renderCategoriesCatalog();return}const cpm=e.target.closest('[data-toggle-counterparty-movements]');if(cpm){const k=cpm.dataset.toggleCounterpartyMovements;expandedCounterpartyMovementDetails.has(k)?expandedCounterpartyMovementDetails.delete(k):expandedCounterpartyMovementDetails.add(k);renderMerchantsCatalog();return}const cpa=e.target.closest('[data-toggle-counterparty-aliases]');if(cpa){const k=cpa.dataset.toggleCounterpartyAliases;expandedCounterpartyAliasDetails.has(k)?expandedCounterpartyAliasDetails.delete(k):expandedCounterpartyAliasDetails.add(k);renderMerchantsCatalog();return}const cap=e.target.closest('[data-cancel-alias-panel]');if(cap){expandedCounterpartyAliasDetails.delete(cap.dataset.cancelAliasPanel);renderMerchantsCatalog();return}const emv=e.target.closest('[data-edit-movement]');if(emv){const row=(catData?.movements||[]).find(x=>x.id===emv.dataset.editMovement);if(row){activateMainTab('categorization');openClassify(row)}return}const aa=e.target.closest('[data-add-alias]');if(aa){addCounterpartyAlias(aa);return}const ma=e.target.closest('[data-move-alias]');if(ma){moveCounterpartyAlias(ma);return}const da=e.target.closest('[data-delete-alias]');if(da){deleteCounterpartyAlias(da);return}const cg=e.target.closest('[data-toggle-category-group]');if(cg){const k=cg.dataset.toggleCategoryGroup;expandedCategoryGroups.has(k)?expandedCategoryGroups.delete(k):expandedCategoryGroups.add(k);renderCategoriesCatalog();return}const mg=e.target.closest('[data-toggle-counterparty-group]');if(mg){const k=mg.dataset.toggleCounterpartyGroup;expandedCounterpartyGroups.has(k)?expandedCounterpartyGroups.delete(k):expandedCounterpartyGroups.add(k);renderMerchantsCatalog();return}const mm=e.target.closest('[data-toggle-mcc-movements]');if(mm){const row=mm.closest('[data-mcc-row]'),k=row?.dataset.mccRow;if(k){expandedMccMovementDetails.has(k)?expandedMccMovementDetails.delete(k):expandedMccMovementDetails.add(k);renderMccCatalog()}return}const em=e.target.closest('[data-edit-mcc]');if(em){editMccCategory(em);return}const cmc=e.target.closest('[data-cancel-mcc-edit]');if(cmc){cancelMccEdit(cmc);return}const sm=e.target.closest('[data-save-mcc]');if(sm){saveMccCategory(sm);return}const sh=e.target.closest('[data-catalog-sort]');if(sh){setCatalogSort(sh.dataset.catalogSort,sh.dataset.catalogKey);return}const del=e.target.closest('[data-delete-entity]');if(del){deleteCatalogEntity(del);return}const cc=e.target.closest('[data-edit-cat]');if(cc){editCategory(cc.dataset.editCat);return}const m=e.target.closest('[data-edit-merch]');if(m){editMerchant(m.dataset.editMerch);return}const p=e.target.closest('[data-edit-project]');if(p){editProject(p.dataset.editProject);return}const t=e.target.closest('[data-edit-tag]');if(t){editTag(t.dataset.editTag);return}const rr=e.target.closest('[data-edit-rule]');if(rr){editCompoundRule(rr.dataset.editRule);return}const pr=e.target.closest('[data-edit-parsing]');if(pr){editParsingRule(pr.dataset.editParsing);return}});
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>activateMainTab(b.dataset.tab));
 addConditionRow();
 init();
