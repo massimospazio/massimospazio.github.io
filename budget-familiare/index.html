@@ -51,6 +51,7 @@
 .net-negative{color:#991b1b}.net-positive{color:#166534}
 @media(max-width:1150px){.counterparty-filters{grid-template-columns:repeat(3,1fr)}.counterparty-summary-head,.counterparty-summary-row{grid-template-columns:minmax(190px,1.5fr) repeat(4,minmax(75px,.6fr)) minmax(100px,.8fr)}.counterparty-detail-metrics{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:750px){.counterparty-filters{grid-template-columns:1fr}.counterparty-summary-head{display:none}.counterparty-summary-row{grid-template-columns:1fr 1fr}.counterparty-summary-row>div:first-child{grid-column:1/-1}.counterparty-summary-row .num{text-align:left}.counterparty-detail-metrics{grid-template-columns:1fr 1fr}.counterparty-detail-head{flex-direction:column}}
+.counterparty-select{width:18px;height:18px}.counterparty-bulk-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 12px;margin:2px 0 10px;border:1px solid #c7d2fe;background:#eef2ff;border-radius:10px}.counterparty-bulk-bar .count{font-weight:750;color:#3730a3}.counterparty-bulk-bar .input{min-width:280px;flex:1}.inline-category-editor{display:grid;grid-template-columns:minmax(170px,1fr) auto auto;gap:5px;align-items:center}.inline-category-editor .input{min-width:0;width:100%;padding:7px 8px;min-height:34px}.category-default-value{display:flex;gap:6px;align-items:flex-start;justify-content:space-between}.category-default-value .btn{flex:0 0 auto}.search-select{display:grid;grid-template-columns:minmax(180px,1fr) minmax(180px,1fr);gap:6px;align-items:center}.search-select .input,.search-select .select{min-width:0;width:100%}.alias-move-search{min-width:210px!important}@media(max-width:750px){.counterparty-bulk-bar .input{min-width:100%}.inline-category-editor{grid-template-columns:1fr auto auto}.search-select{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -66,9 +67,11 @@
 
   <div id="appView" class="hidden">
     <div class="top">
-      <div class="brand"><h1>Dashboard Budget Familiare</h1><small>V61 · Revisione controparti e alias per sintesi, qualità e recenza</small></div>
+      <div class="brand"><h1>Dashboard Budget Familiare</h1><small>V62 · Modifica rapida e massiva delle controparti con selettori ricercabili</small></div>
       <div class="userbar"><span id="userEmail"></span><button id="refreshBtn" class="btn ghost">Aggiorna</button><button id="logoutBtn" class="btn ghost">Esci</button></div>
     </div>
+    <datalist id="v62CategoryOptions"></datalist>
+    <datalist id="v62CounterpartyOptions"></datalist>
     <div class="tabs">
       <button class="tab active" data-tab="overview">Panoramica</button>
       <button class="tab" data-tab="categorization">Movimenti</button>
@@ -138,7 +141,7 @@
 
             <div class="field">
               <label><span id="partyLabel">Controparte</span> <span class="help" id="partyHelp" data-tip="Il valore grezzo del movimento viene usato come alias esatto della controparte selezionata.">?</span></label>
-              <div class="inline-select"><select id="classMerchant" class="select"></select><button id="newCounterpartyBtn" type="button" class="btn ghost compact">＋ Nuova</button></div>
+              <div class="inline-select"><div class="search-select"><input id="classMerchantSearch" class="input" list="v62CounterpartyOptions" placeholder="Cerca controparte..." autocomplete="off" /><select id="classMerchant" class="select"></select></div><button id="newCounterpartyBtn" type="button" class="btn ghost compact">＋ Nuova</button></div>
             </div>
             <div id="movementAliasBox" class="movement-alias-box"></div>
             <div id="parsingCorrectionBox" class="parsing-rule-box hidden">
@@ -165,7 +168,7 @@
               <div class="editor-row four">
                 <div class="field"><label>Nome</label><input id="quickCounterpartyName" class="input" placeholder="es. Pfizer Srl" /></div>
                 <div class="field"><label>Tipo</label><select id="quickCounterpartyType" class="select"><option value="MERCHANT">Negozio / fornitore</option><option value="EMPLOYER">Datore di lavoro</option><option value="PERSON">Persona</option><option value="ENTITY">Azienda / ente</option><option value="PUBLIC_BODY">Ente pubblico</option><option value="BANK">Banca</option><option value="PLATFORM">Piattaforma</option><option value="OTHER">Altro</option></select></div>
-                <div class="field"><label>Categoria predefinita</label><select id="quickCounterpartyCategory" class="select"></select></div>
+                <div class="field"><label>Categoria predefinita</label><div class="search-select"><input id="quickCounterpartyCategorySearch" class="input" list="v62CategoryOptions" placeholder="Cerca categoria..." autocomplete="off" /><select id="quickCounterpartyCategory" class="select"></select></div></div>
                 <button id="saveQuickCounterparty" type="button" class="btn">Crea e seleziona</button>
               </div>
               <div id="quickCounterpartyMsg"></div>
@@ -180,7 +183,7 @@
           <div class="pipeline-step-body">
             <div class="field">
               <label>Categoria <span class="help" data-tip="Per spese, entrate e investimenti la categoria è richiesta per la conferma. La pipeline usa prima la categoria predefinita della controparte e le regole; MCC interviene solo se non esiste una controparte.">?</span></label>
-              <select id="classCategory" class="select"></select>
+              <div class="search-select"><input id="classCategorySearch" class="input" list="v62CategoryOptions" placeholder="Cerca categoria..." autocomplete="off" /><select id="classCategory" class="select"></select></div>
             </div>
             <div id="futureAutomationBox" class="future-automation-box"></div>
             <div class="pipeline-actions"><button type="button" class="btn ghost compact" data-pipeline-next="counterparty">← Controparte</button><button type="button" class="btn secondary compact" data-pipeline-next="rules">Avanti: regole →</button></div>
@@ -354,12 +357,12 @@
 
         <div class="catalog-panel" data-catalog-panel="merchants">
           <div class="card stack catalog-card">
-            <div class="catalog-intro"><div><h2 style="margin:0 0 4px">Controparti</h2><div class="muted small">Revisione anagrafica V61: sintesi per categoria, registro unico ordinabile, qualità alias e recenza d'uso.</div></div></div>
+            <div class="catalog-intro"><div><h2 style="margin:0 0 4px">Controparti</h2><div class="muted small">Revisione anagrafica V62: modifica rapida della categoria default, azioni massive e selettori ricercabili.</div></div></div>
             <div class="catalog-form">
               <div class="editor-row four">
                 <div class="field"><label>Nome controparte</label><input id="merchantName" class="input" /></div>
                 <div class="field"><label>Tipo</label><select id="merchantType" class="select"><option value="MERCHANT">Negozio / fornitore</option><option value="EMPLOYER">Datore di lavoro</option><option value="PERSON">Persona</option><option value="ENTITY">Azienda / ente</option><option value="PUBLIC_BODY">Ente pubblico</option><option value="BANK">Banca</option><option value="PLATFORM">Piattaforma</option><option value="OTHER">Altro</option></select></div>
-                <div class="field"><label>Categoria predefinita</label><select id="merchantCategory" class="select"></select></div>
+                <div class="field"><label>Categoria predefinita</label><div class="search-select"><input id="merchantCategorySearch" class="input" list="v62CategoryOptions" placeholder="Cerca categoria..." autocomplete="off" /><select id="merchantCategory" class="select"></select></div></div>
                 <button id="saveMerchant" class="btn">Salva</button>
               </div>
               <input id="merchantApplyExisting" type="hidden" />
@@ -388,6 +391,14 @@
               <select id="merchantStatusFilter" class="select"><option value="">Tutti gli stati</option><option value="ISSUES">Da controllare</option><option value="NO_CATEGORY">Senza categoria default</option><option value="NO_ALIAS">Senza alias</option><option value="DUPLICATE">Possibile duplicato</option><option value="MCC_BOOTSTRAP">Creata da MCC</option><option value="OK">Configurazione completa</option></select>
               <select id="merchantRecencyFilter" class="select"><option value="">Qualsiasi recenza</option><option value="RECENT_90">Usata negli ultimi 90 giorni</option><option value="RECENT_365">Usata negli ultimi 12 mesi</option><option value="STALE_365">Non usata da oltre 12 mesi</option><option value="NEVER">Mai utilizzata</option></select>
               <button id="clearMerchantFilters" class="btn ghost compact" type="button">Azzera</button>
+            </div>
+            <div id="counterpartyBulkBar" class="counterparty-bulk-bar hidden">
+              <span id="counterpartyBulkCount" class="count">0 selezionate</span>
+              <input id="counterpartyBulkCategory" class="input" list="v62CategoryOptions" placeholder="Cerca / scegli categoria default..." autocomplete="off" />
+              <button id="applyCounterpartyBulkCategory" class="btn compact" type="button">Imposta categoria default</button>
+              <button id="selectVisibleCounterparties" class="btn ghost compact" type="button">Seleziona visibili</button>
+              <button id="clearSelectedCounterparties" class="btn ghost compact" type="button">Annulla selezione</button>
+              <span class="muted small">Non modifica le categorie storiche dei movimenti.</span>
             </div>
             <div id="merchantsTable"></div>
           </div>
@@ -462,8 +473,8 @@
               <input id="compoundRuleId" type="hidden" />
               <div class="editor-row four">
                 <div class="field"><label>Nome regola</label><input id="compoundRuleName" class="input" placeholder="es. Q8 - varianti carburante" /></div>
-                <div class="field"><label>Controparte da assegnare</label><select id="compoundRuleMerchant" class="select"></select></div>
-                <div class="field"><label>Categoria da assegnare</label><select id="compoundRuleCategory" class="select"></select></div>
+                <div class="field"><label>Controparte da assegnare</label><div class="search-select"><input id="compoundRuleMerchantSearch" class="input" list="v62CounterpartyOptions" placeholder="Cerca controparte..." autocomplete="off" /><select id="compoundRuleMerchant" class="select"></select></div></div>
+                <div class="field"><label>Categoria da assegnare</label><div class="search-select"><input id="compoundRuleCategorySearch" class="input" list="v62CategoryOptions" placeholder="Cerca categoria..." autocomplete="off" /><select id="compoundRuleCategory" class="select"></select></div></div>
                 <div class="field"><label>Tipo movimento</label><select id="compoundRuleType" class="select"><option value="">— lascia invariato —</option><option value="EXPENSE">Spesa</option><option value="INCOME">Entrata</option><option value="TRANSFER">Trasferimento</option><option value="FEE">Commissione</option><option value="INTEREST">Interesse</option><option value="INVESTMENT">Investimento</option><option value="OTHER">Altro</option></select></div>
               </div>
               <div class="editor-row four" style="margin-top:8px">
@@ -531,6 +542,8 @@ const expandedGroups=new Set();
 const expandedCategoryGroups=new Set();
 const expandedCounterpartyGroups=new Set();
 const expandedCounterpartyDetails=new Set();
+const selectedCounterpartyIds=new Set();
+const editingCounterpartyCategoryIds=new Set();
 const expandedCategoryMovementDetails=new Set();
 const expandedCounterpartyMovementDetails=new Set();
 const expandedCounterpartyAliasDetails=new Set();
@@ -543,6 +556,28 @@ const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const euro=n=>new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR'}).format(Number(n||0));
 const pct=n=>`${Number(n||0).toLocaleString('it-IT',{maximumFractionDigits:1})}%`;
 const nfmt=n=>Number(n||0).toLocaleString('it-IT');
+function categoryBySearchLabel(value){
+  const q=String(value||'').trim();
+  if(!q||q==='— nessuna categoria —')return null;
+  return (catData?.categories||[]).find(x=>categoryLabel(x).toLowerCase()===q.toLowerCase())||null;
+}
+function counterpartyBySearchLabel(value){
+  const q=String(value||'').trim();
+  if(!q||q==='— nessuna controparte —')return null;
+  return (catData?.counterparties||[]).find(x=>String(x.name||'').trim().toLowerCase()===q.toLowerCase())||null;
+}
+function syncSearchFromSelect(inputId,selectId){
+  const input=$(inputId),select=$(selectId);if(!input||!select)return;
+  input.value=select.value&&select.selectedIndex>=0?select.options[select.selectedIndex].text.trim():'';
+}
+function syncSelectFromSearch(inputId,selectId,kind){
+  const input=$(inputId),select=$(selectId);if(!input||!select)return false;
+  const raw=String(input.value||'').trim();
+  const item=kind==='counterparty'?counterpartyBySearchLabel(raw):categoryBySearchLabel(raw);
+  select.value=item?.id||'';
+  select.dispatchEvent(new Event('change',{bubbles:true}));
+  return !!item||!raw;
+}
 function textSearchMatches(actual,query){
   const hay=String(actual??'').toLowerCase(),q=String(query??'').trim().toLowerCase();
   if(!q)return true;
@@ -997,7 +1032,7 @@ function renderGrouped(rows){
 }
 function groupDetailTable(rows){return `<div class="table-wrap"><table class="table nested-table"><thead><tr><th style="width:3%"></th><th style="width:7%">Data</th><th style="width:7%">Banca</th><th style="width:6%">Canale</th><th style="width:7%">Tipo</th><th style="width:23%">Descrizione</th><th style="width:12%">Controparte</th><th style="width:12%">Categoria</th><th style="width:7%">Progetto / Tag</th><th style="width:7%">Importo</th><th style="width:5%">Stato</th><th style="width:4%"></th></tr></thead><tbody>${sortMovements(rows).map(x=>`<tr><td><input class="movement-select" type="checkbox" data-select-movement="${x.id}" ${selectedMovementIds.has(x.id)?'checked':''} /></td><td>${esc(x.transaction_date)}</td><td>${bankBadge(x.bank_name)}</td><td>${movementKindBadge(x)}</td><td>${transactionTypeBadge(x)}</td><td class="mono">${esc(x.description)}${mccStatusHtml(x)}</td><td>${counterpartyCellHtml(x)}</td><td>${categoryCellHtml(x)}</td><td>${movementContextHtml(x)}</td><td><strong>${euro(x.amount)}</strong></td><td>${statusBadgeForMovement(x)}</td><td><button class="btn ghost compact" data-edit-movement="${x.id}">${esc(movementWorkState(x).action)}</button></td></tr>`).join('')}</tbody></table></div>`}
 function setSort(key){if(sortKey===key)sortDir=sortDir==='asc'?'desc':'asc';else{sortKey=key;sortDir=key==='transaction_date'||key==='amount'?'desc':'asc'}renderMovements()}
-function fillClassificationSelects(){const cats=catData?.categories||[],parties=[...(catData?.counterparties||[])].sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'it',{sensitivity:'base'}));$('classMerchant').innerHTML='<option value="">— nessuna controparte —</option>'+parties.map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('');const catOpts='<option value="">— nessuna categoria —</option>'+cats.map(c=>`<option value="${c.id}">${esc(categoryLabel(c))}</option>`).join('');$('classCategory').innerHTML=catOpts;if($('bulkCategory'))$('bulkCategory').innerHTML='<option value="">— scegli categoria —</option>'+cats.map(c=>`<option value="${c.id}">${esc(categoryLabel(c))}</option>`).join('');if($('quickCounterpartyCategory'))$('quickCounterpartyCategory').innerHTML=catOpts;const projects=[...(catData?.projects||[])].filter(p=>p.is_active).sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'it',{sensitivity:'base'}));$('classProject').innerHTML='<option value="">— nessun progetto —</option>'+projects.map(p=>`<option value="${p.id}">${esc(p.name)} · ${esc(projectTypeLabel(p.project_type))}</option>`).join('');const tags=[...(catData?.tags||[])].filter(t=>t.is_active).sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'it',{sensitivity:'base'}));$('classTags').innerHTML=tags.length?tags.map(t=>`<label><input type="checkbox" value="${t.id}" data-class-tag /> ${esc(t.name)}</label>`).join(''):'<span class="muted small">Nessun tag attivo.</span>';if($('partyLabel'))$('partyLabel').textContent='Controparte';if($('classificationNote'))$('classificationNote').textContent='Sequenza: tipo movimento → controparte/alias → categoria → eventuale regola → dettagli. INVESTMENT usa la stessa pipeline ma resta separato dai consumi. MCC interviene solo quando manca la controparte; nei casi affidabili V60 crea automaticamente controparte, alias e categoria predefinita.'}
+function fillClassificationSelects(){const cats=catData?.categories||[],parties=[...(catData?.counterparties||[])].sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'it',{sensitivity:'base'}));$('classMerchant').innerHTML='<option value="">— nessuna controparte —</option>'+parties.map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('');const catOpts='<option value="">— nessuna categoria —</option>'+cats.map(c=>`<option value="${c.id}">${esc(categoryLabel(c))}</option>`).join('');$('classCategory').innerHTML=catOpts;if($('bulkCategory'))$('bulkCategory').innerHTML='<option value="">— scegli categoria —</option>'+cats.map(c=>`<option value="${c.id}">${esc(categoryLabel(c))}</option>`).join('');if($('quickCounterpartyCategory'))$('quickCounterpartyCategory').innerHTML=catOpts;const projects=[...(catData?.projects||[])].filter(p=>p.is_active).sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'it',{sensitivity:'base'}));$('classProject').innerHTML='<option value="">— nessun progetto —</option>'+projects.map(p=>`<option value="${p.id}">${esc(p.name)} · ${esc(projectTypeLabel(p.project_type))}</option>`).join('');const tags=[...(catData?.tags||[])].filter(t=>t.is_active).sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'it',{sensitivity:'base'}));$('classTags').innerHTML=tags.length?tags.map(t=>`<label><input type="checkbox" value="${t.id}" data-class-tag /> ${esc(t.name)}</label>`).join(''):'<span class="muted small">Nessun tag attivo.</span>';if($('partyLabel'))$('partyLabel').textContent='Controparte';if($('classificationNote'))$('classificationNote').textContent='Sequenza: tipo movimento → controparte/alias → categoria → eventuale regola → dettagli. INVESTMENT usa la stessa pipeline ma resta separato dai consumi. MCC interviene solo quando manca la controparte; nei casi affidabili V60 crea automaticamente controparte, alias e categoria predefinita.';syncSearchFromSelect('classMerchantSearch','classMerchant');syncSearchFromSelect('classCategorySearch','classCategory');syncSearchFromSelect('quickCounterpartyCategorySearch','quickCounterpartyCategory')}
 function selectedMerchantName(){const s=$('classMerchant');return s&&s.selectedIndex>=0?s.options[s.selectedIndex].text.trim():''}
 function syncClassificationCategoryFromMerchant(force=false){
   const merchantId=$('classMerchant')?.value||'';
@@ -1006,7 +1041,7 @@ function syncClassificationCategoryFromMerchant(force=false){
   const defaultCategory=merchant?.default_category_id||'';
   if(!defaultCategory)return false;
   if(force||!$('classCategory').value){
-    $('classCategory').value=defaultCategory;
+    $('classCategory').value=defaultCategory;syncSearchFromSelect('classCategorySearch','classCategory');
     return true;
   }
   return false;
@@ -1245,7 +1280,7 @@ function resetClassificationPanel(close=true){
   $('classificationSuggestion')?.classList.add('hidden');if($('classificationSuggestion'))$('classificationSuggestion').innerHTML='';
   if($('movementAliasBox')){$('movementAliasBox').innerHTML='';$('movementAliasBox').classList.add('hidden')}if($('parsingCorrectionBox')){$('parsingCorrectionBox').classList.add('hidden');$('parsingCorrectionPreview').innerHTML='';msg($('parsingCorrectionMsg'),'')}if($('futureAutomationBox'))$('futureAutomationBox').innerHTML='';
   if($('advancedAutomation'))$('advancedAutomation').open=false;if($('pipelineStepCounterparty'))$('pipelineStepCounterparty').open=true;if($('pipelineStepCategory'))$('pipelineStepCategory').open=false;if($('pipelineStepContext'))$('pipelineStepContext').open=false;syncClassificationPipelineNav();
-  $('selectedDescription').textContent='';if($('movementFacts'))$('movementFacts').innerHTML='';$('splitRows').innerHTML='';$('splitEditor').classList.add('hidden');$('toggleSplitEditor').textContent='Dividi movimento';msg($('splitMsg'),'');$('classMerchant').value='';$('classCategory').value='';$('classProject').value='';
+  $('selectedDescription').textContent='';if($('movementFacts'))$('movementFacts').innerHTML='';$('splitRows').innerHTML='';$('splitEditor').classList.add('hidden');$('toggleSplitEditor').textContent='Dividi movimento';msg($('splitMsg'),'');$('classMerchant').value='';$('classCategory').value='';syncSearchFromSelect('classMerchantSearch','classMerchant');syncSearchFromSelect('classCategorySearch','classCategory');$('classProject').value='';
   document.querySelectorAll('[data-class-tag]').forEach(cb=>cb.checked=false);
   $('classMode').value='all';$('classificationRuleStyle').value='SIMPLE';$('ruleMode').value='CONTAINS';$('rulePattern').value='';$('classificationRuleName').value='';$('classificationConditions').innerHTML='';$('classificationPreview').innerHTML='<span class="muted">Apri e configura la regola per vedere l’impatto.</span>';
   $('onlyUnreviewed').checked=true;$('quickCounterpartyBox').classList.add('hidden');$('transferTarget').value='EXPENSE';$('transferDecision').classList.add('hidden');$('transferDecisionHint').textContent='';msg($('classMsg'),'');
@@ -1318,7 +1353,7 @@ function openClassify(row){
     ['MCC',row.mcc_code?mccStatusText(row).replace(/^MCC\s*/,''):'—']
   ].map(([k,v])=>`<span class="fact"><strong>${esc(k)}</strong>${esc(v)}</span>`).join('');
   renderClassificationSuggestion();
-  $('classMerchant').value=row.counterparty_id||'';$('classCategory').value=row.category_id||'';syncClassificationCategoryFromMerchant(false);renderClassificationSuggestion();renderMovementAliasBox();renderFutureAutomationBox();$('classProject').value=row.project_id||'';const selectedTags=new Set((row.tags||[]).map(t=>t.id));document.querySelectorAll('[data-class-tag]').forEach(cb=>cb.checked=selectedTags.has(cb.value));
+  $('classMerchant').value=row.counterparty_id||'';$('classCategory').value=row.category_id||'';syncClassificationCategoryFromMerchant(false);syncSearchFromSelect('classMerchantSearch','classMerchant');syncSearchFromSelect('classCategorySearch','classCategory');renderClassificationSuggestion();renderMovementAliasBox();renderFutureAutomationBox();$('classProject').value=row.project_id||'';const selectedTags=new Set((row.tags||[]).map(t=>t.id));document.querySelectorAll('[data-class-tag]').forEach(cb=>cb.checked=selectedTags.has(cb.value));
   $('classMode').value='all';$('classificationRuleStyle').value='SIMPLE';if($('advancedAutomation'))$('advancedAutomation').open=false;
   if(selectedRow.is_bank_transfer){const internalTransfer=row.transaction_type==='TRANSFER'&&String(row.category_path||row.category_name||'').toLowerCase().includes('giroconto interno');$('transferTarget').value=internalTransfer?'TRANSFER':(['EXPENSE','INCOME'].includes(row.transaction_type)?row.transaction_type:(Number(row.amount)>=0?'INCOME':'EXPENSE'));}
   $('ruleMode').value='CONTAINS';$('rulePattern').value=(row.counterparty_name&&textSearchMatches(row.description||'',row.counterparty_name))?row.counterparty_name:(classificationAliasValue(row)||row.raw_causale||row.description||'');
@@ -1562,6 +1597,8 @@ function updateCatalogCounts(){
 function renderCatalogs(){
   const cats=catData?.categories||[];
   const parties=catData?.counterparties||[];
+  if($('v62CategoryOptions'))$('v62CategoryOptions').innerHTML='<option value="— nessuna categoria —"></option>'+cats.map(x=>`<option value="${esc(categoryLabel(x))}"></option>`).join('');
+  if($('v62CounterpartyOptions'))$('v62CounterpartyOptions').innerHTML='<option value="— nessuna controparte —"></option>'+parties.slice().sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'it',{sensitivity:'base'})).map(x=>`<option value="${esc(x.name)}"></option>`).join('');
   $('categoryParent').innerHTML='<option value="">— nessuna (L1) —</option>'+cats.filter(c=>Number(c.depth)<3).map(c=>`<option value="${c.id}">${esc(categoryLabel(c))}</option>`).join('');
   const catOpts='<option value="">— nessuna —</option>'+cats.map(c=>`<option value="${c.id}">${esc(categoryLabel(c))}</option>`).join('');
   $('merchantCategory').innerHTML=catOpts;
@@ -1577,6 +1614,7 @@ function renderCatalogs(){
   }
   if($('compoundRuleCategory'))$('compoundRuleCategory').innerHTML=catOpts;
   if($('compoundRuleMerchant'))$('compoundRuleMerchant').innerHTML='<option value="">— nessuna —</option>'+parties.map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('');
+  syncSearchFromSelect('merchantCategorySearch','merchantCategory');syncSearchFromSelect('compoundRuleMerchantSearch','compoundRuleMerchant');syncSearchFromSelect('compoundRuleCategorySearch','compoundRuleCategory');
   if($('mccOptions'))$('mccOptions').innerHTML=(catData?.mccRules||[]).map(r=>`<option value="${esc(r.mcc_code)}">${esc(r.mcc_code+' — '+r.description)}</option>`).join('');
   if($('quickCounterpartyCategory'))$('quickCounterpartyCategory').innerHTML='<option value="">— nessuna —</option>'+cats.map(c=>`<option value="${c.id}">${esc(categoryLabel(c))}</option>`).join('');
   renderCategoriesCatalog();renderMerchantsCatalog();renderProjectsCatalog();renderTagsCatalog();renderMccCatalog();renderCompoundRulesCatalog();renderParsingRulesCatalog();fillClassificationSelects();updateCatalogCounts();setCatalogTab(catalogTab,false);
@@ -1645,7 +1683,6 @@ function counterpartyAliasesHtml(m){
     ?'<div class="msg error" style="margin:0 0 10px">Configurazione incompleta: la controparte viene riconosciuta da uno o più alias, ma non ha una categoria predefinita. Se nessuna regola assegna la categoria, i movimenti restano Da classificare.</div>'
     :'';
   const rows=aliases.map(a=>{
-    const targets=parties.filter(p=>p.id!==m.id).map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');
     const movementCount=Number(a.movements||0);
     const usage=movementCount
       ?`<strong>${nfmt(movementCount)} ${movementCount===1?'movimento':'movimenti'}</strong><br><span class="muted small">${esc((a.banks||[]).join(' · ')||'—')}</span>`
@@ -1653,7 +1690,7 @@ function counterpartyAliasesHtml(m){
     const period=movementCount
       ?(a.first_date===a.last_date?esc(a.first_date||'—'):`${esc(a.first_date||'—')} → ${esc(a.last_date||'—')}`)
       :'—';
-    return `<tr data-alias-id="${a.id}"><td><strong class="mono">${esc(a.pattern)}</strong></td><td>${aliasSourcesHtml(a)}</td><td>${usage}</td><td>${period}</td><td><div class="compact-actions"><select class="select" data-alias-move-target><option value="">— sposta a —</option>${targets}</select><button class="btn ghost compact" data-move-alias="${a.id}" type="button">Sposta</button><button class="btn danger compact" data-delete-alias="${a.id}" type="button">Elimina</button></div></td></tr>`;
+    return `<tr data-alias-id="${a.id}"><td><strong class="mono">${esc(a.pattern)}</strong></td><td>${aliasSourcesHtml(a)}</td><td>${usage}</td><td>${period}</td><td><div class="compact-actions"><input class="input alias-move-search" list="v62CounterpartyOptions" data-alias-move-search placeholder="Cerca controparte..." autocomplete="off" /><button class="btn ghost compact" data-move-alias="${a.id}" type="button">Sposta</button><button class="btn danger compact" data-delete-alias="${a.id}" type="button">Elimina</button></div></td></tr>`;
   }).join('');
   return `<div class="alias-panel">
     <div class="alias-panel-head"><div><strong>Alias di riconoscimento</strong><div class="muted small">Valori grezzi che identificano ${esc(m.name)}. L’origine segue il campo effettivamente usato dal parser; il conteggio considera solo i movimenti in cui l’alias è realmente associato a questa controparte.</div></div><div class="compact-actions"><span class="pill">${nfmt(aliases.length)} alias</span></div></div>
@@ -1675,9 +1712,9 @@ async function addCounterpartyAlias(btn){
   }catch(e){alert(e.message)}finally{setBusy(btn,false)}
 }
 async function moveCounterpartyAlias(btn){
-  const aliasId=btn.dataset.moveAlias,row=btn.closest('[data-alias-id]'),target=row?.querySelector('[data-alias-move-target]')?.value||'';
-  const alias=(catData?.aliases||[]).find(a=>a.id===aliasId);if(!alias||!target)return alert('Scegli la controparte di destinazione.');
-  const dest=(catData?.counterparties||[]).find(m=>m.id===target);
+  const aliasId=btn.dataset.moveAlias,row=btn.closest('[data-alias-id]'),search=row?.querySelector('[data-alias-move-search]')?.value||'';
+  const dest=counterpartyBySearchLabel(search),target=dest?.id||'';
+  const alias=(catData?.aliases||[]).find(a=>a.id===aliasId);if(!alias||!target)return alert('Cerca e scegli una controparte di destinazione valida.');
   setBusy(btn,true,'Sposto');
   try{
     await rpc('dashboard_remember_counterparty_alias_v1',{p_raw_value:alias.pattern,p_merchant_id:target,p_default_category_id:null,p_set_default_category:false});
@@ -1808,10 +1845,14 @@ function counterpartyDetailHtml(m){
     <div style="margin-top:10px">${counterpartyMovementDetailTable(s.movements)}</div>
   </div>`;
 }
-function renderMerchantsCatalog(){
-  const all=counterpartyEnriched();
-  renderCounterpartyKpis(all);renderCounterpartySummary(all);
-
+function counterpartyCategoryEditorHtml(m){
+  if(!editingCounterpartyCategoryIds.has(m.id)){
+    return `<div class="category-default-value"><span>${esc(m._category?.path||counterpartyCategoryLabel(m))}</span><button class="btn ghost compact" data-edit-counterparty-category="${m.id}" type="button">Modifica</button></div>`;
+  }
+  const value=m.default_category_id?categoryNameById(m.default_category_id):'— nessuna categoria —';
+  return `<div class="inline-category-editor"><input class="input" list="v62CategoryOptions" data-inline-counterparty-category="${m.id}" value="${esc(value)}" autocomplete="off" /><button class="btn compact" data-save-counterparty-category="${m.id}" type="button">Salva</button><button class="btn ghost compact" data-cancel-counterparty-category="${m.id}" type="button">Annulla</button></div>`;
+}
+function counterpartyFilteredRows(all=counterpartyEnriched()){
   const q=($('merchantSearch')?.value||'').trim().toLowerCase(),type=$('merchantTypeFilter')?.value||'';
   const l1=$('merchantL1Filter')?.value||'',l2=$('merchantL2Filter')?.value||'',status=$('merchantStatusFilter')?.value||'',recency=$('merchantRecencyFilter')?.value||'';
   let rows=all.filter(m=>{
@@ -1830,23 +1871,62 @@ function renderMerchantsCatalog(){
     if(recency==='NEVER'&&m._stats.last_date)return false;
     return true;
   });
-  rows=genericCatalogSort(rows,'merchants',{
-    name:x=>x.name||'',
-    type:x=>counterpartyTypeLabel(x.counterparty_type),
-    l1:x=>x._category.l1,
-    category:x=>x._category.path,
-    aliases:x=>x._stats.alias_count,
-    movements:x=>x._stats.movement_count,
-    total:x=>x._stats.total,
-    last:x=>x._stats.last_date||'0000-00-00',
-    status:x=>x._status_priority
+  return genericCatalogSort(rows,'merchants',{
+    name:x=>x.name||'',type:x=>counterpartyTypeLabel(x.counterparty_type),l1:x=>x._category.l1,category:x=>x._category.path,
+    aliases:x=>x._stats.alias_count,movements:x=>x._stats.movement_count,total:x=>x._stats.total,last:x=>x._stats.last_date||'0000-00-00',status:x=>x._status_priority
   });
+}
+function syncCounterpartyBulkBar(){
+  const bar=$('counterpartyBulkBar'),count=selectedCounterpartyIds.size;if(!bar)return;
+  bar.classList.toggle('hidden',count===0);
+  $('counterpartyBulkCount').textContent=nfmt(count)+' '+(count===1?'selezionata':'selezionate');
+}
+async function setCounterpartyDefaultCategory(ids,categoryId,button,messageTarget=null){
+  if(!ids.length)return null;
+  if(button)setBusy(button,true,'Salvataggio');
+  try{
+    const r=await rpc('dashboard_set_counterparty_default_category_v1',{p_merchant_ids:ids,p_category_id:categoryId});
+    coherenceData=null;
+    await loadMovementsData();
+    if(messageTarget)msg(messageTarget,`Categoria default aggiornata su ${nfmt(r?.updated||0)} controparti. Nessuna categoria storica dei movimenti è stata modificata.`);
+    return r;
+  }catch(e){
+    if(messageTarget)msg(messageTarget,e.message,true);else alert(e.message);
+    throw e;
+  }finally{if(button)setBusy(button,false)}
+}
+async function saveInlineCounterpartyCategory(btn){
+  const id=btn.dataset.saveCounterpartyCategory,input=document.querySelector('[data-inline-counterparty-category="'+CSS.escape(id)+'"]');
+  const raw=String(input?.value||'').trim();
+  if(!raw)return alert('Scegli una categoria oppure “— nessuna categoria —”.');
+  const category=categoryBySearchLabel(raw);
+  if(!category&&raw!=='— nessuna categoria —')return alert('Scegli una categoria valida dall’elenco.');
+  try{await setCounterpartyDefaultCategory([id],category?.id||null,btn);editingCounterpartyCategoryIds.delete(id);renderMerchantsCatalog()}catch(e){}
+}
+async function applyCounterpartyBulkCategory(){
+  const input=$('counterpartyBulkCategory'),raw=String(input?.value||'').trim();
+  if(!selectedCounterpartyIds.size)return;
+  if(!raw)return alert('Cerca e scegli la categoria da impostare. Per rimuoverla scegli “— nessuna categoria —”.');
+  const category=categoryBySearchLabel(raw);
+  if(!category&&raw!=='— nessuna categoria —')return alert('Scegli una categoria valida dall’elenco.');
+  const btn=$('applyCounterpartyBulkCategory');
+  try{
+    await setCounterpartyDefaultCategory([...selectedCounterpartyIds],category?.id||null,btn,$('merchantMsg'));
+    selectedCounterpartyIds.clear();input.value='';syncCounterpartyBulkBar();renderMerchantsCatalog();
+  }catch(e){}
+}
+function renderMerchantsCatalog(){
+  const all=counterpartyEnriched();
+  renderCounterpartyKpis(all);renderCounterpartySummary(all);
+  const validIds=new Set(all.map(x=>x.id));for(const id of [...selectedCounterpartyIds])if(!validIds.has(id))selectedCounterpartyIds.delete(id);
+  const rows=counterpartyFilteredRows(all);
   $('counterpartyRegistryInfo').textContent=`${nfmt(rows.length)} controparti visualizzate su ${nfmt(all.length)}`;
   const body=rows.map(m=>{
     const open=expandedCounterpartyDetails.has(m.id),s=m._stats;
-    return `<tr><td><strong>${esc(m.name)}</strong></td><td>${esc(counterpartyTypeLabel(m.counterparty_type))}</td><td>${esc(m._category.l1)}</td><td>${esc(m._category.path)}</td><td><button class="btn ghost compact" data-toggle-counterparty-detail="${m.id}">${nfmt(s.alias_count)}</button></td><td>${nfmt(s.movement_count)}</td><td>${counterpartyNetHtml(s)}</td><td>${esc(s.last_date||'—')}<br><span class="muted small">${esc(counterpartyRecencyLabel(s.last_date))}</span></td><td>${counterpartyStatusHtml(m,s)}</td><td><button class="btn ${open?'secondary':'ghost'} compact" data-toggle-counterparty-detail="${m.id}">${open?'Chiudi':'Dettagli'}</button></td></tr>${open?`<tr><td colspan="10" style="padding:0">${counterpartyDetailHtml(m)}</td></tr>`:''}`;
+    return `<tr><td><input class="counterparty-select" type="checkbox" data-select-counterparty="${m.id}" ${selectedCounterpartyIds.has(m.id)?'checked':''} /></td><td><strong>${esc(m.name)}</strong></td><td>${esc(counterpartyTypeLabel(m.counterparty_type))}</td><td>${esc(m._category.l1)}</td><td class="category-default-cell">${counterpartyCategoryEditorHtml(m)}</td><td><button class="btn ghost compact" data-toggle-counterparty-detail="${m.id}">${nfmt(s.alias_count)}</button></td><td>${nfmt(s.movement_count)}</td><td>${counterpartyNetHtml(s)}</td><td>${esc(s.last_date||'—')}<br><span class="muted small">${esc(counterpartyRecencyLabel(s.last_date))}</span></td><td>${counterpartyStatusHtml(m,s)}</td><td><button class="btn ${open?'secondary':'ghost'} compact" data-toggle-counterparty-detail="${m.id}">${open?'Chiudi':'Dettagli'}</button></td></tr>${open?`<tr><td colspan="11" style="padding:0">${counterpartyDetailHtml(m)}</td></tr>`:''}`;
   }).join('');
-  $('merchantsTable').innerHTML=`<div class="table-wrap"><table class="table"><thead><tr><th>${catalogSortHeader('merchants','Controparte','name')}</th><th>${catalogSortHeader('merchants','Tipo','type')}</th><th>${catalogSortHeader('merchants','Categoria L1','l1')}</th><th>${catalogSortHeader('merchants','Categoria default','category')}</th><th>${catalogSortHeader('merchants','Alias','aliases')}</th><th>${catalogSortHeader('merchants','Movimenti','movements')}</th><th>${catalogSortHeader('merchants','Totale netto','total')}</th><th>${catalogSortHeader('merchants','Ultimo movimento','last')}</th><th>${catalogSortHeader('merchants','Stato','status')}</th><th></th></tr></thead><tbody>${body||'<tr><td colspan="10" class="muted">Nessuna controparte con i filtri selezionati.</td></tr>'}</tbody></table></div>`;
+  syncCounterpartyBulkBar();
+  $('merchantsTable').innerHTML=`<div class="table-wrap"><table class="table"><thead><tr><th style="width:38px"><input class="counterparty-select" type="checkbox" data-select-visible-counterparties title="Seleziona le controparti visibili" ${rows.length&&rows.every(x=>selectedCounterpartyIds.has(x.id))?'checked':''} /></th><th>${catalogSortHeader('merchants','Controparte','name')}</th><th>${catalogSortHeader('merchants','Tipo','type')}</th><th>${catalogSortHeader('merchants','Categoria L1','l1')}</th><th>${catalogSortHeader('merchants','Categoria default','category')}</th><th>${catalogSortHeader('merchants','Alias','aliases')}</th><th>${catalogSortHeader('merchants','Movimenti','movements')}</th><th>${catalogSortHeader('merchants','Totale netto','total')}</th><th>${catalogSortHeader('merchants','Ultimo movimento','last')}</th><th>${catalogSortHeader('merchants','Stato','status')}</th><th></th></tr></thead><tbody>${body||'<tr><td colspan="11" class="muted">Nessuna controparte con i filtri selezionati.</td></tr>'}</tbody></table></div>`;
 }
 function renderProjectsCatalog(){
   const q=($('projectSearch')?.value||'').trim().toLowerCase(),type=$('projectTypeFilter')?.value||'',status=$('projectStatusFilter')?.value||'';
@@ -1988,13 +2068,13 @@ async function saveCompoundRule(){
 function editCompoundRule(id){
   const r=(catData.compoundRules||[]).find(x=>x.id===id);if(!r)return;
   setCatalogTab('rules',false);
-  $('compoundRuleId').value=r.id;$('compoundRuleName').value=r.name||'';$('compoundRuleMerchant').value=r.merchant_id||'';$('compoundRuleCategory').value=r.category_id||'';$('compoundRuleType').value=r.target_transaction_type||'';
+  $('compoundRuleId').value=r.id;$('compoundRuleName').value=r.name||'';$('compoundRuleMerchant').value=r.merchant_id||'';$('compoundRuleCategory').value=r.category_id||'';syncSearchFromSelect('compoundRuleMerchantSearch','compoundRuleMerchant');syncSearchFromSelect('compoundRuleCategorySearch','compoundRuleCategory');$('compoundRuleType').value=r.target_transaction_type||'';
   $('compoundRulePriority').value=rulePrioritySelectValue(r.priority);$('compoundRuleConfidence').value=r.confidence??1;$('compoundRuleConfirm').checked=true;$('compoundRuleActive').checked=!!r.is_active;
   $('compoundConditions').innerHTML='';(r.conditions||[]).forEach(addConditionRow);if(!(r.conditions||[]).length)addConditionRow();
   $('saveCompoundRule').textContent='Aggiorna regola';$('compoundRuleName').scrollIntoView({behavior:'smooth',block:'center'});
 }
 function editCategory(id){const c=(catData.categories||[]).find(x=>x.id===id);if(!c)return;setCatalogTab('categories',false);$('categoryId').value=c.id;$('categoryName').value=c.name;$('categoryParent').value=c.parent_id||'';$('saveCategory').textContent='Aggiorna';$('categoryName').scrollIntoView({behavior:'smooth',block:'center'})}
-function editMerchant(id){const m=(catData.counterparties||[]).find(x=>x.id===id);if(!m)return;setCatalogTab('merchants',false);$('merchantId').value=m.id;$('merchantName').value=m.name;$('merchantType').value=m.counterparty_type||'OTHER';$('merchantCategory').value=m.default_category_id||'';$('merchantApplyExisting').checked=true;$('saveMerchant').textContent='Aggiorna';$('merchantName').scrollIntoView({behavior:'smooth',block:'center'})}
+function editMerchant(id){const m=(catData.counterparties||[]).find(x=>x.id===id);if(!m)return;setCatalogTab('merchants',false);$('merchantId').value=m.id;$('merchantName').value=m.name;$('merchantType').value=m.counterparty_type||'OTHER';$('merchantCategory').value=m.default_category_id||'';syncSearchFromSelect('merchantCategorySearch','merchantCategory');$('merchantApplyExisting').checked=true;$('saveMerchant').textContent='Aggiorna';$('merchantName').scrollIntoView({behavior:'smooth',block:'center'})}
 async function saveCategory(){const btn=$('saveCategory');setBusy(btn,true,'Salvataggio');msg($('categoryMsg'),'');try{await rpc('dashboard_upsert_category_v1',{p_id:$('categoryId').value||null,p_name:$('categoryName').value,p_parent_id:$('categoryParent').value||null});$('categoryId').value='';$('categoryName').value='';$('categoryParent').value='';btn.dataset.label='Salva';msg($('categoryMsg'),'Categoria salvata.');await loadMovementsData()}catch(e){msg($('categoryMsg'),e.message,true)}finally{setBusy(btn,false)}}
 async function saveMerchant(){
   const btn=$('saveMerchant');setBusy(btn,true,'Salvataggio');msg($('merchantMsg'),'');
@@ -2006,7 +2086,7 @@ async function saveMerchant(){
       p_default_category_id:$('merchantCategory').value||null,
       p_apply_to_existing:false
     });
-    $('merchantId').value='';$('merchantName').value='';$('merchantType').value='MERCHANT';$('merchantCategory').value='';$('merchantApplyExisting').checked=false;btn.dataset.label='Salva';
+    $('merchantId').value='';$('merchantName').value='';$('merchantType').value='MERCHANT';$('merchantCategory').value='';syncSearchFromSelect('merchantCategorySearch','merchantCategory');$('merchantApplyExisting').checked=false;btn.dataset.label='Salva';
     const rr=r?.reclassification||{};
     const suffix=rr.enabled?` Motore attivo: riallineati ${nfmt(rr.changed||0)} movimenti non protetti.`:' Motore automatico disattivato: controlla la pagina Coerenza per l’impatto sui movimenti esistenti.';
     msg($('merchantMsg'),'Controparte salvata.'+suffix);
@@ -2029,7 +2109,7 @@ async function deleteCatalogEntity(btn){
     if(rr.enabled&&Number(rr.changed||0)>0)alert(`Elemento eliminato. Riallineati ${nfmt(rr.changed)} movimenti non protetti.`);
   }catch(e){alert(e.message)}finally{setBusy(btn,false)}
 }
-function openQuickCounterparty(){const income=(selectedRow?.is_bank_transfer?$('transferTarget').value:selectedRow?.transaction_type)==='INCOME';$('quickCounterpartyName').value='';$('quickCounterpartyType').value=income?'EMPLOYER':'MERCHANT';$('quickCounterpartyCategory').value=$('classCategory').value||'';msg($('quickCounterpartyMsg'),'');$('quickCounterpartyBox').classList.remove('hidden');$('quickCounterpartyName').focus()}
+function openQuickCounterparty(){const income=(selectedRow?.is_bank_transfer?$('transferTarget').value:selectedRow?.transaction_type)==='INCOME';$('quickCounterpartyName').value='';$('quickCounterpartyType').value=income?'EMPLOYER':'MERCHANT';$('quickCounterpartyCategory').value=$('classCategory').value||'';syncSearchFromSelect('quickCounterpartyCategorySearch','quickCounterpartyCategory');msg($('quickCounterpartyMsg'),'');$('quickCounterpartyBox').classList.remove('hidden');$('quickCounterpartyName').focus()}
 async function saveQuickCounterparty(){
   const btn=$('saveQuickCounterparty');setBusy(btn,true,'Creazione');msg($('quickCounterpartyMsg'),'');
   try{
@@ -2041,12 +2121,23 @@ async function saveQuickCounterparty(){
     const selectedCategory=$('classCategory').value;
     catData.counterparties=await rpc('dashboard_counterparties_read_v1')||[];
     catData.aliases=await rpc('dashboard_counterparty_aliases_read_v1')||[];
-    fillClassificationSelects();$('classMerchant').value=created.id;$('classCategory').value=selectedCategory||defaultCategory||'';syncClassificationCategoryFromMerchant(false);
+    fillClassificationSelects();$('classMerchant').value=created.id;$('classCategory').value=selectedCategory||defaultCategory||'';syncClassificationCategoryFromMerchant(false);syncSearchFromSelect('classMerchantSearch','classMerchant');syncSearchFromSelect('classCategorySearch','classCategory');
     updateRuleUi();renderClassificationSuggestion();renderMovementAliasBox();renderFutureAutomationBox();updateClassificationPipelineState();$('quickCounterpartyBox').classList.add('hidden');
     msg($('classMsg'),'Controparte “'+created.name+'” creata e selezionata.'+(alias?' Alias “'+alias+'” salvato automaticamente.':''));
   }catch(e){msg($('quickCounterpartyMsg'),e.message,true)}finally{setBusy(btn,false)}
 }
 
+function bindSearchableSelect(inputId,selectId,kind){
+  const input=$(inputId),select=$(selectId);if(!input||!select)return;
+  input.addEventListener('change',()=>syncSelectFromSearch(inputId,selectId,kind));
+  input.addEventListener('input',()=>{
+    const raw=String(input.value||'').trim();
+    const item=kind==='counterparty'?counterpartyBySearchLabel(raw):categoryBySearchLabel(raw);
+    if(item){select.value=item.id;select.dispatchEvent(new Event('change',{bubbles:true}))}
+    else{select.value='';select.dispatchEvent(new Event('change',{bubbles:true}))}
+  });
+  select.addEventListener('change',()=>syncSearchFromSelect(inputId,selectId));
+}
 function clearMovementFilters(){document.querySelectorAll('[data-pipeline-step]').forEach(b=>b.addEventListener('click',()=>setClassificationPipelineStep(b.dataset.pipelineStep)));
 document.querySelectorAll('[data-pipeline-next]').forEach(b=>b.addEventListener('click',()=>setClassificationPipelineStep(b.dataset.pipelineNext)));
 ['pipelineStepCounterparty','pipelineStepCategory','advancedAutomation','pipelineStepContext'].forEach(id=>$(id)?.addEventListener('toggle',()=>{if($(id)?.open){for(const other of Object.values(classificationPipelineMap()))if(other!==id&&$(other))$(other).open=false}syncClassificationPipelineNav()}));
@@ -2095,16 +2186,23 @@ $('cancelQuickCounterparty').onclick=()=>{$('quickCounterpartyBox').classList.ad
 ['movementSearch','movementStatus','movementAutomation','movementBank','movementKind','movementType','movementDirection','movementCounterparty','movementCategory','movementProject','movementTag','movementDateFrom','movementDateTo'].forEach(id=>$(id).addEventListener(id==='movementSearch'?'input':'change',renderMovements));$('clearMovementFilters').onclick=clearMovementFilters;$('viewList').onclick=()=>{viewMode='list';renderMovements()};$('viewGrouped').onclick=()=>{viewMode='grouped';renderMovements()};$('bulkSelectVisible').onclick=selectVisibleMovements;$('bulkClearSelection').onclick=clearSelectedMovements;$('bulkApplyCategory').onclick=applyBulkCategory;
 $('movementsTable').addEventListener('click',e=>{const auto=e.target.closest('[data-automation-target]');if(auto){openAutomationTarget(auto.dataset.automationTarget,auto.dataset.automationId);return}const sort=e.target.closest('[data-sort]');if(sort){setSort(sort.dataset.sort);return}const edit=e.target.closest('[data-edit-movement]');if(edit){const row=(catData?.movements||[]).find(x=>x.id===edit.dataset.editMovement);if(row)openClassify(row);return}const tg=e.target.closest('[data-toggle-group]');if(tg){const g=(window.__groupRows||[])[Number(tg.dataset.toggleGroup)];if(!g)return;if(expandedGroups.has(g.key))expandedGroups.delete(g.key);else expandedGroups.add(g.key);renderMovements()}});
 $('movementsTable').addEventListener('change',e=>{const cb=e.target.closest('[data-select-movement]');if(!cb)return;cb.checked?selectedMovementIds.add(cb.dataset.selectMovement):selectedMovementIds.delete(cb.dataset.selectMovement);syncBulkSelectionUi()});
-['categorySearch','merchantSearch','merchantL1Filter','merchantL2Filter','merchantTypeFilter','merchantStatusFilter','merchantRecencyFilter','projectSearch','projectTypeFilter','projectStatusFilter','tagSearch','tagStatusFilter','mccSearch','mccStatusFilter','compoundRuleSearch','compoundRuleStatusFilter','parsingRuleSearch'].forEach(id=>$(id)?.addEventListener(id.endsWith('Search')?'input':'change',renderCatalogs));$('expandAllCategories').onclick=()=>{(catData?.categories||[]).filter(x=>Number(x.depth)===1).forEach(x=>expandedCategoryGroups.add(x.level1_name||x.name));renderCategoriesCatalog()};$('collapseAllCategories').onclick=()=>{expandedCategoryGroups.clear();renderCategoriesCatalog()};
+['categorySearch','merchantSearch','merchantL1Filter','merchantL2Filter','merchantTypeFilter','merchantStatusFilter','merchantRecencyFilter','projectSearch','projectTypeFilter','projectStatusFilter','tagSearch','tagStatusFilter','mccSearch','mccStatusFilter','compoundRuleSearch','compoundRuleStatusFilter','parsingRuleSearch'].forEach(id=>$(id)?.addEventListener(id.endsWith('Search')?'input':'change',renderCatalogs));[['classMerchantSearch','classMerchant','counterparty'],['classCategorySearch','classCategory','category'],['merchantCategorySearch','merchantCategory','category'],['quickCounterpartyCategorySearch','quickCounterpartyCategory','category'],['compoundRuleMerchantSearch','compoundRuleMerchant','counterparty'],['compoundRuleCategorySearch','compoundRuleCategory','category']].forEach(x=>bindSearchableSelect(...x));$('expandAllCategories').onclick=()=>{(catData?.categories||[]).filter(x=>Number(x.depth)===1).forEach(x=>expandedCategoryGroups.add(x.level1_name||x.name));renderCategoriesCatalog()};$('collapseAllCategories').onclick=()=>{expandedCategoryGroups.clear();renderCategoriesCatalog()};
 $('clearCounterpartyCategorySummary').onclick=()=>{if($('merchantL1Filter'))$('merchantL1Filter').value='';if($('merchantL2Filter'))$('merchantL2Filter').value='';renderCatalogs()};
+$('applyCounterpartyBulkCategory').onclick=applyCounterpartyBulkCategory;
+$('selectVisibleCounterparties').onclick=()=>{for(const m of counterpartyFilteredRows())selectedCounterpartyIds.add(m.id);renderMerchantsCatalog()};
+$('clearSelectedCounterparties').onclick=()=>{selectedCounterpartyIds.clear();renderMerchantsCatalog()};
 $('clearMerchantFilters').onclick=()=>{['merchantSearch','merchantL1Filter','merchantL2Filter','merchantTypeFilter','merchantStatusFilter','merchantRecencyFilter'].forEach(id=>{if($(id))$(id).value=''});renderCatalogs()};
 $('tab-catalogs').addEventListener('click',e=>{const ct=e.target.closest('[data-catalog-tab]');if(ct){setCatalogTab(ct.dataset.catalogTab);return}
+const cpe=e.target.closest('[data-edit-counterparty-category]');if(cpe){editingCounterpartyCategoryIds.add(cpe.dataset.editCounterpartyCategory);renderMerchantsCatalog();return}
+const cpsave=e.target.closest('[data-save-counterparty-category]');if(cpsave){saveInlineCounterpartyCategory(cpsave);return}
+const cpcancel=e.target.closest('[data-cancel-counterparty-category]');if(cpcancel){editingCounterpartyCategoryIds.delete(cpcancel.dataset.cancelCounterpartyCategory);renderMerchantsCatalog();return}
 const cpk=e.target.closest('[data-counterparty-kpi]');if(cpk){const k=cpk.dataset.counterpartyKpi;if(k==='ALL'){['merchantSearch','merchantL1Filter','merchantL2Filter','merchantTypeFilter','merchantStatusFilter','merchantRecencyFilter'].forEach(id=>{if($(id))$(id).value=''})}else if(k==='STALE_365'){if($('merchantRecencyFilter'))$('merchantRecencyFilter').value='STALE_365';if($('merchantStatusFilter'))$('merchantStatusFilter').value=''}else{if($('merchantStatusFilter'))$('merchantStatusFilter').value=k;if($('merchantRecencyFilter'))$('merchantRecencyFilter').value=''}renderCatalogs();return}
 const cpf=e.target.closest('[data-counterparty-summary-filter-l1]');if(cpf){if($('merchantL1Filter'))$('merchantL1Filter').value=cpf.dataset.counterpartySummaryFilterL1||'';renderCatalogs();if($('merchantL2Filter'))$('merchantL2Filter').value=cpf.dataset.counterpartySummaryFilterL2||'';renderMerchantsCatalog();return}
 const cps=e.target.closest('[data-toggle-counterparty-summary]');if(cps){const k=cps.dataset.toggleCounterpartySummary;expandedCounterpartyGroups.has(k)?expandedCounterpartyGroups.delete(k):expandedCounterpartyGroups.add(k);renderCounterpartySummary(counterpartyEnriched());return}
 const cpd=e.target.closest('[data-toggle-counterparty-detail]');if(cpd){const k=cpd.dataset.toggleCounterpartyDetail;expandedCounterpartyDetails.has(k)?expandedCounterpartyDetails.delete(k):expandedCounterpartyDetails.add(k);renderMerchantsCatalog();return}
 const cpc=e.target.closest('[data-close-counterparty-detail]');if(cpc){expandedCounterpartyDetails.delete(cpc.dataset.closeCounterpartyDetail);renderMerchantsCatalog();return}
 const cpmg=e.target.closest('[data-merge-counterparty]');if(cpmg){mergeSuggestedCounterparty(cpmg);return}const cm=e.target.closest('[data-toggle-category-movements]');if(cm){const k=cm.dataset.toggleCategoryMovements;expandedCategoryMovementDetails.has(k)?expandedCategoryMovementDetails.delete(k):expandedCategoryMovementDetails.add(k);renderCategoriesCatalog();return}const cpm=e.target.closest('[data-toggle-counterparty-movements]');if(cpm){const k=cpm.dataset.toggleCounterpartyMovements;expandedCounterpartyMovementDetails.has(k)?expandedCounterpartyMovementDetails.delete(k):expandedCounterpartyMovementDetails.add(k);renderMerchantsCatalog();return}const cpa=e.target.closest('[data-toggle-counterparty-aliases]');if(cpa){const k=cpa.dataset.toggleCounterpartyAliases;expandedCounterpartyAliasDetails.has(k)?expandedCounterpartyAliasDetails.delete(k):expandedCounterpartyAliasDetails.add(k);renderMerchantsCatalog();return}const cap=e.target.closest('[data-cancel-alias-panel]');if(cap){expandedCounterpartyAliasDetails.delete(cap.dataset.cancelAliasPanel);renderMerchantsCatalog();return}const emv=e.target.closest('[data-edit-movement]');if(emv){const row=(catData?.movements||[]).find(x=>x.id===emv.dataset.editMovement);if(row){activateMainTab('categorization');openClassify(row)}return}const aa=e.target.closest('[data-add-alias]');if(aa){addCounterpartyAlias(aa);return}const ma=e.target.closest('[data-move-alias]');if(ma){moveCounterpartyAlias(ma);return}const da=e.target.closest('[data-delete-alias]');if(da){deleteCounterpartyAlias(da);return}const cg=e.target.closest('[data-toggle-category-group]');if(cg){const k=cg.dataset.toggleCategoryGroup;expandedCategoryGroups.has(k)?expandedCategoryGroups.delete(k):expandedCategoryGroups.add(k);renderCategoriesCatalog();return}const mg=e.target.closest('[data-toggle-counterparty-group]');if(mg){const k=mg.dataset.toggleCounterpartyGroup;expandedCounterpartyGroups.has(k)?expandedCounterpartyGroups.delete(k):expandedCounterpartyGroups.add(k);renderMerchantsCatalog();return}const mm=e.target.closest('[data-toggle-mcc-movements]');if(mm){const row=mm.closest('[data-mcc-row]'),k=row?.dataset.mccRow;if(k){expandedMccMovementDetails.has(k)?expandedMccMovementDetails.delete(k):expandedMccMovementDetails.add(k);renderMccCatalog()}return}const em=e.target.closest('[data-edit-mcc]');if(em){editMccCategory(em);return}const cmc=e.target.closest('[data-cancel-mcc-edit]');if(cmc){cancelMccEdit(cmc);return}const sm=e.target.closest('[data-save-mcc]');if(sm){saveMccCategory(sm);return}const sh=e.target.closest('[data-catalog-sort]');if(sh){setCatalogSort(sh.dataset.catalogSort,sh.dataset.catalogKey);return}const del=e.target.closest('[data-delete-entity]');if(del){deleteCatalogEntity(del);return}const cc=e.target.closest('[data-edit-cat]');if(cc){editCategory(cc.dataset.editCat);return}const m=e.target.closest('[data-edit-merch]');if(m){editMerchant(m.dataset.editMerch);return}const p=e.target.closest('[data-edit-project]');if(p){editProject(p.dataset.editProject);return}const t=e.target.closest('[data-edit-tag]');if(t){editTag(t.dataset.editTag);return}const rr=e.target.closest('[data-edit-rule]');if(rr){editCompoundRule(rr.dataset.editRule);return}const pr=e.target.closest('[data-edit-parsing]');if(pr){editParsingRule(pr.dataset.editParsing);return}});
+$('tab-catalogs').addEventListener('change',e=>{const one=e.target.closest('[data-select-counterparty]');if(one){one.checked?selectedCounterpartyIds.add(one.dataset.selectCounterparty):selectedCounterpartyIds.delete(one.dataset.selectCounterparty);syncCounterpartyBulkBar();return}const all=e.target.closest('[data-select-visible-counterparties]');if(all){for(const m of counterpartyFilteredRows())all.checked?selectedCounterpartyIds.add(m.id):selectedCounterpartyIds.delete(m.id);renderMerchantsCatalog();return}});
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>activateMainTab(b.dataset.tab));
 addConditionRow();
 init();
