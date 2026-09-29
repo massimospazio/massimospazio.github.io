@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Budget Familiare — Reporting</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
+<script src="../shared/supabase-client.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+:root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#6b7280;--line:#e5e7eb;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 8px 24px rgba(15,23,42,.06)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button,input,select{font:inherit}
+.wrap{max-width:1500px;margin:0 auto;padding:22px}
+.top{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:18px}
+.brand h1{font-size:24px;margin:0}.brand small{color:var(--muted)}
+.userbar{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:13px;flex-wrap:wrap}
+.tabs{display:flex;gap:8px;margin:0 0 18px;flex-wrap:wrap}
+.tab{border:1px solid var(--line);background:#fff;padding:9px 14px;border-radius:10px;cursor:pointer;text-decoration:none;color:inherit;display:inline-flex;align-items:center}
+.tab.active{background:var(--text);color:#fff;border-color:var(--text)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:16px}
+.grid{display:grid;gap:14px}
+.kpis{grid-template-columns:repeat(5,minmax(150px,1fr));margin-bottom:14px}
+.kpi .label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.kpi .value{font-size:25px;font-weight:750;margin-top:6px}
+.kpi .sub{font-size:12px;color:var(--muted);margin-top:4px}
+.section{margin-bottom:14px}
+.section-title{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin:0 0 12px}
+.section-title h2{font-size:18px;margin:0}.section-title p{margin:4px 0 0;color:var(--muted);font-size:13px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.btn{border:0;border-radius:9px;padding:9px 12px;cursor:pointer;background:var(--accent);color:#fff;font-weight:650}
+.btn.secondary{background:#eef2ff;color:#3730a3}.btn.ghost{background:#fff;color:var(--text);border:1px solid var(--line)}
+.btn.compact{padding:7px 9px;font-size:12px}.btn:disabled{opacity:.5;cursor:not-allowed}
+.input,.select{border:1px solid var(--line);border-radius:9px;padding:8px 9px;background:#fff;min-height:36px}
+.muted{color:var(--muted)}.small{font-size:12px}.right{text-align:right}.hidden{display:none!important}
+.msg{padding:10px 12px;border-radius:9px;background:#eef2ff;color:#3730a3;font-size:13px;margin:10px 0}
+.msg.error{background:#fee2e2;color:#991b1b}.msg.warn{background:#fff7ed;color:#9a3412}
+.login{max-width:420px;margin:80px auto}.login h2{margin-top:0}.field label{display:block;font-size:12px;color:var(--muted);margin:0 0 4px}
+.chart-box{height:380px;position:relative}.chart-box.compact{height:320px}
+.two{grid-template-columns:1.2fr .8fr}
+.balance-list{display:grid;gap:8px}
+.balance-row{display:grid;grid-template-columns:minmax(190px,1fr) 145px auto;gap:8px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}
+.balance-row:last-child{border-bottom:0}.balance-name{font-weight:700}.balance-meta{font-size:11px;color:var(--muted);margin-top:2px}
+.balance-input{width:100%;text-align:right}
+.balance-total{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:12px;border-top:2px solid var(--line);font-weight:750}
+.notice{padding:10px 12px;border:1px solid #dbeafe;background:#eff6ff;border-radius:10px;font-size:12px;color:#334155}
+.notice.warn{border-color:#fde68a;background:#fffbeb;color:#92400e}
+.plan-wrap{overflow:auto;border:1px solid var(--line);border-radius:12px}
+.plan-table{width:100%;border-collapse:collapse;min-width:1180px}
+.plan-table th,.plan-table td{padding:8px 9px;border-bottom:1px solid var(--line);text-align:right;vertical-align:middle;font-size:12px}
+.plan-table th{background:#fafafa;color:var(--muted);position:sticky;top:0;z-index:2}
+.plan-table th:first-child,.plan-table td:first-child{text-align:left;position:sticky;left:0;background:#fff;z-index:1;min-width:250px;max-width:300px}
+.plan-table th:nth-child(2),.plan-table td:nth-child(2){text-align:left;min-width:160px}
+.plan-table th:first-child{z-index:3;background:#fafafa}
+.plan-table .l1-row td{font-weight:750;background:#f8fafc}
+.plan-table .l1-row td:first-child{background:#f8fafc}
+.plan-table .special-row td{background:#f8fbff}
+.plan-table .special-row td:first-child{background:#f8fbff}
+.plan-label{display:flex;align-items:center;gap:7px}.caret{width:18px;border:0;background:transparent;cursor:pointer;color:#64748b;padding:0;font-size:15px}
+.plan-sub{margin-top:3px;color:var(--muted);font-size:10px;font-weight:400}
+.plan-input{width:96px;text-align:right;border:1px solid #dbe1e8;border-radius:7px;padding:6px}
+.plan-input.manual{border-color:#93c5fd;background:#eff6ff;font-weight:700}
+.method-select{width:150px;border:1px solid #dbe1e8;border-radius:7px;padding:6px;background:#fff}
+.total-cell{font-weight:750}
+.projection-kpis{grid-template-columns:repeat(3,1fr);margin:12px 0}
+.projection-table{width:100%;border-collapse:collapse}
+.projection-table th,.projection-table td{padding:8px 9px;border-bottom:1px solid var(--line);text-align:right;font-size:12px}
+.projection-table th:first-child,.projection-table td:first-child{text-align:left}
+.projection-table th{color:var(--muted);background:#fafafa}
+.positive{color:var(--ok)}.negative{color:var(--danger)}
+.legend-note{font-size:11px;color:var(--muted);margin-top:8px}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid #ddd;border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;vertical-align:-3px;margin-right:6px}@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:1100px){.kpis{grid-template-columns:repeat(3,1fr)}.two{grid-template-columns:1fr}.chart-box{height:340px}}
+@media(max-width:700px){.wrap{padding:12px}.top{align-items:flex-start;flex-direction:column}.kpis,.projection-kpis{grid-template-columns:1fr 1fr}.balance-row{grid-template-columns:1fr 120px}.balance-row .btn{grid-column:1/-1}.section-title{flex-direction:column}.chart-box{height:310px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="loginView" class="login card">
+    <h2>Budget Familiare — Reporting</h2>
+    <p class="muted">Accedi con l'utente autorizzato alla dashboard.</p>
+    <div class="field"><label>Email</label><input id="email" class="input" type="email" autocomplete="username" style="width:100%" /></div>
+    <div class="field" style="margin-top:10px"><label>Password</label><input id="password" class="input" type="password" autocomplete="current-password" style="width:100%" /></div>
+    <button id="loginBtn" class="btn" style="margin-top:12px;width:100%">Accedi</button>
+    <div id="loginMsg"></div>
+  </div>
+
+  <div id="appView" class="hidden">
+    <div class="top">
+      <div class="brand"><h1>Reporting Budget Familiare</h1><small>V66 · Andamento, pianificazione e liquidità</small></div>
+      <div class="userbar"><span id="userEmail"></span><button id="refreshBtn" class="btn ghost">Aggiorna</button><button id="logoutBtn" class="btn ghost">Esci</button></div>
+    </div>
+    <div class="tabs">
+      <a class="tab" href="../">Dashboard</a>
+      <a class="tab active" href="./">Reporting</a>
+    </div>
+
+    <div id="reportMsg"></div>
+
+    <section class="grid kpis">
+      <div class="card kpi"><div class="label">Spese ultimi 12 mesi</div><div id="kExpense12" class="value">—</div><div class="sub">Solo EXPENSE, esclusi investimenti e giroconti</div></div>
+      <div class="card kpi"><div class="label">Media mensile</div><div id="kExpenseAvg" class="value">—</div><div class="sub">Sui 12 mesi visualizzati</div></div>
+      <div class="card kpi"><div class="label">Saldo netto 12 mesi</div><div id="kNet12" class="value">—</div><div class="sub">Entrate − uscite, investimenti inclusi</div></div>
+      <div class="card kpi"><div class="label">Copertura categorie</div><div id="kCoverage" class="value">—</div><div class="sub">Spese con categoria</div></div>
+      <div class="card kpi"><div class="label">Dati aggiornati al</div><div id="kLatest" class="value" style="font-size:20px">—</div><div id="kRange" class="sub">—</div></div>
+    </section>
+
+    <section class="card section">
+      <div class="section-title">
+        <div><h2>Spese mensili per categoria</h2><p>Ultimi 12 mesi, stratificati per categoria di livello 1.</p></div>
+        <label class="small" style="display:flex;gap:7px;align-items:center"><input id="toggleYoY" type="checkbox" checked /> Confronta totale stesso mese anno precedente</label>
+      </div>
+      <div class="chart-box"><canvas id="expenseChart"></canvas></div>
+      <div id="yoyNote" class="legend-note"></div>
+    </section>
+
+    <section class="grid two section">
+      <div class="card">
+        <div class="section-title"><div><h2>Saldo netto mensile</h2><p>Entrate − uscite. I giroconti sono esclusi; gli investimenti assorbono liquidità.</p></div></div>
+        <div class="chart-box compact"><canvas id="cashflowChart"></canvas></div>
+        <div class="legend-note">Barra sopra zero = liquidità generata nel mese. Sotto zero = liquidità consumata. La linea mostra il cumulato dei 12 mesi.</div>
+      </div>
+
+      <div class="card">
+        <div class="section-title"><div><h2>Liquidità attuale</h2><p>Saldo manuale dei conti. È uno stock e non viene inserito tra i movimenti.</p></div></div>
+        <div id="balanceList" class="balance-list"></div>
+        <div class="balance-total"><span>Totale saldi inseriti</span><span id="balanceTotal">—</span></div>
+        <div id="balanceMsg"></div>
+      </div>
+    </section>
+
+    <section class="card section">
+      <div class="section-title">
+        <div><h2>Pianificazione prossimi 6 mesi</h2><p>I totali L1 sono calcolati dalle sottocategorie: si modificano i dettagli, non il totale, per evitare incoerenze.</p></div>
+        <div class="toolbar"><button id="expandAll" class="btn ghost compact">Espandi tutte</button><button id="collapseAll" class="btn ghost compact">Comprimi tutte</button></div>
+      </div>
+      <div class="notice" style="margin-bottom:10px"><strong>Metodo suggerito:</strong> Media 6 mesi per la spesa ordinaria; Media 12 mesi per una base più stabile; Stesso mese anno scorso per categorie stagionali come luce/gas/acqua. Ogni mese resta modificabile manualmente. In questa V1 non viene creato un motore separato di scadenze ricorrenti.</div>
+      <div id="planMsg"></div>
+      <div class="plan-wrap"><table class="plan-table"><thead id="planHead"></thead><tbody id="planBody"></tbody></table></div>
+      <div class="legend-note">I valori grigi sono suggerimenti; un valore inserito manualmente viene evidenziato in azzurro. Svuotando la cella si torna al suggerimento automatico.</div>
+    </section>
+
+    <section class="card section">
+      <div class="section-title"><div><h2>Proiezione liquidità</h2><p>Saldo attuale + entrate previste − spese previste − investimenti previsti.</p></div></div>
+      <div id="projectionContent"></div>
+    </section>
+  </div>
+</div>
+
+<script>
+const sb=window.appSupabase;
+let report=null;
+let expenseChart=null;
+let cashflowChart=null;
+const collapsedL1=new Set();
+
+const $=function(id){return document.getElementById(id)};
+const moneyFmt=new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR',maximumFractionDigits:0});
+const money2Fmt=new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR',minimumFractionDigits:2,maximumFractionDigits:2});
+const monthFmt=new Intl.DateTimeFormat('it-IT',{month:'short',year:'2-digit'});
+const dateFmt=new Intl.DateTimeFormat('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'});
+
+function num(v){const n=Number(v);return Number.isFinite(n)?n:0}
+function money(v){return moneyFmt.format(num(v))}
+function money2(v){return money2Fmt.format(num(v))}
+function dateObj(s){return new Date(String(s).slice(0,10)+'T12:00:00')}
+function monthLabel(s){return monthFmt.format(dateObj(s)).replace('.','')}
+function dateLabel(s){return s?dateFmt.format(dateObj(s)):'—'}
+function localDateISO(){const d=new Date();const y=d.getFullYear();const m=String(d.getMonth()+1).padStart(2,'0');const day=String(d.getDate()).padStart(2,'0');return y+'-'+m+'-'+day}
+function esc(s){return String(s??'').replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function msg(el,text,isError,isWarn){if(!el)return;el.innerHTML=text?'<div class="msg'+(isError?' error':isWarn?' warn':'')+'">'+esc(text)+'</div>':''}
+function setBusy(btn,busy,label){if(!btn)return;if(busy){btn.dataset.old=btn.textContent;btn.disabled=true;btn.innerHTML='<span class="spinner"></span>'+esc(label||'Attendere')}else{btn.disabled=false;btn.textContent=btn.dataset.old||btn.textContent}}
+async function rpc(name,args){const r=await sb.rpc(name,args||{});if(r.error)throw r.error;return r.data}
+
+function showLogin(){$('loginView').classList.remove('hidden');$('appView').classList.add('hidden')}
+function showApp(user){$('loginView').classList.add('hidden');$('appView').classList.remove('hidden');$('userEmail').textContent=user&&user.email?user.email:'';loadReport()}
+async function init(){const s=await sb.auth.getSession();if(s.data.session)showApp(s.data.session.user);else showLogin()}
+
+async function loadReport(){
+  const btn=$('refreshBtn');
+  setBusy(btn,true,'Aggiorno');
+  msg($('reportMsg'),'');
+  try{
+    report=await rpc('dashboard_reporting_read_v2');
+    renderAll();
+  }catch(e){
+    console.error(e);
+    msg($('reportMsg'),e.message||'Errore nel caricamento reporting',true);
+  }finally{setBusy(btn,false)}
+}
+
+function chartMonths(){return (report&&report.cashflow_monthly||[]).map(function(x){return x.month_start})}
+
+function expenseMatrix(){
+  const months=chartMonths();
+  const categories=[];
+  const seen=new Set();
+  (report.expense_monthly||[]).forEach(function(x){
+    if(!seen.has(x.l1_id)){seen.add(x.l1_id);categories.push({id:x.l1_id,name:x.l1_name})}
+  });
+  categories.sort(function(a,b){return a.name.localeCompare(b.name,'it')});
+  const map=new Map();
+  (report.expense_monthly||[]).forEach(function(x){map.set(x.month_start+'|'+x.l1_id,num(x.amount))});
+  return {months:months,categories:categories,map:map};
+}
+
+function renderKpis(){
+  const em=expenseMatrix();
+  let total=0;
+  em.map.forEach(function(v){total+=v});
+  const net=(report.cashflow_monthly||[]).reduce(function(s,x){return s+num(x.net)},0);
+  $('kExpense12').textContent=money(total);
+  $('kExpenseAvg').textContent=money(total/Math.max(em.months.length,1));
+  $('kNet12').textContent=money(net);
+  $('kNet12').className='value '+(net>=0?'positive':'negative');
+  $('kCoverage').textContent=num(report.meta&&report.meta.category_coverage_pct).toLocaleString('it-IT',{maximumFractionDigits:1})+'%';
+  $('kLatest').textContent=dateLabel(report.meta&&report.meta.data_max_date);
+  $('kRange').textContent='Storico dal '+dateLabel(report.meta&&report.meta.data_min_date);
+}
+
+function palette(i,total){
+  const hue=Math.round((i*360/Math.max(total,1)+210)%360);
+  return 'hsl('+hue+' 58% 58%)';
+}
+
+function renderExpenseChart(){
+  const em=expenseMatrix();
+  const previous=new Map((report.expense_previous_totals||[]).map(function(x){return [x.month,x.previous_total===null?null:num(x.previous_total)]}));
+  const datasets=em.categories.map(function(c,i){
+    return {type:'bar',label:c.name,data:em.months.map(function(m){return em.map.get(m+'|'+c.id)||0}),backgroundColor:palette(i,em.categories.length),borderWidth:0,stack:'spese'};
+  });
+  if($('toggleYoY').checked){
+    datasets.push({
+      type:'line',label:'Totale stesso mese anno precedente',
+      data:em.months.map(function(m){return previous.has(m)?previous.get(m):null}),
+      borderColor:'#111827',backgroundColor:'#111827',borderWidth:2.5,pointRadius:3,pointHoverRadius:4,spanGaps:false,tension:.25,stack:'yoy'
+    });
+  }
+  if(expenseChart)expenseChart.destroy();
+  expenseChart=new Chart($('expenseChart'),{
+    type:'bar',
+    data:{labels:em.months.map(monthLabel),datasets:datasets},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{position:'bottom',labels:{boxWidth:12,usePointStyle:true}},
+        tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+': '+money2(ctx.raw)}}}
+      },
+      scales:{
+        x:{stacked:true,grid:{display:false}},
+        y:{stacked:true,beginAtZero:true,ticks:{callback:function(v){return money(v)}}}
+      }
+    }
+  });
+  const missing=(report.expense_previous_totals||[]).filter(function(x){return x.previous_total===null}).length;
+  const latest=report.meta&&report.meta.data_max_date;
+  $('yoyNote').textContent='Dati correnti disponibili fino al '+dateLabel(latest)+'. '+(missing?'Il confronto YoY è parziale: '+missing+' mesi non hanno ancora lo stesso mese dell’anno precedente nello storico.':'Confronto YoY disponibile per tutti i 12 mesi.');
+}
+
+function renderCashflowChart(){
+  const rows=report.cashflow_monthly||[];
+  let running=0;
+  const cumulative=rows.map(function(x){running+=num(x.net);return Math.round(running*100)/100});
+  if(cashflowChart)cashflowChart.destroy();
+  cashflowChart=new Chart($('cashflowChart'),{
+    type:'bar',
+    data:{
+      labels:rows.map(function(x){return monthLabel(x.month_start)}),
+      datasets:[
+        {type:'bar',label:'Saldo netto mese',data:rows.map(function(x){return num(x.net)}),backgroundColor:rows.map(function(x){return num(x.net)>=0?'hsl(145 48% 48%)':'hsl(4 60% 58%)'}),borderWidth:0},
+        {type:'line',label:'Saldo cumulato 12 mesi',data:cumulative,borderColor:'#2563eb',backgroundColor:'#2563eb',borderWidth:2.5,pointRadius:2.5,tension:.25}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+': '+money2(ctx.raw)}}}},
+      scales:{x:{grid:{display:false}},y:{ticks:{callback:function(v){return money(v)}}}}
+    }
+  });
+}
+
+function balancesComplete(){
+  const b=report.balances||[];
+  return b.length>0&&b.every(function(x){return x.balance!==null&&x.balance!==undefined});
+}
+function currentBalanceTotal(){
+  return (report.balances||[]).reduce(function(s,x){return s+(x.balance===null||x.balance===undefined?0:num(x.balance))},0);
+}
+function renderBalances(){
+  const box=$('balanceList');
+  box.innerHTML=(report.balances||[]).map(function(x){
+    const value=x.balance===null||x.balance===undefined?'':Number(x.balance).toFixed(2);
+    return '<div class="balance-row" data-account="'+esc(x.account_id)+'">'+
+      '<div><div class="balance-name">'+esc(x.owner)+' · '+esc(x.bank)+'</div><div class="balance-meta">'+esc(x.account)+' · ultimo saldo: '+dateLabel(x.snapshot_date)+'</div></div>'+
+      '<input class="input balance-input" data-balance-input="'+esc(x.account_id)+'" type="number" step="0.01" value="'+esc(value)+'" placeholder="Saldo €" />'+
+      '<button class="btn compact" data-save-balance="'+esc(x.account_id)+'">Salva</button>'+
+      '</div>';
+  }).join('');
+  $('balanceTotal').textContent=money2(currentBalanceTotal());
+}
+
+function futureMonths(){return report.future_months||[]}
+function cellMap(){
+  return new Map((report.forecast_cells||[]).map(function(x){return [x.category_id+'|'+x.month,x]}));
+}
+function effectiveCell(c){return c&&c.override_amount!==null&&c.override_amount!==undefined?num(c.override_amount):num(c&&c.suggested_amount)}
+function overrideMap(section){
+  return new Map(((section&&section.overrides)||[]).map(function(x){return [x.month,x.amount]}));
+}
+function effectiveSpecial(section,month){
+  const m=overrideMap(section);
+  const v=m.get(month);
+  return v!==null&&v!==undefined?num(v):num(section&&section.avg6);
+}
+function methodLabel(v){return v==='AVG12'?'Media 12 mesi':v==='SAME_MONTH_LAST_YEAR'?'Stesso mese A-1':'Media 6 mesi'}
+
+function groupedForecast(){
+  const groups=new Map();
+  (report.forecast_categories||[]).forEach(function(r){
+    if(!groups.has(r.l1_id))groups.set(r.l1_id,{id:r.l1_id,name:r.l1_name,rows:[]});
+    groups.get(r.l1_id).rows.push(r);
+  });
+  return Array.from(groups.values()).sort(function(a,b){return a.name.localeCompare(b.name,'it')});
+}
+
+function renderPlan(){
+  const months=futureMonths();
+  $('planHead').innerHTML='<tr><th>Categoria</th><th>Metodo</th>'+months.map(function(m){return '<th>'+esc(monthLabel(m))+'</th>'}).join('')+'<th>Totale 6m</th></tr>';
+  const cm=cellMap();
+  let html='';
+  const income=report.income_forecast||{};
+  const inv=report.investment_forecast||{};
+  const incOverrides=overrideMap(income);
+  const invOverrides=overrideMap(inv);
+
+  function specialRow(label,key,section,overrides){
+    const values=months.map(function(m){
+      const ov=overrides.get(m);
+      const manual=ov!==null&&ov!==undefined;
+      const effective=manual?num(ov):num(section.avg6);
+      return '<td><input class="plan-input'+(manual?' manual':'')+'" data-'+key+'="'+esc(m)+'" type="number" min="0" step="0.01" value="'+(manual?Number(ov).toFixed(2):'')+'" placeholder="'+Number(effective).toFixed(0)+'" title="'+(manual?'Manuale':'Suggerito da media 6 mesi')+'" /></td>';
+    });
+    const total=months.reduce(function(s,m){const ov=overrides.get(m);return s+(ov!==null&&ov!==undefined?num(ov):num(section.avg6))},0);
+    return '<tr class="special-row"><td><strong>'+esc(label)+'</strong><div class="plan-sub">Media 6m '+money2(section.avg6)+' · 12m '+money2(section.avg12)+'</div></td><td class="muted">Base: media 6m</td>'+values.join('')+'<td class="total-cell">'+money(total)+'</td></tr>';
+  }
+
+  html+=specialRow('Entrate previste','income',income,incOverrides);
+  html+=specialRow('Investimenti previsti','investment',inv,invOverrides);
+
+  groupedForecast().forEach(function(g){
+    const totals=months.map(function(m){return g.rows.reduce(function(s,r){return s+effectiveCell(cm.get(r.category_id+'|'+m))},0)});
+    const total6=totals.reduce(function(a,b){return a+b},0);
+    const collapsed=collapsedL1.has(g.id);
+    html+='<tr class="l1-row"><td><div class="plan-label"><button class="caret" data-toggle-l1="'+esc(g.id)+'">'+(collapsed?'▸':'▾')+'</button>'+esc(g.name)+'</div><div class="plan-sub">Totale derivato dalle voci sottostanti</div></td><td class="muted">Somma dettagli</td>'+
+      totals.map(function(v){return '<td>'+money(v)+'</td>'}).join('')+'<td class="total-cell">'+money(total6)+'</td></tr>';
+    if(!collapsed){
+      g.rows.forEach(function(r){
+        const label=r.is_direct?'Diretto su '+r.l1_name:(r.l2_name||r.l1_name);
+        const sub='Media 6m '+money2(r.avg6)+' · 12m '+money2(r.avg12)+(r.is_direct?' · movimenti senza dettaglio L2':'');
+        let rowTotal=0;
+        const cells=months.map(function(m){
+          const c=cm.get(r.category_id+'|'+m);
+          const manual=c&&c.override_amount!==null&&c.override_amount!==undefined;
+          const v=effectiveCell(c);rowTotal+=v;
+          const seasonalMissing=r.forecast_method==='SAME_MONTH_LAST_YEAR'&&c&&!c.same_month_available;
+          const title=manual?'Manuale':seasonalMissing?'Anno precedente non disponibile: fallback media 12 mesi':'Suggerito: '+methodLabel(r.forecast_method);
+          return '<td><input class="plan-input'+(manual?' manual':'')+'" data-expense-category="'+esc(r.category_id)+'" data-month="'+esc(m)+'" type="number" min="0" step="0.01" value="'+(manual?Number(c.override_amount).toFixed(2):'')+'" placeholder="'+Number(v).toFixed(0)+'" title="'+esc(title)+'" /></td>';
+        });
+        html+='<tr data-detail-l1="'+esc(g.id)+'"><td style="padding-left:35px"><strong>'+esc(label)+'</strong><div class="plan-sub">'+esc(sub)+'</div></td><td><select class="method-select" data-method-category="'+esc(r.category_id)+'">'+
+          '<option value="AVG6"'+(r.forecast_method==='AVG6'?' selected':'')+'>Media 6 mesi</option>'+
+          '<option value="AVG12"'+(r.forecast_method==='AVG12'?' selected':'')+'>Media 12 mesi</option>'+
+          '<option value="SAME_MONTH_LAST_YEAR"'+(r.forecast_method==='SAME_MONTH_LAST_YEAR'?' selected':'')+'>Stesso mese A-1</option>'+
+          '</select></td>'+cells.join('')+'<td class="total-cell">'+money(rowTotal)+'</td></tr>';
+      });
+    }
+  });
+  $('planBody').innerHTML=html;
+}
+
+function updateOverrideArray(section,month,amount){
+  if(!section.overrides)section.overrides=[];
+  const found=section.overrides.find(function(x){return x.month===month});
+  if(found)found.amount=amount;
+  else section.overrides.push({month:month,amount:amount});
+}
+function setExpenseLocal(category,month,amount){
+  const c=(report.forecast_cells||[]).find(function(x){return x.category_id===category&&x.month===month});
+  if(c)c.override_amount=amount;
+}
+
+function expenseTotalsByMonth(){
+  const cm=cellMap();
+  const groups=groupedForecast();
+  const months=futureMonths();
+  const out=new Map();
+  months.forEach(function(m){
+    let v=0;
+    groups.forEach(function(g){g.rows.forEach(function(r){v+=effectiveCell(cm.get(r.category_id+'|'+m))})});
+    out.set(m,v);
+  });
+  return out;
+}
+
+function renderProjection(){
+  const box=$('projectionContent');
+  if(!balancesComplete()){
+    box.innerHTML='<div class="notice warn"><strong>Completa i saldi dei conti</strong><br>La proiezione parte dalla liquidità reale disponibile: finché manca almeno un saldo ING/Trade Republic non mostro un saldo futuro potenzialmente fuorviante.</div>';
+    return;
+  }
+  const months=futureMonths();
+  const exp=expenseTotalsByMonth();
+  let balance=currentBalanceTotal();
+  const rows=[];
+  months.forEach(function(m){
+    const income=effectiveSpecial(report.income_forecast,m);
+    const expenses=exp.get(m)||0;
+    const investment=effectiveSpecial(report.investment_forecast,m);
+    const delta=income-expenses-investment;
+    balance+=delta;
+    rows.push({month:m,income:income,expenses:expenses,investment:investment,delta:delta,balance:balance});
+  });
+  const min=rows.reduce(function(a,r){return Math.min(a,r.balance)},rows.length?rows[0].balance:balance);
+  const final=rows.length?rows[rows.length-1].balance:balance;
+  box.innerHTML=
+    '<div class="grid projection-kpis">'+
+      '<div class="card kpi"><div class="label">Liquidità iniziale</div><div class="value">'+money(currentBalanceTotal())+'</div></div>'+
+      '<div class="card kpi"><div class="label">Minimo previsto</div><div class="value '+(min<0?'negative':'')+'">'+money(min)+'</div></div>'+
+      '<div class="card kpi"><div class="label">Dopo 6 mesi</div><div class="value '+(final<currentBalanceTotal()?'negative':'positive')+'">'+money(final)+'</div></div>'+
+    '</div>'+
+    '<div style="overflow:auto"><table class="projection-table"><thead><tr><th>Mese</th><th>Entrate</th><th>Spese</th><th>Investimenti</th><th>Delta</th><th>Saldo previsto</th></tr></thead><tbody>'+
+    rows.map(function(r){return '<tr><td>'+esc(monthLabel(r.month))+'</td><td>'+money(r.income)+'</td><td>'+money(r.expenses)+'</td><td>'+money(r.investment)+'</td><td class="'+(r.delta>=0?'positive':'negative')+'">'+money(r.delta)+'</td><td><strong>'+money(r.balance)+'</strong></td></tr>'}).join('')+
+    '</tbody></table></div>'+
+    '<div class="legend-note">Previsione operativa, non saldo bancario garantito: cambia immediatamente quando modifichi entrate, spese, investimenti o saldi iniziali.</div>';
+}
+
+function renderAll(){
+  renderKpis();
+  renderExpenseChart();
+  renderCashflowChart();
+  renderBalances();
+  renderPlan();
+  renderProjection();
+}
+
+$('toggleYoY').onchange=renderExpenseChart;
+$('expandAll').onclick=function(){collapsedL1.clear();renderPlan()};
+$('collapseAll').onclick=function(){groupedForecast().forEach(function(g){collapsedL1.add(g.id)});renderPlan()};
+
+$('planBody').addEventListener('click',function(e){
+  const b=e.target.closest('[data-toggle-l1]');
+  if(!b)return;
+  const id=b.dataset.toggleL1;
+  if(collapsedL1.has(id))collapsedL1.delete(id);else collapsedL1.add(id);
+  renderPlan();
+});
+
+$('planBody').addEventListener('change',async function(e){
+  const el=e.target;
+  try{
+    msg($('planMsg'),'');
+    if(el.matches('[data-method-category]')){
+      el.disabled=true;
+      await rpc('dashboard_reporting_set_category_method_v1',{p_category_id:el.dataset.methodCategory,p_forecast_method:el.value});
+      await loadReport();
+      return;
+    }
+    if(el.matches('[data-expense-category]')){
+      const amount=el.value.trim()===''?null:Number(el.value);
+      if(amount!==null&&(!Number.isFinite(amount)||amount<0))throw new Error('Importo spesa non valido');
+      await rpc('dashboard_reporting_set_expense_override_v1',{p_month:el.dataset.month,p_category_id:el.dataset.expenseCategory,p_amount:amount});
+      setExpenseLocal(el.dataset.expenseCategory,el.dataset.month,amount);
+      renderPlan();renderProjection();
+      return;
+    }
+    if(el.matches('[data-income]')){
+      const amount=el.value.trim()===''?null:Number(el.value);
+      if(amount!==null&&(!Number.isFinite(amount)||amount<0))throw new Error('Importo entrata non valido');
+      await rpc('dashboard_reporting_set_income_override_v1',{p_month:el.dataset.income,p_amount:amount});
+      updateOverrideArray(report.income_forecast,el.dataset.income,amount);
+      renderPlan();renderProjection();
+      return;
+    }
+    if(el.matches('[data-investment]')){
+      const amount=el.value.trim()===''?null:Number(el.value);
+      if(amount!==null&&(!Number.isFinite(amount)||amount<0))throw new Error('Importo investimento non valido');
+      await rpc('dashboard_reporting_set_investment_override_v1',{p_month:el.dataset.investment,p_amount:amount});
+      updateOverrideArray(report.investment_forecast,el.dataset.investment,amount);
+      renderPlan();renderProjection();
+    }
+  }catch(err){console.error(err);msg($('planMsg'),err.message||'Errore salvataggio',true)}
+});
+
+$('balanceList').addEventListener('click',async function(e){
+  const b=e.target.closest('[data-save-balance]');
+  if(!b)return;
+  const id=b.dataset.saveBalance;
+  const input=document.querySelector('[data-balance-input="'+CSS.escape(id)+'"]');
+  const amount=Number(input.value);
+  if(!Number.isFinite(amount)){msg($('balanceMsg'),'Inserisci un saldo valido.',true);return}
+  setBusy(b,true,'Salvo');
+  try{
+    await rpc('dashboard_reporting_set_balance_v1',{p_account_id:id,p_balance:amount});
+    const row=(report.balances||[]).find(function(x){return x.account_id===id});
+    if(row){row.balance=amount;row.snapshot_date=localDateISO()}
+    renderBalances();renderProjection();
+    msg($('balanceMsg'),'Saldo aggiornato.');
+  }catch(err){console.error(err);msg($('balanceMsg'),err.message||'Errore salvataggio',true)}
+  finally{setBusy(b,false)}
+});
+
+$('loginBtn').onclick=async function(){
+  const b=$('loginBtn');setBusy(b,true,'Accesso');msg($('loginMsg'),'');
+  const res=await sb.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});
+  setBusy(b,false);
+  if(res.error){msg($('loginMsg'),res.error.message,true);return}
+  showApp(res.data.user);
+};
+$('logoutBtn').onclick=async function(){await sb.auth.signOut();showLogin()};
+$('refreshBtn').onclick=loadReport;
+init();
+</script>
+</body>
+</html>
