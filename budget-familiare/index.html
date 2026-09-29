@@ -112,6 +112,7 @@
         <div class="section-title"><div><h2>Classifica movimento — pipeline</h2><p id="selectedDescription" class="mono"></p></div><button id="closeClassify" class="btn ghost">Chiudi</button></div>
         <div id="classificationSuggestion" class="classification-suggestion hidden"></div>
         <div id="movementFacts" class="movement-facts"></div>
+        <div id="movementProtectionBox" class="future-automation-box hidden"></div>
 
         <div id="classificationPipelineNav" class="pipeline-flow">
           <button type="button" class="pipeline-nav-btn active" data-pipeline-step="counterparty"><strong>1</strong><span>Controparte</span></button>
@@ -1214,7 +1215,7 @@ async function refreshSelectedPipelinePreview(){
     const preview=await rpc('dashboard_transaction_classification_preview_v1',{p_transaction_id:id});
     if(selectedRow?.id!==id)return;
     selectedRow.__pipeline_preview=preview;
-    renderFutureAutomationBox();
+    renderMovementProtectionBox();
   }catch(e){
     if(selectedRow?.id===id)selectedRow.__pipeline_preview_error=e.message;
   }
@@ -1230,23 +1231,32 @@ async function unlockSelectedManualProtection(btn){
     if(row)openClassify(row);else resetClassificationPanel(true);
   }catch(err){msg($('classMsg'),err.message,true)}finally{setBusy(btn,false)}
 }
+function renderMovementProtectionBox(){
+  const el=$('movementProtectionBox');if(!el)return;
+  el.classList.remove('state-active','state-pending','state-partial','state-none');
+  if(!selectedRow?.manual_lock){
+    el.classList.add('hidden');el.innerHTML='';return;
+  }
+  el.classList.remove('hidden');
+  const preview=selectedRow.__pipeline_preview||null;
+  if(preview?.matches_current){
+    el.classList.add('state-active');
+    const via=classificationPipelineMethodLabel(preview);
+    el.innerHTML='<div class="future-title"><span>Protezione movimento</span><span class="pill manual-protected">MANUALE PROTETTO</span><span class="pill future-state-active">ORA AUTOMATIZZABILE</span></div><div class="future-main">La pipeline attuale riproduce già esattamente questa classificazione tramite <strong>'+esc(via)+'</strong>.</div><div class="future-action-note">La protezione resta attiva finché non decidi esplicitamente di rimuoverla.</div><div style="margin-top:8px"><button type="button" class="btn secondary compact" data-unlock-manual>Rimuovi protezione e passa ad automatico</button></div>';
+  }else{
+    el.classList.add('state-partial');
+    const detail=classificationProtectionDiffHtml(preview);
+    el.innerHTML='<div class="future-title"><span>Protezione movimento</span><span class="pill manual-protected">MANUALE PROTETTO</span></div><div class="future-main">Questo movimento è escluso dalla pipeline automatica.</div>'+detail+'<div class="future-action-note">Regole, alias e MCC non lo modificheranno finché resta protetto.</div><div style="margin-top:8px"><button type="button" class="btn secondary compact" data-unlock-manual>Rimuovi protezione e ricalcola</button></div>';
+  }
+}
 function renderFutureAutomationBox(){
   const el=$('futureAutomationBox');if(!el||!selectedRow)return;
   el.classList.remove('state-active','state-pending','state-partial','state-none');
 
   if(selectedRow.manual_lock){
-    const preview=selectedRow.__pipeline_preview||null;
-    if(preview?.matches_current){
-      el.classList.add('state-active');
-      const via=classificationPipelineMethodLabel(preview);
-      el.innerHTML='<div class="future-title"><span>Classificazione movimento</span><span class="pill manual-protected">MANUALE PROTETTO</span><span class="pill future-state-active">ORA AUTOMATIZZABILE</span></div><div class="future-main">La pipeline attuale riproduce già esattamente questa classificazione tramite <strong>'+esc(via)+'</strong>.</div><div class="future-action-note">La protezione resta attiva finché non decidi esplicitamente di rimuoverla.</div><div style="margin-top:8px"><button type="button" class="btn secondary compact" data-unlock-manual>Rimuovi protezione e passa ad automatico</button></div>';
-    }else{
-      el.classList.add('state-partial');
-      const detail=classificationProtectionDiffHtml(preview);
-      el.innerHTML='<div class="future-title"><span>Classificazione movimento</span><span class="pill manual-protected">MANUALE PROTETTO</span></div><div class="future-main">Questo movimento è escluso dalla pipeline automatica.</div>'+detail+'<div class="future-action-note">Regole, alias e MCC non lo modificheranno finché resta protetto.</div><div style="margin-top:8px"><button type="button" class="btn secondary compact" data-unlock-manual>Rimuovi protezione e ricalcola</button></div>';
-    }
-    return;
+    el.classList.add('hidden');el.innerHTML='';return;
   }
+  el.classList.remove('hidden');
 
   const merchantId=$('classMerchant')?.value||'',categoryId=$('classCategory')?.value||'',merchant=selectedCounterpartyRecord();
   const alias=classificationAliasValue();
@@ -1485,7 +1495,7 @@ function openClassify(row){
     ['MCC',row.mcc_code?mccStatusText(row).replace(/^MCC\s*/,''):'—']
   ].map(([k,v])=>`<span class="fact"><strong>${esc(k)}</strong>${esc(v)}</span>`).join('')+protectionFact;
   renderClassificationSuggestion();
-  $('classMerchant').value=row.counterparty_id||'';$('classCategory').value=row.category_id||'';syncClassificationCategoryFromMerchant(false);syncSearchFromSelect('classMerchantSearch','classMerchant');renderClassificationSuggestion();renderMovementAliasBox();renderFutureAutomationBox();if(row.manual_lock)refreshSelectedPipelinePreview();$('classProject').value=row.project_id||'';const selectedTags=new Set((row.tags||[]).map(t=>t.id));document.querySelectorAll('[data-class-tag]').forEach(cb=>cb.checked=selectedTags.has(cb.value));
+  $('classMerchant').value=row.counterparty_id||'';$('classCategory').value=row.category_id||'';syncClassificationCategoryFromMerchant(false);syncSearchFromSelect('classMerchantSearch','classMerchant');renderClassificationSuggestion();renderMovementAliasBox();renderMovementProtectionBox();renderFutureAutomationBox();if(row.manual_lock)refreshSelectedPipelinePreview();$('classProject').value=row.project_id||'';const selectedTags=new Set((row.tags||[]).map(t=>t.id));document.querySelectorAll('[data-class-tag]').forEach(cb=>cb.checked=selectedTags.has(cb.value));
   $('classMode').value='all';$('classificationRuleStyle').value='SIMPLE';if($('advancedAutomation'))$('advancedAutomation').open=false;
   if(selectedRow.is_bank_transfer){const internalTransfer=row.transaction_type==='TRANSFER'&&String(row.category_path||row.category_name||'').toLowerCase().includes('giroconto interno');$('transferTarget').value=internalTransfer?'TRANSFER':(['EXPENSE','INCOME'].includes(row.transaction_type)?row.transaction_type:(Number(row.amount)>=0?'INCOME':'EXPENSE'));}
   $('ruleMode').value='CONTAINS';$('rulePattern').value=(row.counterparty_name&&textSearchMatches(row.description||'',row.counterparty_name))?row.counterparty_name:(classificationAliasValue(row)||row.raw_causale||row.description||'');
@@ -2322,7 +2332,7 @@ $('movementAliasBox').addEventListener('click',e=>{const b=e.target.closest('[da
 $('cancelParsingCorrection').onclick=()=>{$('parsingCorrectionBox').classList.add('hidden');$('parsingCorrectionPreview').innerHTML='';msg($('parsingCorrectionMsg'),'')};
 $('previewParsingCorrection').onclick=previewParsingCorrection;
 $('saveParsingCorrection').onclick=saveParsingCorrection;
-$('futureAutomationBox').addEventListener('click',e=>{const unlock=e.target.closest('[data-unlock-manual]');if(unlock)unlockSelectedManualProtection(unlock)});
+$('movementProtectionBox').addEventListener('click',e=>{const unlock=e.target.closest('[data-unlock-manual]');if(unlock)unlockSelectedManualProtection(unlock)});
 $('movementFacts').addEventListener('click',e=>{const unlock=e.target.closest('[data-header-unlock-manual]');if(unlock)unlockSelectedManualProtection(unlock)});
 $('cancelQuickCounterparty').onclick=()=>{$('quickCounterpartyBox').classList.add('hidden');msg($('quickCounterpartyMsg'),'')};$('saveQuickCounterparty').onclick=saveQuickCounterparty;$('classificationRuleStyle').onchange=()=>{if($('classificationRuleStyle').value==='SIMPLE'&&selectedRow&&!$('rulePattern').value.trim())$('rulePattern').value=selectedRow.raw_merchant_name||selectedRow.description||'';updateRuleUi();renderFutureAutomationBox()};$('ruleMode').onchange=()=>{if(selectedRow&&!$('rulePattern').value.trim())$('rulePattern').value=selectedRow.raw_merchant_name||selectedRow.description||'';if($('ruleMode').value==='EXACT'&&selectedRow)$('rulePattern').value=selectedRow.description||'';updateRuleUi()};$('rulePattern').oninput=updateRuleUi;$('onlyUnreviewed').onchange=scheduleClassificationPreview;$('classMerchant').onchange=()=>{syncClassificationCategoryFromMerchant(false);updateRuleUi();renderClassificationSuggestion();renderMovementAliasBox();renderFutureAutomationBox();updateClassificationPipelineState()};$('classCategory').onchange=()=>{renderClassificationSuggestion();renderFutureAutomationBox();updateClassificationPipelineState()};$('transferTarget').onchange=()=>{updateTransferDecisionHint();scheduleClassificationPreview();renderClassificationSuggestion();renderFutureAutomationBox();updateClassificationPipelineState()};$('advancedAutomation').addEventListener('toggle',()=>{if($('advancedAutomation').open){updateRuleUi();scheduleClassificationPreview()}});
 ['movementSearch','movementStatus','movementAutomation','movementBank','movementKind','movementType','movementDirection','movementCategory','movementProject','movementTag','movementDateFrom','movementDateTo'].forEach(id=>$(id).addEventListener(id==='movementSearch'?'input':'change',renderMovements));$('movementCounterpartySearch').addEventListener('input',applyMovementCounterpartySearch);$('movementCounterpartySearch').addEventListener('change',applyMovementCounterpartySearch);$('clearMovementFilters').onclick=clearMovementFilters;$('viewList').onclick=()=>{viewMode='list';renderMovements()};$('viewGrouped').onclick=()=>{viewMode='grouped';renderMovements()};$('bulkSelectVisible').onclick=selectVisibleMovements;$('bulkClearSelection').onclick=clearSelectedMovements;$('bulkApplyCategory').onclick=applyBulkCategory;
