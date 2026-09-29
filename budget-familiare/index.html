@@ -205,10 +205,10 @@
               <div id="ruleHint" class="note strong-note"></div>
               <div class="preview-box" style="margin-top:10px">
                 <div class="section-title" style="margin-bottom:6px"><div><strong>Anteprima impatto</strong><p class="muted small">Controlla i movimenti che la regola intercetterà.</p></div><button id="refreshClassificationPreview" type="button" class="btn ghost compact">Aggiorna anteprima</button></div>
-                <div id="classificationPreview"><span class="muted">Configura una regola per vedere l’impatto.</span></div>
+                <div id="classificationPreview"><span class="muted">Configura una regola per vedere l’impatto. I movimenti mostrati saranno aggiornati subito alla creazione della regola.</span></div>
               </div>
               <input id="onlyUnreviewed" type="hidden" checked />
-              <div style="margin-top:10px"><button id="saveClassificationWithRule" class="btn" type="button">Crea regola e salva movimento</button></div>
+              <div style="margin-top:10px"><button id="saveClassificationWithRule" class="btn" type="button">Crea regola e applica ai movimenti</button></div>
             </div>
             <div class="pipeline-actions"><button type="button" class="btn ghost compact" data-pipeline-next="category">← Categoria</button><button type="button" class="btn secondary compact" data-pipeline-next="context">Nessuna regola / avanti →</button></div>
           </div>
@@ -1443,11 +1443,16 @@ async function saveClassification(createRule=false){
       }
       const preview=await rpc('dashboard_preview_compound_rule_v2',{p_conditions:conditions,p_only_unreviewed:false});
       if(!Number(preview?.count||0))throw new Error('La regola non intercetta alcun movimento.');
-      await rpc('dashboard_upsert_compound_rule_v1',{
+      const ruleSaved=await rpc('dashboard_upsert_compound_rule_v1',{
         p_id:null,p_name:name,p_merchant_id:merchant,p_category_id:category,
         p_target_transaction_type:target!==sourceType?target:null,
         p_priority:priority,p_confidence:1,p_auto_confirm:true,p_is_active:true,p_conditions:conditions
       });
+      const applied=await rpc('dashboard_apply_compound_rule_existing_v1',{
+        p_rule_id:ruleSaved.id,
+        p_only_unreviewed:true
+      });
+      selectedRow.__rule_apply_result=applied;
     }
 
     const saved=await rpc('dashboard_update_movement_v1',{
@@ -1455,9 +1460,13 @@ async function saveClassification(createRule=false){
     });
     await saveMovementContext();
     const protectedNow=!!saved?.manual_lock;
+    const ruleApplyResult=selectedRow?.__rule_apply_result||null;
     coherenceData=null;
     await loadMovementsData();
     resetClassificationPanel(true);
+    if(createRule&&ruleApplyResult){
+      $('movementSummary').textContent+=` · Regola applicata a ${nfmt(ruleApplyResult.updated||0)} movimenti`;
+    }
     if(protectedNow)alert('Classificazione salvata come Manuale protetto perché differisce dalla pipeline automatica attuale. Puoi rimuovere la protezione dalla pagina Coerenza o riaprendo il movimento.');
   }catch(e){msg($('classMsg'),e.message,true)}finally{setBusy(btn,false)}
 }
