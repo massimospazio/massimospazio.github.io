@@ -66,7 +66,7 @@
 
   <div id="appView" class="hidden">
     <div class="top">
-      <div class="brand"><h1>Dashboard Budget Familiare</h1><small>V63 · Alias opzionale e regole indipendenti</small></div>
+      <div class="brand"><h1>Dashboard Budget Familiare</h1><small>V64 · Protezione manuale esplicita e transizione verso automazione</small></div>
       <div class="userbar"><span id="userEmail"></span><button id="refreshBtn" class="btn ghost">Aggiorna</button><button id="logoutBtn" class="btn ghost">Esci</button></div>
     </div>
     <datalist id="v62CounterpartyOptions"></datalist>
@@ -1179,13 +1179,72 @@ async function addSelectedMovementAlias(btn){
     msg($('classMsg'),`Alias “${candidate}” associato a ${merchant?.name||'controparte'}.`);
   }catch(e){msg($('classMsg'),e.message,true)}finally{setBusy(btn,false)}
 }
+function classificationPipelineMethodLabel(preview){
+  const method=String(preview?.expected?.method||'').toUpperCase();
+  if(method==='ALIAS')return 'alias';
+  if(method==='RULE')return preview?.expected?.classification_rule_name?'regola “'+preview.expected.classification_rule_name+'”':'regola';
+  if(method==='MCC')return 'fallback MCC';
+  return method?method.toLowerCase():'pipeline automatica';
+}
+function classificationProtectionDiffHtml(preview){
+  if(!preview||preview.matches_current)return '';
+  const cur=preview.current||{},exp=preview.expected||{},diff=[];
+  if(String(cur.merchant_id||'')!==String(exp.merchant_id||'')){
+    diff.push('Controparte: <strong>'+esc(cur.merchant_name||'nessuna')+'</strong> → pipeline: <strong>'+esc(exp.merchant_name||'nessuna')+'</strong>');
+  }
+  if(String(cur.category_id||'')!==String(exp.category_id||'')){
+    diff.push('Categoria: <strong>'+esc(cur.category_name||'nessuna')+'</strong> → pipeline: <strong>'+esc(exp.category_name||'nessuna')+'</strong>');
+  }
+  if(String(cur.transaction_type||'')!==String(exp.transaction_type||'')){
+    diff.push('Tipo: <strong>'+esc(transactionTypeLabel(cur.transaction_type)||cur.transaction_type||'—')+'</strong> → pipeline: <strong>'+esc(transactionTypeLabel(exp.transaction_type)||exp.transaction_type||'—')+'</strong>');
+  }
+  return diff.length?'<div class="future-action-note"><strong>Perché è protetto:</strong> '+diff.join(' · ')+'</div>':'';
+}
+function classificationProtectionReasonText(preview){
+  if(!preview||preview.matches_current)return '';
+  const cur=preview.current||{},exp=preview.expected||{},diff=[];
+  if(String(cur.merchant_id||'')!==String(exp.merchant_id||''))diff.push('controparte '+(cur.merchant_name||'nessuna')+' invece di '+(exp.merchant_name||'nessuna')+' prevista dalla pipeline');
+  if(String(cur.category_id||'')!==String(exp.category_id||''))diff.push('categoria '+(cur.category_name||'nessuna')+' invece di '+(exp.category_name||'nessuna')+' prevista dalla pipeline');
+  if(String(cur.transaction_type||'')!==String(exp.transaction_type||''))diff.push('tipo '+(cur.transaction_type||'—')+' invece di '+(exp.transaction_type||'—')+' previsto dalla pipeline');
+  return diff.length?' Motivo: '+diff.join('; ')+'.':'';
+}
+async function refreshSelectedPipelinePreview(){
+  const id=selectedRow?.id;if(!id||!selectedRow?.manual_lock)return;
+  try{
+    const preview=await rpc('dashboard_transaction_classification_preview_v1',{p_transaction_id:id});
+    if(selectedRow?.id!==id)return;
+    selectedRow.__pipeline_preview=preview;
+    renderFutureAutomationBox();
+  }catch(e){
+    if(selectedRow?.id===id)selectedRow.__pipeline_preview_error=e.message;
+  }
+}
+async function unlockSelectedManualProtection(btn){
+  if(!selectedRow)return;
+  if(!confirm('Rimuovere la protezione manuale? Il movimento verrà ricalcolato subito con alias, regole e fallback MCC correnti.'))return;
+  setBusy(btn,true,'Ricalcolo');
+  try{
+    await rpc('dashboard_set_manual_protection_v1',{p_transaction_id:selectedRow.id,p_locked:false});
+    const id=selectedRow.id;coherenceData=null;await loadMovementsData();
+    const row=(catData?.movements||[]).find(x=>x.id===id);
+    if(row)openClassify(row);else resetClassificationPanel(true);
+  }catch(err){msg($('classMsg'),err.message,true)}finally{setBusy(btn,false)}
+}
 function renderFutureAutomationBox(){
   const el=$('futureAutomationBox');if(!el||!selectedRow)return;
   el.classList.remove('state-active','state-pending','state-partial','state-none');
 
   if(selectedRow.manual_lock){
-    el.classList.add('state-partial');
-    el.innerHTML='<div class="future-title"><span>Classificazione movimento</span><span class="pill manual-protected">MANUALE PROTETTO</span></div><div class="future-main">Questo movimento è escluso dalla pipeline automatica.</div><div class="future-action-note">Regole, alias e MCC non lo modificheranno finché resta protetto.</div><div style="margin-top:8px"><button type="button" class="btn secondary compact" data-unlock-manual>Rimuovi protezione e ricalcola</button></div>';
+    const preview=selectedRow.__pipeline_preview||null;
+    if(preview?.matches_current){
+      el.classList.add('state-active');
+      const via=classificationPipelineMethodLabel(preview);
+      el.innerHTML='<div class="future-title"><span>Classificazione movimento</span><span class="pill manual-protected">MANUALE PROTETTO</span><span class="pill future-state-active">ORA AUTOMATIZZABILE</span></div><div class="future-main">La pipeline attuale riproduce già esattamente questa classificazione tramite <strong>'+esc(via)+'</strong>.</div><div class="future-action-note">La protezione resta attiva finché non decidi esplicitamente di rimuoverla.</div><div style="margin-top:8px"><button type="button" class="btn secondary compact" data-unlock-manual>Rimuovi protezione e passa ad automatico</button></div>';
+    }else{
+      el.classList.add('state-partial');
+      const detail=classificationProtectionDiffHtml(preview);
+      el.innerHTML='<div class="future-title"><span>Classificazione movimento</span><span class="pill manual-protected">MANUALE PROTETTO</span></div><div class="future-main">Questo movimento è escluso dalla pipeline automatica.</div>'+detail+'<div class="future-action-note">Regole, alias e MCC non lo modificheranno finché resta protetto.</div><div style="margin-top:8px"><button type="button" class="btn secondary compact" data-unlock-manual>Rimuovi protezione e ricalcola</button></div>';
+    }
     return;
   }
 
@@ -1417,15 +1476,16 @@ function openClassify(row){
   $('quickCounterpartyBox').classList.add('hidden');$('transferDecision').classList.toggle('hidden',!selectedRow.is_bank_transfer);fillClassificationSelects();
   const dateTimeLabel=movementDateTimeLabel(row);
   $('selectedDescription').innerHTML=`${esc(row.description)} &nbsp; ${bankBadge(row.bank_name)} <span class="muted">${esc(dateTimeLabel)}</span>`;
+  const protectionFact=row.manual_lock?'<span class="fact"><strong>Protezione</strong><span class="pill manual-protected">Manuale protetto</span> <button type="button" class="btn ghost compact" data-header-unlock-manual>Rimuovi</button></span>':'';
   $('movementFacts').innerHTML=[
     ['Canale',movementKindLabel(row.movement_kind)],
     ['Tipo movimento',transactionTypeLabel(row.transaction_type)],
     ['Causale',row.raw_causale||'—'],
     ['Tipo raw',row.raw_type||'—'],
     ['MCC',row.mcc_code?mccStatusText(row).replace(/^MCC\s*/,''):'—']
-  ].map(([k,v])=>`<span class="fact"><strong>${esc(k)}</strong>${esc(v)}</span>`).join('');
+  ].map(([k,v])=>`<span class="fact"><strong>${esc(k)}</strong>${esc(v)}</span>`).join('')+protectionFact;
   renderClassificationSuggestion();
-  $('classMerchant').value=row.counterparty_id||'';$('classCategory').value=row.category_id||'';syncClassificationCategoryFromMerchant(false);syncSearchFromSelect('classMerchantSearch','classMerchant');renderClassificationSuggestion();renderMovementAliasBox();renderFutureAutomationBox();$('classProject').value=row.project_id||'';const selectedTags=new Set((row.tags||[]).map(t=>t.id));document.querySelectorAll('[data-class-tag]').forEach(cb=>cb.checked=selectedTags.has(cb.value));
+  $('classMerchant').value=row.counterparty_id||'';$('classCategory').value=row.category_id||'';syncClassificationCategoryFromMerchant(false);syncSearchFromSelect('classMerchantSearch','classMerchant');renderClassificationSuggestion();renderMovementAliasBox();renderFutureAutomationBox();if(row.manual_lock)refreshSelectedPipelinePreview();$('classProject').value=row.project_id||'';const selectedTags=new Set((row.tags||[]).map(t=>t.id));document.querySelectorAll('[data-class-tag]').forEach(cb=>cb.checked=selectedTags.has(cb.value));
   $('classMode').value='all';$('classificationRuleStyle').value='SIMPLE';if($('advancedAutomation'))$('advancedAutomation').open=false;
   if(selectedRow.is_bank_transfer){const internalTransfer=row.transaction_type==='TRANSFER'&&String(row.category_path||row.category_name||'').toLowerCase().includes('giroconto interno');$('transferTarget').value=internalTransfer?'TRANSFER':(['EXPENSE','INCOME'].includes(row.transaction_type)?row.transaction_type:(Number(row.amount)>=0?'INCOME':'EXPENSE'));}
   $('ruleMode').value='CONTAINS';$('rulePattern').value=(row.counterparty_name&&textSearchMatches(row.description||'',row.counterparty_name))?row.counterparty_name:(classificationAliasValue(row)||row.raw_causale||row.description||'');
@@ -1440,6 +1500,7 @@ function openClassify(row){
 async function saveMovementContext(){if(!selectedRow)return;const projectId=$('classProject').value||null;const tagIds=[...document.querySelectorAll('[data-class-tag]:checked')].map(x=>x.value);await rpc('dashboard_set_transaction_project_v1',{p_transaction_id:selectedRow.id,p_project_id:projectId});await rpc('dashboard_set_transaction_tags_v1',{p_transaction_id:selectedRow.id,p_tag_ids:tagIds})}
 async function saveClassification(createRule=false){
   if(!selectedRow)return;
+  const wasProtected=!!selectedRow.manual_lock,movementId=selectedRow.id;
   const btn=$(createRule?'saveClassificationWithRule':'saveClassificationNoRule');
   setBusy(btn,true,createRule?'Creazione regola':'Conferma');msg($('classMsg'),'');
   try{
@@ -1488,13 +1549,23 @@ async function saveClassification(createRule=false){
     await saveMovementContext();
     const protectedNow=!!saved?.manual_lock;
     const ruleApplyResult=selectedRow?.__rule_apply_result||null;
+    let protectionPreview=null;
+    if(protectedNow&&!wasProtected){
+      try{protectionPreview=await rpc('dashboard_transaction_classification_preview_v1',{p_transaction_id:movementId})}catch(_){}
+    }
     coherenceData=null;
     await loadMovementsData();
-    resetClassificationPanel(true);
+    const reopenForAutomation=protectedNow&&wasProtected&&createRule;
+    if(reopenForAutomation){
+      const refreshed=(catData?.movements||[]).find(x=>x.id===movementId);
+      if(refreshed)openClassify(refreshed);else resetClassificationPanel(true);
+    }else{
+      resetClassificationPanel(true);
+    }
     if(createRule&&ruleApplyResult){
       $('movementSummary').textContent+=` · Regola applicata a ${nfmt(ruleApplyResult.updated||0)} movimenti`;
     }
-    if(protectedNow)alert('Classificazione salvata come Manuale protetto perché differisce dalla pipeline automatica attuale. Puoi rimuovere la protezione dalla pagina Coerenza o riaprendo il movimento.');
+    if(protectedNow&&!wasProtected)alert('Classificazione salvata come Manuale protetto.'+classificationProtectionReasonText(protectionPreview)+' Rimarrà invariata finché non rimuovi esplicitamente la protezione.');
   }catch(e){msg($('classMsg'),e.message,true)}finally{setBusy(btn,false)}
 }
 async function applyBulkCategory(){
@@ -2251,17 +2322,8 @@ $('movementAliasBox').addEventListener('click',e=>{const b=e.target.closest('[da
 $('cancelParsingCorrection').onclick=()=>{$('parsingCorrectionBox').classList.add('hidden');$('parsingCorrectionPreview').innerHTML='';msg($('parsingCorrectionMsg'),'')};
 $('previewParsingCorrection').onclick=previewParsingCorrection;
 $('saveParsingCorrection').onclick=saveParsingCorrection;
-$('futureAutomationBox').addEventListener('click',async e=>{
-  const unlock=e.target.closest('[data-unlock-manual]');if(!unlock||!selectedRow)return;
-  if(!confirm('Rimuovere la protezione manuale? Il movimento verrà ricalcolato subito con alias, regole e fallback MCC correnti.'))return;
-  setBusy(unlock,true,'Ricalcolo');
-  try{
-    await rpc('dashboard_set_manual_protection_v1',{p_transaction_id:selectedRow.id,p_locked:false});
-    const id=selectedRow.id;coherenceData=null;await loadMovementsData();
-    const row=(catData?.movements||[]).find(x=>x.id===id);
-    if(row)openClassify(row);else resetClassificationPanel(true);
-  }catch(err){msg($('classMsg'),err.message,true)}finally{setBusy(unlock,false)}
-});
+$('futureAutomationBox').addEventListener('click',e=>{const unlock=e.target.closest('[data-unlock-manual]');if(unlock)unlockSelectedManualProtection(unlock)});
+$('movementFacts').addEventListener('click',e=>{const unlock=e.target.closest('[data-header-unlock-manual]');if(unlock)unlockSelectedManualProtection(unlock)});
 $('cancelQuickCounterparty').onclick=()=>{$('quickCounterpartyBox').classList.add('hidden');msg($('quickCounterpartyMsg'),'')};$('saveQuickCounterparty').onclick=saveQuickCounterparty;$('classificationRuleStyle').onchange=()=>{if($('classificationRuleStyle').value==='SIMPLE'&&selectedRow&&!$('rulePattern').value.trim())$('rulePattern').value=selectedRow.raw_merchant_name||selectedRow.description||'';updateRuleUi();renderFutureAutomationBox()};$('ruleMode').onchange=()=>{if(selectedRow&&!$('rulePattern').value.trim())$('rulePattern').value=selectedRow.raw_merchant_name||selectedRow.description||'';if($('ruleMode').value==='EXACT'&&selectedRow)$('rulePattern').value=selectedRow.description||'';updateRuleUi()};$('rulePattern').oninput=updateRuleUi;$('onlyUnreviewed').onchange=scheduleClassificationPreview;$('classMerchant').onchange=()=>{syncClassificationCategoryFromMerchant(false);updateRuleUi();renderClassificationSuggestion();renderMovementAliasBox();renderFutureAutomationBox();updateClassificationPipelineState()};$('classCategory').onchange=()=>{renderClassificationSuggestion();renderFutureAutomationBox();updateClassificationPipelineState()};$('transferTarget').onchange=()=>{updateTransferDecisionHint();scheduleClassificationPreview();renderClassificationSuggestion();renderFutureAutomationBox();updateClassificationPipelineState()};$('advancedAutomation').addEventListener('toggle',()=>{if($('advancedAutomation').open){updateRuleUi();scheduleClassificationPreview()}});
 ['movementSearch','movementStatus','movementAutomation','movementBank','movementKind','movementType','movementDirection','movementCategory','movementProject','movementTag','movementDateFrom','movementDateTo'].forEach(id=>$(id).addEventListener(id==='movementSearch'?'input':'change',renderMovements));$('movementCounterpartySearch').addEventListener('input',applyMovementCounterpartySearch);$('movementCounterpartySearch').addEventListener('change',applyMovementCounterpartySearch);$('clearMovementFilters').onclick=clearMovementFilters;$('viewList').onclick=()=>{viewMode='list';renderMovements()};$('viewGrouped').onclick=()=>{viewMode='grouped';renderMovements()};$('bulkSelectVisible').onclick=selectVisibleMovements;$('bulkClearSelection').onclick=clearSelectedMovements;$('bulkApplyCategory').onclick=applyBulkCategory;
 $('movementsTable').addEventListener('click',e=>{const auto=e.target.closest('[data-automation-target]');if(auto){openAutomationTarget(auto.dataset.automationTarget,auto.dataset.automationId);return}const sort=e.target.closest('[data-sort]');if(sort){setSort(sort.dataset.sort);return}const edit=e.target.closest('[data-edit-movement]');if(edit){const row=(catData?.movements||[]).find(x=>x.id===edit.dataset.editMovement);if(row)openClassify(row);return}const tg=e.target.closest('[data-toggle-group]');if(tg){const g=(window.__groupRows||[])[Number(tg.dataset.toggleGroup)];if(!g)return;if(expandedGroups.has(g.key))expandedGroups.delete(g.key);else expandedGroups.add(g.key);renderMovements()}});
