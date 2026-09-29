@@ -1659,7 +1659,7 @@ function counterpartyAliasesHtml(m){
     <div class="alias-panel-head"><div><strong>Alias di riconoscimento</strong><div class="muted small">Valori grezzi che identificano ${esc(m.name)}. L’origine segue il campo effettivamente usato dal parser; il conteggio considera solo i movimenti in cui l’alias è realmente associato a questa controparte.</div></div><div class="compact-actions"><span class="pill">${nfmt(aliases.length)} alias</span></div></div>
     ${warning}
     <div class="alias-add-row"><input class="input" data-new-alias-for="${m.id}" placeholder="Aggiungi alias esatto..." /><button class="btn compact" data-add-alias="${m.id}" type="button">Aggiungi alias</button></div>
-    <div class="note">Le modifiche agli alias cambiano il riconoscimento futuro. Se il motore automatico è disattivato, lo storico non viene riallineato subito ma le differenze compaiono in Coerenza.</div>
+    <div class="note">Spostare un alias riallinea subito anche i movimenti storici non protetti che usano esattamente quel valore, senza cambiare categoria, tipo, progetto o tag. Se la vecchia controparte resta senza alias, movimenti, regole o altre dipendenze, viene rimossa automaticamente. Le altre modifiche seguono il normale motore di coerenza.</div>
     <div class="table-wrap alias-table" style="margin-top:10px"><table class="table"><thead><tr><th>Alias</th><th>Origine osservata</th><th>Movimenti / banche</th><th>Periodo utilizzo</th><th>Azioni</th></tr></thead><tbody>${rows||'<tr><td colspan="5" class="muted">Nessun alias associato. Puoi aggiungerne uno sopra.</td></tr>'}</tbody></table></div>
   </div>`;
 }
@@ -1678,7 +1678,6 @@ async function moveCounterpartyAlias(btn){
   const aliasId=btn.dataset.moveAlias,row=btn.closest('[data-alias-id]'),target=row?.querySelector('[data-alias-move-target]')?.value||'';
   const alias=(catData?.aliases||[]).find(a=>a.id===aliasId);if(!alias||!target)return alert('Scegli la controparte di destinazione.');
   const dest=(catData?.counterparties||[]).find(m=>m.id===target);
-  if(!confirm(`Spostare l'alias “${alias.pattern}” da ${alias.merchant_name} a ${dest?.name||'altra controparte'}?`))return;
   setBusy(btn,true,'Sposto');
   try{
     await rpc('dashboard_remember_counterparty_alias_v1',{p_raw_value:alias.pattern,p_merchant_id:target,p_default_category_id:null,p_set_default_category:false});
