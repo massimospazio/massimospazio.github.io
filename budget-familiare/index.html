@@ -139,7 +139,7 @@
             </div>
 
             <div class="field">
-              <label><span id="partyLabel">Controparte</span> <span class="help" id="partyHelp" data-tip="Il valore grezzo del movimento viene usato come alias esatto della controparte selezionata.">?</span></label>
+              <label><span id="partyLabel">Controparte</span> <span class="help" id="partyHelp" data-tip="Il candidato affidabile viene salvato come alias EXACT. Gli altri movimenti storici non protetti con lo stesso candidato vengono riallineati subito tramite la pipeline.">?</span></label>
               <div class="inline-select"><input id="classMerchantSearch" class="input" list="v62CounterpartyOptions" placeholder="Cerca controparte..." autocomplete="off" /><select id="classMerchant" class="hidden"></select><button id="newCounterpartyBtn" type="button" class="btn ghost compact">＋ Nuova</button></div>
             </div>
             <div id="movementAliasBox" class="movement-alias-box"></div>
@@ -1421,7 +1421,7 @@ async function saveClassification(createRule=false){
     const sourceType=selectedRow.base_transaction_type||selectedRow.transaction_type;
     if(target!=='TRANSFER'&&!category)throw new Error('La categoria è obbligatoria per confermare il movimento, inclusi gli investimenti.');
 
-    await persistSelectedCounterpartyAutomation(merchant,category);
+    const aliasAutomation=await persistSelectedCounterpartyAutomation(merchant,category);
 
     if(createRule){
       const advanced=$('classificationRuleStyle').value==='ADVANCED';
@@ -1461,9 +1461,14 @@ async function saveClassification(createRule=false){
     await saveMovementContext();
     const protectedNow=!!saved?.manual_lock;
     const ruleApplyResult=selectedRow?.__rule_apply_result||null;
+    const aliasMatched=Number(aliasAutomation?.matching_transactions_targeted||0);
+    const aliasChanged=Number(aliasAutomation?.reclassified_matching_transactions||0);
     coherenceData=null;
     await loadMovementsData();
     resetClassificationPanel(true);
+    if(aliasMatched>1){
+      $('movementSummary').textContent+=' · Alias EXACT applicato a '+nfmt(aliasMatched)+' movimenti'+(aliasChanged?' ('+nfmt(aliasChanged)+' riallineati)':'');
+    }
     if(createRule&&ruleApplyResult){
       $('movementSummary').textContent+=` · Regola applicata a ${nfmt(ruleApplyResult.updated||0)} movimenti`;
     }
@@ -1772,7 +1777,7 @@ function counterpartyAliasesHtml(m){
     <div class="alias-panel-head"><div><strong>Alias di riconoscimento</strong><div class="muted small">Valori grezzi che identificano ${esc(m.name)}. L’origine segue il campo effettivamente usato dal parser; il conteggio considera solo i movimenti in cui l’alias è realmente associato a questa controparte.</div></div><div class="compact-actions"><span class="pill">${nfmt(aliases.length)} alias</span></div></div>
     ${warning}
     <div class="alias-add-row"><input class="input" data-new-alias-for="${m.id}" placeholder="Aggiungi alias esatto..." /><button class="btn compact" data-add-alias="${m.id}" type="button">Aggiungi alias</button></div>
-    <div class="note">Spostare un alias riallinea subito anche i movimenti storici non protetti che usano esattamente quel valore, senza cambiare categoria, tipo, progetto o tag. Se la vecchia controparte resta senza alias, movimenti, regole o altre dipendenze, viene rimossa automaticamente. Le altre modifiche seguono il normale motore di coerenza.</div>
+    <div class="note">Creare/ricordare un alias EXACT riallinea subito tramite la pipeline i movimenti storici non protetti con lo stesso candidato. Spostare invece un alias già esistente tra due controparti corregge solo l’identità e preserva categoria, tipo, progetto e tag storici. Se la vecchia controparte resta vuota, viene rimossa automaticamente.</div>
     <div class="table-wrap alias-table" style="margin-top:10px"><table class="table"><thead><tr><th>Alias</th><th>Origine osservata</th><th>Movimenti / banche</th><th>Periodo utilizzo</th><th>Azioni</th></tr></thead><tbody>${rows||'<tr><td colspan="5" class="muted">Nessun alias associato. Puoi aggiungerne uno sopra.</td></tr>'}</tbody></table></div>
   </div>`;
 }
