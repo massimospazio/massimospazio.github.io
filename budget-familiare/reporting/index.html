@@ -77,7 +77,12 @@ button,input,select{font:inherit}
 
 .mode-toggle{display:inline-flex;gap:4px;padding:3px;border:1px solid var(--line);border-radius:10px;background:#fff}
 .copy-btn{white-space:nowrap}
-.heat-table td.heat-cell{cursor:pointer;font-weight:700;min-width:78px}
+.heat-table{min-width:0;table-layout:fixed}
+.heat-table th,.heat-table td{padding:7px 5px;font-size:11px;white-space:nowrap}
+.heat-table th:first-child,.heat-table td:first-child{min-width:0;max-width:none;width:180px}
+.heat-table th:nth-child(2),.heat-table td:nth-child(2){min-width:0;width:72px;text-align:right}
+.heat-table th:nth-child(n+3),.heat-table td:nth-child(n+3){min-width:0;width:auto;text-align:right}
+.heat-table td.heat-cell{cursor:pointer;font-weight:700;min-width:0}
 .heat-table td.heat-cell:hover{outline:2px solid #93c5fd;outline-offset:-2px}
 .category-link{border:0;background:transparent;color:var(--accent);font-weight:700;cursor:pointer;padding:0;text-align:left}
 .detail-panel{margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
@@ -478,7 +483,7 @@ function renderAnalysis(){
   const direction=$("analysisDirection").value;
   const months=report.analysis_months||[];
   const rows=analysisRows(direction);
-  $("analysisHead").innerHTML="<tr><th>Categoria</th><th>Media 12m</th><th></th>"+months.map(function(m){return "<th>"+esc(monthLabel(m))+"</th>"}).join("")+"<th>Totale</th></tr>";
+  $("analysisHead").innerHTML="<tr><th>Categoria</th><th>Media 12m</th>"+months.map(function(m){return "<th>"+esc(monthLabel(m))+"</th>"}).join("")+"<th>Totale</th></tr>";
   const byCat=new Map();
   rows.forEach(function(x){
     if(!byCat.has(x.category_id))byCat.set(x.category_id,{meta:x,months:new Map(),total:0});
@@ -496,18 +501,18 @@ function renderAnalysis(){
     const collapsed=collapsedL1.has(g.id);
     const totals=months.map(function(m){return g.rows.reduce(function(s,r){return s+(r.months.get(m)||0)},0)});
     const total=totals.reduce(function(a,b){return a+b},0),avg=total/Math.max(months.length,1);
-    html+='<tr class="l1-row"><td><div class="plan-label"><button class="caret" data-toggle-l1="'+esc(g.id)+'">'+(collapsed?"▸":"▾")+'</button><button class="category-link" data-analysis-category="'+esc(g.rawId)+'" data-analysis-direction="'+direction+'">'+esc(g.name)+'</button></div></td><td>'+money(avg)+'</td><td></td>'+
+    html+='<tr class="l1-row"><td><div class="plan-label"><button class="caret" data-toggle-l1="'+esc(g.id)+'">'+(collapsed?"▸":"▾")+'</button><button class="category-link" data-analysis-category="'+esc(g.rawId)+'" data-analysis-direction="'+direction+'">'+esc(g.name)+'</button></div></td><td>'+money(avg)+'</td>'+
       totals.map(function(v,i){return '<td class="heat-cell" style="'+heatStyle(v,avg,direction)+'" data-analysis-category="'+esc(g.rawId)+'" data-analysis-direction="'+direction+'" data-analysis-month="'+esc(months[i])+'">'+money(v)+"</td>"}).join("")+"<td>"+money(total)+"</td></tr>";
     if(!collapsed){
       g.rows.sort(function(a,b){return detailLabel(a.meta).localeCompare(detailLabel(b.meta),"it")}).forEach(function(r){
         const avg12=num(r.meta.avg12);
-        html+='<tr><td style="padding-left:35px"><button class="category-link" data-analysis-category="'+esc(r.meta.category_id)+'" data-analysis-direction="'+direction+'">'+esc(detailLabel(r.meta))+'</button></td><td>'+money(avg12)+'</td><td></td>'+
+        html+='<tr><td style="padding-left:35px"><button class="category-link" data-analysis-category="'+esc(r.meta.category_id)+'" data-analysis-direction="'+direction+'">'+esc(detailLabel(r.meta))+'</button></td><td>'+money(avg12)+'</td>'+
           months.map(function(m){const v=r.months.get(m)||0;return '<td class="heat-cell" style="'+heatStyle(v,avg12,direction)+'" data-analysis-category="'+esc(r.meta.category_id)+'" data-analysis-direction="'+direction+'" data-analysis-month="'+esc(m)+'" title="'+esc((direction==="EXPENSE"?"Spesa":"Entrata")+" "+money(v)+" · media "+money(avg12))+'">'+money(v)+"</td>"}).join("")+
           "<td>"+money(r.total)+"</td></tr>";
       });
     }
   });
-  $("analysisBody").innerHTML=html||'<tr><td colspan="'+(months.length+4)+'" class="muted">Nessun dato nel periodo.</td></tr>';
+  $("analysisBody").innerHTML=html||'<tr><td colspan="'+(months.length+3)+'" class="muted">Nessun dato nel periodo.</td></tr>';
 }
 function maxDeviationMonth(detail){
   const avg=num(detail.avg12);let best=null,bestDev=-1;
