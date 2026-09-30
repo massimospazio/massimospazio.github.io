@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Budget Familiare — Dashboard gestione</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="shared/supabase-client.js"></script>
+<script src="../shared/supabase-client.js"></script>
 <style>
 :root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#6b7280;--line:#e5e7eb;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 8px 24px rgba(15,23,42,.06)}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,input,select{font:inherit}.wrap{max-width:1500px;margin:0 auto;padding:22px}.top{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:18px}.brand h1{font-size:24px;margin:0}.brand small{color:var(--muted)}.userbar{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:13px}.tabs{display:flex;gap:8px;margin:0 0 18px;flex-wrap:wrap}.tab{border:1px solid var(--line);background:#fff;padding:9px 14px;border-radius:10px;cursor:pointer}.tab.active{background:var(--text);color:#fff;border-color:var(--text)}.tabs a.tab{text-decoration:none;color:inherit;display:inline-flex;align-items:center}.card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:16px}.grid{display:grid;gap:14px}.kpis{grid-template-columns:repeat(6,minmax(150px,1fr));margin-bottom:14px}.kpi .label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}.kpi .value{font-size:27px;font-weight:750;margin-top:6px}.kpi .sub{font-size:12px;color:var(--muted);margin-top:4px}.section-title{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:4px 0 12px}.section-title h2{font-size:18px;margin:0}.section-title p{margin:4px 0 0;color:var(--muted);font-size:13px}.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.input,.select{border:1px solid var(--line);border-radius:9px;padding:9px 10px;background:#fff;min-height:38px}.input{min-width:220px}.btn{border:0;border-radius:9px;padding:9px 12px;cursor:pointer;background:var(--accent);color:#fff;font-weight:650}.btn.secondary{background:#eef2ff;color:#3730a3}.btn.ghost{background:#fff;color:var(--text);border:1px solid var(--line)}.btn.danger{background:#fee2e2;color:#991b1b}
@@ -20,6 +20,24 @@
 @media(max-width:900px){.bulk-movement-bar .select{width:100%;min-width:0}}
 .catalog-section{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:8px}.catalog-section-head{display:grid;grid-template-columns:minmax(220px,1.6fr) 110px 120px 120px 115px;gap:8px;align-items:center;padding:10px 12px;background:#f8fafc;cursor:pointer}.catalog-section-body{border-top:1px solid var(--line)}
 @media(max-width:900px){.catalog-section-head{grid-template-columns:1fr auto}.catalog-section-head .group-stat{display:none}}
+.category-audit-kpis{grid-template-columns:repeat(4,minmax(140px,1fr));gap:8px}
+.category-audit-kpi{border:1px solid var(--line);background:#fff;border-radius:10px;padding:10px 12px;text-align:left;cursor:pointer;color:inherit}
+.category-audit-kpi:hover{border-color:#93c5fd;background:#f8fbff}.category-audit-kpi .audit-value{font-size:22px;font-weight:750;margin-top:3px}
+.category-audit-kpi.red{border-color:#fecaca;background:#fef2f2}.category-audit-kpi.yellow{border-color:#fde68a;background:#fffbeb}
+.category-audit-head{display:grid;grid-template-columns:minmax(190px,1.45fr) 72px 92px 132px 86px minmax(145px,1fr) 112px minmax(190px,auto);gap:7px;align-items:center}
+.category-audit-head.labels{padding:0 12px 5px;font-size:11px;color:var(--muted);font-weight:700}
+.category-audit-head.catalog-section-head{grid-template-columns:minmax(190px,1.45fr) 72px 92px 132px 86px minmax(145px,1fr) 112px minmax(190px,auto)}
+.category-audit-head .group-stat{text-align:left}.category-audit-head .audit-actions{justify-self:end}
+.category-frequency strong{font-size:12px}.month-strip{display:flex;gap:2px;margin-top:4px;white-space:nowrap}
+.month-dot{width:7px;height:7px;border-radius:50%;background:#e5e7eb;display:inline-block}.month-dot.active{background:#64748b}
+.audit-deps{font-size:11px;line-height:1.35;color:#475569}.audit-deps strong{color:#111827}
+.audit-status-red{background:#fee2e2;color:#991b1b;font-weight:750}.audit-status-yellow{background:#fef3c7;color:#92400e;font-weight:750}.audit-status-normal{background:#dcfce7;color:#166534}
+.category-audit-section-red{border-color:#fecaca}.category-audit-section-yellow{border-color:#fde68a}
+.category-audit-row-red td:first-child{border-left:4px solid #dc2626}.category-audit-row-yellow td:first-child{border-left:4px solid #d97706}
+.category-audit-table th:nth-child(1){width:20%}.category-audit-table th:nth-child(2){width:8%}.category-audit-table th:nth-child(3){width:10%}.category-audit-table th:nth-child(4){width:15%}.category-audit-table th:nth-child(5){width:10%}.category-audit-table th:nth-child(6){width:17%}.category-audit-table th:nth-child(7){width:10%}.category-audit-table th:nth-child(8){width:10%}
+@media(max-width:1100px){.category-audit-kpis{grid-template-columns:repeat(2,1fr)}.category-audit-head.catalog-section-head{grid-template-columns:minmax(190px,1fr) 80px 105px 150px}.category-audit-head.catalog-section-head>:nth-child(5),.category-audit-head.catalog-section-head>:nth-child(6),.category-audit-head.catalog-section-head>:nth-child(7){display:none}.category-audit-head.labels{display:none}}
+@media(max-width:650px){.category-audit-kpis{grid-template-columns:1fr 1fr}.category-audit-head.catalog-section-head{grid-template-columns:1fr auto}.category-audit-head.catalog-section-head>:not(:first-child):not(:last-child){display:none}}
+
 .btn.compact{padding:8px 10px;white-space:nowrap}.inline-select{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;align-items:center}.btn:disabled{opacity:.5;cursor:not-allowed}.toolbar .select{min-width:145px}.table-wrap{overflow:visible;border:1px solid var(--line);border-radius:12px}.table{width:100%;border-collapse:collapse;table-layout:fixed}.table th,.table td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;overflow-wrap:anywhere;word-break:break-word}.table th{font-size:12px;color:var(--muted);background:#fafafa;position:sticky;top:0;z-index:1}.table td{font-size:13px}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.muted{color:var(--muted)}.pill{display:inline-flex;align-items:center;border-radius:999px;padding:3px 8px;font-size:11px;background:#f3f4f6;margin:1px 2px 1px 0}.pill.warn{background:#fef3c7;color:#92400e}.pill.ok{background:#dcfce7;color:#166534}.pill.in{background:#dcfce7;color:#166534;font-weight:700}.pill.out{background:#fee2e2;color:#991b1b;font-weight:700}.two{grid-template-columns:1.1fr .9fr}.three{grid-template-columns:repeat(3,1fr)}.stack{display:grid;gap:14px}.hidden{display:none!important}.login{max-width:420px;margin:80px auto}.login h2{margin-top:0}.msg{padding:10px 12px;border-radius:9px;background:#eef2ff;color:#3730a3;font-size:13px;margin:10px 0}.msg.error{background:#fee2e2;color:#991b1b}.editor-row{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end}.editor-row.four{grid-template-columns:1fr 1fr 1fr auto}.field label{display:block;font-size:12px;color:var(--muted);margin:0 0 4px}.field input,.field select{width:100%}.classify-box{border:1px solid #c7d2fe;background:#eef2ff;border-radius:12px;padding:14px;margin-bottom:14px}.checks{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:13px}.overview-kpis{grid-template-columns:repeat(4,minmax(180px,1fr));margin-bottom:14px}.right{text-align:right}.small{font-size:12px}.truncate{white-space:normal;overflow-wrap:anywhere;word-break:break-word}.note{font-size:12px;color:var(--muted);margin-top:8px}.help{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:50%;border:1px solid #cbd5e1;color:#475569;font-size:11px;font-weight:700;cursor:help;position:relative;vertical-align:1px;margin-left:3px}.help:hover:after{content:attr(data-tip);position:absolute;z-index:30;left:50%;bottom:135%;transform:translateX(-50%);width:min(320px,80vw);background:#172033;color:#fff;padding:9px 10px;border-radius:8px;font-size:12px;line-height:1.35;font-weight:400;box-shadow:0 8px 20px rgba(15,23,42,.18)}.rule-box{margin-top:12px;padding:12px;border:1px solid #dbeafe;border-radius:10px;background:#fff}.rule-grid{display:grid;grid-template-columns:minmax(220px,.8fr) minmax(260px,1.2fr);gap:10px}.strong-note{color:#334155}.rule-box.disabled{opacity:.55}.rule-box.disabled input,.rule-box.disabled select{pointer-events:none}@media(max-width:650px){.rule-grid{grid-template-columns:1fr}.inline-select{grid-template-columns:1fr}}.spinner{display:inline-block;width:16px;height:16px;border:2px solid #ddd;border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;vertical-align:-3px;margin-right:6px}@keyframes spin{to{transform:rotate(360deg)}}
 @media(max-width:1100px){.kpis{grid-template-columns:repeat(3,1fr)}.two,.three{grid-template-columns:1fr}.overview-kpis{grid-template-columns:repeat(2,1fr)}.catalog-card .editor-row.four{grid-template-columns:1fr 1fr}.catalog-card .editor-row{grid-template-columns:1fr 1fr}.catalog-card .editor-row .btn{align-self:end}}
 @media(max-width:650px){.wrap{padding:12px}.kpis,.overview-kpis{grid-template-columns:1fr 1fr}.editor-row,.editor-row.four{grid-template-columns:1fr}.top{align-items:flex-start;flex-direction:column}.input{min-width:100%}.table thead{display:none}.table,.table tbody,.table tr,.table td{display:block;width:100%}.table tr{padding:8px 0;border-bottom:1px solid var(--line)}.table td{border:0;padding:5px 10px}.table td:last-child{padding-bottom:10px}}
@@ -67,7 +85,7 @@
 
   <div id="appView" class="hidden">
     <div class="top">
-      <div class="brand"><h1>Dashboard Budget Familiare</h1><small>V69 · Analisi e pianificazione</small></div>
+      <div class="brand"><h1>Dashboard Budget Familiare</h1><small>V70 · Audit categorie</small></div>
       <div class="userbar"><span id="userEmail"></span><button id="refreshBtn" class="btn ghost">Aggiorna</button><button id="logoutBtn" class="btn ghost">Esci</button></div>
     </div>
     <datalist id="v62CounterpartyOptions"></datalist>
@@ -340,7 +358,7 @@
       <div class="grid catalog-grid">
         <div class="catalog-panel active" data-catalog-panel="categories">
           <div class="card stack catalog-card">
-            <div class="catalog-intro"><div><h2 style="margin:0 0 4px">Categorie</h2><div class="muted small">Gerarchia economica fino a 3 livelli. Clicca le intestazioni della tabella per ordinare.</div></div></div>
+            <div class="catalog-intro"><div><h2 style="margin:0 0 4px">Categorie · Audit V70</h2><div class="muted small">Revisione della tassonomia: utilizzo, frequenza e dipendenze. In questa versione non vengono eseguite migrazioni.</div></div></div>
             <div class="catalog-form">
               <div class="editor-row">
                 <div class="field"><label>Nome categoria</label><input id="categoryName" class="input" /></div>
@@ -350,8 +368,26 @@
               <input id="categoryId" type="hidden" />
               <div id="categoryMsg"></div>
             </div>
+            <div id="categoryAuditKpis" class="grid category-audit-kpis"></div>
             <div class="catalog-toolbar">
               <input id="categorySearch" class="input" placeholder="Filtra categorie..." />
+              <select id="categoryStatusFilter" class="select">
+                <option value="">Tutti gli stati</option>
+                <option value="RED">Vuote senza dipendenze</option>
+                <option value="YELLOW">Da valutare</option>
+                <option value="NORMAL">Utilizzo consolidato</option>
+                <option value="INACTIVE">Inattive ultimi 12 mesi</option>
+                <option value="SPARSE">Attive solo 1–2 mesi</option>
+              </select>
+              <select id="categorySort" class="select">
+                <option value="NAME">Ordina: nome</option>
+                <option value="STATUS">Ordina: priorità revisione</option>
+                <option value="VALUE12">Ordina: valore 12m</option>
+                <option value="MOVEMENTS">Ordina: movimenti</option>
+                <option value="ACTIVE_MONTHS">Ordina: mesi attivi</option>
+                <option value="LAST_USED">Ordina: ultimo utilizzo</option>
+                <option value="DEPENDENCIES">Ordina: dipendenze</option>
+              </select>
               <button id="expandAllCategories" class="btn ghost compact" type="button">Espandi tutte</button>
               <button id="collapseAllCategories" class="btn ghost compact" type="button">Comprimi tutte</button>
             </div>
@@ -605,7 +641,7 @@ async function loadAll(){await Promise.all([loadOverview(),loadMovementsData()])
 async function loadOverview(){try{overview=await rpc('dashboard_read_v1');renderOverview()}catch(e){console.error(e);$('accountsTable').innerHTML=`<div class="msg error">${esc(e.message)}</div>`}}
 async function loadMovementsData(){
   try{
-    const [base,counterparties,aliases,movements,transfers,projectsTags,rulesData,parsingRules,duplicates]=await Promise.all([
+    const [base,counterparties,aliases,movements,transfers,projectsTags,rulesData,parsingRules,duplicates,categoryAudit]=await Promise.all([
       rpc('dashboard_categorization_read_v1'),
       rpc('dashboard_counterparties_read_v1'),
       rpc('dashboard_counterparty_aliases_read_v1'),
@@ -614,7 +650,8 @@ async function loadMovementsData(){
       rpc('dashboard_projects_tags_read_v1'),
       rpc('dashboard_rules_read_v1'),
       rpc('dashboard_counterparty_parsing_rules_read_v1'),
-      rpc('dashboard_counterparty_duplicate_suggestions_v1').catch(()=>[])
+      rpc('dashboard_counterparty_duplicate_suggestions_v1').catch(()=>[]),
+      rpc('dashboard_category_audit_v1')
     ]);
     catData=base||{};
     catData.counterparties=counterparties||[];
@@ -626,6 +663,7 @@ async function loadMovementsData(){
     catData.mccRules=rulesData?.mcc_rules||[];
     catData.compoundRules=rulesData?.compound_rules||[];
     catData.parsingRules=parsingRules||[];
+    catData.categoryAudit=categoryAudit||{summary:{},months:[],rows:[]};
     duplicateSuggestions=duplicates||[];
     renderMovementsPage();
     renderCatalogs();
@@ -1911,9 +1949,87 @@ function renderCatalogs(){
 
   renderCategoriesCatalog();renderMerchantsCatalog();renderProjectsCatalog();renderTagsCatalog();renderMccCatalog();renderCompoundRulesCatalog();renderParsingRulesCatalog();fillClassificationSelects();updateCatalogCounts();setCatalogTab(catalogTab,false);
 }
+function categoryAuditMap(){
+  return new Map((catData?.categoryAudit?.rows||[]).map(x=>[String(x.category_id),x]));
+}
+function categoryAuditFilterMatch(m,filter){
+  if(!filter)return true;
+  if(!m)return false;
+  if(filter==='RED'||filter==='YELLOW'||filter==='NORMAL')return m.audit_status===filter;
+  if(filter==='INACTIVE')return Number(m.active_months||0)===0;
+  if(filter==='SPARSE')return Number(m.active_months||0)>=1&&Number(m.active_months||0)<=2;
+  return true;
+}
+function categoryAuditSortRows(rows,getMetric,mode){
+  const statusRank={RED:0,YELLOW:1,NORMAL:2};
+  return [...rows].sort((a,b)=>{
+    const am=getMetric(a)||{},bm=getMetric(b)||{};
+    if(mode==='STATUS'){
+      const d=(statusRank[am.audit_status]??9)-(statusRank[bm.audit_status]??9);
+      if(d)return d;
+    }else if(mode==='VALUE12'){
+      const d=Number(bm.value_12||0)-Number(am.value_12||0);if(d)return d;
+    }else if(mode==='MOVEMENTS'){
+      const d=Number(bm.movement_count||0)-Number(am.movement_count||0);if(d)return d;
+    }else if(mode==='ACTIVE_MONTHS'){
+      const d=Number(am.active_months||0)-Number(bm.active_months||0);if(d)return d;
+    }else if(mode==='LAST_USED'){
+      const av=String(am.last_used||''),bv=String(bm.last_used||'');
+      if(av!==bv)return bv.localeCompare(av);
+    }else if(mode==='DEPENDENCIES'){
+      const d=Number(bm.dependency_count||0)-Number(am.dependency_count||0);if(d)return d;
+    }
+    const al=typeof a==='string'?a:categoryLabel(a),bl=typeof b==='string'?b:categoryLabel(b);
+    return String(al||'').localeCompare(String(bl||''),'it',{sensitivity:'base'});
+  });
+}
+function categoryAuditStatusHtml(m){
+  if(!m)return '<span class="pill">—</span>';
+  const cfg=m.audit_status==='RED'
+    ?{cls:'audit-status-red',label:'Vuota'}
+    :m.audit_status==='YELLOW'
+      ?{cls:'audit-status-yellow',label:'Da valutare'}
+      :{cls:'audit-status-normal',label:'Consolidata'};
+  return '<span class="pill '+cfg.cls+'" title="'+esc(m.audit_reason||'')+'">'+esc(cfg.label)+'</span><div class="muted small">'+esc(m.audit_reason||'')+'</div>';
+}
+function categoryAuditFrequencyHtml(m){
+  if(!m)return '<span class="muted">—</span>';
+  const dots=(m.months||[]).map(x=>{
+    const d=new Date(String(x.month)+'T12:00:00');
+    const label=Number.isNaN(d.getTime())?String(x.month||''):d.toLocaleDateString('it-IT',{month:'short',year:'2-digit'});
+    return '<span class="month-dot'+(x.active?' active':'')+'" title="'+esc(label+' · '+euro(x.amount||0))+'"></span>';
+  }).join('');
+  return '<div class="category-frequency"><strong>'+nfmt(m.active_months||0)+'/12 · '+nfmt(m.active_pct||0)+'%</strong><div class="month-strip">'+dots+'</div></div>';
+}
+function categoryAuditDepsHtml(m){
+  if(!m)return '<span class="muted">—</span>';
+  const cp=Number(m.merchant_defaults||0),rules=Number(m.rules||0),mcc=Number(m.mcc||0),splits=Number(m.splits||0),rep=Number(m.reporting_refs||0),boot=Number(m.bootstrap_refs||0);
+  const total=Number(m.dependency_count||0);
+  const title='Controparti default '+cp+' · Regole '+rules+' · MCC '+mcc+' · Split '+splits+' · Reporting '+rep+' · Bootstrap '+boot;
+  if(!total)return '<span class="muted small" title="'+esc(title)+'">Nessuna</span>';
+  return '<div class="audit-deps" title="'+esc(title)+'"><strong>'+nfmt(total)+'</strong> rif.<br>CP '+nfmt(cp)+' · R '+nfmt(rules)+' · MCC '+nfmt(mcc)+' · S '+nfmt(splits)+(rep?' · Rep '+nfmt(rep):'')+'</div>';
+}
+function renderCategoryAuditKpis(){
+  const s=catData?.categoryAudit?.summary||{};
+  const box=$('categoryAuditKpis');if(!box)return;
+  box.innerHTML=
+    '<button class="category-audit-kpi" data-category-audit-kpi=""><div class="muted small">Categorie</div><div class="audit-value">'+nfmt(s.categories||0)+'</div><div class="muted small">intera tassonomia</div></button>'+
+    '<button class="category-audit-kpi red" data-category-audit-kpi="RED"><div class="muted small">Vuote</div><div class="audit-value">'+nfmt(s.red||0)+'</div><div class="muted small">senza utilizzi o dipendenze</div></button>'+
+    '<button class="category-audit-kpi yellow" data-category-audit-kpi="YELLOW"><div class="muted small">Da valutare</div><div class="audit-value">'+nfmt(s.yellow||0)+'</div><div class="muted small">poco usate / inattive</div></button>'+
+    '<button class="category-audit-kpi" data-category-audit-kpi="NORMAL"><div class="muted small">Consolidate</div><div class="audit-value">'+nfmt(s.normal||0)+'</div><div class="muted small">uso significativo</div></button>';
+}
+function categoryAuditSectionClass(m){
+  return m?.audit_status==='RED'?' category-audit-section-red':m?.audit_status==='YELLOW'?' category-audit-section-yellow':'';
+}
+function categoryAuditRowClass(m){
+  return m?.audit_status==='RED'?' category-audit-row-red':m?.audit_status==='YELLOW'?' category-audit-row-yellow':'';
+}
 function renderCategoriesCatalog(){
+  renderCategoryAuditKpis();
   const q=($('categorySearch')?.value||'').trim().toLowerCase();
-  const cats=catData?.categories||[],movements=catData?.movements||[];
+  const statusFilter=$('categoryStatusFilter')?.value||'';
+  const sortMode=$('categorySort')?.value||'NAME';
+  const cats=catData?.categories||[],movements=catData?.movements||[],audit=categoryAuditMap();
   const groups=new Map();
   for(const x of cats){
     const l1=x.level1_name||x.name||'Altro';
@@ -1921,35 +2037,69 @@ function renderCategoriesCatalog(){
     const g=groups.get(l1);
     if(Number(x.depth)===1)g.root=x;else g.children.push(x);
   }
-  let list=[...groups.values()].filter(g=>!q||textSearchMatches(g.name,q)||g.children.some(x=>textSearchMatches(categoryLabel(x),q)));
-  list.sort((a,b)=>a.name.localeCompare(b.name,'it',{sensitivity:'base'}));
+
+  let list=[...groups.values()].filter(g=>{
+    const rootM=g.root?audit.get(String(g.root.id)):null;
+    const rootSearch=!q||textSearchMatches(g.name,q);
+    const rootFilter=categoryAuditFilterMatch(rootM,statusFilter);
+    const childMatch=g.children.some(x=>(!q||textSearchMatches(categoryLabel(x),q))&&categoryAuditFilterMatch(audit.get(String(x.id)),statusFilter));
+    return (rootSearch&&rootFilter)||childMatch;
+  });
+
+  list=categoryAuditSortRows(list,g=>g.root?audit.get(String(g.root.id)):null,sortMode);
+
+  const labels='<div class="category-audit-head labels"><div>Categoria</div><div>Mov.</div><div>€ 12m</div><div>Frequenza</div><div>Ultimo uso</div><div>Dipendenze</div><div>Stato</div><div></div></div>';
   const html=list.map(g=>{
-    const expanded=q||expandedCategoryGroups.has(g.name);
+    const rootM=g.root?audit.get(String(g.root.id)):null;
+    const expanded=!!q||!!statusFilter||expandedCategoryGroups.has(g.name);
     const prefix=g.name+' › ';
     const mv=movements.filter(x=>x.category_path===g.name||String(x.category_path||'').startsWith(prefix));
-    const total=mv.reduce((s,x)=>s+Number(x.amount||0),0);
     const detailOpen=expandedCategoryMovementDetails.has('L1:'+g.name);
-    const children=[...g.children].sort((a,b)=>categoryLabel(a).localeCompare(categoryLabel(b),'it',{sensitivity:'base'}))
-      .filter(x=>!q||categoryLabel(x).toLowerCase().includes(q)||g.name.toLowerCase().includes(q));
-    const rootActions=`<div class="compact-actions"><button class="btn secondary compact" data-toggle-category-movements="L1:${esc(g.name)}">Movimenti</button>${g.root?`<button class="btn ghost compact" data-edit-cat="${g.root.id}">Modifica</button><button class="btn danger compact" data-delete-entity="CATEGORY" data-delete-key="${g.root.id}" data-delete-label="${esc(g.name)}">Elimina</button>`:''}</div>`;
+
+    let children=g.children
+      .filter(x=>(!q||textSearchMatches(categoryLabel(x),q)||textSearchMatches(g.name,q))&&categoryAuditFilterMatch(audit.get(String(x.id)),statusFilter));
+    children=categoryAuditSortRows(children,x=>audit.get(String(x.id)),sortMode);
+
+    const rootActions='<div class="compact-actions audit-actions"><button class="btn secondary compact" data-toggle-category-movements="L1:'+esc(g.name)+'">Movimenti</button>'+
+      (g.root?'<button class="btn ghost compact" data-edit-cat="'+g.root.id+'">Modifica</button><button class="btn danger compact" data-delete-entity="CATEGORY" data-delete-key="'+g.root.id+'" data-delete-label="'+esc(g.name)+'">Elimina</button>':'')+'</div>';
+
     const childRows=children.map(x=>{
-      const key='CAT:'+x.id,open=expandedCategoryMovementDetails.has(key),childMov=categoryBranchMovements(x);
-      return `<tr class="catalog-child-row depth-${x.depth}"><td>${esc(categoryLabel(x).replace(g.name+' › ',''))}</td><td>Livello ${x.depth}</td><td>${nfmt(childMov.length)}</td><td>${euro(childMov.reduce((s,m)=>s+Number(m.amount||0),0))}</td><td><div class="compact-actions"><button class="btn secondary compact" data-toggle-category-movements="${key}">Movimenti</button><button class="btn ghost compact" data-edit-cat="${x.id}">Modifica</button><button class="btn danger compact" data-delete-entity="CATEGORY" data-delete-key="${x.id}" data-delete-label="${esc(categoryLabel(x))}">Elimina</button></div></td></tr>${open?`<tr><td colspan="5" style="padding:0">${catalogMovementDetailTable(childMov)}</td></tr>`:''}`;
+      const m=audit.get(String(x.id)),key='CAT:'+x.id,open=expandedCategoryMovementDetails.has(key),childMov=categoryBranchMovements(x);
+      return '<tr class="catalog-child-row depth-'+x.depth+categoryAuditRowClass(m)+'"><td><strong>'+esc(categoryLabel(x).replace(g.name+' › ',''))+'</strong><div class="muted small">L'+nfmt(x.depth)+'</div></td>'+
+        '<td>'+nfmt(m?.movement_count||0)+'</td>'+
+        '<td><strong>'+euro(m?.value_12||0)+'</strong><div class="muted small">'+nfmt(m?.movement_count_12||0)+' mov. 12m</div></td>'+
+        '<td>'+categoryAuditFrequencyHtml(m)+'</td>'+
+        '<td>'+(m?.last_used?esc(m.last_used):'<span class="muted">mai</span>')+'</td>'+
+        '<td>'+categoryAuditDepsHtml(m)+'</td>'+
+        '<td>'+categoryAuditStatusHtml(m)+'</td>'+
+        '<td><div class="compact-actions"><button class="btn secondary compact" data-toggle-category-movements="'+key+'">Movimenti</button><button class="btn ghost compact" data-edit-cat="'+x.id+'">Modifica</button><button class="btn danger compact" data-delete-entity="CATEGORY" data-delete-key="'+x.id+'" data-delete-label="'+esc(categoryLabel(x))+'">Elimina</button></div></td></tr>'+
+        (open?'<tr><td colspan="8" style="padding:0">'+catalogMovementDetailTable(childMov)+'</td></tr>':'');
     }).join('');
-    return `<div class="catalog-section">
-      <div class="catalog-section-head" data-toggle-category-group="${esc(g.name)}">
-        <div><span class="group-caret">${expanded?'▼':'▶'}</span>${categoryChip(g.name)}<span class="group-meta">${nfmt(children.length)} sottocategorie</span></div>
-        <div class="group-stat"><strong>${nfmt(mv.length)}</strong><br><span class="muted small">movimenti</span></div>
-        <div class="group-stat"><strong>${euro(total)}</strong><br><span class="muted small">totale</span></div>
-        <div class="group-stat"></div>
-        <div onclick="event.stopPropagation()">${rootActions}</div>
-      </div>
-      ${detailOpen?`<div class="catalog-section-body">${catalogMovementDetailTable(mv)}</div>`:''}
-      <div class="catalog-section-body ${expanded?'':'hidden'}"><table class="table"><thead><tr><th>Sottocategoria</th><th>Livello</th><th>Movimenti</th><th>Totale</th><th></th></tr></thead><tbody>${childRows||'<tr><td colspan="5" class="muted">Nessuna sottocategoria.</td></tr>'}</tbody></table></div>
-    </div>`;
+
+    return '<div class="catalog-section'+categoryAuditSectionClass(rootM)+'">'+
+      '<div class="catalog-section-head category-audit-head" data-toggle-category-group="'+esc(g.name)+'">'+
+        '<div><span class="group-caret">'+(expanded?'▼':'▶')+'</span>'+categoryChip(g.name)+'<span class="group-meta">'+nfmt(g.children.length)+' sottocategorie</span></div>'+
+        '<div class="group-stat"><strong>'+nfmt(rootM?.movement_count||0)+'</strong></div>'+
+        '<div class="group-stat"><strong>'+euro(rootM?.value_12||0)+'</strong></div>'+
+        '<div class="group-stat">'+categoryAuditFrequencyHtml(rootM)+'</div>'+
+        '<div class="group-stat">'+(rootM?.last_used?esc(rootM.last_used):'<span class="muted">mai</span>')+'</div>'+
+        '<div class="group-stat">'+categoryAuditDepsHtml(rootM)+'</div>'+
+        '<div class="group-stat">'+categoryAuditStatusHtml(rootM)+'</div>'+
+        '<div onclick="event.stopPropagation()">'+rootActions+'</div>'+
+      '</div>'+
+      (detailOpen?'<div class="catalog-section-body">'+catalogMovementDetailTable(mv)+'</div>':'')+
+      '<div class="catalog-section-body '+(expanded?'':'hidden')+'"><table class="table category-audit-table"><thead><tr><th>Sottocategoria</th><th>Mov.</th><th>€ 12m</th><th>Frequenza</th><th>Ultimo uso</th><th>Dipendenze</th><th>Stato</th><th></th></tr></thead><tbody>'+
+        (childRows||'<tr><td colspan="8" class="muted">Nessuna sottocategoria con i filtri selezionati.</td></tr>')+
+      '</tbody></table></div>'+
+    '</div>';
   }).join('');
-  $('categoriesTable').innerHTML=html||'<div class="muted">Nessuna categoria.</div>';
+
+  const period=catData?.categoryAudit?.analysis_start&&catData?.categoryAudit?.analysis_end
+    ?'<div class="note" style="margin-bottom:8px">Metriche economiche e frequenza: <strong>'+esc(catData.categoryAudit.analysis_start)+'</strong> → <strong>'+esc(catData.categoryAudit.analysis_end)+'</strong>. Movimenti = storico completo del ramo; € 12m = volume assoluto su linee effettive, inclusi split.</div>'
+    :'';
+  $('categoriesTable').innerHTML=period+labels+(html||'<div class="muted">Nessuna categoria con i filtri selezionati.</div>');
 }
+
 function aliasesForMerchant(merchantId){
   return (catData?.aliases||[]).filter(a=>a.merchant_id===merchantId);
 }
@@ -2447,12 +2597,13 @@ $('cancelQuickCounterparty').onclick=()=>{$('quickCounterpartyBox').classList.ad
 ['movementSearch','movementStatus','movementAutomation','movementBank','movementKind','movementType','movementDirection','movementCategory','movementProject','movementTag','movementDateFrom','movementDateTo'].forEach(id=>$(id).addEventListener(id==='movementSearch'?'input':'change',renderMovements));$('movementCounterpartySearch').addEventListener('input',applyMovementCounterpartySearch);$('movementCounterpartySearch').addEventListener('change',applyMovementCounterpartySearch);$('clearMovementFilters').onclick=clearMovementFilters;$('viewList').onclick=()=>{viewMode='list';renderMovements()};$('viewGrouped').onclick=()=>{viewMode='grouped';renderMovements()};$('bulkSelectVisible').onclick=selectVisibleMovements;$('bulkClearSelection').onclick=clearSelectedMovements;$('bulkApplyCategory').onclick=applyBulkCategory;
 $('movementsTable').addEventListener('click',e=>{const auto=e.target.closest('[data-automation-target]');if(auto){openAutomationTarget(auto.dataset.automationTarget,auto.dataset.automationId);return}const sort=e.target.closest('[data-sort]');if(sort){setSort(sort.dataset.sort);return}const edit=e.target.closest('[data-edit-movement]');if(edit){const row=(catData?.movements||[]).find(x=>x.id===edit.dataset.editMovement);if(row)openClassify(row);return}const tg=e.target.closest('[data-toggle-group]');if(tg){const g=(window.__groupRows||[])[Number(tg.dataset.toggleGroup)];if(!g)return;if(expandedGroups.has(g.key))expandedGroups.delete(g.key);else expandedGroups.add(g.key);renderMovements()}});
 $('movementsTable').addEventListener('change',e=>{const cb=e.target.closest('[data-select-movement]');if(!cb)return;cb.checked?selectedMovementIds.add(cb.dataset.selectMovement):selectedMovementIds.delete(cb.dataset.selectMovement);syncBulkSelectionUi()});
-['categorySearch','merchantSearch','merchantL1Filter','merchantL2Filter','merchantStatusFilter','merchantRecencyFilter','projectSearch','projectTypeFilter','projectStatusFilter','tagSearch','tagStatusFilter','mccSearch','mccStatusFilter','compoundRuleSearch','compoundRuleStatusFilter','parsingRuleSearch'].forEach(id=>$(id)?.addEventListener(id.endsWith('Search')?'input':'change',renderCatalogs));[['classMerchantSearch','classMerchant'],['compoundRuleMerchantSearch','compoundRuleMerchant']].forEach(x=>bindCounterpartySearch(...x));$('expandAllCategories').onclick=()=>{(catData?.categories||[]).filter(x=>Number(x.depth)===1).forEach(x=>expandedCategoryGroups.add(x.level1_name||x.name));renderCategoriesCatalog()};$('collapseAllCategories').onclick=()=>{expandedCategoryGroups.clear();renderCategoriesCatalog()};
+['categorySearch','categoryStatusFilter','categorySort','merchantSearch','merchantL1Filter','merchantL2Filter','merchantStatusFilter','merchantRecencyFilter','projectSearch','projectTypeFilter','projectStatusFilter','tagSearch','tagStatusFilter','mccSearch','mccStatusFilter','compoundRuleSearch','compoundRuleStatusFilter','parsingRuleSearch'].forEach(id=>$(id)?.addEventListener(id.endsWith('Search')?'input':'change',renderCatalogs));[['classMerchantSearch','classMerchant'],['compoundRuleMerchantSearch','compoundRuleMerchant']].forEach(x=>bindCounterpartySearch(...x));$('expandAllCategories').onclick=()=>{(catData?.categories||[]).filter(x=>Number(x.depth)===1).forEach(x=>expandedCategoryGroups.add(x.level1_name||x.name));renderCategoriesCatalog()};$('collapseAllCategories').onclick=()=>{expandedCategoryGroups.clear();renderCategoriesCatalog()};
 $('applyCounterpartyBulkCategory').onclick=applyCounterpartyBulkCategory;
 $('selectVisibleCounterparties').onclick=()=>{for(const m of counterpartyFilteredRows())selectedCounterpartyIds.add(m.id);renderMerchantsCatalog()};
 $('clearSelectedCounterparties').onclick=()=>{selectedCounterpartyIds.clear();renderMerchantsCatalog()};
 $('clearMerchantFilters').onclick=()=>{['merchantSearch','merchantL1Filter','merchantL2Filter','merchantStatusFilter','merchantRecencyFilter'].forEach(id=>{if($(id))$(id).value=''});renderCatalogs()};
 $('tab-catalogs').addEventListener('click',e=>{const ct=e.target.closest('[data-catalog-tab]');if(ct){setCatalogTab(ct.dataset.catalogTab);return}
+const cak=e.target.closest('[data-category-audit-kpi]');if(cak){if($('categoryStatusFilter'))$('categoryStatusFilter').value=cak.dataset.categoryAuditKpi||'';renderCategoriesCatalog();return}
 const cpe=e.target.closest('[data-edit-counterparty-category]');if(cpe){editingCounterpartyCategoryIds.add(cpe.dataset.editCounterpartyCategory);renderMerchantsCatalog();return}
 const cpsave=e.target.closest('[data-save-counterparty-category]');if(cpsave){saveInlineCounterpartyCategory(cpsave);return}
 const cpcancel=e.target.closest('[data-cancel-counterparty-category]');if(cpcancel){editingCounterpartyCategoryIds.delete(cpcancel.dataset.cancelCounterpartyCategory);renderMerchantsCatalog();return}
