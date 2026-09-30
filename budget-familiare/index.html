@@ -1979,7 +1979,7 @@ function categoryAuditSortRows(rows,getMetric,mode){
     }else if(mode==='DEPENDENCIES'){
       const d=Number(bm.dependency_count||0)-Number(am.dependency_count||0);if(d)return d;
     }
-    const al=typeof a==='string'?a:categoryLabel(a),bl=typeof b==='string'?b:categoryLabel(b);
+    const al=typeof a==='string'?a:(a?.name||categoryLabel(a)),bl=typeof b==='string'?b:(b?.name||categoryLabel(b));
     return String(al||'').localeCompare(String(bl||''),'it',{sensitivity:'base'});
   });
 }
