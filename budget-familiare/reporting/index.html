@@ -62,6 +62,14 @@ button,input,select{font:inherit}
 .plan-input{width:96px;text-align:right;border:1px solid #dbe1e8;border-radius:7px;padding:6px}
 .plan-input.manual{border-color:#93c5fd;background:#eff6ff;font-weight:700}
 .method-select{width:150px;border:1px solid #dbe1e8;border-radius:7px;padding:6px;background:#fff}
+.method-control{display:grid;grid-template-columns:minmax(120px,1fr) auto;gap:5px;align-items:center}
+.method-control .method-select{width:100%;min-width:0}
+.method-control .plan-sub{grid-column:1/-1;margin-top:0}
+.method-state.manual{color:#1d4ed8;font-weight:650}
+.method-state.auto{color:var(--muted)}
+.detail-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.detail-selection{display:flex;gap:8px;align-items:center;margin:8px 0 0;min-height:24px}
+
 .total-cell{font-weight:750}
 .projection-kpis{grid-template-columns:repeat(3,1fr);margin:12px 0}
 .projection-table{width:100%;border-collapse:collapse}
@@ -108,7 +116,7 @@ button,input,select{font:inherit}
 
   <div id="appView" class="hidden">
     <div class="top">
-      <div class="brand"><h1>Reporting Budget Familiare</h1><small>V68 · Pianificazione e analisi spesa</small></div>
+      <div class="brand"><h1>Reporting Budget Familiare</h1><small>V69 · Pianificazione e analisi spesa</small></div>
       <div class="userbar"><span id="userEmail"></span><button id="refreshBtn" class="btn ghost">Aggiorna</button><button id="logoutBtn" class="btn ghost">Esci</button></div>
     </div>
     <div class="tabs">
@@ -181,8 +189,18 @@ button,input,select{font:inherit}
         <div class="plan-wrap"><table class="plan-table heat-table"><thead id="analysisHead"></thead><tbody id="analysisBody"></tbody></table></div>
         <div class="legend-note">Spese: verde sotto media, rosso sopra media. Entrate: verde sopra media, rosso sotto media. Clicca una cella o una categoria per aprire trend e movimenti esplicativi.</div>
         <div id="categoryDetail" class="detail-panel hidden">
-          <div class="section-title"><div><h2 id="detailTitle">Dettaglio categoria</h2><p id="detailSubtitle"></p></div><button id="closeDetail" class="btn ghost compact">Chiudi</button></div>
+          <div class="section-title">
+            <div><h2 id="detailTitle">Dettaglio categoria</h2><p id="detailSubtitle"></p></div>
+            <div class="detail-toolbar">
+              <div id="detailChartToggle" class="mode-toggle hidden">
+                <button id="detailTrendMode" class="btn compact">Trend totale</button>
+                <button id="detailStackMode" class="btn ghost compact">Composizione L2</button>
+              </div>
+              <button id="closeDetail" class="btn ghost compact">Chiudi</button>
+            </div>
+          </div>
           <div class="chart-box compact"><canvas id="categoryTrendChart"></canvas></div>
+          <div id="detailSelection" class="detail-selection"></div>
           <div id="detailMovements"></div>
         </div>
       </div>
@@ -207,6 +225,10 @@ let report=null;
 let expenseChart=null;
 let cashflowChart=null;
 let categoryTrendChart=null;
+let categoryDetailData=null;
+let categoryDetailMode="TREND";
+let categoryDetailFocus=null;
+let categoryDetailComponent=null;
 let planMode="PLAN";
 const collapsedL1=new Set();
 
@@ -397,6 +419,21 @@ function methodSelect(r,kind){
   html+="</select>";
   return html;
 }
+function manualOverrideCount(kind,category,cellMapObj){
+  return futureMonths().reduce(function(n,m){
+    const cell=cellMapObj.get(category+"|"+m);
+    return n+(cell&&cell.override_amount!==null&&cell.override_amount!==undefined?1:0);
+  },0);
+}
+function methodControl(r,kind,cellMapObj){
+  const n=manualOverrideCount(kind,r.category_id,cellMapObj);
+  const state=n>0
+    ?'<div class="plan-sub method-state manual">Manuale su '+n+' '+(n===1?'mese':'mesi')+' · base '+esc(methodLabel(r.forecast_method))+'</div>'
+    :'<div class="plan-sub method-state auto">Automatico · '+esc(methodLabel(r.forecast_method))+'</div>';
+  return '<div class="method-control">'+methodSelect(r,kind)+
+    '<button class="btn ghost compact" type="button" data-apply-method="'+esc(r.category_id)+'" data-apply-kind="'+kind+'" title="Applica il metodo e rimuove gli override futuri della riga">Applica</button>'+
+    state+'</div>';
+}
 function detailLabel(r){return r.is_direct?"Diretto su "+r.l1_name:(r.l2_name||r.l1_name)}
 function renderPlanRows(groups,kind,cellMapObj){
   const months=futureMonths();
@@ -421,7 +458,7 @@ function renderPlanRows(groups,kind,cellMapObj){
         const info=kind==="income"
           ?"6m "+money(r.avg6)+" · 12m "+money(r.avg12)+" · mediana "+money(r.median12)
           :"6m "+money(r.avg6)+" · 12m "+money(r.avg12);
-        html+='<tr data-detail-l1="'+esc(g.id)+'"><td style="padding-left:35px"><button class="category-link" data-plan-detail="'+esc(r.category_id)+'" data-plan-direction="'+(kind==="income"?"INCOME":"EXPENSE")+'">'+esc(detailLabel(r))+'</button><div class="plan-sub">'+esc(info)+'</div></td><td>'+methodSelect(r,kind)+'</td><td><button class="btn ghost compact copy-btn" data-copy-kind="'+kind+'" data-copy-category="'+esc(r.category_id)+'">Copia 1° mese</button></td>'+cells.join("")+'<td class="total-cell">'+money(rowTotal)+"</td></tr>";
+        html+='<tr data-detail-l1="'+esc(g.id)+'"><td style="padding-left:35px"><button class="category-link" data-plan-detail="'+esc(r.category_id)+'" data-plan-direction="'+(kind==="income"?"INCOME":"EXPENSE")+'">'+esc(detailLabel(r))+'</button><div class="plan-sub">'+esc(info)+'</div></td><td>'+methodControl(r,kind,cellMapObj)+'</td><td><button class="btn ghost compact copy-btn" data-copy-kind="'+kind+'" data-copy-category="'+esc(r.category_id)+'">Copia 1° mese</button></td>'+cells.join("")+'<td class="total-cell">'+money(rowTotal)+"</td></tr>";
       });
     }
   });
@@ -519,32 +556,117 @@ function maxDeviationMonth(detail){
   (detail.months||[]).forEach(function(x){const d=Math.abs(num(x.amount)-avg);if(d>bestDev){bestDev=d;best=x.month}});
   return best;
 }
-async function openCategoryDetail(categoryId,direction,selectedMonth){
-  const box=$("categoryDetail");
-  box.classList.remove("hidden");
-  $("detailTitle").textContent="Caricamento dettaglio…";
-  $("detailSubtitle").textContent="";
-  $("detailMovements").innerHTML="";
-  try{
-    const d=await rpc("dashboard_reporting_category_detail_v1",{p_category_id:categoryId,p_direction:direction});
-    const focus=selectedMonth||maxDeviationMonth(d);
-    $("detailTitle").textContent=(direction==="EXPENSE"?"Spesa · ":"Entrata · ")+(d.category_name||"Categoria");
-    $("detailSubtitle").textContent="Media 12 mesi "+money(d.avg12)+(focus?" · mese analizzato "+monthLabel(focus):"");
-    if(categoryTrendChart)categoryTrendChart.destroy();
+function renderCategoryDetailSubtitle(){
+  const d=categoryDetailData;if(!d)return;
+  let s="Media 12 mesi "+money(d.avg12);
+  if(categoryDetailFocus)s+=" · mese analizzato "+monthLabel(categoryDetailFocus);
+  if(categoryDetailComponent){
+    const comp=(d.l2_components||[]).find(function(x){return x.category_id===categoryDetailComponent});
+    if(comp)s+=" · L2 "+comp.name;
+  }
+  $("detailSubtitle").textContent=s;
+}
+function renderCategoryDetailMovements(){
+  const d=categoryDetailData;if(!d)return;
+  const focus=categoryDetailFocus;
+  let moves;
+  if(categoryDetailComponent){
+    moves=(d.component_top_movements||[]).filter(function(x){
+      return x.component_id===categoryDetailComponent&&(!focus||x.month_start===focus);
+    });
+  }else{
+    moves=(d.top_movements||[]).filter(function(x){return !focus||x.month_start===focus});
+  }
+  const quotaLabel=categoryDetailComponent?"Quota L2":"Quota mese";
+  const comp=(d.l2_components||[]).find(function(x){return x.category_id===categoryDetailComponent});
+  $("detailSelection").innerHTML=categoryDetailComponent
+    ?'<span class="small">Filtro L2: <strong>'+esc(comp?comp.name:"Categoria")+'</strong></span><button class="btn ghost compact" type="button" data-clear-detail-component>Mostra tutte</button>'
+    :"";
+  $("detailMovements").innerHTML='<div class="detail-moves"><h3 style="font-size:14px;margin:0 0 8px">Movimenti che spiegano '+esc(focus?monthLabel(focus):"il trend")+'</h3>'+
+    (moves.length?'<table><thead><tr><th>Data</th><th>Controparte</th><th>Importo</th><th>'+quotaLabel+'</th><th></th></tr></thead><tbody>'+
+    moves.map(function(x){return "<tr><td>"+dateLabel(x.transaction_date)+"</td><td><strong>"+esc(x.counterparty||"—")+"</strong><div class=\"plan-sub\">"+esc(x.description||x.category||"")+"</div></td><td>"+money(x.amount)+"</td><td>"+num(x.share_pct).toLocaleString("it-IT",{maximumFractionDigits:1})+'%</td><td><a class="btn ghost compact" href="../?movement='+encodeURIComponent(x.id)+'">Apri movimento</a></td></tr>'}).join("")+"</tbody></table>":'<div class="muted small">Nessun movimento nel mese selezionato.</div>')+"</div>";
+  renderCategoryDetailSubtitle();
+}
+function renderCategoryDetailChart(){
+  const d=categoryDetailData;if(!d)return;
+  const components=d.l2_components||[];
+  const canStack=components.length>1;
+  $("detailChartToggle").classList.toggle("hidden",!canStack);
+  if(!canStack)categoryDetailMode="TREND";
+  $("detailTrendMode").className="btn "+(categoryDetailMode==="TREND"?"":"ghost ")+"compact";
+  $("detailStackMode").className="btn "+(categoryDetailMode==="STACK"?"":"ghost ")+"compact";
+  if(categoryTrendChart)categoryTrendChart.destroy();
+
+  if(categoryDetailMode==="STACK"&&canStack){
+    const months=(d.months||[]).map(function(x){return x.month});
+    const valueMap=new Map((d.l2_monthly||[]).map(function(x){return [x.month+"|"+x.category_id,num(x.amount)]}));
+    const datasets=components.map(function(comp,i){
+      return {
+        label:comp.name,
+        data:months.map(function(m){return valueMap.get(m+"|"+comp.category_id)||0}),
+        backgroundColor:palette(i,components.length),
+        borderWidth:0,
+        stack:"l2",
+        componentId:comp.category_id
+      };
+    });
+    categoryTrendChart=new Chart($("categoryTrendChart"),{
+      type:"bar",
+      data:{labels:months.map(monthLabel),datasets:datasets},
+      options:{
+        responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},
+        onClick:function(evt,elements){
+          if(!elements||!elements.length)return;
+          const p=elements[0],ds=categoryTrendChart.data.datasets[p.datasetIndex];
+          categoryDetailFocus=months[p.index]||categoryDetailFocus;
+          categoryDetailComponent=ds.componentId||null;
+          renderCategoryDetailMovements();
+        },
+        plugins:{legend:{position:"bottom",labels:{boxWidth:12,usePointStyle:true}},tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+": "+money(ctx.raw)}}}},
+        scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,beginAtZero:true,ticks:{callback:function(v){return money(v)}}}}
+      }
+    });
+  }else{
     categoryTrendChart=new Chart($("categoryTrendChart"),{
       type:"line",
       data:{labels:(d.months||[]).map(function(x){return monthLabel(x.month)}),datasets:[
         {label:"Valore mese",data:(d.months||[]).map(function(x){return num(x.amount)}),borderColor:"#2563eb",backgroundColor:"#2563eb",borderWidth:2.5,pointRadius:3,tension:.25},
         {label:"Media 12 mesi",data:(d.months||[]).map(function(){return num(d.avg12)}),borderColor:"#64748b",backgroundColor:"#64748b",borderDash:[5,5],borderWidth:1.5,pointRadius:0}
       ]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom"},tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+": "+money(ctx.raw)}}}},scales:{y:{beginAtZero:true,ticks:{callback:function(v){return money(v)}}},x:{grid:{display:false}}}}
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        onClick:function(evt,elements){
+          if(!elements||!elements.length)return;
+          const p=elements[0];
+          categoryDetailFocus=(d.months||[])[p.index]&&d.months[p.index].month;
+          categoryDetailComponent=null;
+          renderCategoryDetailMovements();
+        },
+        plugins:{legend:{position:"bottom"},tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+": "+money(ctx.raw)}}}},
+        scales:{y:{beginAtZero:true,ticks:{callback:function(v){return money(v)}}},x:{grid:{display:false}}}
+      }
     });
-    const moves=(d.top_movements||[]).filter(function(x){return !focus||x.month_start===focus});
-    $("detailMovements").innerHTML='<div class="detail-moves"><h3 style="font-size:14px;margin:0 0 8px">Movimenti che spiegano '+esc(focus?monthLabel(focus):"il trend")+'</h3>'+
-      (moves.length?'<table><thead><tr><th>Data</th><th>Controparte</th><th>Importo</th><th>Quota mese</th><th></th></tr></thead><tbody>'+
-      moves.map(function(x){return "<tr><td>"+dateLabel(x.transaction_date)+"</td><td><strong>"+esc(x.counterparty||"—")+"</strong><div class=\"plan-sub\">"+esc(x.description||x.category||"")+"</div></td><td>"+money(x.amount)+"</td><td>"+num(x.share_pct).toLocaleString("it-IT",{maximumFractionDigits:1})+'%</td><td><a class="btn ghost compact" href="../?movement='+encodeURIComponent(x.id)+'">Apri movimento</a></td></tr>'}).join("")+"</tbody></table>":'<div class="muted small">Nessun movimento nel mese selezionato.</div>')+"</div>";
+  }
+}
+async function openCategoryDetail(categoryId,direction,selectedMonth){
+  const box=$("categoryDetail");
+  box.classList.remove("hidden");
+  $("detailTitle").textContent="Caricamento dettaglio…";
+  $("detailSubtitle").textContent="";
+  $("detailSelection").innerHTML="";
+  $("detailMovements").innerHTML="";
+  try{
+    const d=await rpc("dashboard_reporting_category_detail_v1",{p_category_id:categoryId,p_direction:direction});
+    categoryDetailData=d;
+    categoryDetailMode="TREND";
+    categoryDetailComponent=null;
+    categoryDetailFocus=selectedMonth||maxDeviationMonth(d);
+    $("detailTitle").textContent=(direction==="EXPENSE"?"Spesa · ":"Entrata · ")+(d.category_name||"Categoria");
+    renderCategoryDetailChart();
+    renderCategoryDetailMovements();
     box.scrollIntoView({behavior:"smooth",block:"start"});
   }catch(e){
+    categoryDetailData=null;
     $("detailTitle").textContent="Errore dettaglio";
     $("detailMovements").innerHTML='<div class="msg error">'+esc(e.message||"Errore")+"</div>";
   }
@@ -603,6 +725,25 @@ function updateCellLocal(kind,category,month,amount){
   const c=(list||[]).find(function(x){return x.category_id===category&&x.month===month});
   if(c)c.override_amount=amount;
 }
+async function applyForecastMethod(kind,category,method,control){
+  if(control)control.disabled=true;
+  try{
+    const result=await rpc("dashboard_reporting_apply_category_method_v1",{
+      p_category_id:category,
+      p_forecast_method:method,
+      p_direction:kind==="income"?"INCOME":"EXPENSE"
+    });
+    await loadReport();
+    const n=num(result&&result.cleared_overrides);
+    msg($("planMsg"),n>0
+      ?"Metodo applicato: rimossi "+n+" override "+(n===1?"manuale":"manuali")+"."
+      :"Metodo applicato: riga in modalità automatica.");
+  }catch(e){
+    msg($("planMsg"),e.message||"Errore applicazione metodo",true);
+  }finally{
+    if(control&&document.body.contains(control))control.disabled=false;
+  }
+}
 async function copyFirstMonth(kind,category,btn){
   const months=futureMonths();if(months.length<2)return;
   let firstValue=0;
@@ -634,6 +775,14 @@ $("modePlan").onclick=function(){planMode="PLAN";renderMode()};
 $("modeAnalysis").onclick=function(){planMode="ANALYSIS";renderMode()};
 $("analysisDirection").onchange=function(){renderAnalysis();$("categoryDetail").classList.add("hidden")};
 $("closeDetail").onclick=function(){$("categoryDetail").classList.add("hidden")};
+$("detailTrendMode").onclick=function(){categoryDetailMode="TREND";categoryDetailComponent=null;renderCategoryDetailChart();renderCategoryDetailMovements()};
+$("detailStackMode").onclick=function(){categoryDetailMode="STACK";categoryDetailComponent=null;renderCategoryDetailChart();renderCategoryDetailMovements()};
+$("detailMovements").addEventListener("click",function(e){
+  const b=e.target.closest("[data-clear-detail-component]");
+  if(!b)return;
+  categoryDetailComponent=null;
+  renderCategoryDetailMovements();
+});
 $("expandAll").onclick=function(){collapsedL1.clear();renderMode()};
 $("collapseAll").onclick=function(){
   if(planMode==="PLAN"){groupedIncomeForecast().concat(groupedExpenseForecast()).forEach(function(g){collapsedL1.add(g.id)})}
@@ -648,6 +797,12 @@ $("collapseAll").onclick=function(){
 $("planBody").addEventListener("click",async function(e){
   const toggle=e.target.closest("[data-toggle-l1]");
   if(toggle){const id=toggle.dataset.toggleL1;if(collapsedL1.has(id))collapsedL1.delete(id);else collapsedL1.add(id);renderPlan();return}
+  const apply=e.target.closest("[data-apply-method]");
+  if(apply){
+    const row=apply.closest("tr"),select=row&&row.querySelector("[data-method-category]");
+    if(select)await applyForecastMethod(apply.dataset.applyKind,apply.dataset.applyMethod,select.value,apply);
+    return;
+  }
   const copy=e.target.closest("[data-copy-kind]");
   if(copy){await copyFirstMonth(copy.dataset.copyKind,copy.dataset.copyCategory||null,copy);return}
   const detail=e.target.closest("[data-plan-detail]");
@@ -659,9 +814,8 @@ $("planBody").addEventListener("change",async function(e){
   try{
     msg($("planMsg"),"");
     if(el.matches("[data-method-category]")){
-      el.disabled=true;
-      await rpc("dashboard_reporting_set_category_method_v1",{p_category_id:el.dataset.methodCategory,p_forecast_method:el.value});
-      await loadReport();return;
+      await applyForecastMethod(el.dataset.methodKind,el.dataset.methodCategory,el.value,el);
+      return;
     }
     if(el.matches("[data-expense-category]")){
       const amount=el.value.trim()===""?null:Math.round(Number(el.value));
@@ -684,7 +838,6 @@ $("planBody").addEventListener("change",async function(e){
       renderPlan();renderProjection();
     }
   }catch(err){console.error(err);msg($("planMsg"),err.message||"Errore salvataggio",true)}
-  finally{if(el.matches("[data-method-category]"))el.disabled=false}
 });
 
 $("analysisBody").addEventListener("click",async function(e){
