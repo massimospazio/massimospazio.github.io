@@ -70,6 +70,13 @@
 @media(max-width:1150px){.counterparty-filters{grid-template-columns:repeat(3,1fr)}.counterparty-detail-metrics{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:750px){.counterparty-filters{grid-template-columns:1fr}.counterparty-detail-metrics{grid-template-columns:1fr 1fr}.counterparty-detail-head{flex-direction:column}}
 .counterparty-select{width:18px;height:18px}.counterparty-bulk-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 12px;margin:2px 0 10px;border:1px solid #c7d2fe;background:#eef2ff;border-radius:10px}.counterparty-bulk-bar .count{font-weight:750;color:#3730a3}.counterparty-bulk-bar .select{min-width:280px;flex:1}.inline-category-editor{display:grid;grid-template-columns:minmax(170px,1fr) auto auto;gap:5px;align-items:center}.inline-category-editor .select{min-width:0;width:100%;padding:7px 8px;min-height:34px}.category-default-value{display:flex;gap:6px;align-items:flex-start;justify-content:space-between}.category-default-value .btn{flex:0 0 auto}.search-select{display:grid;grid-template-columns:minmax(180px,1fr) minmax(180px,1fr);gap:6px;align-items:center}.search-select .input,.search-select .select{min-width:0;width:100%}.alias-move-search{min-width:210px!important}@media(max-width:750px){.counterparty-bulk-bar .input{min-width:100%}.inline-category-editor{grid-template-columns:1fr auto auto}.search-select{grid-template-columns:1fr}}
+
+.category-viewbar{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;margin:2px 0 10px}.category-v71-toolbar{display:grid;grid-template-columns:minmax(220px,1.5fr) minmax(150px,.8fr) minmax(170px,.9fr) minmax(180px,1fr);gap:8px}.category-v71-toolbar .input,.category-v71-toolbar .select{width:100%;min-width:0}
+.category-flat-wrap{overflow-x:auto}.category-flat-table{min-width:1040px}.category-flat-table td,.category-flat-table th{vertical-align:middle}.category-flat-table .cat-main{font-weight:750}.category-flat-table .cat-path{font-size:11px;color:var(--muted);margin-top:3px}.category-flat-table .direct-row{background:#fafafa}.category-flat-table .direct-badge{display:inline-flex;padding:2px 6px;border-radius:999px;background:#f3f4f6;color:#4b5563;font-size:10px;font-weight:750;margin-left:5px}
+.audit-status-empty{background:#f3f4f6;color:#4b5563}.category-actions-menu{position:relative;display:inline-block}.category-actions-menu>summary{list-style:none}.category-actions-menu>summary::-webkit-details-marker{display:none}.category-actions-popover{position:absolute;right:0;top:calc(100% + 4px);z-index:30;min-width:190px;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 12px 28px rgba(15,23,42,.14);padding:5px}.category-actions-popover button{display:block;width:100%;border:0;background:#fff;text-align:left;padding:8px 9px;border-radius:7px;cursor:pointer;color:var(--text)}.category-actions-popover button:hover:not(:disabled){background:#f3f4f6}.category-actions-popover button:disabled{color:#9ca3af;cursor:not-allowed}.category-actions-popover button.danger{color:#991b1b}
+.category-action-panel{margin-top:14px;border:1px solid #bfdbfe;background:#f8fbff;border-radius:12px;padding:14px}.category-action-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:12px}.category-action-grid{display:grid;grid-template-columns:repeat(4,minmax(130px,1fr));gap:8px;margin:10px 0}.category-impact{border:1px solid var(--line);background:#fff;border-radius:10px;padding:10px}.category-impact .value{font-size:19px;font-weight:780;margin-top:3px}.category-action-form{display:grid;grid-template-columns:minmax(220px,1fr) auto;gap:8px;align-items:end}.category-action-warning{padding:9px 10px;border-radius:9px;background:#fffbeb;border:1px solid #fde68a;color:#92400e;margin-top:10px}.category-action-ok{padding:9px 10px;border-radius:9px;background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;margin-top:10px}
+@media(max-width:900px){.category-v71-toolbar{grid-template-columns:1fr 1fr}.category-action-grid{grid-template-columns:1fr 1fr}.category-action-form{grid-template-columns:1fr}}
+
 </style>
 </head>
 <body>
@@ -85,7 +92,7 @@
 
   <div id="appView" class="hidden">
     <div class="top">
-      <div class="brand"><h1>Dashboard Budget Familiare</h1><small>V70 · Audit categorie</small></div>
+      <div class="brand"><h1>Dashboard Budget Familiare</h1><small>V71 · Gestione categorie</small></div>
       <div class="userbar"><span id="userEmail"></span><button id="refreshBtn" class="btn ghost">Aggiorna</button><button id="logoutBtn" class="btn ghost">Esci</button></div>
     </div>
     <datalist id="v62CounterpartyOptions"></datalist>
@@ -357,30 +364,39 @@
 
       <div class="grid catalog-grid">
         <div class="catalog-panel active" data-catalog-panel="categories">
-          <div class="card stack catalog-card">
-            <div class="catalog-intro"><div><h2 style="margin:0 0 4px">Categorie · Audit V70</h2><div class="muted small">Revisione della tassonomia: utilizzo, frequenza e dipendenze. In questa versione non vengono eseguite migrazioni.</div></div></div>
+          <div class="card stack catalog-card category-v71">
+            <div class="catalog-intro"><div><h2 style="margin:0 0 4px">Categorie · Gestione V71</h2><div class="muted small">Vista operativa piatta per rivedere le categorie trasversalmente agli L1. Rinomina, spostamento e migrazione mantengono storico e dipendenze sotto controllo.</div></div></div>
             <div class="catalog-form">
+              <div class="small" style="font-weight:750;margin-bottom:8px">Nuova categoria</div>
               <div class="editor-row">
                 <div class="field"><label>Nome categoria</label><input id="categoryName" class="input" /></div>
                 <div class="field"><label>Categoria padre</label><select id="categoryParent" class="select"></select></div>
-                <button id="saveCategory" class="btn">Salva</button>
+                <button id="saveCategory" class="btn">Crea</button>
               </div>
               <input id="categoryId" type="hidden" />
               <div id="categoryMsg"></div>
             </div>
             <div id="categoryAuditKpis" class="grid category-audit-kpis"></div>
-            <div class="catalog-toolbar">
-              <input id="categorySearch" class="input" placeholder="Filtra categorie..." />
+            <div class="category-viewbar">
+              <div class="view-toggle">
+                <button class="btn secondary compact" type="button" data-category-view="OPERATIONAL">Categorie operative</button>
+                <button class="btn ghost compact" type="button" data-category-view="L1">Aggregazione L1</button>
+              </div>
+              <div class="muted small">La vista operativa mostra le categorie foglia e gli eventuali utilizzi diretti sugli L1.</div>
+            </div>
+            <div class="catalog-toolbar category-v71-toolbar">
+              <input id="categorySearch" class="input" placeholder="Cerca categoria..." />
+              <select id="categoryL1Filter" class="select"><option value="">Tutti gli L1</option></select>
               <select id="categoryStatusFilter" class="select">
                 <option value="">Tutti gli stati</option>
-                <option value="RED">Vuote senza dipendenze</option>
+                <option value="RED">Vuote</option>
                 <option value="YELLOW">Da valutare</option>
-                <option value="NORMAL">Utilizzo consolidato</option>
+                <option value="NORMAL">Consolidate</option>
                 <option value="INACTIVE">Inattive ultimi 12 mesi</option>
                 <option value="SPARSE">Attive solo 1–2 mesi</option>
               </select>
               <select id="categorySort" class="select">
-                <option value="NAME">Ordina: nome</option>
+                <option value="NAME">Ordina: categoria</option>
                 <option value="STATUS">Ordina: priorità revisione</option>
                 <option value="VALUE12">Ordina: valore 12m</option>
                 <option value="MOVEMENTS">Ordina: movimenti</option>
@@ -388,10 +404,11 @@
                 <option value="LAST_USED">Ordina: ultimo utilizzo</option>
                 <option value="DEPENDENCIES">Ordina: dipendenze</option>
               </select>
-              <button id="expandAllCategories" class="btn ghost compact" type="button">Espandi tutte</button>
-              <button id="collapseAllCategories" class="btn ghost compact" type="button">Comprimi tutte</button>
+              <button id="expandAllCategories" class="hidden" type="button">Espandi</button>
+              <button id="collapseAllCategories" class="hidden" type="button">Comprimi</button>
             </div>
             <div id="categoriesTable"></div>
+            <div id="categoryActionPanel" class="category-action-panel hidden"></div>
           </div>
         </div>
 
@@ -567,7 +584,7 @@
 </div>
 <script>
 const sb=window.appSupabase;
-let overview=null,catData=null,coherenceData=null,engineStatus=null,duplicateSuggestions=[],selectedRow=null,splitData=null,viewMode='list',sortKey='transaction_date',sortDir='desc',catalogTab='categories',deepLinkHandled=false;
+let overview=null,catData=null,coherenceData=null,engineStatus=null,duplicateSuggestions=[],selectedRow=null,splitData=null,viewMode='list',sortKey='transaction_date',sortDir='desc',catalogTab='categories',deepLinkHandled=false,categoryViewMode='OPERATIONAL',categoryActionState=null;
 const catalogSort={categories:{key:'label',dir:'asc'},merchants:{key:'name',dir:'asc'},projects:{key:'name',dir:'asc'},tags:{key:'name',dir:'asc'},mcc:{key:'mcc_code',dir:'asc'},rules:{key:'priority',dir:'desc'},parsing:{key:'priority',dir:'desc'}};
 const expandedGroups=new Set();
 const expandedCategoryGroups=new Set();
@@ -651,7 +668,7 @@ async function loadMovementsData(){
       rpc('dashboard_rules_read_v1'),
       rpc('dashboard_counterparty_parsing_rules_read_v1'),
       rpc('dashboard_counterparty_duplicate_suggestions_v1').catch(()=>[]),
-      rpc('dashboard_category_audit_v1')
+      rpc('dashboard_category_audit_v2')
     ]);
     catData=base||{};
     catData.counterparties=counterparties||[];
@@ -1961,7 +1978,7 @@ function categoryAuditFilterMatch(m,filter){
   return true;
 }
 function categoryAuditSortRows(rows,getMetric,mode){
-  const statusRank={RED:0,YELLOW:1,NORMAL:2};
+  const statusRank={YELLOW:0,RED:1,NORMAL:2};
   return [...rows].sort((a,b)=>{
     const am=getMetric(a)||{},bm=getMetric(b)||{};
     if(mode==='STATUS'){
@@ -1979,14 +1996,14 @@ function categoryAuditSortRows(rows,getMetric,mode){
     }else if(mode==='DEPENDENCIES'){
       const d=Number(bm.dependency_count||0)-Number(am.dependency_count||0);if(d)return d;
     }
-    const al=typeof a==='string'?a:(a?.name||categoryLabel(a)),bl=typeof b==='string'?b:(b?.name||categoryLabel(b));
-    return String(al||'').localeCompare(String(bl||''),'it',{sensitivity:'base'});
+    const al=String(a?.name||''),bl=String(b?.name||'');
+    return al.localeCompare(bl,'it',{sensitivity:'base'});
   });
 }
 function categoryAuditStatusHtml(m){
   if(!m)return '<span class="pill">—</span>';
   const cfg=m.audit_status==='RED'
-    ?{cls:'audit-status-red',label:'Vuota'}
+    ?{cls:'audit-status-empty',label:'Vuota'}
     :m.audit_status==='YELLOW'
       ?{cls:'audit-status-yellow',label:'Da valutare'}
       :{cls:'audit-status-normal',label:'Consolidata'};
@@ -2009,97 +2026,222 @@ function categoryAuditDepsHtml(m){
   if(!total)return '<span class="muted small" title="'+esc(title)+'">Nessuna</span>';
   return '<div class="audit-deps" title="'+esc(title)+'"><strong>'+nfmt(total)+'</strong> rif.<br>CP '+nfmt(cp)+' · R '+nfmt(rules)+' · MCC '+nfmt(mcc)+' · S '+nfmt(splits)+(rep?' · Rep '+nfmt(rep):'')+'</div>';
 }
+function directCategoryMetric(m){
+  if(!m)return null;
+  return {
+    movement_count:m.direct_movement_count||0,
+    movement_count_12:m.direct_movement_count_12||0,
+    value_12:m.direct_value_12||0,
+    last_used:m.direct_last_used||null,
+    active_months:m.direct_active_months||0,
+    active_pct:m.direct_active_pct||0,
+    months:m.direct_months||[],
+    merchant_defaults:m.direct_merchant_defaults||0,
+    rules:m.direct_rules||0,
+    mcc:m.direct_mcc||0,
+    splits:m.direct_splits||0,
+    bootstrap_refs:m.direct_bootstrap_refs||0,
+    reporting_refs:m.direct_reporting_refs||0,
+    dependency_count:m.direct_dependency_count||0,
+    audit_status:m.direct_audit_status||'RED',
+    audit_reason:m.direct_audit_reason||''
+  };
+}
+function categoryL1Name(cat){return cat?.level1_name||cat?.name||'—'}
+function categoryOperationalName(cat){
+  if(!cat)return '—';
+  if(Number(cat.depth)===1)return 'Diretto su '+cat.name;
+  if(Number(cat.depth)===2)return cat.name;
+  return (cat.level2_name?cat.level2_name+' › ':'')+cat.name;
+}
+function categoryOperationalRows(){
+  const audit=categoryAuditMap(),rows=[];
+  for(const cat of (catData?.categories||[])){
+    const m=audit.get(String(cat.id));if(!m)continue;
+    const leaf=Number(m.child_count||0)===0;
+    if(leaf){
+      rows.push({id:cat.id,cat,kind:'CATEGORY',name:categoryOperationalName(cat),l1:categoryL1Name(cat),metric:m});
+    }else if(Number(m.direct_movement_count||0)>0||Number(m.direct_dependency_count||0)>0){
+      rows.push({id:cat.id,cat,kind:'DIRECT',name:categoryOperationalName(cat),l1:categoryL1Name(cat),metric:directCategoryMetric(m)});
+    }
+  }
+  return rows;
+}
+function categoryL1Rows(){
+  const audit=categoryAuditMap();
+  return (catData?.categories||[]).filter(x=>Number(x.depth)===1).map(cat=>({
+    id:cat.id,cat,kind:'L1',name:cat.name,l1:cat.name,metric:audit.get(String(cat.id))
+  }));
+}
+function visibleCategoryRows(){
+  const q=($('categorySearch')?.value||'').trim().toLowerCase();
+  const status=$('categoryStatusFilter')?.value||'',l1=$('categoryL1Filter')?.value||'',sort=$('categorySort')?.value||'NAME';
+  let rows=categoryViewMode==='L1'?categoryL1Rows():categoryOperationalRows();
+  rows=rows.filter(r=>(!q||textSearchMatches([r.l1,r.name,categoryLabel(r.cat)].join(' '),q))&&(!l1||r.l1===l1)&&categoryAuditFilterMatch(r.metric,status));
+  return categoryAuditSortRows(rows,r=>r.metric,sort);
+}
 function renderCategoryAuditKpis(){
-  const s=catData?.categoryAudit?.summary||{};
+  const rows=categoryViewMode==='L1'?categoryL1Rows():categoryOperationalRows();
+  const counts={ALL:rows.length,RED:0,YELLOW:0,NORMAL:0};
+  rows.forEach(r=>{if(counts[r.metric?.audit_status]!=null)counts[r.metric.audit_status]++});
   const box=$('categoryAuditKpis');if(!box)return;
   box.innerHTML=
-    '<button class="category-audit-kpi" data-category-audit-kpi=""><div class="muted small">Categorie</div><div class="audit-value">'+nfmt(s.categories||0)+'</div><div class="muted small">intera tassonomia</div></button>'+
-    '<button class="category-audit-kpi red" data-category-audit-kpi="RED"><div class="muted small">Vuote</div><div class="audit-value">'+nfmt(s.red||0)+'</div><div class="muted small">senza utilizzi o dipendenze</div></button>'+
-    '<button class="category-audit-kpi yellow" data-category-audit-kpi="YELLOW"><div class="muted small">Da valutare</div><div class="audit-value">'+nfmt(s.yellow||0)+'</div><div class="muted small">poco usate / inattive</div></button>'+
-    '<button class="category-audit-kpi" data-category-audit-kpi="NORMAL"><div class="muted small">Consolidate</div><div class="audit-value">'+nfmt(s.normal||0)+'</div><div class="muted small">uso significativo</div></button>';
+    '<button class="category-audit-kpi" data-category-audit-kpi=""><div class="muted small">'+(categoryViewMode==='L1'?'L1':'Categorie operative')+'</div><div class="audit-value">'+nfmt(counts.ALL)+'</div><div class="muted small">'+(categoryViewMode==='L1'?'macro-aree':'foglie + usi diretti')+'</div></button>'+
+    '<button class="category-audit-kpi" data-category-audit-kpi="RED"><div class="muted small">Vuote</div><div class="audit-value">'+nfmt(counts.RED)+'</div><div class="muted small">stato informativo</div></button>'+
+    '<button class="category-audit-kpi yellow" data-category-audit-kpi="YELLOW"><div class="muted small">Da valutare</div><div class="audit-value">'+nfmt(counts.YELLOW)+'</div><div class="muted small">poco usate / inattive</div></button>'+
+    '<button class="category-audit-kpi" data-category-audit-kpi="NORMAL"><div class="muted small">Consolidate</div><div class="audit-value">'+nfmt(counts.NORMAL)+'</div><div class="muted small">uso significativo</div></button>';
 }
-function categoryAuditSectionClass(m){
-  return m?.audit_status==='RED'?' category-audit-section-red':m?.audit_status==='YELLOW'?' category-audit-section-yellow':'';
+function categoryCanDelete(row){
+  const m=row?.metric||{};
+  return Number(m.movement_count||0)===0&&Number(m.dependency_count||0)===0&&Number(row?.cat&&categoryAuditMap().get(String(row.cat.id))?.child_count||0)===0;
 }
-function categoryAuditRowClass(m){
-  return m?.audit_status==='RED'?' category-audit-row-red':m?.audit_status==='YELLOW'?' category-audit-row-yellow':'';
+function categoryActionsMenu(row){
+  const audit=categoryAuditMap().get(String(row.cat.id))||{},hasChildren=Number(audit.child_count||0)>0,canDelete=categoryCanDelete(row);
+  return '<details class="category-actions-menu"><summary class="btn ghost compact">Azioni ▾</summary><div class="category-actions-popover">'+
+    '<button type="button" data-category-action="MOVEMENTS" data-category-id="'+row.cat.id+'">Apri movimenti</button>'+
+    '<button type="button" data-category-action="RENAME" data-category-id="'+row.cat.id+'">Rinomina</button>'+
+    '<button type="button" data-category-action="MOVE" data-category-id="'+row.cat.id+'">Sposta</button>'+
+    '<button type="button" data-category-action="MERGE" data-category-id="'+row.cat.id+'" '+(hasChildren?'disabled title="Prima sposta o migra le sottocategorie"':'')+'>Migra / Fondi</button>'+
+    '<button type="button" class="danger" data-category-action="DELETE" data-category-id="'+row.cat.id+'" '+(canDelete?'':'disabled title="Categoria ancora utilizzata o con dipendenze"')+'>Elimina</button>'+
+  '</div></details>';
 }
 function renderCategoriesCatalog(){
-  renderCategoryAuditKpis();
-  const q=($('categorySearch')?.value||'').trim().toLowerCase();
-  const statusFilter=$('categoryStatusFilter')?.value||'';
-  const sortMode=$('categorySort')?.value||'NAME';
-  const cats=catData?.categories||[],movements=catData?.movements||[],audit=categoryAuditMap();
-  const groups=new Map();
-  for(const x of cats){
-    const l1=x.level1_name||x.name||'Altro';
-    if(!groups.has(l1))groups.set(l1,{name:l1,root:null,children:[]});
-    const g=groups.get(l1);
-    if(Number(x.depth)===1)g.root=x;else g.children.push(x);
+  const cats=catData?.categories||[];
+  const keepL1=$('categoryL1Filter')?.value||'';
+  const l1s=[...new Set(cats.map(categoryL1Name).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'it',{sensitivity:'base'}));
+  if($('categoryL1Filter')){
+    $('categoryL1Filter').innerHTML='<option value="">Tutti gli L1</option>'+l1s.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join('');
+    $('categoryL1Filter').value=l1s.includes(keepL1)?keepL1:'';
   }
-
-  let list=[...groups.values()].filter(g=>{
-    const rootM=g.root?audit.get(String(g.root.id)):null;
-    const rootSearch=!q||textSearchMatches(g.name,q);
-    const rootFilter=categoryAuditFilterMatch(rootM,statusFilter);
-    const childMatch=g.children.some(x=>(!q||textSearchMatches(categoryLabel(x),q))&&categoryAuditFilterMatch(audit.get(String(x.id)),statusFilter));
-    return (rootSearch&&rootFilter)||childMatch;
-  });
-
-  list=categoryAuditSortRows(list,g=>g.root?audit.get(String(g.root.id)):null,sortMode);
-
-  const labels='<div class="category-audit-head labels"><div>Categoria</div><div>Mov.</div><div>€ 12m</div><div>Frequenza</div><div>Ultimo uso</div><div>Dipendenze</div><div>Stato</div><div></div></div>';
-  const html=list.map(g=>{
-    const rootM=g.root?audit.get(String(g.root.id)):null;
-    const expanded=!!q||!!statusFilter||expandedCategoryGroups.has(g.name);
-    const prefix=g.name+' › ';
-    const mv=movements.filter(x=>x.category_path===g.name||String(x.category_path||'').startsWith(prefix));
-    const detailOpen=expandedCategoryMovementDetails.has('L1:'+g.name);
-
-    let children=g.children
-      .filter(x=>(!q||textSearchMatches(categoryLabel(x),q)||textSearchMatches(g.name,q))&&categoryAuditFilterMatch(audit.get(String(x.id)),statusFilter));
-    children=categoryAuditSortRows(children,x=>audit.get(String(x.id)),sortMode);
-
-    const rootActions='<div class="compact-actions audit-actions"><button class="btn secondary compact" data-toggle-category-movements="L1:'+esc(g.name)+'">Movimenti</button>'+
-      (g.root?'<button class="btn ghost compact" data-edit-cat="'+g.root.id+'">Modifica</button><button class="btn danger compact" data-delete-entity="CATEGORY" data-delete-key="'+g.root.id+'" data-delete-label="'+esc(g.name)+'">Elimina</button>':'')+'</div>';
-
-    const childRows=children.map(x=>{
-      const m=audit.get(String(x.id)),key='CAT:'+x.id,open=expandedCategoryMovementDetails.has(key),childMov=categoryBranchMovements(x);
-      return '<tr class="catalog-child-row depth-'+x.depth+categoryAuditRowClass(m)+'"><td><strong>'+esc(categoryLabel(x).replace(g.name+' › ',''))+'</strong><div class="muted small">L'+nfmt(x.depth)+'</div></td>'+
-        '<td>'+nfmt(m?.movement_count||0)+'</td>'+
-        '<td><strong>'+euro(m?.value_12||0)+'</strong><div class="muted small">'+nfmt(m?.movement_count_12||0)+' mov. 12m</div></td>'+
-        '<td>'+categoryAuditFrequencyHtml(m)+'</td>'+
-        '<td>'+(m?.last_used?esc(m.last_used):'<span class="muted">mai</span>')+'</td>'+
-        '<td>'+categoryAuditDepsHtml(m)+'</td>'+
-        '<td>'+categoryAuditStatusHtml(m)+'</td>'+
-        '<td><div class="compact-actions"><button class="btn secondary compact" data-toggle-category-movements="'+key+'">Movimenti</button><button class="btn ghost compact" data-edit-cat="'+x.id+'">Modifica</button><button class="btn danger compact" data-delete-entity="CATEGORY" data-delete-key="'+x.id+'" data-delete-label="'+esc(categoryLabel(x))+'">Elimina</button></div></td></tr>'+
-        (open?'<tr><td colspan="8" style="padding:0">'+catalogMovementDetailTable(childMov)+'</td></tr>':'');
-    }).join('');
-
-    return '<div class="catalog-section'+categoryAuditSectionClass(rootM)+'">'+
-      '<div class="catalog-section-head category-audit-head" data-toggle-category-group="'+esc(g.name)+'">'+
-        '<div><span class="group-caret">'+(expanded?'▼':'▶')+'</span>'+categoryChip(g.name)+'<span class="group-meta">'+nfmt(g.children.length)+' sottocategorie</span></div>'+
-        '<div class="group-stat"><strong>'+nfmt(rootM?.movement_count||0)+'</strong></div>'+
-        '<div class="group-stat"><strong>'+euro(rootM?.value_12||0)+'</strong></div>'+
-        '<div class="group-stat">'+categoryAuditFrequencyHtml(rootM)+'</div>'+
-        '<div class="group-stat">'+(rootM?.last_used?esc(rootM.last_used):'<span class="muted">mai</span>')+'</div>'+
-        '<div class="group-stat">'+categoryAuditDepsHtml(rootM)+'</div>'+
-        '<div class="group-stat">'+categoryAuditStatusHtml(rootM)+'</div>'+
-        '<div onclick="event.stopPropagation()">'+rootActions+'</div>'+
-      '</div>'+
-      (detailOpen?'<div class="catalog-section-body">'+catalogMovementDetailTable(mv)+'</div>':'')+
-      '<div class="catalog-section-body '+(expanded?'':'hidden')+'"><table class="table category-audit-table"><thead><tr><th>Sottocategoria</th><th>Mov.</th><th>€ 12m</th><th>Frequenza</th><th>Ultimo uso</th><th>Dipendenze</th><th>Stato</th><th></th></tr></thead><tbody>'+
-        (childRows||'<tr><td colspan="8" class="muted">Nessuna sottocategoria con i filtri selezionati.</td></tr>')+
-      '</tbody></table></div>'+
-    '</div>';
-  }).join('');
-
+  document.querySelectorAll('[data-category-view]').forEach(b=>{b.className='btn '+(b.dataset.categoryView===categoryViewMode?'secondary':'ghost')+' compact'});
+  renderCategoryAuditKpis();
+  const rows=visibleCategoryRows();
   const period=catData?.categoryAudit?.analysis_start&&catData?.categoryAudit?.analysis_end
-    ?'<div class="note" style="margin-bottom:8px">Metriche economiche e frequenza: <strong>'+esc(catData.categoryAudit.analysis_start)+'</strong> → <strong>'+esc(catData.categoryAudit.analysis_end)+'</strong>. Movimenti = storico completo del ramo; € 12m = volume assoluto su linee effettive, inclusi split.</div>'
+    ?'<div class="note" style="margin-bottom:8px">Metriche economiche e frequenza: <strong>'+esc(catData.categoryAudit.analysis_start)+'</strong> → <strong>'+esc(catData.categoryAudit.analysis_end)+'</strong>. € 12m usa le linee effettive, inclusi split.</div>'
     :'';
-  $('categoriesTable').innerHTML=period+labels+(html||'<div class="muted">Nessuna categoria con i filtri selezionati.</div>');
+  const head=categoryViewMode==='L1'
+    ?'<tr><th>L1</th><th>Sottocategorie</th><th>Mov.</th><th>€ 12m</th><th>Frequenza</th><th>Ultimo uso</th><th>Dipendenze</th><th>Stato</th><th></th></tr>'
+    :'<tr><th>L1</th><th>Categoria operativa</th><th>Mov.</th><th>€ 12m</th><th>Frequenza</th><th>Ultimo uso</th><th>Dipendenze</th><th>Stato</th><th></th></tr>';
+  const body=rows.map(r=>{
+    const m=r.metric||{},audit=categoryAuditMap().get(String(r.cat.id))||{};
+    const prefix=categoryViewMode==='L1'
+      ?'<td><strong>'+esc(r.cat.name)+'</strong></td><td>'+nfmt(audit.child_count||0)+'</td>'
+      :'<td><strong>'+esc(r.l1)+'</strong></td><td><div class="cat-main">'+esc(r.name)+(r.kind==='DIRECT'?'<span class="direct-badge">uso diretto L1</span>':'')+'</div><div class="cat-path">'+esc(categoryLabel(r.cat))+'</div></td>';
+    return '<tr class="'+(r.kind==='DIRECT'?'direct-row':'')+'">'+prefix+
+      '<td>'+nfmt(m.movement_count||0)+'</td>'+
+      '<td><strong>'+euro(m.value_12||0)+'</strong><div class="muted small">'+nfmt(m.movement_count_12||0)+' mov. 12m</div></td>'+
+      '<td>'+categoryAuditFrequencyHtml(m)+'</td>'+
+      '<td>'+(m.last_used?esc(m.last_used):'<span class="muted">mai</span>')+'</td>'+
+      '<td>'+categoryAuditDepsHtml(m)+'</td>'+
+      '<td>'+categoryAuditStatusHtml(m)+'</td>'+
+      '<td>'+categoryActionsMenu(r)+'</td></tr>';
+  }).join('');
+  const cols=9;
+  $('categoriesTable').innerHTML=period+'<div class="muted small" style="margin:0 0 8px">'+nfmt(rows.length)+' righe visualizzate · vista '+(categoryViewMode==='L1'?'aggregata L1':'operativa cross-L1')+'</div><div class="category-flat-wrap"><table class="table category-flat-table"><thead>'+head+'</thead><tbody>'+(body||'<tr><td colspan="'+cols+'" class="muted">Nessuna categoria con i filtri selezionati.</td></tr>')+'</tbody></table></div>';
 }
-
+function categoryById(id){return (catData?.categories||[]).find(x=>String(x.id)===String(id))}
+function categoryDescendantIds(id){
+  const out=new Set(),queue=[String(id)];
+  while(queue.length){
+    const parent=queue.shift();
+    for(const c of (catData?.categories||[]))if(String(c.parent_id||'')===parent&&!out.has(String(c.id))){out.add(String(c.id));queue.push(String(c.id))}
+  }
+  return out;
+}
+function closeCategoryAction(){
+  categoryActionState=null;
+  if($('categoryActionPanel')){$('categoryActionPanel').classList.add('hidden');$('categoryActionPanel').innerHTML=''}
+}
+function openCategoryMovements(id){
+  closeCategoryAction();
+  clearMovementFilters();
+  activateMainTab('categorization');
+  $('movementCategory').value=id;
+  renderMovements();
+  $('movementSummary')?.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function categoryParentSelectHtml(cat){
+  const descendants=categoryDescendantIds(cat.id);
+  const options=(catData?.categories||[]).filter(x=>Number(x.depth)<3&&String(x.id)!==String(cat.id)&&!descendants.has(String(x.id))).sort((a,b)=>categoryLabel(a).localeCompare(categoryLabel(b),'it',{sensitivity:'base'}));
+  return '<option value="">— nessuna (L1) —</option>'+options.map(x=>'<option value="'+x.id+'" '+(String(x.id)===String(cat.parent_id||'')?'selected':'')+'>'+esc(categoryLabel(x))+'</option>').join('');
+}
+function categoryDestinationSelectHtml(cat){
+  return '<option value="">— scegli categoria destinazione —</option>'+(catData?.categories||[]).filter(x=>String(x.id)!==String(cat.id)).sort((a,b)=>categoryLabel(a).localeCompare(categoryLabel(b),'it',{sensitivity:'base'})).map(x=>'<option value="'+x.id+'">'+esc(categoryLabel(x))+'</option>').join('');
+}
+function openCategoryAction(id,action){
+  document.querySelectorAll('.category-actions-menu[open]').forEach(x=>x.removeAttribute('open'));
+  if(action==='MOVEMENTS'){openCategoryMovements(id);return}
+  const cat=categoryById(id);if(!cat)return;
+  categoryActionState={id:cat.id,action,preview:null};
+  const panel=$('categoryActionPanel');panel.classList.remove('hidden');
+  const audit=categoryAuditMap().get(String(cat.id))||{};
+  let body='';
+  if(action==='RENAME'){
+    body='<div class="category-action-form"><div class="field"><label>Nuovo nome</label><input id="categoryActionName" class="input" value="'+esc(cat.name)+'" /></div><button class="btn" type="button" data-category-action-save="RENAME">Salva rinomina</button></div><div class="note" style="margin-top:8px">Il category_id resta invariato: movimenti, regole e riferimenti continuano a puntare alla stessa categoria.</div>';
+  }else if(action==='MOVE'){
+    body='<div class="category-action-form"><div class="field"><label>Nuova categoria padre</label><select id="categoryActionParent" class="select">'+categoryParentSelectHtml(cat)+'</select></div><button class="btn" type="button" data-category-action-save="MOVE">Salva spostamento</button></div><div class="note" style="margin-top:8px">Lo spostamento mantiene lo stesso ID. Il backend blocca cicli e gerarchie oltre 3 livelli.</div>';
+  }else if(action==='MERGE'){
+    body='<div class="category-action-form"><div class="field"><label>Categoria destinazione</label><select id="categoryMergeDestination" class="select">'+categoryDestinationSelectHtml(cat)+'</select></div><button id="categoryMergeConfirm" class="btn" type="button" data-category-action-save="MERGE" disabled>Conferma migrazione</button></div><div class="note" style="margin-top:8px">La destinazione deve esistere già. La sorgente rimane vuota dopo la migrazione e potrà essere eliminata separatamente.</div><div id="categoryMigrationPreview" style="margin-top:10px"><div class="muted">Scegli la destinazione per vedere l’anteprima completa.</div></div>';
+  }else if(action==='DELETE'){
+    const canDelete=Number(audit.child_count||0)===0&&Number(audit.movement_count||0)===0&&Number(audit.dependency_count||0)===0;
+    body='<div class="'+(canDelete?'category-action-ok':'category-action-warning')+'">'+(canDelete?'La categoria risulta vuota e senza dipendenze. L’eliminazione sarà comunque ricontrollata dal backend.':'La categoria non è eliminabile: contiene utilizzi, sottocategorie o dipendenze. Prima occorre spostarli o migrarli.')+'</div><div class="compact-actions" style="margin-top:10px"><button class="btn danger" type="button" data-category-action-save="DELETE" '+(canDelete?'':'disabled')+'>Elimina definitivamente</button></div>';
+  }
+  panel.innerHTML='<div class="category-action-head"><div><strong>'+esc(({RENAME:'Rinomina',MOVE:'Sposta',MERGE:'Migra / Fondi',DELETE:'Elimina'})[action]||action)+'</strong><div class="muted small">'+esc(categoryLabel(cat))+'</div></div><button class="btn ghost compact" type="button" data-category-action-close>Chiudi</button></div>'+body;
+  panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+async function previewCategoryMigration(){
+  if(!categoryActionState||categoryActionState.action!=='MERGE')return;
+  const dest=$('categoryMergeDestination')?.value||'',box=$('categoryMigrationPreview'),confirmBtn=$('categoryMergeConfirm');
+  if(!dest){box.innerHTML='<div class="muted">Scegli la destinazione per vedere l’anteprima completa.</div>';confirmBtn.disabled=true;return}
+  box.innerHTML='<div class="muted">Calcolo impatti…</div>';confirmBtn.disabled=true;
+  try{
+    const p=await rpc('dashboard_category_migration_preview_v1',{p_source_id:categoryActionState.id,p_destination_id:dest});
+    categoryActionState.preview=p;
+    const i=p.impact||{},cf=p.conflicts||{};
+    box.innerHTML=
+      '<div><strong>'+esc(p.source?.path||'')+'</strong> → <strong>'+esc(p.destination?.path||'')+'</strong></div>'+
+      '<div class="category-action-grid">'+
+        '<div class="category-impact"><div class="muted small">Movimenti</div><div class="value">'+nfmt(i.movements||0)+'</div></div>'+
+        '<div class="category-impact"><div class="muted small">Valore storico</div><div class="value">'+euro(i.historical_value||0)+'</div></div>'+
+        '<div class="category-impact"><div class="muted small">Controparti default</div><div class="value">'+nfmt(i.counterparty_defaults||0)+'</div></div>'+
+        '<div class="category-impact"><div class="muted small">Regole</div><div class="value">'+nfmt(i.rules||0)+'</div></div>'+
+        '<div class="category-impact"><div class="muted small">MCC</div><div class="value">'+nfmt(i.mcc||0)+'</div></div>'+
+        '<div class="category-impact"><div class="muted small">Split</div><div class="value">'+nfmt(i.splits||0)+'</div></div>'+
+        '<div class="category-impact"><div class="muted small">Reporting</div><div class="value">'+nfmt(i.reporting_refs||0)+'</div></div>'+
+        '<div class="category-impact"><div class="muted small">Bootstrap</div><div class="value">'+nfmt(i.bootstrap_refs||0)+'</div></div>'+
+      '</div>'+
+      (p.can_merge
+        ?'<div class="category-action-ok"><strong>Operazione consentita.</strong> Sarà transazionale: o tutti i riferimenti vengono aggiornati oppure nessuna modifica viene mantenuta.</div>'
+        :'<div class="category-action-warning"><strong>Migrazione bloccata.</strong> '+esc(p.block_reason||'Conflitto non risolto')+(Number(cf.reporting_settings||0)+Number(cf.expense_override_months||0)+Number(cf.income_override_months||0)?'<div class="small" style="margin-top:4px">Conflitti reporting: impostazioni '+nfmt(cf.reporting_settings||0)+' · mesi spesa '+nfmt(cf.expense_override_months||0)+' · mesi entrata '+nfmt(cf.income_override_months||0)+'</div>':'')+'</div>');
+    confirmBtn.disabled=!p.can_merge;
+  }catch(e){box.innerHTML='<div class="msg error">'+esc(e.message)+'</div>';confirmBtn.disabled=true}
+}
+async function saveCategoryAction(action){
+  const state=categoryActionState,cat=state&&categoryById(state.id);if(!state||!cat)return;
+  const panel=$('categoryActionPanel');
+  try{
+    if(action==='RENAME'){
+      const name=$('categoryActionName')?.value.trim();if(!name)return alert('Inserisci il nuovo nome.');
+      await rpc('dashboard_upsert_category_v1',{p_id:cat.id,p_name:name,p_parent_id:cat.parent_id||null});
+      msg($('categoryMsg'),'Categoria rinominata.');
+    }else if(action==='MOVE'){
+      await rpc('dashboard_category_move_v1',{p_category_id:cat.id,p_parent_id:$('categoryActionParent')?.value||null});
+      msg($('categoryMsg'),'Categoria spostata mantenendo lo stesso ID.');
+    }else if(action==='MERGE'){
+      const dest=$('categoryMergeDestination')?.value||'';if(!dest||!state.preview?.can_merge)return;
+      if(!confirm('Confermare la migrazione? Tutti i riferimenti della categoria sorgente verranno trasferiti alla destinazione. La sorgente resterà vuota.'))return;
+      await rpc('dashboard_category_merge_v1',{p_source_id:cat.id,p_destination_id:dest});
+      msg($('categoryMsg'),'Migrazione completata. La categoria sorgente è stata mantenuta vuota: puoi verificarla e poi eliminarla separatamente.');
+    }else if(action==='DELETE'){
+      if(!confirm('Eliminare definitivamente “'+categoryLabel(cat)+'”?'))return;
+      await rpc('dashboard_category_delete_v1',{p_category_id:cat.id});
+      msg($('categoryMsg'),'Categoria eliminata.');
+    }
+    closeCategoryAction();coherenceData=null;await loadMovementsData();
+  }catch(e){
+    panel.insertAdjacentHTML('beforeend','<div class="msg error" style="margin-top:10px">'+esc(e.message)+'</div>');
+  }
+}
 function aliasesForMerchant(merchantId){
   return (catData?.aliases||[]).filter(a=>a.merchant_id===merchantId);
 }
@@ -2485,7 +2627,7 @@ function editCompoundRule(id){
 }
 function editCategory(id){const c=(catData.categories||[]).find(x=>x.id===id);if(!c)return;setCatalogTab('categories',false);$('categoryId').value=c.id;$('categoryName').value=c.name;$('categoryParent').value=c.parent_id||'';$('saveCategory').textContent='Aggiorna';$('categoryName').scrollIntoView({behavior:'smooth',block:'center'})}
 function editMerchant(id){const m=(catData.counterparties||[]).find(x=>x.id===id);if(!m)return;setCatalogTab('merchants',false);$('merchantId').value=m.id;$('merchantName').value=m.name;$('merchantType').value=m.counterparty_type||'OTHER';$('merchantCategory').value=m.default_category_id||'';$('merchantApplyExisting').checked=true;$('saveMerchant').textContent='Aggiorna';$('merchantName').scrollIntoView({behavior:'smooth',block:'center'})}
-async function saveCategory(){const btn=$('saveCategory');setBusy(btn,true,'Salvataggio');msg($('categoryMsg'),'');try{await rpc('dashboard_upsert_category_v1',{p_id:$('categoryId').value||null,p_name:$('categoryName').value,p_parent_id:$('categoryParent').value||null});$('categoryId').value='';$('categoryName').value='';$('categoryParent').value='';btn.dataset.label='Salva';msg($('categoryMsg'),'Categoria salvata.');await loadMovementsData()}catch(e){msg($('categoryMsg'),e.message,true)}finally{setBusy(btn,false)}}
+async function saveCategory(){const btn=$('saveCategory');setBusy(btn,true,'Salvataggio');msg($('categoryMsg'),'');try{await rpc('dashboard_upsert_category_v1',{p_id:$('categoryId').value||null,p_name:$('categoryName').value,p_parent_id:$('categoryParent').value||null});$('categoryId').value='';$('categoryName').value='';$('categoryParent').value='';btn.dataset.label='Crea';msg($('categoryMsg'),'Categoria creata.');await loadMovementsData()}catch(e){msg($('categoryMsg'),e.message,true)}finally{setBusy(btn,false)}}
 async function saveMerchant(){
   const btn=$('saveMerchant');setBusy(btn,true,'Salvataggio');msg($('merchantMsg'),'');
   try{
@@ -2597,13 +2739,17 @@ $('cancelQuickCounterparty').onclick=()=>{$('quickCounterpartyBox').classList.ad
 ['movementSearch','movementStatus','movementAutomation','movementBank','movementKind','movementType','movementDirection','movementCategory','movementProject','movementTag','movementDateFrom','movementDateTo'].forEach(id=>$(id).addEventListener(id==='movementSearch'?'input':'change',renderMovements));$('movementCounterpartySearch').addEventListener('input',applyMovementCounterpartySearch);$('movementCounterpartySearch').addEventListener('change',applyMovementCounterpartySearch);$('clearMovementFilters').onclick=clearMovementFilters;$('viewList').onclick=()=>{viewMode='list';renderMovements()};$('viewGrouped').onclick=()=>{viewMode='grouped';renderMovements()};$('bulkSelectVisible').onclick=selectVisibleMovements;$('bulkClearSelection').onclick=clearSelectedMovements;$('bulkApplyCategory').onclick=applyBulkCategory;
 $('movementsTable').addEventListener('click',e=>{const auto=e.target.closest('[data-automation-target]');if(auto){openAutomationTarget(auto.dataset.automationTarget,auto.dataset.automationId);return}const sort=e.target.closest('[data-sort]');if(sort){setSort(sort.dataset.sort);return}const edit=e.target.closest('[data-edit-movement]');if(edit){const row=(catData?.movements||[]).find(x=>x.id===edit.dataset.editMovement);if(row)openClassify(row);return}const tg=e.target.closest('[data-toggle-group]');if(tg){const g=(window.__groupRows||[])[Number(tg.dataset.toggleGroup)];if(!g)return;if(expandedGroups.has(g.key))expandedGroups.delete(g.key);else expandedGroups.add(g.key);renderMovements()}});
 $('movementsTable').addEventListener('change',e=>{const cb=e.target.closest('[data-select-movement]');if(!cb)return;cb.checked?selectedMovementIds.add(cb.dataset.selectMovement):selectedMovementIds.delete(cb.dataset.selectMovement);syncBulkSelectionUi()});
-['categorySearch','categoryStatusFilter','categorySort','merchantSearch','merchantL1Filter','merchantL2Filter','merchantStatusFilter','merchantRecencyFilter','projectSearch','projectTypeFilter','projectStatusFilter','tagSearch','tagStatusFilter','mccSearch','mccStatusFilter','compoundRuleSearch','compoundRuleStatusFilter','parsingRuleSearch'].forEach(id=>$(id)?.addEventListener(id.endsWith('Search')?'input':'change',renderCatalogs));[['classMerchantSearch','classMerchant'],['compoundRuleMerchantSearch','compoundRuleMerchant']].forEach(x=>bindCounterpartySearch(...x));$('expandAllCategories').onclick=()=>{(catData?.categories||[]).filter(x=>Number(x.depth)===1).forEach(x=>expandedCategoryGroups.add(x.level1_name||x.name));renderCategoriesCatalog()};$('collapseAllCategories').onclick=()=>{expandedCategoryGroups.clear();renderCategoriesCatalog()};
+['categorySearch','categoryL1Filter','categoryStatusFilter','categorySort','merchantSearch','merchantL1Filter','merchantL2Filter','merchantStatusFilter','merchantRecencyFilter','projectSearch','projectTypeFilter','projectStatusFilter','tagSearch','tagStatusFilter','mccSearch','mccStatusFilter','compoundRuleSearch','compoundRuleStatusFilter','parsingRuleSearch'].forEach(id=>$(id)?.addEventListener(id.endsWith('Search')?'input':'change',renderCatalogs));[['classMerchantSearch','classMerchant'],['compoundRuleMerchantSearch','compoundRuleMerchant']].forEach(x=>bindCounterpartySearch(...x));$('expandAllCategories').onclick=()=>{(catData?.categories||[]).filter(x=>Number(x.depth)===1).forEach(x=>expandedCategoryGroups.add(x.level1_name||x.name));renderCategoriesCatalog()};$('collapseAllCategories').onclick=()=>{expandedCategoryGroups.clear();renderCategoriesCatalog()};
 $('applyCounterpartyBulkCategory').onclick=applyCounterpartyBulkCategory;
 $('selectVisibleCounterparties').onclick=()=>{for(const m of counterpartyFilteredRows())selectedCounterpartyIds.add(m.id);renderMerchantsCatalog()};
 $('clearSelectedCounterparties').onclick=()=>{selectedCounterpartyIds.clear();renderMerchantsCatalog()};
 $('clearMerchantFilters').onclick=()=>{['merchantSearch','merchantL1Filter','merchantL2Filter','merchantStatusFilter','merchantRecencyFilter'].forEach(id=>{if($(id))$(id).value=''});renderCatalogs()};
 $('tab-catalogs').addEventListener('click',e=>{const ct=e.target.closest('[data-catalog-tab]');if(ct){setCatalogTab(ct.dataset.catalogTab);return}
 const cak=e.target.closest('[data-category-audit-kpi]');if(cak){if($('categoryStatusFilter'))$('categoryStatusFilter').value=cak.dataset.categoryAuditKpi||'';renderCategoriesCatalog();return}
+const cv=e.target.closest('[data-category-view]');if(cv){categoryViewMode=cv.dataset.categoryView||'OPERATIONAL';closeCategoryAction();renderCategoriesCatalog();return}
+const ca=e.target.closest('[data-category-action]');if(ca){openCategoryAction(ca.dataset.categoryId,ca.dataset.categoryAction);return}
+const cac=e.target.closest('[data-category-action-close]');if(cac){closeCategoryAction();return}
+const cas=e.target.closest('[data-category-action-save]');if(cas){saveCategoryAction(cas.dataset.categoryActionSave);return}
 const cpe=e.target.closest('[data-edit-counterparty-category]');if(cpe){editingCounterpartyCategoryIds.add(cpe.dataset.editCounterpartyCategory);renderMerchantsCatalog();return}
 const cpsave=e.target.closest('[data-save-counterparty-category]');if(cpsave){saveInlineCounterpartyCategory(cpsave);return}
 const cpcancel=e.target.closest('[data-cancel-counterparty-category]');if(cpcancel){editingCounterpartyCategoryIds.delete(cpcancel.dataset.cancelCounterpartyCategory);renderMerchantsCatalog();return}
@@ -2628,7 +2774,7 @@ $('classExtraordinary').addEventListener('change',async e=>{
     state.textContent=err.message||'Errore aggiornamento reporting';
   }finally{cb.disabled=false}
 });
-$('tab-catalogs').addEventListener('change',e=>{const one=e.target.closest('[data-select-counterparty]');if(one){one.checked?selectedCounterpartyIds.add(one.dataset.selectCounterparty):selectedCounterpartyIds.delete(one.dataset.selectCounterparty);syncCounterpartyBulkBar();return}const all=e.target.closest('[data-select-visible-counterparties]');if(all){for(const m of counterpartyFilteredRows())all.checked?selectedCounterpartyIds.add(m.id):selectedCounterpartyIds.delete(m.id);renderMerchantsCatalog();return}});
+$('tab-catalogs').addEventListener('change',e=>{if(e.target.id==='categoryMergeDestination'){previewCategoryMigration();return}const one=e.target.closest('[data-select-counterparty]');if(one){one.checked?selectedCounterpartyIds.add(one.dataset.selectCounterparty):selectedCounterpartyIds.delete(one.dataset.selectCounterparty);syncCounterpartyBulkBar();return}const all=e.target.closest('[data-select-visible-counterparties]');if(all){for(const m of counterpartyFilteredRows())all.checked?selectedCounterpartyIds.add(m.id):selectedCounterpartyIds.delete(m.id);renderMerchantsCatalog();return}});
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>activateMainTab(b.dataset.tab));
 addConditionRow();
 init();
