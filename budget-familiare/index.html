@@ -71,11 +71,18 @@
 @media(max-width:750px){.counterparty-filters{grid-template-columns:1fr}.counterparty-detail-metrics{grid-template-columns:1fr 1fr}.counterparty-detail-head{flex-direction:column}}
 .counterparty-select{width:18px;height:18px}.counterparty-bulk-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 12px;margin:2px 0 10px;border:1px solid #c7d2fe;background:#eef2ff;border-radius:10px}.counterparty-bulk-bar .count{font-weight:750;color:#3730a3}.counterparty-bulk-bar .select{min-width:280px;flex:1}.inline-category-editor{display:grid;grid-template-columns:minmax(170px,1fr) auto auto;gap:5px;align-items:center}.inline-category-editor .select{min-width:0;width:100%;padding:7px 8px;min-height:34px}.category-default-value{display:flex;gap:6px;align-items:flex-start;justify-content:space-between}.category-default-value .btn{flex:0 0 auto}.search-select{display:grid;grid-template-columns:minmax(180px,1fr) minmax(180px,1fr);gap:6px;align-items:center}.search-select .input,.search-select .select{min-width:0;width:100%}.alias-move-search{min-width:210px!important}@media(max-width:750px){.counterparty-bulk-bar .input{min-width:100%}.inline-category-editor{grid-template-columns:1fr auto auto}.search-select{grid-template-columns:1fr}}
 
-.category-viewbar{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;margin:2px 0 10px}.category-v71-toolbar{display:grid;grid-template-columns:minmax(220px,1.5fr) minmax(150px,.8fr) minmax(170px,.9fr) minmax(180px,1fr);gap:8px}.category-v71-toolbar .input,.category-v71-toolbar .select{width:100%;min-width:0}
-.category-flat-wrap{overflow-x:auto}.category-flat-table{min-width:1040px}.category-flat-table td,.category-flat-table th{vertical-align:middle}.category-flat-table .cat-main{font-weight:750}.category-flat-table .cat-path{font-size:11px;color:var(--muted);margin-top:3px}.category-flat-table .direct-row{background:#fafafa}.category-flat-table .direct-badge{display:inline-flex;padding:2px 6px;border-radius:999px;background:#f3f4f6;color:#4b5563;font-size:10px;font-weight:750;margin-left:5px}
-.audit-status-empty{background:#f3f4f6;color:#4b5563}.category-actions-menu{position:relative;display:inline-block}.category-actions-menu>summary{list-style:none}.category-actions-menu>summary::-webkit-details-marker{display:none}.category-actions-popover{position:absolute;right:0;top:calc(100% + 4px);z-index:30;min-width:190px;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 12px 28px rgba(15,23,42,.14);padding:5px}.category-actions-popover button{display:block;width:100%;border:0;background:#fff;text-align:left;padding:8px 9px;border-radius:7px;cursor:pointer;color:var(--text)}.category-actions-popover button:hover:not(:disabled){background:#f3f4f6}.category-actions-popover button:disabled{color:#9ca3af;cursor:not-allowed}.category-actions-popover button.danger{color:#991b1b}
-.category-action-panel{margin-top:14px;border:1px solid #bfdbfe;background:#f8fbff;border-radius:12px;padding:14px}.category-action-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:12px}.category-action-grid{display:grid;grid-template-columns:repeat(4,minmax(130px,1fr));gap:8px;margin:10px 0}.category-impact{border:1px solid var(--line);background:#fff;border-radius:10px;padding:10px}.category-impact .value{font-size:19px;font-weight:780;margin-top:3px}.category-action-form{display:grid;grid-template-columns:minmax(220px,1fr) auto;gap:8px;align-items:end}.category-action-warning{padding:9px 10px;border-radius:9px;background:#fffbeb;border:1px solid #fde68a;color:#92400e;margin-top:10px}.category-action-ok{padding:9px 10px;border-radius:9px;background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;margin-top:10px}
-@media(max-width:900px){.category-v71-toolbar{grid-template-columns:1fr 1fr}.category-action-grid{grid-template-columns:1fr 1fr}.category-action-form{grid-template-columns:1fr}}
+.category-viewbar{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;margin:2px 0 10px}
+.category-period-control{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+.category-period-control>span{margin-right:3px}
+.category-v71-toolbar{display:grid;grid-template-columns:minmax(240px,1.6fr) minmax(170px,.9fr) minmax(190px,1fr);gap:8px}.category-v71-toolbar .input,.category-v71-toolbar .select{width:100%;min-width:0}
+.category-flat-wrap{overflow-x:auto}.category-flat-table{min-width:980px;border-collapse:collapse}.category-flat-table td,.category-flat-table th{vertical-align:middle}.category-flat-table td{padding:6px 8px;line-height:1.15}.category-flat-table th{padding:7px 8px}.category-flat-table .cat-main{font-weight:750;white-space:nowrap}.category-flat-table .direct-row{background:#fafafa}.category-flat-table .direct-badge,.category-empty-badge{display:inline-flex;padding:1px 5px;border-radius:999px;background:#f3f4f6;color:#4b5563;font-size:9px;font-weight:750;margin-left:5px;vertical-align:middle}
+.l1-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border-radius:8px;font-size:11px;font-weight:780;white-space:nowrap;border:1px solid transparent}.l1-icon{font-size:12px;line-height:1}.l1-p0{background:#dbeafe;color:#1e3a8a;border-color:#bfdbfe}.l1-p1{background:#dcfce7;color:#166534;border-color:#bbf7d0}.l1-p2{background:#fef3c7;color:#92400e;border-color:#fde68a}.l1-p3{background:#fce7f3;color:#9d174d;border-color:#fbcfe8}.l1-p4{background:#ede9fe;color:#5b21b6;border-color:#ddd6fe}.l1-p5{background:#cffafe;color:#155e75;border-color:#a5f3fc}.l1-p6{background:#ffedd5;color:#9a3412;border-color:#fed7aa}.l1-p7{background:#e2e8f0;color:#334155;border-color:#cbd5e1}
+.category-amount{min-width:145px}.category-amount-line{display:flex;align-items:center;gap:8px}.category-amount-line strong{min-width:72px;white-space:nowrap}.category-amount-track{height:8px;flex:1;min-width:55px;background:#eef2f7;border-radius:999px;overflow:hidden}.category-amount-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#93c5fd,#2563eb)}
+.category-frequency-compact{display:inline-flex;align-items:center;gap:6px;font-weight:750;white-space:nowrap}.frequency-dot{width:10px;height:10px;border-radius:50%;display:inline-block;flex:0 0 auto}.freq-red .frequency-dot{background:#ef4444}.freq-yellow .frequency-dot{background:#f59e0b}.freq-green .frequency-dot{background:#22c55e}.freq-red{color:#991b1b}.freq-yellow{color:#92400e}.freq-green{color:#166534}
+.audit-deps-compact{font-size:11px;white-space:nowrap}.audit-deps-compact strong{font-weight:780}.category-period-note{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}.category-period-note .coverage-warn{color:#92400e;font-weight:700}
+.category-actions-menu{position:relative;display:inline-block}.category-actions-menu>summary{list-style:none}.category-actions-menu>summary::-webkit-details-marker{display:none}.category-actions-popover{position:absolute;right:0;top:calc(100% + 4px);z-index:30;min-width:190px;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 12px 28px rgba(15,23,42,.14);padding:5px}.category-actions-popover button{display:block;width:100%;border:0;background:#fff;text-align:left;padding:8px 9px;border-radius:7px;cursor:pointer;color:var(--text)}.category-actions-popover button:hover:not(:disabled){background:#f3f4f6}.category-actions-popover button:disabled{color:#9ca3af;cursor:not-allowed}.category-actions-popover button.danger{color:#991b1b}
+.category-action-row td{padding:0!important;border-top:0!important}.category-action-panel{margin:0 8px 8px;border:1px solid #bfdbfe;background:#f8fbff;border-radius:10px;padding:12px}.category-action-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:10px}.category-action-grid{display:grid;grid-template-columns:repeat(4,minmax(120px,1fr));gap:7px;margin:9px 0}.category-impact{border:1px solid var(--line);background:#fff;border-radius:9px;padding:8px}.category-impact .value{font-size:17px;font-weight:780;margin-top:2px}.category-action-form{display:grid;grid-template-columns:minmax(220px,1fr) auto;gap:8px;align-items:end}.category-action-warning{padding:8px 10px;border-radius:9px;background:#fffbeb;border:1px solid #fde68a;color:#92400e;margin-top:8px}.category-action-ok{padding:8px 10px;border-radius:9px;background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;margin-top:8px}
+@media(max-width:900px){.category-v71-toolbar{grid-template-columns:1fr}.category-action-grid{grid-template-columns:1fr 1fr}.category-action-form{grid-template-columns:1fr}.category-flat-table{min-width:900px}}
 
 </style>
 </head>
@@ -92,7 +99,7 @@
 
   <div id="appView" class="hidden">
     <div class="top">
-      <div class="brand"><h1>Dashboard Budget Familiare</h1><small>V71 · Gestione categorie</small></div>
+      <div class="brand"><h1>Dashboard Budget Familiare</h1><small>V71.1 · Categorie compatte</small></div>
       <div class="userbar"><span id="userEmail"></span><button id="refreshBtn" class="btn ghost">Aggiorna</button><button id="logoutBtn" class="btn ghost">Esci</button></div>
     </div>
     <datalist id="v62CounterpartyOptions"></datalist>
@@ -365,7 +372,7 @@
       <div class="grid catalog-grid">
         <div class="catalog-panel active" data-catalog-panel="categories">
           <div class="card stack catalog-card category-v71">
-            <div class="catalog-intro"><div><h2 style="margin:0 0 4px">Categorie · Gestione V71</h2><div class="muted small">Vista operativa piatta per rivedere le categorie trasversalmente agli L1. Rinomina, spostamento e migrazione mantengono storico e dipendenze sotto controllo.</div></div></div>
+            <div class="catalog-intro"><div><h2 style="margin:0 0 4px">Categorie · Gestione V71.1</h2><div class="muted small">Vista operativa piatta per rivedere le categorie trasversalmente agli L1. Rinomina, spostamento e migrazione mantengono storico e dipendenze sotto controllo.</div></div></div>
             <div class="catalog-form">
               <div class="small" style="font-weight:750;margin-bottom:8px">Nuova categoria</div>
               <div class="editor-row">
@@ -382,25 +389,22 @@
                 <button class="btn secondary compact" type="button" data-category-view="OPERATIONAL">Categorie operative</button>
                 <button class="btn ghost compact" type="button" data-category-view="L1">Aggregazione L1</button>
               </div>
-              <div class="muted small">La vista operativa mostra le categorie foglia e gli eventuali utilizzi diretti sugli L1.</div>
+              <div class="category-period-control" aria-label="Intervallo temporale categorie">
+                <span class="muted small">Periodo</span>
+                <button class="btn ghost compact" type="button" data-category-period="6M">6 mesi</button>
+                <button class="btn secondary compact" type="button" data-category-period="12M">12 mesi</button>
+                <button class="btn ghost compact" type="button" data-category-period="24M">24 mesi</button>
+                <button class="btn ghost compact" type="button" data-category-period="ALL">Tutto</button>
+              </div>
             </div>
             <div class="catalog-toolbar category-v71-toolbar">
               <input id="categorySearch" class="input" placeholder="Cerca categoria..." />
               <select id="categoryL1Filter" class="select"><option value="">Tutti gli L1</option></select>
-              <select id="categoryStatusFilter" class="select">
-                <option value="">Tutti gli stati</option>
-                <option value="RED">Vuote</option>
-                <option value="YELLOW">Da valutare</option>
-                <option value="NORMAL">Consolidate</option>
-                <option value="INACTIVE">Inattive ultimi 12 mesi</option>
-                <option value="SPARSE">Attive solo 1–2 mesi</option>
-              </select>
               <select id="categorySort" class="select">
                 <option value="NAME">Ordina: categoria</option>
-                <option value="STATUS">Ordina: priorità revisione</option>
-                <option value="VALUE12">Ordina: valore 12m</option>
+                <option value="VALUE12">Ordina: importo</option>
                 <option value="MOVEMENTS">Ordina: movimenti</option>
-                <option value="ACTIVE_MONTHS">Ordina: mesi attivi</option>
+                <option value="ACTIVE_MONTHS">Ordina: frequenza</option>
                 <option value="LAST_USED">Ordina: ultimo utilizzo</option>
                 <option value="DEPENDENCIES">Ordina: dipendenze</option>
               </select>
@@ -408,7 +412,6 @@
               <button id="collapseAllCategories" class="hidden" type="button">Comprimi</button>
             </div>
             <div id="categoriesTable"></div>
-            <div id="categoryActionPanel" class="category-action-panel hidden"></div>
           </div>
         </div>
 
@@ -584,7 +587,7 @@
 </div>
 <script>
 const sb=window.appSupabase;
-let overview=null,catData=null,coherenceData=null,engineStatus=null,duplicateSuggestions=[],selectedRow=null,splitData=null,viewMode='list',sortKey='transaction_date',sortDir='desc',catalogTab='categories',deepLinkHandled=false,categoryViewMode='OPERATIONAL',categoryActionState=null;
+let overview=null,catData=null,coherenceData=null,engineStatus=null,duplicateSuggestions=[],selectedRow=null,splitData=null,viewMode='list',sortKey='transaction_date',sortDir='desc',catalogTab='categories',deepLinkHandled=false,categoryViewMode='OPERATIONAL',categoryActionState=null,categoryAuditPeriod='12M',categoryAuditLoading=false;
 const catalogSort={categories:{key:'label',dir:'asc'},merchants:{key:'name',dir:'asc'},projects:{key:'name',dir:'asc'},tags:{key:'name',dir:'asc'},mcc:{key:'mcc_code',dir:'asc'},rules:{key:'priority',dir:'desc'},parsing:{key:'priority',dir:'desc'}};
 const expandedGroups=new Set();
 const expandedCategoryGroups=new Set();
@@ -668,7 +671,7 @@ async function loadMovementsData(){
       rpc('dashboard_rules_read_v1'),
       rpc('dashboard_counterparty_parsing_rules_read_v1'),
       rpc('dashboard_counterparty_duplicate_suggestions_v1').catch(()=>[]),
-      rpc('dashboard_category_audit_v2')
+      rpc('dashboard_category_audit_v3',{p_period:categoryAuditPeriod})
     ]);
     catData=base||{};
     catData.counterparties=counterparties||[];
@@ -1969,83 +1972,57 @@ function renderCatalogs(){
 function categoryAuditMap(){
   return new Map((catData?.categoryAudit?.rows||[]).map(x=>[String(x.category_id),x]));
 }
-function categoryAuditFilterMatch(m,filter){
-  if(!filter)return true;
-  if(!m)return false;
-  if(filter==='RED'||filter==='YELLOW'||filter==='NORMAL')return m.audit_status===filter;
-  if(filter==='INACTIVE')return Number(m.active_months||0)===0;
-  if(filter==='SPARSE')return Number(m.active_months||0)>=1&&Number(m.active_months||0)<=2;
-  return true;
-}
 function categoryAuditSortRows(rows,getMetric,mode){
-  const statusRank={YELLOW:0,RED:1,NORMAL:2};
   return [...rows].sort((a,b)=>{
     const am=getMetric(a)||{},bm=getMetric(b)||{};
-    if(mode==='STATUS'){
-      const d=(statusRank[am.audit_status]??9)-(statusRank[bm.audit_status]??9);
-      if(d)return d;
-    }else if(mode==='VALUE12'){
-      const d=Number(bm.value_12||0)-Number(am.value_12||0);if(d)return d;
-    }else if(mode==='MOVEMENTS'){
-      const d=Number(bm.movement_count||0)-Number(am.movement_count||0);if(d)return d;
-    }else if(mode==='ACTIVE_MONTHS'){
-      const d=Number(am.active_months||0)-Number(bm.active_months||0);if(d)return d;
-    }else if(mode==='LAST_USED'){
-      const av=String(am.last_used||''),bv=String(bm.last_used||'');
-      if(av!==bv)return bv.localeCompare(av);
-    }else if(mode==='DEPENDENCIES'){
-      const d=Number(bm.dependency_count||0)-Number(am.dependency_count||0);if(d)return d;
-    }
-    const al=String(a?.name||''),bl=String(b?.name||'');
-    return al.localeCompare(bl,'it',{sensitivity:'base'});
+    if(mode==='VALUE12'){const d=Number(bm.value||0)-Number(am.value||0);if(d)return d}
+    else if(mode==='MOVEMENTS'){const d=Number(bm.movement_count||0)-Number(am.movement_count||0);if(d)return d}
+    else if(mode==='ACTIVE_MONTHS'){const d=Number(bm.active_pct||0)-Number(am.active_pct||0);if(d)return d}
+    else if(mode==='LAST_USED'){const av=String(am.last_used||''),bv=String(bm.last_used||'');if(av!==bv)return bv.localeCompare(av)}
+    else if(mode==='DEPENDENCIES'){const d=Number(bm.dependency_count||0)-Number(am.dependency_count||0);if(d)return d}
+    return String(a?.name||'').localeCompare(String(b?.name||''),'it',{sensitivity:'base'});
   });
 }
-function categoryAuditStatusHtml(m){
-  if(!m)return '<span class="pill">—</span>';
-  const cfg=m.audit_status==='RED'
-    ?{cls:'audit-status-empty',label:'Vuota'}
-    :m.audit_status==='YELLOW'
-      ?{cls:'audit-status-yellow',label:'Da valutare'}
-      :{cls:'audit-status-normal',label:'Consolidata'};
-  return '<span class="pill '+cfg.cls+'" title="'+esc(m.audit_reason||'')+'">'+esc(cfg.label)+'</span><div class="muted small">'+esc(m.audit_reason||'')+'</div>';
+function periodMetric(m,direct=false){
+  if(!m)return null;
+  const p=direct?'direct_period_':'period_';
+  const d=direct?'direct_':'';
+  return {
+    movement_count:Number(m[p+'movement_count']||0),
+    value:Number(m[p+'value']||0),
+    active_months:Number(m[p+'active_months']||0),
+    active_pct:Number(m[p+'active_pct']||0),
+    month_count:Number(m[p+'month_count']||0),
+    months:m[p+'months']||[],
+    last_used:m[d+'last_used']||null,
+    merchant_defaults:Number(m[d+'merchant_defaults']||0),
+    rules:Number(m[d+'rules']||0),
+    mcc:Number(m[d+'mcc']||0),
+    splits:Number(m[d+'splits']||0),
+    bootstrap_refs:Number(m[d+'bootstrap_refs']||0),
+    reporting_refs:Number(m[d+'reporting_refs']||0),
+    dependency_count:Number(m[d+'dependency_count']||0)
+  };
+}
+function categoryFrequencyClass(m){
+  const pct=Number(m?.active_pct||0);
+  if(pct<25)return 'freq-red';
+  if(pct<50)return 'freq-yellow';
+  return 'freq-green';
 }
 function categoryAuditFrequencyHtml(m){
   if(!m)return '<span class="muted">—</span>';
-  const dots=(m.months||[]).map(x=>{
-    const d=new Date(String(x.month)+'T12:00:00');
-    const label=Number.isNaN(d.getTime())?String(x.month||''):d.toLocaleDateString('it-IT',{month:'short',year:'2-digit'});
-    return '<span class="month-dot'+(x.active?' active':'')+'" title="'+esc(label+' · '+euro(x.amount||0))+'"></span>';
-  }).join('');
-  return '<div class="category-frequency"><strong>'+nfmt(m.active_months||0)+'/12 · '+nfmt(m.active_pct||0)+'%</strong><div class="month-strip">'+dots+'</div></div>';
+  const denom=Number(m.month_count||0),active=Number(m.active_months||0),pct=Number(m.active_pct||0);
+  const detail=(m.months||[]).filter(x=>x.active).map(x=>String(x.month||'').slice(0,7)).join(', ');
+  return '<span class="category-frequency-compact '+categoryFrequencyClass(m)+'" title="'+esc((detail?'Mesi attivi: '+detail+'. ':'')+'Soglie: rosso <25%, giallo 25–49%, verde ≥50%')+'"><span class="frequency-dot"></span>'+nfmt(active)+'/'+nfmt(denom)+' · '+nfmt(pct)+'%</span>';
 }
 function categoryAuditDepsHtml(m){
   if(!m)return '<span class="muted">—</span>';
-  const cp=Number(m.merchant_defaults||0),rules=Number(m.rules||0),mcc=Number(m.mcc||0),splits=Number(m.splits||0),rep=Number(m.reporting_refs||0),boot=Number(m.bootstrap_refs||0);
-  const total=Number(m.dependency_count||0);
+  const cp=Number(m.merchant_defaults||0),rules=Number(m.rules||0),mcc=Number(m.mcc||0),splits=Number(m.splits||0),rep=Number(m.reporting_refs||0),boot=Number(m.bootstrap_refs||0),total=Number(m.dependency_count||0);
   const title='Controparti default '+cp+' · Regole '+rules+' · MCC '+mcc+' · Split '+splits+' · Reporting '+rep+' · Bootstrap '+boot;
-  if(!total)return '<span class="muted small" title="'+esc(title)+'">Nessuna</span>';
-  return '<div class="audit-deps" title="'+esc(title)+'"><strong>'+nfmt(total)+'</strong> rif.<br>CP '+nfmt(cp)+' · R '+nfmt(rules)+' · MCC '+nfmt(mcc)+' · S '+nfmt(splits)+(rep?' · Rep '+nfmt(rep):'')+'</div>';
-}
-function directCategoryMetric(m){
-  if(!m)return null;
-  return {
-    movement_count:m.direct_movement_count||0,
-    movement_count_12:m.direct_movement_count_12||0,
-    value_12:m.direct_value_12||0,
-    last_used:m.direct_last_used||null,
-    active_months:m.direct_active_months||0,
-    active_pct:m.direct_active_pct||0,
-    months:m.direct_months||[],
-    merchant_defaults:m.direct_merchant_defaults||0,
-    rules:m.direct_rules||0,
-    mcc:m.direct_mcc||0,
-    splits:m.direct_splits||0,
-    bootstrap_refs:m.direct_bootstrap_refs||0,
-    reporting_refs:m.direct_reporting_refs||0,
-    dependency_count:m.direct_dependency_count||0,
-    audit_status:m.direct_audit_status||'RED',
-    audit_reason:m.direct_audit_reason||''
-  };
+  if(!total)return '<span class="muted small" title="'+esc(title)+'">0 rif.</span>';
+  const short=['CP '+nfmt(cp),rules?'R '+nfmt(rules):'',mcc?'MCC '+nfmt(mcc):'',splits?'S '+nfmt(splits):'',rep?'Rep '+nfmt(rep):''].filter(Boolean).join(' · ');
+  return '<span class="audit-deps-compact" title="'+esc(title)+'"><strong>'+nfmt(total)+' rif.</strong>'+(short?' · '+short:'')+'</span>';
 }
 function categoryL1Name(cat){return cat?.level1_name||cat?.name||'—'}
 function categoryOperationalName(cat){
@@ -2054,49 +2031,74 @@ function categoryOperationalName(cat){
   if(Number(cat.depth)===2)return cat.name;
   return (cat.level2_name?cat.level2_name+' › ':'')+cat.name;
 }
+function categoryL1Icon(name){
+  const n=String(name||'').toLowerCase();
+  if(n.includes('casa'))return '⌂';
+  if(n.includes('shopping'))return '🛍';
+  if(n.includes('uten'))return '⚡';
+  if(n.includes('aliment')||n.includes('spesa'))return '🛒';
+  if(n.includes('vacanz')||n.includes('viagg'))return '✈';
+  if(n.includes('scuol')||n.includes('istruz'))return '🎓';
+  if(n.includes('cura personale'))return '✂';
+  if(n.includes('tempo libero')||n.includes('sport'))return '●';
+  if(n.includes('debit')||n.includes('prest'))return '▣';
+  if(n.includes('risparm')||n.includes('invest')||n.includes('finanz'))return '◆';
+  if(n.includes('salute'))return '✚';
+  if(n.includes('trasport'))return '🚗';
+  if(n.includes('assicur'))return '◆';
+  if(n.includes('ristor'))return '🍽';
+  if(n.includes('famigl')||n.includes('figli'))return '★';
+  if(n.includes('entrate'))return '↑';
+  return '•';
+}
+function categoryL1Palette(name){
+  let h=0;for(const ch of String(name||''))h=(h*31+ch.charCodeAt(0))>>>0;
+  return 'l1-p'+(h%8);
+}
+function categoryL1Badge(name){
+  return '<span class="l1-badge '+categoryL1Palette(name)+'"><span class="l1-icon">'+esc(categoryL1Icon(name))+'</span>'+esc(name)+'</span>';
+}
 function categoryOperationalRows(){
   const audit=categoryAuditMap(),rows=[];
   for(const cat of (catData?.categories||[])){
-    const m=audit.get(String(cat.id));if(!m)continue;
-    const leaf=Number(m.child_count||0)===0;
-    if(leaf){
-      rows.push({id:cat.id,cat,kind:'CATEGORY',name:categoryOperationalName(cat),l1:categoryL1Name(cat),metric:m});
-    }else if(Number(m.direct_movement_count||0)>0||Number(m.direct_dependency_count||0)>0){
-      rows.push({id:cat.id,cat,kind:'DIRECT',name:categoryOperationalName(cat),l1:categoryL1Name(cat),metric:directCategoryMetric(m)});
-    }
+    const raw=audit.get(String(cat.id));if(!raw)continue;
+    const leaf=Number(raw.child_count||0)===0;
+    if(leaf)rows.push({id:cat.id,cat,kind:'CATEGORY',name:categoryOperationalName(cat),l1:categoryL1Name(cat),raw,metric:periodMetric(raw,false)});
+    else if(Number(raw.direct_movement_count||0)>0||Number(raw.direct_dependency_count||0)>0)rows.push({id:cat.id,cat,kind:'DIRECT',name:categoryOperationalName(cat),l1:categoryL1Name(cat),raw,metric:periodMetric(raw,true)});
   }
   return rows;
 }
 function categoryL1Rows(){
   const audit=categoryAuditMap();
-  return (catData?.categories||[]).filter(x=>Number(x.depth)===1).map(cat=>({
-    id:cat.id,cat,kind:'L1',name:cat.name,l1:cat.name,metric:audit.get(String(cat.id))
-  }));
+  return (catData?.categories||[]).filter(x=>Number(x.depth)===1).map(cat=>{
+    const raw=audit.get(String(cat.id));
+    return {id:cat.id,cat,kind:'L1',name:cat.name,l1:cat.name,raw,metric:periodMetric(raw,false)};
+  });
 }
 function visibleCategoryRows(){
-  const q=($('categorySearch')?.value||'').trim().toLowerCase();
-  const status=$('categoryStatusFilter')?.value||'',l1=$('categoryL1Filter')?.value||'',sort=$('categorySort')?.value||'NAME';
+  const q=($('categorySearch')?.value||'').trim().toLowerCase(),l1=$('categoryL1Filter')?.value||'',sort=$('categorySort')?.value||'NAME';
   let rows=categoryViewMode==='L1'?categoryL1Rows():categoryOperationalRows();
-  rows=rows.filter(r=>(!q||textSearchMatches([r.l1,r.name,categoryLabel(r.cat)].join(' '),q))&&(!l1||r.l1===l1)&&categoryAuditFilterMatch(r.metric,status));
+  rows=rows.filter(r=>(!q||textSearchMatches([r.l1,r.name,categoryLabel(r.cat)].join(' '),q))&&(!l1||r.l1===l1));
   return categoryAuditSortRows(rows,r=>r.metric,sort);
 }
 function renderCategoryAuditKpis(){
   const rows=categoryViewMode==='L1'?categoryL1Rows():categoryOperationalRows();
-  const counts={ALL:rows.length,RED:0,YELLOW:0,NORMAL:0};
-  rows.forEach(r=>{if(counts[r.metric?.audit_status]!=null)counts[r.metric.audit_status]++});
+  const recurring=rows.filter(r=>Number(r.metric?.active_pct||0)>=50).length;
+  const occasional=rows.filter(r=>Number(r.metric?.active_pct||0)>0&&Number(r.metric?.active_pct||0)<25).length;
+  const inactive=rows.filter(r=>Number(r.metric?.active_months||0)===0).length;
   const box=$('categoryAuditKpis');if(!box)return;
   box.innerHTML=
-    '<button class="category-audit-kpi" data-category-audit-kpi=""><div class="muted small">'+(categoryViewMode==='L1'?'L1':'Categorie operative')+'</div><div class="audit-value">'+nfmt(counts.ALL)+'</div><div class="muted small">'+(categoryViewMode==='L1'?'macro-aree':'foglie + usi diretti')+'</div></button>'+
-    '<button class="category-audit-kpi" data-category-audit-kpi="RED"><div class="muted small">Vuote</div><div class="audit-value">'+nfmt(counts.RED)+'</div><div class="muted small">stato informativo</div></button>'+
-    '<button class="category-audit-kpi yellow" data-category-audit-kpi="YELLOW"><div class="muted small">Da valutare</div><div class="audit-value">'+nfmt(counts.YELLOW)+'</div><div class="muted small">poco usate / inattive</div></button>'+
-    '<button class="category-audit-kpi" data-category-audit-kpi="NORMAL"><div class="muted small">Consolidate</div><div class="audit-value">'+nfmt(counts.NORMAL)+'</div><div class="muted small">uso significativo</div></button>';
+    '<div class="category-audit-kpi"><div class="muted small">'+(categoryViewMode==='L1'?'Macro categorie':'Categorie operative')+'</div><div class="audit-value">'+nfmt(rows.length)+'</div><div class="muted small">righe della vista</div></div>'+
+    '<div class="category-audit-kpi"><div class="muted small">Ricorrenti</div><div class="audit-value">'+nfmt(recurring)+'</div><div class="muted small">frequenza ≥ 50%</div></div>'+
+    '<div class="category-audit-kpi yellow"><div class="muted small">Occasionali</div><div class="audit-value">'+nfmt(occasional)+'</div><div class="muted small">frequenza < 25%</div></div>'+
+    '<div class="category-audit-kpi"><div class="muted small">Inattive</div><div class="audit-value">'+nfmt(inactive)+'</div><div class="muted small">0 mesi attivi nel periodo</div></div>';
 }
 function categoryCanDelete(row){
-  const m=row?.metric||{};
-  return Number(m.movement_count||0)===0&&Number(m.dependency_count||0)===0&&Number(row?.cat&&categoryAuditMap().get(String(row.cat.id))?.child_count||0)===0;
+  const raw=row?.raw||categoryAuditMap().get(String(row?.cat?.id))||{};
+  return Number(raw.movement_count||0)===0&&Number(raw.dependency_count||0)===0&&Number(raw.child_count||0)===0;
 }
 function categoryActionsMenu(row){
-  const audit=categoryAuditMap().get(String(row.cat.id))||{},hasChildren=Number(audit.child_count||0)>0,canDelete=categoryCanDelete(row);
+  const raw=row?.raw||{},hasChildren=Number(raw.child_count||0)>0,canDelete=categoryCanDelete(row);
   return '<details class="category-actions-menu"><summary class="btn ghost compact">Azioni ▾</summary><div class="category-actions-popover">'+
     '<button type="button" data-category-action="MOVEMENTS" data-category-id="'+row.cat.id+'">Apri movimenti</button>'+
     '<button type="button" data-category-action="RENAME" data-category-id="'+row.cat.id+'">Rinomina</button>'+
@@ -2105,39 +2107,80 @@ function categoryActionsMenu(row){
     '<button type="button" class="danger" data-category-action="DELETE" data-category-id="'+row.cat.id+'" '+(canDelete?'':'disabled title="Categoria ancora utilizzata o con dipendenze"')+'>Elimina</button>'+
   '</div></details>';
 }
+function categoryAmountHtml(value,maxValue){
+  const v=Math.abs(Number(value||0)),max=Math.max(0,Number(maxValue||0));
+  const width=max>0?Math.max(v>0?4:0,Math.round(Math.sqrt(v/max)*100)):0;
+  return '<div class="category-amount"><div class="category-amount-line"><strong>'+euro(v)+'</strong><span class="category-amount-track" title="'+esc('Intensità relativa alle righe visibili')+'"><span class="category-amount-fill" style="width:'+width+'%"></span></span></div></div>';
+}
+function categoryPeriodLabel(){
+  const p=catData?.categoryAudit?.period||{},key=p.key||categoryAuditPeriod,coverage=Number(p.coverage_months||0),requested=p.requested_months==null?null:Number(p.requested_months);
+  if(key==='ALL')return 'Tutto · '+nfmt(coverage)+' mesi disponibili';
+  return (requested||coverage)+' mesi'+(requested&&coverage<requested?' · '+coverage+' disponibili':'');
+}
+function categoryPeriodNoteHtml(){
+  const p=catData?.categoryAudit?.period||{};
+  if(!p.start_date||!p.end_date)return '';
+  const requested=p.requested_months==null?null:Number(p.requested_months),coverage=Number(p.coverage_months||0);
+  const warn=requested&&coverage<requested?'<span class="coverage-warn">Copertura disponibile: '+nfmt(coverage)+'/'+nfmt(requested)+' mesi</span>':'';
+  return '<div class="category-period-note muted small"><span>Periodo: <strong>'+esc(p.start_date)+'</strong> → <strong>'+esc(p.end_date)+'</strong> · mesi completi</span>'+warn+(p.data_first_date?'<span>Primo dato: '+esc(p.data_first_date)+'</span>':'')+'</div>';
+}
+function categoryActionPanelHtml(cat,action){
+  const raw=categoryAuditMap().get(String(cat.id))||{};
+  let body='';
+  if(action==='RENAME'){
+    body='<div class="category-action-form"><div class="field"><label>Nuovo nome</label><input id="categoryActionName" class="input" value="'+esc(cat.name)+'" /></div><button class="btn" type="button" data-category-action-save="RENAME">Salva rinomina</button></div><div class="note" style="margin-top:7px">Il category_id resta invariato.</div>';
+  }else if(action==='MOVE'){
+    body='<div class="category-action-form"><div class="field"><label>Nuova categoria padre</label><select id="categoryActionParent" class="select">'+categoryParentSelectHtml(cat)+'</select></div><button class="btn" type="button" data-category-action-save="MOVE">Salva spostamento</button></div><div class="note" style="margin-top:7px">Lo stesso ID viene mantenuto. Il backend blocca cicli e profondità oltre 3 livelli.</div>';
+  }else if(action==='MERGE'){
+    body='<div class="category-action-form"><div class="field"><label>Categoria destinazione</label><select id="categoryMergeDestination" class="select">'+categoryDestinationSelectHtml(cat)+'</select></div><button id="categoryMergeConfirm" class="btn" type="button" data-category-action-save="MERGE" disabled>Conferma migrazione</button></div><div class="note" style="margin-top:7px">La sorgente resta vuota dopo la migrazione e non viene eliminata automaticamente.</div><div id="categoryMigrationPreview" style="margin-top:8px"><div class="muted">Scegli la destinazione per calcolare gli impatti.</div></div>';
+  }else if(action==='DELETE'){
+    const canDelete=Number(raw.child_count||0)===0&&Number(raw.movement_count||0)===0&&Number(raw.dependency_count||0)===0;
+    body='<div class="'+(canDelete?'category-action-ok':'category-action-warning')+'">'+(canDelete?'Categoria vuota e senza dipendenze. Il backend ricontrollerà prima della cancellazione.':'Categoria non eliminabile: esistono ancora utilizzi, sottocategorie o dipendenze.')+'</div><div class="compact-actions" style="margin-top:8px"><button class="btn danger compact" type="button" data-category-action-save="DELETE" '+(canDelete?'':'disabled')+'>Elimina definitivamente</button></div>';
+  }
+  return '<div class="category-action-panel"><div class="category-action-head"><div><strong>'+esc(({RENAME:'Rinomina',MOVE:'Sposta',MERGE:'Migra / Fondi',DELETE:'Elimina'})[action]||action)+'</strong><div class="muted small">'+esc(categoryLabel(cat))+'</div></div><button class="btn ghost compact" type="button" data-category-action-close>Annulla</button></div>'+body+'</div>';
+}
 function renderCategoriesCatalog(){
-  const cats=catData?.categories||[];
-  const keepL1=$('categoryL1Filter')?.value||'';
+  const cats=catData?.categories||[],keepL1=$('categoryL1Filter')?.value||'';
   const l1s=[...new Set(cats.map(categoryL1Name).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'it',{sensitivity:'base'}));
   if($('categoryL1Filter')){
     $('categoryL1Filter').innerHTML='<option value="">Tutti gli L1</option>'+l1s.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join('');
     $('categoryL1Filter').value=l1s.includes(keepL1)?keepL1:'';
   }
   document.querySelectorAll('[data-category-view]').forEach(b=>{b.className='btn '+(b.dataset.categoryView===categoryViewMode?'secondary':'ghost')+' compact'});
+  document.querySelectorAll('[data-category-period]').forEach(b=>{b.className='btn '+(b.dataset.categoryPeriod===categoryAuditPeriod?'secondary':'ghost')+' compact';b.disabled=categoryAuditLoading});
   renderCategoryAuditKpis();
-  const rows=visibleCategoryRows();
-  const period=catData?.categoryAudit?.analysis_start&&catData?.categoryAudit?.analysis_end
-    ?'<div class="note" style="margin-bottom:8px">Metriche economiche e frequenza: <strong>'+esc(catData.categoryAudit.analysis_start)+'</strong> → <strong>'+esc(catData.categoryAudit.analysis_end)+'</strong>. € 12m usa le linee effettive, inclusi split.</div>'
-    :'';
+  const rows=visibleCategoryRows(),maxValue=Math.max(0,...rows.map(r=>Number(r.metric?.value||0)));
   const head=categoryViewMode==='L1'
-    ?'<tr><th>L1</th><th>Sottocategorie</th><th>Mov.</th><th>€ 12m</th><th>Frequenza</th><th>Ultimo uso</th><th>Dipendenze</th><th>Stato</th><th></th></tr>'
-    :'<tr><th>L1</th><th>Categoria operativa</th><th>Mov.</th><th>€ 12m</th><th>Frequenza</th><th>Ultimo uso</th><th>Dipendenze</th><th>Stato</th><th></th></tr>';
+    ?'<tr><th>Macro categoria L1</th><th>Categorie</th><th>Mov.</th><th>Importo</th><th>Frequenza</th><th>Ultimo uso</th><th>Dipendenze</th><th></th></tr>'
+    :'<tr><th>L1</th><th>Categoria operativa</th><th>Mov.</th><th>Importo</th><th>Frequenza</th><th>Ultimo uso</th><th>Dipendenze</th><th></th></tr>';
   const body=rows.map(r=>{
-    const m=r.metric||{},audit=categoryAuditMap().get(String(r.cat.id))||{};
+    const m=r.metric||{},raw=r.raw||{},empty=Number(raw.movement_count||0)===0&&Number(raw.dependency_count||0)===0&&Number(raw.child_count||0)===0;
     const prefix=categoryViewMode==='L1'
-      ?'<td><strong>'+esc(r.cat.name)+'</strong></td><td>'+nfmt(audit.child_count||0)+'</td>'
-      :'<td><strong>'+esc(r.l1)+'</strong></td><td><div class="cat-main">'+esc(r.name)+(r.kind==='DIRECT'?'<span class="direct-badge">uso diretto L1</span>':'')+'</div><div class="cat-path">'+esc(categoryLabel(r.cat))+'</div></td>';
-    return '<tr class="'+(r.kind==='DIRECT'?'direct-row':'')+'">'+prefix+
+      ?'<td>'+categoryL1Badge(r.cat.name)+'</td><td>'+nfmt(raw.child_count||0)+'</td>'
+      :'<td>'+categoryL1Badge(r.l1)+'</td><td><div class="cat-main">'+esc(r.name)+(r.kind==='DIRECT'?'<span class="direct-badge">uso diretto L1</span>':'')+(empty?'<span class="category-empty-badge">Vuota</span>':'')+'</div></td>';
+    const actionRow=categoryActionState&&String(categoryActionState.id)===String(r.cat.id)
+      ?'<tr class="category-action-row"><td colspan="8">'+categoryActionPanelHtml(r.cat,categoryActionState.action)+'</td></tr>'
+      :'';
+    return '<tr class="'+(r.kind==='DIRECT'?'direct-row':'')+'" data-category-row="'+r.cat.id+'">'+prefix+
       '<td>'+nfmt(m.movement_count||0)+'</td>'+
-      '<td><strong>'+euro(m.value_12||0)+'</strong><div class="muted small">'+nfmt(m.movement_count_12||0)+' mov. 12m</div></td>'+
+      '<td>'+categoryAmountHtml(m.value,maxValue)+'</td>'+
       '<td>'+categoryAuditFrequencyHtml(m)+'</td>'+
       '<td>'+(m.last_used?esc(m.last_used):'<span class="muted">mai</span>')+'</td>'+
       '<td>'+categoryAuditDepsHtml(m)+'</td>'+
-      '<td>'+categoryAuditStatusHtml(m)+'</td>'+
-      '<td>'+categoryActionsMenu(r)+'</td></tr>';
+      '<td>'+categoryActionsMenu(r)+'</td></tr>'+actionRow;
   }).join('');
-  const cols=9;
-  $('categoriesTable').innerHTML=period+'<div class="muted small" style="margin:0 0 8px">'+nfmt(rows.length)+' righe visualizzate · vista '+(categoryViewMode==='L1'?'aggregata L1':'operativa cross-L1')+'</div><div class="category-flat-wrap"><table class="table category-flat-table"><thead>'+head+'</thead><tbody>'+(body||'<tr><td colspan="'+cols+'" class="muted">Nessuna categoria con i filtri selezionati.</td></tr>')+'</tbody></table></div>';
+  $('categoriesTable').innerHTML=categoryPeriodNoteHtml()+'<div class="muted small" style="margin:0 0 7px">'+nfmt(rows.length)+' righe · '+(categoryViewMode==='L1'?'aggregazione L1':'categorie operative cross-L1')+' · '+esc(categoryPeriodLabel())+'</div><div class="category-flat-wrap"><table class="table category-flat-table"><thead>'+head+'</thead><tbody>'+(body||'<tr><td colspan="8" class="muted">Nessuna categoria con i filtri selezionati.</td></tr>')+'</tbody></table></div>';
+}
+async function loadCategoryAuditPeriod(period){
+  const next=period||'12M';if(categoryAuditLoading||next===categoryAuditPeriod)return;
+  categoryAuditLoading=true;categoryAuditPeriod=next;closeCategoryAction(false);renderCategoriesCatalog();
+  try{
+    catData.categoryAudit=await rpc('dashboard_category_audit_v3',{p_period:categoryAuditPeriod})||{summary:{},rows:[],period:{}};
+  }catch(e){
+    alert(e.message);categoryAuditPeriod=catData?.categoryAudit?.period?.key||'12M';
+  }finally{
+    categoryAuditLoading=false;renderCategoriesCatalog();
+  }
 }
 function categoryById(id){return (catData?.categories||[]).find(x=>String(x.id)===String(id))}
 function categoryDescendantIds(id){
@@ -2148,12 +2191,12 @@ function categoryDescendantIds(id){
   }
   return out;
 }
-function closeCategoryAction(){
+function closeCategoryAction(render=true){
   categoryActionState=null;
-  if($('categoryActionPanel')){$('categoryActionPanel').classList.add('hidden');$('categoryActionPanel').innerHTML=''}
+  if(render)renderCategoriesCatalog();
 }
 function openCategoryMovements(id){
-  closeCategoryAction();
+  closeCategoryAction(false);
   clearMovementFilters();
   activateMainTab('categorization');
   $('movementCategory').value=id;
@@ -2173,26 +2216,14 @@ function openCategoryAction(id,action){
   if(action==='MOVEMENTS'){openCategoryMovements(id);return}
   const cat=categoryById(id);if(!cat)return;
   categoryActionState={id:cat.id,action,preview:null};
-  const panel=$('categoryActionPanel');panel.classList.remove('hidden');
-  const audit=categoryAuditMap().get(String(cat.id))||{};
-  let body='';
-  if(action==='RENAME'){
-    body='<div class="category-action-form"><div class="field"><label>Nuovo nome</label><input id="categoryActionName" class="input" value="'+esc(cat.name)+'" /></div><button class="btn" type="button" data-category-action-save="RENAME">Salva rinomina</button></div><div class="note" style="margin-top:8px">Il category_id resta invariato: movimenti, regole e riferimenti continuano a puntare alla stessa categoria.</div>';
-  }else if(action==='MOVE'){
-    body='<div class="category-action-form"><div class="field"><label>Nuova categoria padre</label><select id="categoryActionParent" class="select">'+categoryParentSelectHtml(cat)+'</select></div><button class="btn" type="button" data-category-action-save="MOVE">Salva spostamento</button></div><div class="note" style="margin-top:8px">Lo spostamento mantiene lo stesso ID. Il backend blocca cicli e gerarchie oltre 3 livelli.</div>';
-  }else if(action==='MERGE'){
-    body='<div class="category-action-form"><div class="field"><label>Categoria destinazione</label><select id="categoryMergeDestination" class="select">'+categoryDestinationSelectHtml(cat)+'</select></div><button id="categoryMergeConfirm" class="btn" type="button" data-category-action-save="MERGE" disabled>Conferma migrazione</button></div><div class="note" style="margin-top:8px">La destinazione deve esistere già. La sorgente rimane vuota dopo la migrazione e potrà essere eliminata separatamente.</div><div id="categoryMigrationPreview" style="margin-top:10px"><div class="muted">Scegli la destinazione per vedere l’anteprima completa.</div></div>';
-  }else if(action==='DELETE'){
-    const canDelete=Number(audit.child_count||0)===0&&Number(audit.movement_count||0)===0&&Number(audit.dependency_count||0)===0;
-    body='<div class="'+(canDelete?'category-action-ok':'category-action-warning')+'">'+(canDelete?'La categoria risulta vuota e senza dipendenze. L’eliminazione sarà comunque ricontrollata dal backend.':'La categoria non è eliminabile: contiene utilizzi, sottocategorie o dipendenze. Prima occorre spostarli o migrarli.')+'</div><div class="compact-actions" style="margin-top:10px"><button class="btn danger" type="button" data-category-action-save="DELETE" '+(canDelete?'':'disabled')+'>Elimina definitivamente</button></div>';
-  }
-  panel.innerHTML='<div class="category-action-head"><div><strong>'+esc(({RENAME:'Rinomina',MOVE:'Sposta',MERGE:'Migra / Fondi',DELETE:'Elimina'})[action]||action)+'</strong><div class="muted small">'+esc(categoryLabel(cat))+'</div></div><button class="btn ghost compact" type="button" data-category-action-close>Chiudi</button></div>'+body;
-  panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+  renderCategoriesCatalog();
+  requestAnimationFrame(()=>document.querySelector('.category-action-row')?.scrollIntoView({behavior:'smooth',block:'nearest'}));
 }
 async function previewCategoryMigration(){
   if(!categoryActionState||categoryActionState.action!=='MERGE')return;
   const dest=$('categoryMergeDestination')?.value||'',box=$('categoryMigrationPreview'),confirmBtn=$('categoryMergeConfirm');
-  if(!dest){box.innerHTML='<div class="muted">Scegli la destinazione per vedere l’anteprima completa.</div>';confirmBtn.disabled=true;return}
+  if(!box||!confirmBtn)return;
+  if(!dest){box.innerHTML='<div class="muted">Scegli la destinazione per calcolare gli impatti.</div>';confirmBtn.disabled=true;return}
   box.innerHTML='<div class="muted">Calcolo impatti…</div>';confirmBtn.disabled=true;
   try{
     const p=await rpc('dashboard_category_migration_preview_v1',{p_source_id:categoryActionState.id,p_destination_id:dest});
@@ -2211,14 +2242,14 @@ async function previewCategoryMigration(){
         '<div class="category-impact"><div class="muted small">Bootstrap</div><div class="value">'+nfmt(i.bootstrap_refs||0)+'</div></div>'+
       '</div>'+
       (p.can_merge
-        ?'<div class="category-action-ok"><strong>Operazione consentita.</strong> Sarà transazionale: o tutti i riferimenti vengono aggiornati oppure nessuna modifica viene mantenuta.</div>'
+        ?'<div class="category-action-ok"><strong>Operazione consentita.</strong> La migrazione è transazionale: tutto o niente.</div>'
         :'<div class="category-action-warning"><strong>Migrazione bloccata.</strong> '+esc(p.block_reason||'Conflitto non risolto')+(Number(cf.reporting_settings||0)+Number(cf.expense_override_months||0)+Number(cf.income_override_months||0)?'<div class="small" style="margin-top:4px">Conflitti reporting: impostazioni '+nfmt(cf.reporting_settings||0)+' · mesi spesa '+nfmt(cf.expense_override_months||0)+' · mesi entrata '+nfmt(cf.income_override_months||0)+'</div>':'')+'</div>');
     confirmBtn.disabled=!p.can_merge;
   }catch(e){box.innerHTML='<div class="msg error">'+esc(e.message)+'</div>';confirmBtn.disabled=true}
 }
 async function saveCategoryAction(action){
   const state=categoryActionState,cat=state&&categoryById(state.id);if(!state||!cat)return;
-  const panel=$('categoryActionPanel');
+  const inline=document.querySelector('.category-action-row .category-action-panel');
   try{
     if(action==='RENAME'){
       const name=$('categoryActionName')?.value.trim();if(!name)return alert('Inserisci il nuovo nome.');
@@ -2231,15 +2262,16 @@ async function saveCategoryAction(action){
       const dest=$('categoryMergeDestination')?.value||'';if(!dest||!state.preview?.can_merge)return;
       if(!confirm('Confermare la migrazione? Tutti i riferimenti della categoria sorgente verranno trasferiti alla destinazione. La sorgente resterà vuota.'))return;
       await rpc('dashboard_category_merge_v1',{p_source_id:cat.id,p_destination_id:dest});
-      msg($('categoryMsg'),'Migrazione completata. La categoria sorgente è stata mantenuta vuota: puoi verificarla e poi eliminarla separatamente.');
+      msg($('categoryMsg'),'Migrazione completata. La sorgente è rimasta vuota per il controllo finale.');
     }else if(action==='DELETE'){
       if(!confirm('Eliminare definitivamente “'+categoryLabel(cat)+'”?'))return;
       await rpc('dashboard_category_delete_v1',{p_category_id:cat.id});
       msg($('categoryMsg'),'Categoria eliminata.');
     }
-    closeCategoryAction();coherenceData=null;await loadMovementsData();
+    categoryActionState=null;coherenceData=null;await loadMovementsData();
   }catch(e){
-    panel.insertAdjacentHTML('beforeend','<div class="msg error" style="margin-top:10px">'+esc(e.message)+'</div>');
+    if(inline)inline.insertAdjacentHTML('beforeend','<div class="msg error" style="margin-top:8px">'+esc(e.message)+'</div>');
+    else alert(e.message);
   }
 }
 function aliasesForMerchant(merchantId){
@@ -2739,14 +2771,14 @@ $('cancelQuickCounterparty').onclick=()=>{$('quickCounterpartyBox').classList.ad
 ['movementSearch','movementStatus','movementAutomation','movementBank','movementKind','movementType','movementDirection','movementCategory','movementProject','movementTag','movementDateFrom','movementDateTo'].forEach(id=>$(id).addEventListener(id==='movementSearch'?'input':'change',renderMovements));$('movementCounterpartySearch').addEventListener('input',applyMovementCounterpartySearch);$('movementCounterpartySearch').addEventListener('change',applyMovementCounterpartySearch);$('clearMovementFilters').onclick=clearMovementFilters;$('viewList').onclick=()=>{viewMode='list';renderMovements()};$('viewGrouped').onclick=()=>{viewMode='grouped';renderMovements()};$('bulkSelectVisible').onclick=selectVisibleMovements;$('bulkClearSelection').onclick=clearSelectedMovements;$('bulkApplyCategory').onclick=applyBulkCategory;
 $('movementsTable').addEventListener('click',e=>{const auto=e.target.closest('[data-automation-target]');if(auto){openAutomationTarget(auto.dataset.automationTarget,auto.dataset.automationId);return}const sort=e.target.closest('[data-sort]');if(sort){setSort(sort.dataset.sort);return}const edit=e.target.closest('[data-edit-movement]');if(edit){const row=(catData?.movements||[]).find(x=>x.id===edit.dataset.editMovement);if(row)openClassify(row);return}const tg=e.target.closest('[data-toggle-group]');if(tg){const g=(window.__groupRows||[])[Number(tg.dataset.toggleGroup)];if(!g)return;if(expandedGroups.has(g.key))expandedGroups.delete(g.key);else expandedGroups.add(g.key);renderMovements()}});
 $('movementsTable').addEventListener('change',e=>{const cb=e.target.closest('[data-select-movement]');if(!cb)return;cb.checked?selectedMovementIds.add(cb.dataset.selectMovement):selectedMovementIds.delete(cb.dataset.selectMovement);syncBulkSelectionUi()});
-['categorySearch','categoryL1Filter','categoryStatusFilter','categorySort','merchantSearch','merchantL1Filter','merchantL2Filter','merchantStatusFilter','merchantRecencyFilter','projectSearch','projectTypeFilter','projectStatusFilter','tagSearch','tagStatusFilter','mccSearch','mccStatusFilter','compoundRuleSearch','compoundRuleStatusFilter','parsingRuleSearch'].forEach(id=>$(id)?.addEventListener(id.endsWith('Search')?'input':'change',renderCatalogs));[['classMerchantSearch','classMerchant'],['compoundRuleMerchantSearch','compoundRuleMerchant']].forEach(x=>bindCounterpartySearch(...x));$('expandAllCategories').onclick=()=>{(catData?.categories||[]).filter(x=>Number(x.depth)===1).forEach(x=>expandedCategoryGroups.add(x.level1_name||x.name));renderCategoriesCatalog()};$('collapseAllCategories').onclick=()=>{expandedCategoryGroups.clear();renderCategoriesCatalog()};
+['categorySearch','categoryL1Filter','categorySort','merchantSearch','merchantL1Filter','merchantL2Filter','merchantStatusFilter','merchantRecencyFilter','projectSearch','projectTypeFilter','projectStatusFilter','tagSearch','tagStatusFilter','mccSearch','mccStatusFilter','compoundRuleSearch','compoundRuleStatusFilter','parsingRuleSearch'].forEach(id=>$(id)?.addEventListener(id.endsWith('Search')?'input':'change',renderCatalogs));[['classMerchantSearch','classMerchant'],['compoundRuleMerchantSearch','compoundRuleMerchant']].forEach(x=>bindCounterpartySearch(...x));$('expandAllCategories').onclick=()=>{(catData?.categories||[]).filter(x=>Number(x.depth)===1).forEach(x=>expandedCategoryGroups.add(x.level1_name||x.name));renderCategoriesCatalog()};$('collapseAllCategories').onclick=()=>{expandedCategoryGroups.clear();renderCategoriesCatalog()};
 $('applyCounterpartyBulkCategory').onclick=applyCounterpartyBulkCategory;
 $('selectVisibleCounterparties').onclick=()=>{for(const m of counterpartyFilteredRows())selectedCounterpartyIds.add(m.id);renderMerchantsCatalog()};
 $('clearSelectedCounterparties').onclick=()=>{selectedCounterpartyIds.clear();renderMerchantsCatalog()};
 $('clearMerchantFilters').onclick=()=>{['merchantSearch','merchantL1Filter','merchantL2Filter','merchantStatusFilter','merchantRecencyFilter'].forEach(id=>{if($(id))$(id).value=''});renderCatalogs()};
 $('tab-catalogs').addEventListener('click',e=>{const ct=e.target.closest('[data-catalog-tab]');if(ct){setCatalogTab(ct.dataset.catalogTab);return}
-const cak=e.target.closest('[data-category-audit-kpi]');if(cak){if($('categoryStatusFilter'))$('categoryStatusFilter').value=cak.dataset.categoryAuditKpi||'';renderCategoriesCatalog();return}
-const cv=e.target.closest('[data-category-view]');if(cv){categoryViewMode=cv.dataset.categoryView||'OPERATIONAL';closeCategoryAction();renderCategoriesCatalog();return}
+const cv=e.target.closest('[data-category-view]');if(cv){categoryViewMode=cv.dataset.categoryView||'OPERATIONAL';closeCategoryAction(false);renderCategoriesCatalog();return}
+const cper=e.target.closest('[data-category-period]');if(cper){loadCategoryAuditPeriod(cper.dataset.categoryPeriod);return}
 const ca=e.target.closest('[data-category-action]');if(ca){openCategoryAction(ca.dataset.categoryId,ca.dataset.categoryAction);return}
 const cac=e.target.closest('[data-category-action-close]');if(cac){closeCategoryAction();return}
 const cas=e.target.closest('[data-category-action-save]');if(cas){saveCategoryAction(cas.dataset.categoryActionSave);return}
