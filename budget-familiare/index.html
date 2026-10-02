@@ -74,7 +74,7 @@
 .category-viewbar{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;margin:2px 0 10px}
 .category-period-control{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
 .category-period-control>span{margin-right:3px}
-.category-v71-toolbar{display:grid;grid-template-columns:minmax(240px,1.6fr) minmax(170px,.9fr) minmax(190px,1fr);gap:8px}.category-v71-toolbar .input,.category-v71-toolbar .select{width:100%;min-width:0}
+.category-v71-toolbar{display:grid;grid-template-columns:minmax(260px,1.6fr) minmax(180px,.9fr);gap:8px}.category-v71-toolbar .input,.category-v71-toolbar .select{width:100%;min-width:0}
 .category-flat-wrap{overflow-x:auto}.category-flat-table{min-width:980px;border-collapse:collapse}.category-flat-table td,.category-flat-table th{vertical-align:middle}.category-flat-table td{padding:6px 8px;line-height:1.15}.category-flat-table th{padding:7px 8px}.category-flat-table .cat-main{font-weight:750;white-space:nowrap}.category-flat-table .direct-row{background:#fafafa}.category-flat-table .direct-badge,.category-empty-badge{display:inline-flex;padding:1px 5px;border-radius:999px;background:#f3f4f6;color:#4b5563;font-size:9px;font-weight:750;margin-left:5px;vertical-align:middle}
 .l1-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border-radius:8px;font-size:11px;font-weight:780;white-space:nowrap;border:1px solid transparent}.l1-icon{font-size:12px;line-height:1}.l1-p0{background:#dbeafe;color:#1e3a8a;border-color:#bfdbfe}.l1-p1{background:#dcfce7;color:#166534;border-color:#bbf7d0}.l1-p2{background:#fef3c7;color:#92400e;border-color:#fde68a}.l1-p3{background:#fce7f3;color:#9d174d;border-color:#fbcfe8}.l1-p4{background:#ede9fe;color:#5b21b6;border-color:#ddd6fe}.l1-p5{background:#cffafe;color:#155e75;border-color:#a5f3fc}.l1-p6{background:#ffedd5;color:#9a3412;border-color:#fed7aa}.l1-p7{background:#e2e8f0;color:#334155;border-color:#cbd5e1}
 .category-amount{min-width:145px}.category-amount-line{display:flex;align-items:center;gap:8px}.category-amount-line strong{min-width:72px;white-space:nowrap}.category-amount-track{height:8px;flex:1;min-width:55px;background:#eef2f7;border-radius:999px;overflow:hidden}.category-amount-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#93c5fd,#2563eb)}
@@ -82,6 +82,15 @@
 .audit-deps-compact{font-size:11px;white-space:nowrap}.audit-deps-compact strong{font-weight:780}.category-period-note{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}.category-period-note .coverage-warn{color:#92400e;font-weight:700}
 .category-actions-menu{position:relative;display:inline-block}.category-actions-menu>summary{list-style:none}.category-actions-menu>summary::-webkit-details-marker{display:none}.category-actions-popover{position:absolute;right:0;top:calc(100% + 4px);z-index:30;min-width:190px;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 12px 28px rgba(15,23,42,.14);padding:5px}.category-actions-popover button{display:block;width:100%;border:0;background:#fff;text-align:left;padding:8px 9px;border-radius:7px;cursor:pointer;color:var(--text)}.category-actions-popover button:hover:not(:disabled){background:#f3f4f6}.category-actions-popover button:disabled{color:#9ca3af;cursor:not-allowed}.category-actions-popover button.danger{color:#991b1b}
 .category-action-row td{padding:0!important;border-top:0!important}.category-action-panel{margin:0 8px 8px;border:1px solid #bfdbfe;background:#f8fbff;border-radius:10px;padding:12px}.category-action-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:10px}.category-action-grid{display:grid;grid-template-columns:repeat(4,minmax(120px,1fr));gap:7px;margin:9px 0}.category-impact{border:1px solid var(--line);background:#fff;border-radius:9px;padding:8px}.category-impact .value{font-size:17px;font-weight:780;margin-top:2px}.category-action-form{display:grid;grid-template-columns:minmax(220px,1fr) auto;gap:8px;align-items:end}.category-action-warning{padding:8px 10px;border-radius:9px;background:#fffbeb;border:1px solid #fde68a;color:#92400e;margin-top:8px}.category-action-ok{padding:8px 10px;border-radius:9px;background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;margin-top:8px}
+
+.category-flat-table .sortbtn{border:0;background:transparent;padding:0;font:inherit;font-weight:750;color:inherit;cursor:pointer;white-space:nowrap}.category-flat-table .sortbtn:hover{color:#1d4ed8}.category-flat-table .sortbtn.active{color:#1d4ed8}
+.category-amount-fill{display:block}
+.category-amount-fill.amount-low{background:#fbbf24}.category-amount-fill.amount-mid{background:#fb923c}.category-amount-fill.amount-high{background:#ef4444}
+.category-counterparty-link{border:0;background:#dbeafe;color:#1d4ed8;border-radius:8px;padding:3px 8px;font-weight:800;cursor:pointer;min-width:32px}.category-counterparty-link:hover{background:#bfdbfe}.category-counterparty-link.zero{background:#f3f4f6;color:#64748b}
+.category-main-selected{background:#eff6ff!important;box-shadow:inset 3px 0 #3b82f6}
+.category-counterparty-panel{margin:0 8px 9px;border:1px solid #bfdbfe;background:#fff;border-radius:11px;padding:12px}.category-counterparty-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px}.category-counterparty-title{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.category-counterparty-title strong{font-size:15px}.category-counterparty-actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.category-counterparty-actions .input{min-width:220px}
+.category-counterparty-table{width:100%;border-collapse:collapse}.category-counterparty-table th,.category-counterparty-table td{padding:7px 8px;border-top:1px solid var(--line);vertical-align:middle}.category-counterparty-table th{text-align:left;background:#f8fafc;color:#475569;font-size:11px}.category-counterparty-table td{font-size:12px}.category-counterparty-table .sortbtn{border:0;background:transparent;font:inherit;font-weight:750;color:inherit;cursor:pointer;padding:0}.category-counterparty-table .sortbtn.active{color:#1d4ed8}
+.counterparty-avatar{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:#2563eb;color:#fff;font-weight:800;margin-right:7px;vertical-align:middle}.counterparty-name-link{border:0;background:none;padding:0;font:inherit;font-weight:750;color:var(--text);cursor:pointer;text-align:left}.counterparty-name-link:hover{color:#1d4ed8;text-decoration:underline}.cp-category-list{max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}.category-counterparty-summary{display:flex;gap:18px;flex-wrap:wrap;margin-top:9px;padding:9px 10px;border:1px solid var(--line);border-radius:9px;background:#f8fafc}.category-counterparty-summary strong{display:block}.cp-missing{color:#92400e;font-style:italic}.category-inline-loading{padding:14px;color:var(--muted)}
 @media(max-width:900px){.category-v71-toolbar{grid-template-columns:1fr}.category-action-grid{grid-template-columns:1fr 1fr}.category-action-form{grid-template-columns:1fr}.category-flat-table{min-width:900px}}
 
 </style>
@@ -99,7 +108,7 @@
 
   <div id="appView" class="hidden">
     <div class="top">
-      <div class="brand"><h1>Dashboard Budget Familiare</h1><small>V71.1 · Categorie compatte</small></div>
+      <div class="brand"><h1>Dashboard Budget Familiare</h1><small>V71.2 · Categorie e controparti</small></div>
       <div class="userbar"><span id="userEmail"></span><button id="refreshBtn" class="btn ghost">Aggiorna</button><button id="logoutBtn" class="btn ghost">Esci</button></div>
     </div>
     <datalist id="v62CounterpartyOptions"></datalist>
@@ -372,7 +381,7 @@
       <div class="grid catalog-grid">
         <div class="catalog-panel active" data-catalog-panel="categories">
           <div class="card stack catalog-card category-v71">
-            <div class="catalog-intro"><div><h2 style="margin:0 0 4px">Categorie · Gestione V71.1</h2><div class="muted small">Vista operativa piatta per rivedere le categorie trasversalmente agli L1. Rinomina, spostamento e migrazione mantengono storico e dipendenze sotto controllo.</div></div></div>
+            <div class="catalog-intro"><div><h2 style="margin:0 0 4px">Categorie · Gestione V71.2</h2><div class="muted small">Vista operativa piatta per rivedere le categorie trasversalmente agli L1. Rinomina, spostamento e migrazione mantengono storico e dipendenze sotto controllo.</div></div></div>
             <div class="catalog-form">
               <div class="small" style="font-weight:750;margin-bottom:8px">Nuova categoria</div>
               <div class="editor-row">
@@ -400,14 +409,6 @@
             <div class="catalog-toolbar category-v71-toolbar">
               <input id="categorySearch" class="input" placeholder="Cerca categoria..." />
               <select id="categoryL1Filter" class="select"><option value="">Tutti gli L1</option></select>
-              <select id="categorySort" class="select">
-                <option value="NAME">Ordina: categoria</option>
-                <option value="VALUE12">Ordina: importo</option>
-                <option value="MOVEMENTS">Ordina: movimenti</option>
-                <option value="ACTIVE_MONTHS">Ordina: frequenza</option>
-                <option value="LAST_USED">Ordina: ultimo utilizzo</option>
-                <option value="DEPENDENCIES">Ordina: dipendenze</option>
-              </select>
               <button id="expandAllCategories" class="hidden" type="button">Espandi</button>
               <button id="collapseAllCategories" class="hidden" type="button">Comprimi</button>
             </div>
@@ -587,7 +588,7 @@
 </div>
 <script>
 const sb=window.appSupabase;
-let overview=null,catData=null,coherenceData=null,engineStatus=null,duplicateSuggestions=[],selectedRow=null,splitData=null,viewMode='list',sortKey='transaction_date',sortDir='desc',catalogTab='categories',deepLinkHandled=false,categoryViewMode='OPERATIONAL',categoryActionState=null,categoryAuditPeriod='12M',categoryAuditLoading=false;
+let overview=null,catData=null,coherenceData=null,engineStatus=null,duplicateSuggestions=[],selectedRow=null,splitData=null,viewMode='list',sortKey='transaction_date',sortDir='desc',catalogTab='categories',deepLinkHandled=false,categoryViewMode='OPERATIONAL',categoryActionState=null,categoryCounterpartyState=null,categoryAuditPeriod='12M',categoryAuditLoading=false,categoryTableSortKey='NAME',categoryTableSortDir='asc',movementCategoryScopeIds=null,movementCategoryScopeLabel='';
 const catalogSort={categories:{key:'label',dir:'asc'},merchants:{key:'name',dir:'asc'},projects:{key:'name',dir:'asc'},tags:{key:'name',dir:'asc'},mcc:{key:'mcc_code',dir:'asc'},rules:{key:'priority',dir:'desc'},parsing:{key:'priority',dir:'desc'}};
 const expandedGroups=new Set();
 const expandedCategoryGroups=new Set();
@@ -605,6 +606,7 @@ const selectedMovementIds=new Set();
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 const euro=n=>new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR'}).format(Number(n||0));
+const euroInt=n=>new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR',minimumFractionDigits:0,maximumFractionDigits:0}).format(Number(n||0));
 const pct=n=>`${Number(n||0).toLocaleString('it-IT',{maximumFractionDigits:1})}%`;
 const nfmt=n=>Number(n||0).toLocaleString('it-IT');
 function categoryOptionsHtml({emptyLabel='— nessuna —',emptyValue='',selected='',includeEmpty=true}={}){
@@ -671,7 +673,7 @@ async function loadMovementsData(){
       rpc('dashboard_rules_read_v1'),
       rpc('dashboard_counterparty_parsing_rules_read_v1'),
       rpc('dashboard_counterparty_duplicate_suggestions_v1').catch(()=>[]),
-      rpc('dashboard_category_audit_v3',{p_period:categoryAuditPeriod})
+      rpc('dashboard_category_audit_v4',{p_period:categoryAuditPeriod})
     ]);
     catData=base||{};
     catData.counterparties=counterparties||[];
@@ -1057,8 +1059,12 @@ function filteredMovements(){
     if(dir&&movementDirection(x).key!==dir)return false;
     if(cp==='__NONE__'&&x.counterparty_id)return false;
     if(cp&&cp!=='__NONE__'&&x.counterparty_id!==cp)return false;
-    if(cat==='__NONE__'&&x.category_id)return false;
-    if(cat&&cat!=='__NONE__'&&x.category_id!==cat)return false;
+    if(movementCategoryScopeIds){
+      if(!movementCategoryScopeIds.has(String(x.category_id||'')))return false;
+    }else{
+      if(cat==='__NONE__'&&x.category_id)return false;
+      if(cat&&cat!=='__NONE__'&&x.category_id!==cat)return false;
+    }
     if(project==='__NONE__'&&x.project_id)return false;
     if(project&&project!=='__NONE__'&&x.project_id!==project)return false;
     const tagIds=(x.tags||[]).map(t=>t.id);
@@ -1072,7 +1078,7 @@ function filteredMovements(){
 }
 function sortMovements(rows){const mult=sortDir==='asc'?1:-1;return [...rows].sort((a,b)=>{let av=a[sortKey],bv=b[sortKey];if(sortKey==='amount'){av=Math.abs(Number(a.amount||0));bv=Math.abs(Number(b.amount||0))}if(sortKey==='counterparty_name'){av=a.counterparty_name||'';bv=b.counterparty_name||''}if(sortKey==='category_path'){av=a.category_path||'';bv=b.category_path||''}if(sortKey==='description'){av=a.description||'';bv=b.description||''}if(typeof av==='number'||typeof bv==='number')return (Number(av||0)-Number(bv||0))*mult;return String(av||'').localeCompare(String(bv||''),'it',{numeric:true,sensitivity:'base'})*mult})}
 function sortHeader(label,key){const arrow=sortKey===key?(sortDir==='asc'?' ↑':' ↓'):'';return `<button class="sortbtn" data-sort="${key}">${esc(label)}${arrow}</button>`}
-function renderMovements(){const rows=filteredMovements();$('movementSummary').textContent=`${nfmt(rows.length)} movimenti visualizzati · volume ${euro(rows.reduce((s,x)=>s+Math.abs(Number(x.amount||0)),0))}`;$('viewList').className=`btn ${viewMode==='list'?'secondary':'ghost'} compact`;$('viewGrouped').className=`btn ${viewMode==='grouped'?'secondary':'ghost'} compact`;if(viewMode==='grouped')renderGrouped(rows);else renderMovementList(rows);syncBulkSelectionUi()}
+function renderMovements(){const rows=filteredMovements();$('movementSummary').textContent=`${nfmt(rows.length)} movimenti visualizzati · volume ${euro(rows.reduce((s,x)=>s+Math.abs(Number(x.amount||0)),0))}${movementCategoryScopeLabel?' · categoria '+movementCategoryScopeLabel:''}`;$('viewList').className=`btn ${viewMode==='list'?'secondary':'ghost'} compact`;$('viewGrouped').className=`btn ${viewMode==='grouped'?'secondary':'ghost'} compact`;if(viewMode==='grouped')renderGrouped(rows);else renderMovementList(rows);syncBulkSelectionUi()}
 function syncBulkSelectionUi(){
   const count=selectedMovementIds.size;
   if($('bulkSelectedCount'))$('bulkSelectedCount').textContent=`${nfmt(count)} ${count===1?'selezionato':'selezionati'}`;
@@ -1972,21 +1978,46 @@ function renderCatalogs(){
 function categoryAuditMap(){
   return new Map((catData?.categoryAudit?.rows||[]).map(x=>[String(x.category_id),x]));
 }
-function categoryAuditSortRows(rows,getMetric,mode){
+function categorySortValue(row,key){
+  const m=row.metric||{},raw=row.raw||{};
+  if(key==='L1')return row.l1||'';
+  if(key==='NAME')return row.name||'';
+  if(key==='CHILDREN')return Number(raw.child_count||0);
+  if(key==='MOVEMENTS')return Number(m.movement_count||0);
+  if(key==='VALUE')return Number(m.value||0);
+  if(key==='FREQUENCY')return Number(m.active_pct||0);
+  if(key==='LAST_USED')return String(m.last_used||'');
+  if(key==='COUNTERPARTIES')return Number(m.counterparty_count||0);
+  if(key==='DEPENDENCIES')return Number(m.dependency_count||0);
+  return row.name||'';
+}
+function categoryAuditSortRows(rows){
+  const mult=categoryTableSortDir==='asc'?1:-1,key=categoryTableSortKey;
   return [...rows].sort((a,b)=>{
-    const am=getMetric(a)||{},bm=getMetric(b)||{};
-    if(mode==='VALUE12'){const d=Number(bm.value||0)-Number(am.value||0);if(d)return d}
-    else if(mode==='MOVEMENTS'){const d=Number(bm.movement_count||0)-Number(am.movement_count||0);if(d)return d}
-    else if(mode==='ACTIVE_MONTHS'){const d=Number(bm.active_pct||0)-Number(am.active_pct||0);if(d)return d}
-    else if(mode==='LAST_USED'){const av=String(am.last_used||''),bv=String(bm.last_used||'');if(av!==bv)return bv.localeCompare(av)}
-    else if(mode==='DEPENDENCIES'){const d=Number(bm.dependency_count||0)-Number(am.dependency_count||0);if(d)return d}
-    return String(a?.name||'').localeCompare(String(b?.name||''),'it',{sensitivity:'base'});
+    const av=categorySortValue(a,key),bv=categorySortValue(b,key);
+    let d=0;
+    if(typeof av==='number'||typeof bv==='number')d=Number(av||0)-Number(bv||0);
+    else d=String(av||'').localeCompare(String(bv||''),'it',{numeric:true,sensitivity:'base'});
+    if(d)return d*mult;
+    return String(a.name||'').localeCompare(String(b.name||''),'it',{sensitivity:'base'});
   });
+}
+function categorySortHeader(label,key){
+  const active=categoryTableSortKey===key;
+  const arrow=active?(categoryTableSortDir==='asc'?' ↑':' ↓'):' ↕';
+  return '<button type="button" class="sortbtn '+(active?'active':'')+'" data-category-sort-key="'+key+'">'+esc(label)+arrow+'</button>';
+}
+function setCategoryTableSort(key){
+  if(categoryTableSortKey===key)categoryTableSortDir=categoryTableSortDir==='asc'?'desc':'asc';
+  else{
+    categoryTableSortKey=key;
+    categoryTableSortDir=['NAME','L1'].includes(key)?'asc':'desc';
+  }
+  renderCategoriesCatalog();
 }
 function periodMetric(m,direct=false){
   if(!m)return null;
-  const p=direct?'direct_period_':'period_';
-  const d=direct?'direct_':'';
+  const p=direct?'direct_period_':'period_',d=direct?'direct_':'';
   return {
     movement_count:Number(m[p+'movement_count']||0),
     value:Number(m[p+'value']||0),
@@ -1994,6 +2025,8 @@ function periodMetric(m,direct=false){
     active_pct:Number(m[p+'active_pct']||0),
     month_count:Number(m[p+'month_count']||0),
     months:m[p+'months']||[],
+    counterparty_count:Number(m[p+'counterparty_count']||0),
+    without_counterparty_movements:Number(m[p+'without_counterparty_movements']||0),
     last_used:m[d+'last_used']||null,
     merchant_defaults:Number(m[d+'merchant_defaults']||0),
     rules:Number(m[d+'rules']||0),
@@ -2014,7 +2047,7 @@ function categoryAuditFrequencyHtml(m){
   if(!m)return '<span class="muted">—</span>';
   const denom=Number(m.month_count||0),active=Number(m.active_months||0),pct=Number(m.active_pct||0);
   const detail=(m.months||[]).filter(x=>x.active).map(x=>String(x.month||'').slice(0,7)).join(', ');
-  return '<span class="category-frequency-compact '+categoryFrequencyClass(m)+'" title="'+esc((detail?'Mesi attivi: '+detail+'. ':'')+'Soglie: rosso <25%, giallo 25–49%, verde ≥50%')+'"><span class="frequency-dot"></span>'+nfmt(active)+'/'+nfmt(denom)+' · '+nfmt(pct)+'%</span>';
+  return '<span class="category-frequency-compact '+categoryFrequencyClass(m)+'" title="'+esc((detail?'Mesi attivi: '+detail+'. ':'')+'Rosso <25%, giallo 25–49%, verde ≥50%')+'"><span class="frequency-dot"></span>'+nfmt(active)+'/'+nfmt(denom)+' · '+nfmt(pct)+'%</span>';
 }
 function categoryAuditDepsHtml(m){
   if(!m)return '<span class="muted">—</span>';
@@ -2040,7 +2073,7 @@ function categoryL1Icon(name){
   if(n.includes('vacanz')||n.includes('viagg'))return '✈';
   if(n.includes('scuol')||n.includes('istruz'))return '🎓';
   if(n.includes('cura personale'))return '✂';
-  if(n.includes('tempo libero')||n.includes('sport'))return '●';
+  if(n.includes('tempo libero')||n.includes('sport'))return '⚽';
   if(n.includes('debit')||n.includes('prest'))return '▣';
   if(n.includes('risparm')||n.includes('invest')||n.includes('finanz'))return '◆';
   if(n.includes('salute'))return '✚';
@@ -2076,10 +2109,10 @@ function categoryL1Rows(){
   });
 }
 function visibleCategoryRows(){
-  const q=($('categorySearch')?.value||'').trim().toLowerCase(),l1=$('categoryL1Filter')?.value||'',sort=$('categorySort')?.value||'NAME';
+  const q=($('categorySearch')?.value||'').trim().toLowerCase(),l1=$('categoryL1Filter')?.value||'';
   let rows=categoryViewMode==='L1'?categoryL1Rows():categoryOperationalRows();
   rows=rows.filter(r=>(!q||textSearchMatches([r.l1,r.name,categoryLabel(r.cat)].join(' '),q))&&(!l1||r.l1===l1));
-  return categoryAuditSortRows(rows,r=>r.metric,sort);
+  return categoryAuditSortRows(rows);
 }
 function renderCategoryAuditKpis(){
   const rows=categoryViewMode==='L1'?categoryL1Rows():categoryOperationalRows();
@@ -2107,10 +2140,11 @@ function categoryActionsMenu(row){
     '<button type="button" class="danger" data-category-action="DELETE" data-category-id="'+row.cat.id+'" '+(canDelete?'':'disabled title="Categoria ancora utilizzata o con dipendenze"')+'>Elimina</button>'+
   '</div></details>';
 }
-function categoryAmountHtml(value,maxValue){
-  const v=Math.abs(Number(value||0)),max=Math.max(0,Number(maxValue||0));
-  const width=max>0?Math.max(v>0?4:0,Math.round(Math.sqrt(v/max)*100)):0;
-  return '<div class="category-amount"><div class="category-amount-line"><strong>'+euro(v)+'</strong><span class="category-amount-track" title="'+esc('Intensità relativa alle righe visibili')+'"><span class="category-amount-fill" style="width:'+width+'%"></span></span></div></div>';
+function categoryAmountHtml(value,maxValue,compact=false){
+  const v=Math.abs(Number(value||0)),max=Math.max(0,Number(maxValue||0)),ratio=max>0?v/max:0;
+  const width=max>0?Math.max(v>0?4:0,Math.round(Math.sqrt(ratio)*100)):0;
+  const cls=ratio>=.6?'amount-high':ratio>=.25?'amount-mid':'amount-low';
+  return '<div class="category-amount'+(compact?' compact':'')+'"><div class="category-amount-line"><strong>'+euroInt(v)+'</strong><span class="category-amount-track" title="'+esc('Intensità relativa alle righe visibili')+'"><span class="category-amount-fill '+cls+'" style="width:'+width+'%"></span></span></div></div>';
 }
 function categoryPeriodLabel(){
   const p=catData?.categoryAudit?.period||{},key=p.key||categoryAuditPeriod,coverage=Number(p.coverage_months||0),requested=p.requested_months==null?null:Number(p.requested_months);
@@ -2139,6 +2173,60 @@ function categoryActionPanelHtml(cat,action){
   }
   return '<div class="category-action-panel"><div class="category-action-head"><div><strong>'+esc(({RENAME:'Rinomina',MOVE:'Sposta',MERGE:'Migra / Fondi',DELETE:'Elimina'})[action]||action)+'</strong><div class="muted small">'+esc(categoryLabel(cat))+'</div></div><button class="btn ghost compact" type="button" data-category-action-close>Annulla</button></div>'+body+'</div>';
 }
+function categoryCounterpartyInitial(name){
+  const s=String(name||'?').trim();
+  return esc((s[0]||'?').toUpperCase());
+}
+function categoryCounterpartySortHeader(label,key){
+  const st=categoryCounterpartyState||{},active=st.sortKey===key,arrow=active?(st.sortDir==='asc'?' ↑':' ↓'):' ↕';
+  return '<button type="button" class="sortbtn '+(active?'active':'')+'" data-category-cp-sort="'+key+'">'+esc(label)+arrow+'</button>';
+}
+function sortedCategoryCounterpartyRows(){
+  const st=categoryCounterpartyState||{},rows=[...(st.data?.rows||[])],key=st.sortKey||'VALUE',mult=(st.sortDir||'desc')==='asc'?1:-1;
+  return rows.sort((a,b)=>{
+    const val=x=>key==='NAME'?String(x.name||''):key==='MOVEMENTS'?Number(x.movement_count||0):key==='VALUE'?Number(x.value||0):key==='FREQUENCY'?Number(x.active_pct||0):key==='LAST_USED'?String(x.last_used||''):'';
+    const av=val(a),bv=val(b);let d=0;
+    if(typeof av==='number'||typeof bv==='number')d=Number(av||0)-Number(bv||0);else d=String(av).localeCompare(String(bv),'it',{numeric:true,sensitivity:'base'});
+    return d?d*mult:String(a.name||'').localeCompare(String(b.name||''),'it',{sensitivity:'base'});
+  });
+}
+function categoryCounterpartyPanelHtml(cat){
+  const st=categoryCounterpartyState;
+  if(!st||String(st.id)!==String(cat.id))return '';
+  if(st.loading)return '<div class="category-counterparty-panel"><div class="category-inline-loading">Caricamento controparti…</div></div>';
+  if(st.error)return '<div class="category-counterparty-panel"><div class="msg error">'+esc(st.error)+'</div></div>';
+  const d=st.data||{},rows=sortedCategoryCounterpartyRows(),maxValue=Math.max(0,...rows.map(x=>Number(x.value||0)));
+  const rowHtml=rows.map(x=>{
+    const cats=(x.categories_used||[]).join(' · ');
+    const freq={active_months:x.active_months,month_count:x.month_count,active_pct:x.active_pct,months:[]};
+    return '<tr class="category-cp-row" data-search="'+esc(String(x.name||'').toLowerCase())+'">'+
+      '<td>'+(x.is_missing?'<span class="cp-missing">Senza controparte</span>':'<span class="counterparty-avatar">'+categoryCounterpartyInitial(x.name)+'</span><button type="button" class="counterparty-name-link" data-category-cp-edit="'+x.merchant_id+'">'+esc(x.name)+'</button>')+'</td>'+
+      '<td>'+nfmt(x.movement_count||0)+'</td>'+
+      '<td>'+categoryAmountHtml(x.value,maxValue,true)+'</td>'+
+      '<td>'+categoryAuditFrequencyHtml(freq)+'</td>'+
+      '<td>'+(x.last_used?esc(x.last_used):'—')+'</td>'+
+      '<td><span class="cp-category-list" title="'+esc(cats)+'">'+esc(cats||'—')+'</span></td>'+
+      '<td>'+(x.is_missing?'<span class="muted">—</span>':'<button type="button" class="btn ghost compact" data-category-cp-movements="'+x.merchant_id+'">Apri movimenti</button>')+'</td>'+
+    '</tr>';
+  }).join('');
+  const without=Number(d.without_counterparty_movements||0);
+  return '<div class="category-counterparty-panel">'+
+    '<div class="category-counterparty-head">'+
+      '<div class="category-counterparty-title"><strong>Controparti per '+esc(cat.name)+'</strong><span class="pill">'+nfmt(d.counterparty_count||0)+' controparti</span><span class="muted small">'+nfmt(d.total_movements||0)+' movimenti · '+euroInt(d.total_value||0)+' · '+esc(categoryPeriodLabel())+'</span></div>'+
+      '<div class="category-counterparty-actions"><input class="input" data-category-cp-search placeholder="Cerca controparte..." /><button type="button" class="btn ghost compact" data-category-cp-open-all>Apri tutte nei movimenti</button><button type="button" class="btn compact" data-category-cp-new>Nuova controparte</button></div>'+
+    '</div>'+
+    '<div class="table-wrap"><table class="category-counterparty-table"><thead><tr>'+
+      '<th>'+categoryCounterpartySortHeader('Controparte','NAME')+'</th>'+
+      '<th>'+categoryCounterpartySortHeader('Mov.','MOVEMENTS')+'</th>'+
+      '<th>'+categoryCounterpartySortHeader('Importo','VALUE')+'</th>'+
+      '<th>'+categoryCounterpartySortHeader('Frequenza','FREQUENCY')+'</th>'+
+      '<th>'+categoryCounterpartySortHeader('Ultimo uso','LAST_USED')+'</th>'+
+      '<th>Categorie usate</th><th>Azioni</th></tr></thead><tbody>'+
+      (rowHtml||'<tr><td colspan="7" class="muted">Nessuna controparte nel periodo selezionato.</td></tr>')+
+    '</tbody></table></div>'+
+    '<div class="category-counterparty-summary"><div><span class="muted small">Totale categoria</span><strong>'+nfmt(d.total_movements||0)+' movimenti · '+euroInt(d.total_value||0)+'</strong></div><div><span class="muted small">Controparti</span><strong>'+nfmt(d.counterparty_count||0)+(without?' · '+nfmt(without)+' mov. senza controparte':'')+'</strong></div></div>'+
+  '</div>';
+}
 function renderCategoriesCatalog(){
   const cats=catData?.categories||[],keepL1=$('categoryL1Filter')?.value||'';
   const l1s=[...new Set(cats.map(categoryL1Name).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'it',{sensitivity:'base'}));
@@ -2151,31 +2239,34 @@ function renderCategoriesCatalog(){
   renderCategoryAuditKpis();
   const rows=visibleCategoryRows(),maxValue=Math.max(0,...rows.map(r=>Number(r.metric?.value||0)));
   const head=categoryViewMode==='L1'
-    ?'<tr><th>Macro categoria L1</th><th>Categorie</th><th>Mov.</th><th>Importo</th><th>Frequenza</th><th>Ultimo uso</th><th>Dipendenze</th><th></th></tr>'
-    :'<tr><th>L1</th><th>Categoria operativa</th><th>Mov.</th><th>Importo</th><th>Frequenza</th><th>Ultimo uso</th><th>Dipendenze</th><th></th></tr>';
+    ?'<tr><th>'+categorySortHeader('Macro categoria L1','L1')+'</th><th>'+categorySortHeader('Categorie','CHILDREN')+'</th><th>'+categorySortHeader('Mov.','MOVEMENTS')+'</th><th>'+categorySortHeader('Importo','VALUE')+'</th><th>'+categorySortHeader('Frequenza','FREQUENCY')+'</th><th>'+categorySortHeader('Ultimo uso','LAST_USED')+'</th><th>'+categorySortHeader('Controparti','COUNTERPARTIES')+'</th><th>'+categorySortHeader('Dipendenze','DEPENDENCIES')+'</th><th>Azioni</th></tr>'
+    :'<tr><th>'+categorySortHeader('L1','L1')+'</th><th>'+categorySortHeader('Categoria','NAME')+'</th><th>'+categorySortHeader('Mov.','MOVEMENTS')+'</th><th>'+categorySortHeader('Importo','VALUE')+'</th><th>'+categorySortHeader('Frequenza','FREQUENCY')+'</th><th>'+categorySortHeader('Ultimo uso','LAST_USED')+'</th><th>'+categorySortHeader('Controparti','COUNTERPARTIES')+'</th><th>'+categorySortHeader('Dipendenze','DEPENDENCIES')+'</th><th>Azioni</th></tr>';
   const body=rows.map(r=>{
     const m=r.metric||{},raw=r.raw||{},empty=Number(raw.movement_count||0)===0&&Number(raw.dependency_count||0)===0&&Number(raw.child_count||0)===0;
+    const selected=(categoryActionState&&String(categoryActionState.id)===String(r.cat.id))||(categoryCounterpartyState&&String(categoryCounterpartyState.id)===String(r.cat.id));
     const prefix=categoryViewMode==='L1'
       ?'<td>'+categoryL1Badge(r.cat.name)+'</td><td>'+nfmt(raw.child_count||0)+'</td>'
       :'<td>'+categoryL1Badge(r.l1)+'</td><td><div class="cat-main">'+esc(r.name)+(r.kind==='DIRECT'?'<span class="direct-badge">uso diretto L1</span>':'')+(empty?'<span class="category-empty-badge">Vuota</span>':'')+'</div></td>';
-    const actionRow=categoryActionState&&String(categoryActionState.id)===String(r.cat.id)
-      ?'<tr class="category-action-row"><td colspan="8">'+categoryActionPanelHtml(r.cat,categoryActionState.action)+'</td></tr>'
-      :'';
-    return '<tr class="'+(r.kind==='DIRECT'?'direct-row':'')+'" data-category-row="'+r.cat.id+'">'+prefix+
+    const cpButton='<button type="button" class="category-counterparty-link '+(Number(m.counterparty_count||0)===0?'zero':'')+'" data-category-counterparties="'+r.cat.id+'" title="'+esc((m.without_counterparty_movements?m.without_counterparty_movements+' movimenti senza controparte · ':'')+'Apri elenco controparti')+'">'+nfmt(m.counterparty_count||0)+'</button>';
+    let inline='';
+    if(categoryActionState&&String(categoryActionState.id)===String(r.cat.id))inline='<tr class="category-action-row"><td colspan="9">'+categoryActionPanelHtml(r.cat,categoryActionState.action)+'</td></tr>';
+    else if(categoryCounterpartyState&&String(categoryCounterpartyState.id)===String(r.cat.id))inline='<tr class="category-action-row"><td colspan="9">'+categoryCounterpartyPanelHtml(r.cat)+'</td></tr>';
+    return '<tr class="'+(r.kind==='DIRECT'?'direct-row ':'')+(selected?'category-main-selected':'')+'" data-category-row="'+r.cat.id+'">'+prefix+
       '<td>'+nfmt(m.movement_count||0)+'</td>'+
       '<td>'+categoryAmountHtml(m.value,maxValue)+'</td>'+
       '<td>'+categoryAuditFrequencyHtml(m)+'</td>'+
       '<td>'+(m.last_used?esc(m.last_used):'<span class="muted">mai</span>')+'</td>'+
+      '<td>'+cpButton+'</td>'+
       '<td>'+categoryAuditDepsHtml(m)+'</td>'+
-      '<td>'+categoryActionsMenu(r)+'</td></tr>'+actionRow;
+      '<td>'+categoryActionsMenu(r)+'</td></tr>'+inline;
   }).join('');
-  $('categoriesTable').innerHTML=categoryPeriodNoteHtml()+'<div class="muted small" style="margin:0 0 7px">'+nfmt(rows.length)+' righe · '+(categoryViewMode==='L1'?'aggregazione L1':'categorie operative cross-L1')+' · '+esc(categoryPeriodLabel())+'</div><div class="category-flat-wrap"><table class="table category-flat-table"><thead>'+head+'</thead><tbody>'+(body||'<tr><td colspan="8" class="muted">Nessuna categoria con i filtri selezionati.</td></tr>')+'</tbody></table></div>';
+  $('categoriesTable').innerHTML=categoryPeriodNoteHtml()+'<div class="muted small" style="margin:0 0 7px">'+nfmt(rows.length)+' righe · '+(categoryViewMode==='L1'?'aggregazione L1':'categorie operative cross-L1')+' · '+esc(categoryPeriodLabel())+'</div><div class="category-flat-wrap"><table class="table category-flat-table"><thead>'+head+'</thead><tbody>'+(body||'<tr><td colspan="9" class="muted">Nessuna categoria con i filtri selezionati.</td></tr>')+'</tbody></table></div>';
 }
 async function loadCategoryAuditPeriod(period){
   const next=period||'12M';if(categoryAuditLoading||next===categoryAuditPeriod)return;
-  categoryAuditLoading=true;categoryAuditPeriod=next;closeCategoryAction(false);renderCategoriesCatalog();
+  categoryAuditLoading=true;categoryAuditPeriod=next;categoryActionState=null;categoryCounterpartyState=null;renderCategoriesCatalog();
   try{
-    catData.categoryAudit=await rpc('dashboard_category_audit_v3',{p_period:categoryAuditPeriod})||{summary:{},rows:[],period:{}};
+    catData.categoryAudit=await rpc('dashboard_category_audit_v4',{p_period:categoryAuditPeriod})||{summary:{},rows:[],period:{}};
   }catch(e){
     alert(e.message);categoryAuditPeriod=catData?.categoryAudit?.period?.key||'12M';
   }finally{
@@ -2191,17 +2282,58 @@ function categoryDescendantIds(id){
   }
   return out;
 }
+function categoryScopeIds(id,includeDescendants){
+  const out=new Set([String(id)]);
+  if(includeDescendants)for(const x of categoryDescendantIds(id))out.add(String(x));
+  return out;
+}
 function closeCategoryAction(render=true){
   categoryActionState=null;
   if(render)renderCategoriesCatalog();
 }
-function openCategoryMovements(id){
-  closeCategoryAction(false);
+function closeCategoryCounterparties(render=true){
+  categoryCounterpartyState=null;
+  if(render)renderCategoriesCatalog();
+}
+function openCategoryMovements(id,includeDescendants=false,merchantId=null){
+  categoryActionState=null;categoryCounterpartyState=null;
   clearMovementFilters();
   activateMainTab('categorization');
-  $('movementCategory').value=id;
+  if(includeDescendants){
+    movementCategoryScopeIds=categoryScopeIds(id,true);
+    movementCategoryScopeLabel=categoryLabel(categoryById(id));
+    $('movementCategory').value='';
+  }else{
+    movementCategoryScopeIds=null;movementCategoryScopeLabel='';
+    $('movementCategory').value=id;
+  }
+  if(merchantId)$('movementCounterparty').value=merchantId;
   renderMovements();
   $('movementSummary')?.scrollIntoView({behavior:'smooth',block:'start'});
+}
+async function toggleCategoryCounterparties(id){
+  if(categoryCounterpartyState&&String(categoryCounterpartyState.id)===String(id)){closeCategoryCounterparties();return}
+  const cat=categoryById(id);if(!cat)return;
+  const includeDescendants=categoryViewMode==='L1';
+  categoryActionState=null;
+  categoryCounterpartyState={id:cat.id,includeDescendants,loading:true,error:null,data:null,sortKey:'VALUE',sortDir:'desc'};
+  renderCategoriesCatalog();
+  try{
+    const data=await rpc('dashboard_category_counterparties_v1',{p_category_id:cat.id,p_period:categoryAuditPeriod,p_include_descendants:includeDescendants});
+    if(!categoryCounterpartyState||String(categoryCounterpartyState.id)!==String(cat.id))return;
+    categoryCounterpartyState.data=data||{rows:[]};categoryCounterpartyState.loading=false;
+  }catch(e){
+    if(categoryCounterpartyState&&String(categoryCounterpartyState.id)===String(cat.id)){categoryCounterpartyState.loading=false;categoryCounterpartyState.error=e.message}
+  }
+  renderCategoriesCatalog();
+  requestAnimationFrame(()=>document.querySelector('.category-counterparty-panel')?.scrollIntoView({behavior:'smooth',block:'nearest'}));
+}
+function newCounterpartyForCategory(id){
+  const cat=categoryById(id);if(!cat)return;
+  categoryCounterpartyState=null;categoryActionState=null;
+  setCatalogTab('merchants');
+  $('merchantId').value='';$('merchantName').value='';$('merchantType').value='MERCHANT';$('merchantCategory').value=id;$('saveMerchant').textContent='Salva';
+  $('merchantName').focus();$('merchantName').scrollIntoView({behavior:'smooth',block:'center'});
 }
 function categoryParentSelectHtml(cat){
   const descendants=categoryDescendantIds(cat.id);
@@ -2213,8 +2345,9 @@ function categoryDestinationSelectHtml(cat){
 }
 function openCategoryAction(id,action){
   document.querySelectorAll('.category-actions-menu[open]').forEach(x=>x.removeAttribute('open'));
-  if(action==='MOVEMENTS'){openCategoryMovements(id);return}
+  if(action==='MOVEMENTS'){openCategoryMovements(id,categoryViewMode==='L1');return}
   const cat=categoryById(id);if(!cat)return;
+  categoryCounterpartyState=null;
   categoryActionState={id:cat.id,action,preview:null};
   renderCategoriesCatalog();
   requestAnimationFrame(()=>document.querySelector('.category-action-row')?.scrollIntoView({behavior:'smooth',block:'nearest'}));
@@ -2233,7 +2366,7 @@ async function previewCategoryMigration(){
       '<div><strong>'+esc(p.source?.path||'')+'</strong> → <strong>'+esc(p.destination?.path||'')+'</strong></div>'+
       '<div class="category-action-grid">'+
         '<div class="category-impact"><div class="muted small">Movimenti</div><div class="value">'+nfmt(i.movements||0)+'</div></div>'+
-        '<div class="category-impact"><div class="muted small">Valore storico</div><div class="value">'+euro(i.historical_value||0)+'</div></div>'+
+        '<div class="category-impact"><div class="muted small">Valore storico</div><div class="value">'+euroInt(i.historical_value||0)+'</div></div>'+
         '<div class="category-impact"><div class="muted small">Controparti default</div><div class="value">'+nfmt(i.counterparty_defaults||0)+'</div></div>'+
         '<div class="category-impact"><div class="muted small">Regole</div><div class="value">'+nfmt(i.rules||0)+'</div></div>'+
         '<div class="category-impact"><div class="muted small">MCC</div><div class="value">'+nfmt(i.mcc||0)+'</div></div>'+
@@ -2268,7 +2401,7 @@ async function saveCategoryAction(action){
       await rpc('dashboard_category_delete_v1',{p_category_id:cat.id});
       msg($('categoryMsg'),'Categoria eliminata.');
     }
-    categoryActionState=null;coherenceData=null;await loadMovementsData();
+    categoryActionState=null;categoryCounterpartyState=null;coherenceData=null;await loadMovementsData();
   }catch(e){
     if(inline)inline.insertAdjacentHTML('beforeend','<div class="msg error" style="margin-top:8px">'+esc(e.message)+'</div>');
     else alert(e.message);
@@ -2731,7 +2864,7 @@ function bindCounterpartySearch(inputId,selectId){
   input.addEventListener('change',apply);
   input.addEventListener('focus',()=>{if(input.value)input.select()});
 }
-function clearMovementFilters(){document.querySelectorAll('[data-pipeline-step]').forEach(b=>b.addEventListener('click',()=>setClassificationPipelineStep(b.dataset.pipelineStep)));
+function clearMovementFilters(){movementCategoryScopeIds=null;movementCategoryScopeLabel='';document.querySelectorAll('[data-pipeline-step]').forEach(b=>b.addEventListener('click',()=>setClassificationPipelineStep(b.dataset.pipelineStep)));
 document.querySelectorAll('[data-pipeline-next]').forEach(b=>b.addEventListener('click',()=>setClassificationPipelineStep(b.dataset.pipelineNext)));
 ['pipelineStepCounterparty','pipelineStepCategory','advancedAutomation','pipelineStepContext'].forEach(id=>$(id)?.addEventListener('toggle',()=>{if($(id)?.open){for(const other of Object.values(classificationPipelineMap()))if(other!==id&&$(other))$(other).open=false}syncClassificationPipelineNav()}));
 $('classProject')?.addEventListener('change',()=>{updateClassificationPipelineState();updateClassificationSaveBar()});$('classTags')?.addEventListener('change',()=>{updateClassificationPipelineState();updateClassificationSaveBar()});
@@ -2771,13 +2904,20 @@ $('cancelQuickCounterparty').onclick=()=>{$('quickCounterpartyBox').classList.ad
 ['movementSearch','movementStatus','movementAutomation','movementBank','movementKind','movementType','movementDirection','movementCategory','movementProject','movementTag','movementDateFrom','movementDateTo'].forEach(id=>$(id).addEventListener(id==='movementSearch'?'input':'change',renderMovements));$('movementCounterpartySearch').addEventListener('input',applyMovementCounterpartySearch);$('movementCounterpartySearch').addEventListener('change',applyMovementCounterpartySearch);$('clearMovementFilters').onclick=clearMovementFilters;$('viewList').onclick=()=>{viewMode='list';renderMovements()};$('viewGrouped').onclick=()=>{viewMode='grouped';renderMovements()};$('bulkSelectVisible').onclick=selectVisibleMovements;$('bulkClearSelection').onclick=clearSelectedMovements;$('bulkApplyCategory').onclick=applyBulkCategory;
 $('movementsTable').addEventListener('click',e=>{const auto=e.target.closest('[data-automation-target]');if(auto){openAutomationTarget(auto.dataset.automationTarget,auto.dataset.automationId);return}const sort=e.target.closest('[data-sort]');if(sort){setSort(sort.dataset.sort);return}const edit=e.target.closest('[data-edit-movement]');if(edit){const row=(catData?.movements||[]).find(x=>x.id===edit.dataset.editMovement);if(row)openClassify(row);return}const tg=e.target.closest('[data-toggle-group]');if(tg){const g=(window.__groupRows||[])[Number(tg.dataset.toggleGroup)];if(!g)return;if(expandedGroups.has(g.key))expandedGroups.delete(g.key);else expandedGroups.add(g.key);renderMovements()}});
 $('movementsTable').addEventListener('change',e=>{const cb=e.target.closest('[data-select-movement]');if(!cb)return;cb.checked?selectedMovementIds.add(cb.dataset.selectMovement):selectedMovementIds.delete(cb.dataset.selectMovement);syncBulkSelectionUi()});
-['categorySearch','categoryL1Filter','categorySort','merchantSearch','merchantL1Filter','merchantL2Filter','merchantStatusFilter','merchantRecencyFilter','projectSearch','projectTypeFilter','projectStatusFilter','tagSearch','tagStatusFilter','mccSearch','mccStatusFilter','compoundRuleSearch','compoundRuleStatusFilter','parsingRuleSearch'].forEach(id=>$(id)?.addEventListener(id.endsWith('Search')?'input':'change',renderCatalogs));[['classMerchantSearch','classMerchant'],['compoundRuleMerchantSearch','compoundRuleMerchant']].forEach(x=>bindCounterpartySearch(...x));$('expandAllCategories').onclick=()=>{(catData?.categories||[]).filter(x=>Number(x.depth)===1).forEach(x=>expandedCategoryGroups.add(x.level1_name||x.name));renderCategoriesCatalog()};$('collapseAllCategories').onclick=()=>{expandedCategoryGroups.clear();renderCategoriesCatalog()};
+['categorySearch','categoryL1Filter','merchantSearch','merchantL1Filter','merchantL2Filter','merchantStatusFilter','merchantRecencyFilter','projectSearch','projectTypeFilter','projectStatusFilter','tagSearch','tagStatusFilter','mccSearch','mccStatusFilter','compoundRuleSearch','compoundRuleStatusFilter','parsingRuleSearch'].forEach(id=>$(id)?.addEventListener(id.endsWith('Search')?'input':'change',renderCatalogs));[['classMerchantSearch','classMerchant'],['compoundRuleMerchantSearch','compoundRuleMerchant']].forEach(x=>bindCounterpartySearch(...x));$('expandAllCategories').onclick=()=>{(catData?.categories||[]).filter(x=>Number(x.depth)===1).forEach(x=>expandedCategoryGroups.add(x.level1_name||x.name));renderCategoriesCatalog()};$('collapseAllCategories').onclick=()=>{expandedCategoryGroups.clear();renderCategoriesCatalog()};
 $('applyCounterpartyBulkCategory').onclick=applyCounterpartyBulkCategory;
 $('selectVisibleCounterparties').onclick=()=>{for(const m of counterpartyFilteredRows())selectedCounterpartyIds.add(m.id);renderMerchantsCatalog()};
 $('clearSelectedCounterparties').onclick=()=>{selectedCounterpartyIds.clear();renderMerchantsCatalog()};
 $('clearMerchantFilters').onclick=()=>{['merchantSearch','merchantL1Filter','merchantL2Filter','merchantStatusFilter','merchantRecencyFilter'].forEach(id=>{if($(id))$(id).value=''});renderCatalogs()};
 $('tab-catalogs').addEventListener('click',e=>{const ct=e.target.closest('[data-catalog-tab]');if(ct){setCatalogTab(ct.dataset.catalogTab);return}
-const cv=e.target.closest('[data-category-view]');if(cv){categoryViewMode=cv.dataset.categoryView||'OPERATIONAL';closeCategoryAction(false);renderCategoriesCatalog();return}
+const cv=e.target.closest('[data-category-view]');if(cv){categoryViewMode=cv.dataset.categoryView||'OPERATIONAL';categoryActionState=null;categoryCounterpartyState=null;renderCategoriesCatalog();return}
+const csort=e.target.closest('[data-category-sort-key]');if(csort){setCategoryTableSort(csort.dataset.categorySortKey);return}
+const ccp=e.target.closest('[data-category-counterparties]');if(ccp){toggleCategoryCounterparties(ccp.dataset.categoryCounterparties);return}
+const cpsort=e.target.closest('[data-category-cp-sort]');if(cpsort&&categoryCounterpartyState){const k=cpsort.dataset.categoryCpSort;if(categoryCounterpartyState.sortKey===k)categoryCounterpartyState.sortDir=categoryCounterpartyState.sortDir==='asc'?'desc':'asc';else{categoryCounterpartyState.sortKey=k;categoryCounterpartyState.sortDir=k==='NAME'?'asc':'desc'}renderCategoriesCatalog();return}
+const cpedit=e.target.closest('[data-category-cp-edit]');if(cpedit){editMerchant(cpedit.dataset.categoryCpEdit);return}
+const cpmov=e.target.closest('[data-category-cp-movements]');if(cpmov&&categoryCounterpartyState){openCategoryMovements(categoryCounterpartyState.id,categoryCounterpartyState.includeDescendants,cpmov.dataset.categoryCpMovements);return}
+const cpall=e.target.closest('[data-category-cp-open-all]');if(cpall&&categoryCounterpartyState){openCategoryMovements(categoryCounterpartyState.id,categoryCounterpartyState.includeDescendants);return}
+const cpnew=e.target.closest('[data-category-cp-new]');if(cpnew&&categoryCounterpartyState){newCounterpartyForCategory(categoryCounterpartyState.id);return}
 const cper=e.target.closest('[data-category-period]');if(cper){loadCategoryAuditPeriod(cper.dataset.categoryPeriod);return}
 const ca=e.target.closest('[data-category-action]');if(ca){openCategoryAction(ca.dataset.categoryId,ca.dataset.categoryAction);return}
 const cac=e.target.closest('[data-category-action-close]');if(cac){closeCategoryAction();return}
@@ -2805,6 +2945,13 @@ $('classExtraordinary').addEventListener('change',async e=>{
     cb.checked=!desired;
     state.textContent=err.message||'Errore aggiornamento reporting';
   }finally{cb.disabled=false}
+});
+$('tab-catalogs').addEventListener('input',e=>{
+  const s=e.target.closest('[data-category-cp-search]');
+  if(s){
+    const q=String(s.value||'').trim().toLowerCase();
+    document.querySelectorAll('.category-cp-row').forEach(tr=>tr.classList.toggle('hidden',q&&!String(tr.dataset.search||'').includes(q)));
+  }
 });
 $('tab-catalogs').addEventListener('change',e=>{if(e.target.id==='categoryMergeDestination'){previewCategoryMigration();return}const one=e.target.closest('[data-select-counterparty]');if(one){one.checked?selectedCounterpartyIds.add(one.dataset.selectCounterparty):selectedCounterpartyIds.delete(one.dataset.selectCounterparty);syncCounterpartyBulkBar();return}const all=e.target.closest('[data-select-visible-counterparties]');if(all){for(const m of counterpartyFilteredRows())all.checked?selectedCounterpartyIds.add(m.id):selectedCounterpartyIds.delete(m.id);renderMerchantsCatalog();return}});
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>activateMainTab(b.dataset.tab));
