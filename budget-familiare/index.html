@@ -115,7 +115,7 @@
 
   <div id="appView" class="hidden">
     <div class="top">
-      <div class="brand"><h1>Dashboard Budget Familiare</h1><small>V71.4 · Uscite / Entrate</small></div>
+      <div class="brand"><h1>Dashboard Budget Familiare</h1><small>V71.4.1 · L1 strutturali</small></div>
       <div class="userbar"><span id="userEmail"></span><button id="refreshBtn" class="btn ghost">Aggiorna</button><button id="logoutBtn" class="btn ghost">Esci</button></div>
     </div>
     <datalist id="v62CounterpartyOptions"></datalist>
@@ -388,12 +388,12 @@
       <div class="grid catalog-grid">
         <div class="catalog-panel active" data-catalog-panel="categories">
           <div class="card stack catalog-card category-v71">
-            <div class="catalog-intro"><div><h2 style="margin:0 0 4px">Categorie · Gestione V71.4</h2><div class="muted small">Vista operativa piatta per rivedere le categorie trasversalmente agli L1. Rinomina, spostamento e migrazione mantengono storico e dipendenze sotto controllo.</div></div></div>
+            <div class="catalog-intro"><div><h2 style="margin:0 0 4px">Categorie · Gestione V71.4.1</h2><div class="muted small">L1 solo strutturali, L2 assegnabili. Le dropdown usano gli L1 come intestazioni e impediscono la creazione di L3.</div></div></div>
             <div class="catalog-form">
               <div class="small" style="font-weight:750;margin-bottom:8px">Nuova categoria</div>
               <div class="editor-row">
                 <div class="field"><label>Nome categoria</label><input id="categoryName" class="input" /></div>
-                <div class="field"><label>Categoria padre</label><select id="categoryParent" class="select"></select></div>
+                <div class="field"><label>Macro categoria (L1)</label><select id="categoryParent" class="select"></select></div>
                 <button id="saveCategory" class="btn">Crea</button>
               </div>
               <input id="categoryId" type="hidden" />
@@ -630,20 +630,53 @@ const euro=n=>new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR'}).f
 const euroInt=n=>new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR',minimumFractionDigits:0,maximumFractionDigits:0}).format(Number(n||0));
 const pct=n=>`${Number(n||0).toLocaleString('it-IT',{maximumFractionDigits:1})}%`;
 const nfmt=n=>Number(n||0).toLocaleString('it-IT');
-function categoryOptionsHtml({emptyLabel='— nessuna —',emptyValue='',selected='',includeEmpty=true}={}){
-  const cats=[...(catData?.categories||[])].sort((a,b)=>categoryLabel(a).localeCompare(categoryLabel(b),'it',{sensitivity:'base'}));
+function categoryOptionsHtml({emptyLabel='— nessuna —',emptyValue='',selected='',includeEmpty=true,excludeIds=[]}={}){
+  const excluded=new Set((excludeIds||[]).map(String));
+  const all=catData?.categories||[];
+  const roots=new Map(all.filter(c=>!c.parent_id).map(c=>[String(c.id),c]));
   const groups=new Map();
-  for(const cat of cats){
-    const l1=cat.level1_name||cat.name||'Altro';
+  for(const cat of all){
+    if(!cat.parent_id||excluded.has(String(cat.id)))continue;
+    const parent=roots.get(String(cat.parent_id));
+    const l1=parent?.name||cat.level1_name||'Altro';
     if(!groups.has(l1))groups.set(l1,[]);
     groups.get(l1).push(cat);
   }
-  const empty=includeEmpty?`<option value="${esc(emptyValue)}" ${String(selected)===String(emptyValue)?'selected':''}>${esc(emptyLabel)}</option>`:'';
-  const body=[...groups.entries()].sort((a,b)=>a[0].localeCompare(b[0],'it',{sensitivity:'base'})).map(([l1,items])=>{
-    const opts=items.map(cat=>`<option value="${cat.id}" ${String(cat.id)===String(selected)?'selected':''}>${esc(categoryLabel(cat))}</option>`).join('');
-    return `<optgroup label="${esc(l1)}">${opts}</optgroup>`;
-  }).join('');
+  const empty=includeEmpty?`<option value='${esc(emptyValue)}' ${String(selected)===String(emptyValue)?'selected':''}>${esc(emptyLabel)}</option>`:'';
+  const body=[...groups.entries()]
+    .sort((a,b)=>a[0].localeCompare(b[0],'it',{sensitivity:'base'}))
+    .map(([l1,items])=>{
+      const opts=items
+        .sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'it',{sensitivity:'base'}))
+        .map(cat=>`<option value='${cat.id}' ${String(cat.id)===String(selected)?'selected':''}>${esc(cat.name)}</option>`)
+        .join('');
+      return `<optgroup label='${esc(l1)}'>${opts}</optgroup>`;
+    }).join('');
   return empty+body;
+}
+function categoryFilterOptionsHtml({selected=''}={}){
+  const all=catData?.categories||[];
+  const roots=all.filter(c=>!c.parent_id).sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'it',{sensitivity:'base'}));
+  return roots.map(root=>{
+    const children=all.filter(c=>String(c.parent_id||'')===String(root.id))
+      .sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'it',{sensitivity:'base'}));
+    const branchValue='__L1__:'+root.id;
+    const aggregate=`<option value='${branchValue}' ${String(selected)===branchValue?'selected':''}>Tutte le voci</option>`;
+    const opts=children.map(cat=>`<option value='${cat.id}' ${String(cat.id)===String(selected)?'selected':''}>${esc(cat.name)}</option>`).join('');
+    return `<optgroup label='${esc(root.name)}'>${aggregate}${opts}</optgroup>`;
+  }).join('');
+}
+function residualL2ForL1(id){
+  const l1=(catData?.categories||[]).find(c=>String(c.id)===String(id)&&!c.parent_id);
+  if(!l1)return null;
+  const children=(catData?.categories||[]).filter(c=>String(c.parent_id||'')===String(l1.id));
+  if(String(l1.name||'').toLowerCase()==='entrate')return children.find(c=>String(c.name||'').toLowerCase()==='altre entrate')||null;
+  return children.find(c=>String(c.name||'').toLowerCase()==='altro')||children[0]||null;
+}
+function assignableCategoryForContext(id){
+  const cat=(catData?.categories||[]).find(c=>String(c.id)===String(id));
+  if(!cat)return null;
+  return cat.parent_id?cat:residualL2ForL1(cat.id);
 }
 function counterpartyBySearchLabel(value){
   const q=String(value||'').trim();
@@ -1053,7 +1086,7 @@ function populateMovementFilters(){
   $('movementBank').innerHTML='<option value="">Tutte le banche</option>'+banks.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');
   const cps=[...(catData?.counterparties||[])].sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'it',{sensitivity:'base'}));
   $('movementCounterparty').innerHTML='<option value="">Tutte le controparti</option><option value="__NONE__">Senza controparte</option>'+cps.map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('');
-  $('movementCategory').innerHTML='<option value="">Tutte le categorie</option><option value="__NONE__">Senza categoria</option>'+categoryOptionsHtml({includeEmpty:false});
+  $('movementCategory').innerHTML='<option value="">Tutte le categorie</option><option value="__NONE__">Senza categoria</option>'+categoryFilterOptionsHtml({selected:vals.cat});
   const projects=[...(catData?.projects||[])].filter(x=>x.is_active).sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'it',{sensitivity:'base'}));
   $('movementProject').innerHTML='<option value="">Tutti i progetti</option><option value="__NONE__">Senza progetto</option>'+projects.map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('');
   const tags=[...(catData?.tags||[])].filter(x=>x.is_active).sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'it',{sensitivity:'base'}));
@@ -1084,7 +1117,10 @@ function filteredMovements(){
       if(!movementCategoryScopeIds.has(String(x.category_id||'')))return false;
     }else{
       if(cat==='__NONE__'&&x.category_id)return false;
-      if(cat&&cat!=='__NONE__'&&x.category_id!==cat)return false;
+      if(cat&&cat!=='__NONE__'&&cat.startsWith('__L1__:')){
+        const l1Id=cat.slice(7),scope=categoryScopeIds(l1Id,true);
+        if(!scope.has(String(x.category_id||'')))return false;
+      }else if(cat&&cat!=='__NONE__'&&x.category_id!==cat)return false;
     }
     if(project==='__NONE__'&&x.project_id)return false;
     if(project&&project!=='__NONE__'&&x.project_id!==project)return false;
@@ -1958,8 +1994,9 @@ function renderCatalogs(){
   if($('v62CounterpartyFilterOptions'))$('v62CounterpartyFilterOptions').innerHTML='<option value="— senza controparte —"></option>'+sortedParties.map(x=>`<option value="${esc(x.name)}"></option>`).join('');
 
   const keepParent=$('categoryParent')?.value||'';
-  $('categoryParent').innerHTML='<option value="">— nessuna (L1) —</option>'+cats.filter(c=>Number(c.depth)<3).map(c=>`<option value="${c.id}">${esc(categoryLabel(c))}</option>`).join('');
-  $('categoryParent').value=keepParent;
+  const rootCategories=cats.filter(c=>!c.parent_id).sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'it',{sensitivity:'base'}));
+  $('categoryParent').innerHTML='<option value="">— crea nuova macro L1 —</option>'+rootCategories.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  $('categoryParent').value=[...$('categoryParent').options].some(o=>o.value===keepParent)?keepParent:'';
 
   const keepMerchantCategory=$('merchantCategory')?.value||'';
   const keepRuleCategory=$('compoundRuleCategory')?.value||'';
@@ -2534,19 +2571,19 @@ async function toggleCategoryCounterparties(id,includeDescendantsOverride=null){
   requestAnimationFrame(()=>document.querySelector('.category-counterparty-panel')?.scrollIntoView({behavior:'smooth',block:'nearest'}));
 }
 function newCounterpartyForCategory(id){
-  const cat=categoryById(id);if(!cat)return;
+  const cat=assignableCategoryForContext(id);if(!cat)return;
   categoryCounterpartyState=null;categoryActionState=null;
   setCatalogTab('merchants');
-  $('merchantId').value='';$('merchantName').value='';$('merchantType').value='MERCHANT';$('merchantCategory').value=id;$('saveMerchant').textContent='Salva';
+  $('merchantId').value='';$('merchantName').value='';$('merchantType').value='MERCHANT';$('merchantCategory').value=cat.id;$('saveMerchant').textContent='Salva';
   $('merchantName').focus();$('merchantName').scrollIntoView({behavior:'smooth',block:'center'});
 }
 function categoryParentSelectHtml(cat){
-  const descendants=categoryDescendantIds(cat.id);
-  const options=(catData?.categories||[]).filter(x=>Number(x.depth)<3&&String(x.id)!==String(cat.id)&&!descendants.has(String(x.id))).sort((a,b)=>categoryLabel(a).localeCompare(categoryLabel(b),'it',{sensitivity:'base'}));
-  return '<option value="">— nessuna (L1) —</option>'+options.map(x=>'<option value="'+x.id+'" '+(String(x.id)===String(cat.parent_id||'')?'selected':'')+'>'+esc(categoryLabel(x))+'</option>').join('');
+  if(!cat?.parent_id)return '<option value="" selected>— macro L1 —</option>';
+  const options=(catData?.categories||[]).filter(x=>!x.parent_id&&String(x.id)!==String(cat.id)).sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'it',{sensitivity:'base'}));
+  return options.map(x=>'<option value="'+x.id+'" '+(String(x.id)===String(cat.parent_id||'')?'selected':'')+'>'+esc(x.name)+'</option>').join('');
 }
 function categoryDestinationSelectHtml(cat){
-  return '<option value="">— scegli categoria destinazione —</option>'+(catData?.categories||[]).filter(x=>String(x.id)!==String(cat.id)).sort((a,b)=>categoryLabel(a).localeCompare(categoryLabel(b),'it',{sensitivity:'base'})).map(x=>'<option value="'+x.id+'">'+esc(categoryLabel(x))+'</option>').join('');
+  return '<option value="">— scegli categoria L2 destinazione —</option>'+categoryOptionsHtml({includeEmpty:false,excludeIds:[cat.id]});
 }
 function openCategoryAction(id,action){
   document.querySelectorAll('.category-actions-menu[open]').forEach(x=>x.removeAttribute('open'));
@@ -2871,7 +2908,7 @@ function fieldLabel(v){return ({MERCHANT_NAME:'Nome merchant',DESCRIPTION:'Descr
 function operatorLabel(v){return ({EXACT:'uguale a',CONTAINS:'contiene',STARTS_WITH:'inizia con',IN:'è uno tra'})[v]||v}
 function renderMccCatalog(){
   if(!$('mccTable'))return;
-  const q=($('mccSearch')?.value||'').trim().toLowerCase(),status=$('mccStatusFilter')?.value||'',cats=catData?.categories||[];
+  const q=($('mccSearch')?.value||'').trim().toLowerCase(),status=$('mccStatusFilter')?.value||'';
   let rows=(catData?.mccRules||[]).filter(r=>{
     const hit=!q||textSearchMatches([r.mcc_code,r.description,r.category_path].join(' '),q);
     if(!hit)return false;
@@ -2883,7 +2920,7 @@ function renderMccCatalog(){
   });
   rows=genericCatalogSort(rows,'mcc',{mcc_code:x=>x.mcc_code||'',description:x=>x.description||'',category:x=>x.category_path||'',movements:x=>Number(x.movement_count||0),confidence:x=>Number(x.confidence||0),active:x=>x.is_mapped?(x.is_active?1:0):-1});
   $('mccTable').innerHTML=`<div class="table-wrap"><table class="table"><thead><tr><th>${catalogSortHeader('mcc','MCC','mcc_code')}</th><th>${catalogSortHeader('mcc','Descrizione','description')}</th><th>${catalogSortHeader('mcc','Movimenti','movements')}</th><th>Categoria MCC</th><th>${catalogSortHeader('mcc','Affidabilità','confidence')}</th><th>${catalogSortHeader('mcc','Stato','active')}</th><th></th></tr></thead><tbody>${rows.length?rows.map(r=>{
-    const opts='<option value="">— scegli categoria —</option>'+cats.map(x=>`<option value="${x.id}" ${x.id===r.category_id?'selected':''}>${esc(categoryLabel(x))}</option>`).join('');
+    const opts=categoryOptionsHtml({emptyLabel:'— scegli categoria L2 —',selected:r.category_id||''});
     const statusHtml=!r.is_mapped?'<span class="pill warn">Da configurare</span>':activeBadge(r.is_active);
     const confidenceHtml=r.is_mapped?pct(Number(r.confidence||0)*100):'<span class="muted">—</span>';
     const missing=Number(r.unclassified_count||0),editing=editingMccCodes.has(r.mcc_code),open=expandedMccMovementDetails.has(r.mcc_code);
@@ -3001,7 +3038,7 @@ function editCompoundRule(id){
 }
 function editCategory(id){const c=(catData.categories||[]).find(x=>x.id===id);if(!c)return;setCatalogTab('categories',false);$('categoryId').value=c.id;$('categoryName').value=c.name;$('categoryParent').value=c.parent_id||'';$('saveCategory').textContent='Aggiorna';$('categoryName').scrollIntoView({behavior:'smooth',block:'center'})}
 function editMerchant(id){const m=(catData.counterparties||[]).find(x=>x.id===id);if(!m)return;setCatalogTab('merchants',false);$('merchantId').value=m.id;$('merchantName').value=m.name;$('merchantType').value=m.counterparty_type||'OTHER';$('merchantCategory').value=m.default_category_id||'';$('merchantApplyExisting').checked=true;$('saveMerchant').textContent='Aggiorna';$('merchantName').scrollIntoView({behavior:'smooth',block:'center'})}
-async function saveCategory(){const btn=$('saveCategory');setBusy(btn,true,'Salvataggio');msg($('categoryMsg'),'');try{await rpc('dashboard_upsert_category_v1',{p_id:$('categoryId').value||null,p_name:$('categoryName').value,p_parent_id:$('categoryParent').value||null});$('categoryId').value='';$('categoryName').value='';$('categoryParent').value='';btn.dataset.label='Crea';msg($('categoryMsg'),'Categoria creata.');await loadMovementsData()}catch(e){msg($('categoryMsg'),e.message,true)}finally{setBusy(btn,false)}}
+async function saveCategory(){const btn=$('saveCategory');setBusy(btn,true,'Salvataggio');msg($('categoryMsg'),'');try{await rpc('dashboard_upsert_category_v1',{p_id:$('categoryId').value||null,p_name:$('categoryName').value,p_parent_id:$('categoryParent').value||null});$('categoryId').value='';$('categoryName').value='';$('categoryParent').value='';btn.dataset.label='Crea';msg($('categoryMsg'),'Categoria salvata. Struttura massima: L1 → L2.');await loadMovementsData()}catch(e){msg($('categoryMsg'),e.message,true)}finally{setBusy(btn,false)}}
 async function saveMerchant(){
   const btn=$('saveMerchant');setBusy(btn,true,'Salvataggio');msg($('merchantMsg'),'');
   try{
