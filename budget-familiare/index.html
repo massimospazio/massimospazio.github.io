@@ -97,7 +97,7 @@
 .category-l2-table{width:100%;border-collapse:collapse}.category-l2-table th,.category-l2-table td{padding:7px 8px;border-top:1px solid var(--line);vertical-align:middle}.category-l2-table th{text-align:left;background:#f8fafc;color:#475569;font-size:11px}.category-l2-table td{font-size:12px}.category-l2-table .sortbtn{border:0;background:transparent;font:inherit;font-weight:750;color:inherit;cursor:pointer;padding:0}.category-l2-table .sortbtn.active{color:#1d4ed8}.category-l2-row-selected{background:#eff6ff}.category-l2-name{display:flex;align-items:center;gap:7px;font-weight:750}.category-l2-name .mini-icon{display:inline-flex;width:24px;height:24px;border-radius:7px;align-items:center;justify-content:center;background:#eef2ff;color:#3730a3}.category-direct-row{background:#fafafa}.category-direct-row .category-l2-name{font-style:italic;color:#475569}
 .category-l2-summary{display:flex;gap:18px;flex-wrap:wrap;margin-top:9px;padding:9px 10px;border:1px solid var(--line);border-radius:9px;background:#f8fafc}.category-l2-summary strong{display:block}
 
-.analysis-controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.analysis-direction-control{display:flex;gap:5px;align-items:center;flex-wrap:wrap}.analysis-direction-control>span{margin-right:3px}.counterparty-title-controls{display:flex;align-items:flex-end;gap:10px;flex-direction:column}.analysis-scope-note{display:inline-flex;align-items:center;gap:6px}.analysis-scope-note strong{color:#0f172a}
+.analysis-controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.analysis-direction-control{display:flex;gap:5px;align-items:center;flex-wrap:wrap}.analysis-direction-control>span{margin-right:3px}.counterparty-title-controls{display:flex;align-items:flex-end;gap:10px;flex-direction:column}.analysis-scope-note{display:inline-flex;align-items:center;gap:6px}.analysis-scope-note strong{color:#0f172a}.counterparty-history-scope{margin-top:10px;padding:10px 12px;border:1px solid #dbeafe;background:#f8fbff;border-radius:10px}.counterparty-history-scope .scope-title{font-weight:750;margin-bottom:7px}.counterparty-history-scope .scope-options{display:flex;gap:16px;flex-wrap:wrap}.counterparty-history-scope label{display:inline-flex;gap:6px;align-items:center;font-size:12px}.counterparty-history-scope .scope-help{margin-top:6px}
 @media(max-width:900px){.category-v71-toolbar{grid-template-columns:1fr}.category-action-grid{grid-template-columns:1fr 1fr}.category-action-form{grid-template-columns:1fr}.category-flat-table{min-width:900px}}
 
 </style>
@@ -115,7 +115,7 @@
 
   <div id="appView" class="hidden">
     <div class="top">
-      <div class="brand"><h1>Dashboard Budget Familiare</h1><small>V71.4.1 · L1 strutturali</small></div>
+      <div class="brand"><h1>Dashboard Budget Familiare</h1><small>V71.4.3 · Ambito categoria controparte</small></div>
       <div class="userbar"><span id="userEmail"></span><button id="refreshBtn" class="btn ghost">Aggiorna</button><button id="logoutBtn" class="btn ghost">Esci</button></div>
     </div>
     <datalist id="v62CounterpartyOptions"></datalist>
@@ -432,7 +432,7 @@
 
         <div class="catalog-panel" data-catalog-panel="merchants">
           <div class="card stack catalog-card">
-            <div class="catalog-intro"><div><h2 style="margin:0 0 4px">Controparti</h2><div class="muted small">Revisione anagrafica V62: categoria default inline/massiva, categorie a scorrimento e controparti ricercabili.</div></div></div>
+            <div class="catalog-intro"><div><h2 style="margin:0 0 4px">Controparti</h2><div class="muted small">La categoria default è la classificazione standard della controparte: quando cambia, il sistema riallinea automaticamente lo storico non protetto.</div></div></div>
             <div class="catalog-form">
               <div class="editor-row four">
                 <div class="field"><label>Nome controparte</label><input id="merchantName" class="input" /></div>
@@ -441,7 +441,15 @@
                 <button id="saveMerchant" class="btn">Salva</button>
               </div>
               <input id="merchantApplyExisting" type="hidden" />
-              <div class="note">La categoria predefinita ha priorità <strong>Normale (100)</strong>. Nel registro è mostrato il percorso completo L1 › L2; le eventuali categorie eccezione dei singoli movimenti non cambiano questo default.</div>
+              <div class="note">La categoria predefinita ha priorità <strong>Normale (100)</strong>. Il comportamento standard è riallineare anche lo storico non protetto; eventuali regole con priorità superiore restano valide e i movimenti manualmente protetti non vengono modificati.</div>
+              <div id="merchantHistoryScope" class="counterparty-history-scope hidden">
+                <div class="scope-title small">Ambito del cambio categoria</div>
+                <div class="scope-options">
+                  <label><input type="radio" name="merchantHistoryScope" value="ALL" checked /> <strong>Storico + nuovi movimenti</strong> <span class="pill">predefinito</span></label>
+                  <label><input type="radio" name="merchantHistoryScope" value="FUTURE" /> Solo nuovi movimenti</label>
+                </div>
+                <div class="scope-help muted small">“Storico + nuovi” ricalcola subito i movimenti non protetti già associati alla controparte. “Solo nuovi” cambia soltanto il default per il futuro.</div>
+              </div>
               <input id="merchantId" type="hidden" />
               <div id="merchantMsg"></div>
             </div>
@@ -473,7 +481,7 @@
               <button id="applyCounterpartyBulkCategory" class="btn compact" type="button">Imposta categoria default</button>
               <button id="selectVisibleCounterparties" class="btn ghost compact" type="button">Seleziona visibili</button>
               <button id="clearSelectedCounterparties" class="btn ghost compact" type="button">Annulla selezione</button>
-              <span class="muted small">Non modifica le categorie storiche dei movimenti.</span>
+              <span class="muted small">Riclassifica automaticamente lo storico non protetto; i movimenti protetti restano invariati.</span>
             </div>
             <div id="merchantsTable"></div>
           </div>
@@ -1434,12 +1442,12 @@ async function persistSelectedCounterpartyDefaults(merchantId,categoryId){
   if(!merchantId||!$('setMerchantDefaultCategory')?.checked)return null;
   const merchant=(catData?.counterparties||[]).find(m=>m.id===merchantId);
   if(!merchant)return null;
-  return await rpc('dashboard_upsert_counterparty_v3',{
+  return await rpc('dashboard_upsert_counterparty_v4',{
     p_id:merchantId,
     p_name:merchant.name,
     p_counterparty_type:merchant.counterparty_type||'OTHER',
     p_default_category_id:categoryId||null,
-    p_apply_to_existing:false
+    p_apply_to_existing:true
   });
 }
 function rememberRuleExists(merchantId,pattern,targetType){
@@ -2854,7 +2862,7 @@ async function setCounterpartyDefaultCategory(ids,categoryId,button,messageTarge
     const r=await rpc('dashboard_set_counterparty_default_category_v1',{p_merchant_ids:ids,p_category_id:categoryId});
     coherenceData=null;
     await loadMovementsData();
-    if(messageTarget)msg(messageTarget,`Categoria default aggiornata su ${nfmt(r?.updated||0)} controparti. Nessuna categoria storica dei movimenti è stata modificata.`);
+    if(messageTarget){const changed=Number(r?.historical_movements_changed||0),checked=Number(r?.historical_movements_checked||0),protectedCount=Number(r?.protected_movements_unchanged||0);msg(messageTarget,`Categoria default aggiornata su ${nfmt(r?.updated||0)} controparti. Storico verificato: ${nfmt(checked)} movimenti non protetti, ${nfmt(changed)} aggiornati${protectedCount?` · ${nfmt(protectedCount)} protetti lasciati invariati`:''}.`);}
     return r;
   }catch(e){
     if(messageTarget)msg(messageTarget,e.message,true);else alert(e.message);
@@ -3037,21 +3045,28 @@ function editCompoundRule(id){
   $('saveCompoundRule').textContent='Aggiorna regola';$('compoundRuleName').scrollIntoView({behavior:'smooth',block:'center'});
 }
 function editCategory(id){const c=(catData.categories||[]).find(x=>x.id===id);if(!c)return;setCatalogTab('categories',false);$('categoryId').value=c.id;$('categoryName').value=c.name;$('categoryParent').value=c.parent_id||'';$('saveCategory').textContent='Aggiorna';$('categoryName').scrollIntoView({behavior:'smooth',block:'center'})}
-function editMerchant(id){const m=(catData.counterparties||[]).find(x=>x.id===id);if(!m)return;setCatalogTab('merchants',false);$('merchantId').value=m.id;$('merchantName').value=m.name;$('merchantType').value=m.counterparty_type||'OTHER';$('merchantCategory').value=m.default_category_id||'';$('merchantApplyExisting').checked=true;$('saveMerchant').textContent='Aggiorna';$('merchantName').scrollIntoView({behavior:'smooth',block:'center'})}
+function editMerchant(id){const m=(catData.counterparties||[]).find(x=>x.id===id);if(!m)return;setCatalogTab('merchants',false);$('merchantId').value=m.id;$('merchantName').value=m.name;$('merchantType').value=m.counterparty_type||'OTHER';$('merchantCategory').value=m.default_category_id||'';$('merchantApplyExisting').checked=true;document.querySelector('input[name="merchantHistoryScope"][value="ALL"]').checked=true;$('merchantHistoryScope')?.classList.remove('hidden');$('saveMerchant').textContent='Aggiorna';$('merchantName').scrollIntoView({behavior:'smooth',block:'center'})}
 async function saveCategory(){const btn=$('saveCategory');setBusy(btn,true,'Salvataggio');msg($('categoryMsg'),'');try{await rpc('dashboard_upsert_category_v1',{p_id:$('categoryId').value||null,p_name:$('categoryName').value,p_parent_id:$('categoryParent').value||null});$('categoryId').value='';$('categoryName').value='';$('categoryParent').value='';btn.dataset.label='Crea';msg($('categoryMsg'),'Categoria salvata. Struttura massima: L1 → L2.');await loadMovementsData()}catch(e){msg($('categoryMsg'),e.message,true)}finally{setBusy(btn,false)}}
 async function saveMerchant(){
   const btn=$('saveMerchant');setBusy(btn,true,'Salvataggio');msg($('merchantMsg'),'');
+  const editingId=$('merchantId').value||null;
+  const scope=document.querySelector('input[name="merchantHistoryScope"]:checked')?.value||'ALL';
+  const applyExisting=!!editingId&&scope!=='FUTURE';
   try{
-    const r=await rpc('dashboard_upsert_counterparty_v3',{
-      p_id:$('merchantId').value||null,
+    const r=await rpc('dashboard_upsert_counterparty_v4',{
+      p_id:editingId,
       p_name:$('merchantName').value,
       p_counterparty_type:$('merchantType').value||'OTHER',
       p_default_category_id:$('merchantCategory').value||null,
-      p_apply_to_existing:false
+      p_apply_to_existing:applyExisting
     });
-    $('merchantId').value='';$('merchantName').value='';$('merchantType').value='MERCHANT';$('merchantCategory').value='';$('merchantApplyExisting').checked=false;btn.dataset.label='Salva';
+    $('merchantId').value='';$('merchantName').value='';$('merchantType').value='MERCHANT';$('merchantCategory').value='';$('merchantApplyExisting').checked=false;$('merchantHistoryScope')?.classList.add('hidden');document.querySelector('input[name="merchantHistoryScope"][value="ALL"]').checked=true;btn.dataset.label='Salva';
     const rr=r?.reclassification||{};
-    const suffix=rr.enabled?` Motore attivo: riallineati ${nfmt(rr.changed||0)} movimenti non protetti.`:' Motore automatico disattivato: controlla la pagina Coerenza per l’impatto sui movimenti esistenti.';
+    const changed=Number(r?.updated_existing_movements??rr.changed??0),checked=Number(r?.checked_existing_movements??rr.checked??0),protectedCount=Number(r?.protected_existing_movements??rr.protected??0);
+    const categoryChanged=String(r?.old_default_category_id||'')!==String(r?.default_category_id||'');
+    let suffix='';
+    if(categoryChanged&&editingId&&scope==='FUTURE')suffix=' Categoria aggiornata solo per i nuovi movimenti; storico lasciato invariato.';
+    else if(checked||protectedCount)suffix=` Storico verificato: ${nfmt(checked)} movimenti non protetti, ${nfmt(changed)} aggiornati${protectedCount?` · ${nfmt(protectedCount)} protetti lasciati invariati`:''}.`;
     msg($('merchantMsg'),'Controparte salvata.'+suffix);
     coherenceData=null;await loadMovementsData();
   }catch(e){msg($('merchantMsg'),e.message,true)}finally{setBusy(btn,false)}
