@@ -115,7 +115,7 @@
 
   <div id="appView" class="hidden">
     <div class="top">
-      <div class="brand"><h1>Dashboard Budget Familiare</h1><small>V71.4.3 · Ambito categoria controparte</small></div>
+      <div class="brand"><h1>Dashboard Budget Familiare</h1><small>V71.4.4 · Ambito categoria anche massivo</small></div>
       <div class="userbar"><span id="userEmail"></span><button id="refreshBtn" class="btn ghost">Aggiorna</button><button id="logoutBtn" class="btn ghost">Esci</button></div>
     </div>
     <datalist id="v62CounterpartyOptions"></datalist>
@@ -478,10 +478,14 @@
             <div id="counterpartyBulkBar" class="counterparty-bulk-bar hidden">
               <span id="counterpartyBulkCount" class="count">0 selezionate</span>
               <select id="counterpartyBulkCategory" class="select category-select"><option value="">— scegli categoria default —</option></select>
+              <select id="counterpartyBulkScope" class="select" title="Ambito del cambio categoria">
+                <option value="ALL">Storico + nuovi</option>
+                <option value="FUTURE">Solo nuovi</option>
+              </select>
               <button id="applyCounterpartyBulkCategory" class="btn compact" type="button">Imposta categoria default</button>
               <button id="selectVisibleCounterparties" class="btn ghost compact" type="button">Seleziona visibili</button>
               <button id="clearSelectedCounterparties" class="btn ghost compact" type="button">Annulla selezione</button>
-              <span class="muted small">Riclassifica automaticamente lo storico non protetto; i movimenti protetti restano invariati.</span>
+              <span id="counterpartyBulkScopeNote" class="muted small">Storico + nuovi: riclassifica lo storico non protetto; i movimenti protetti restano invariati.</span>
             </div>
             <div id="merchantsTable"></div>
           </div>
@@ -2855,14 +2859,21 @@ function syncCounterpartyBulkBar(){
   bar.classList.toggle('hidden',count===0);
   $('counterpartyBulkCount').textContent=nfmt(count)+' '+(count===1?'selezionata':'selezionate');
 }
-async function setCounterpartyDefaultCategory(ids,categoryId,button,messageTarget=null){
+async function setCounterpartyDefaultCategory(ids,categoryId,button,messageTarget=null,applyExisting=true){
   if(!ids.length)return null;
   if(button)setBusy(button,true,'Salvataggio');
   try{
-    const r=await rpc('dashboard_set_counterparty_default_category_v1',{p_merchant_ids:ids,p_category_id:categoryId});
+    const r=await rpc('dashboard_set_counterparty_default_category_v2',{p_merchant_ids:ids,p_category_id:categoryId,p_apply_to_existing:!!applyExisting});
     coherenceData=null;
     await loadMovementsData();
-    if(messageTarget){const changed=Number(r?.historical_movements_changed||0),checked=Number(r?.historical_movements_checked||0),protectedCount=Number(r?.protected_movements_unchanged||0);msg(messageTarget,`Categoria default aggiornata su ${nfmt(r?.updated||0)} controparti. Storico verificato: ${nfmt(checked)} movimenti non protetti, ${nfmt(changed)} aggiornati${protectedCount?` · ${nfmt(protectedCount)} protetti lasciati invariati`:''}.`);}
+    if(messageTarget){
+      if(!applyExisting){
+        msg(messageTarget,`Categoria default aggiornata su ${nfmt(r?.updated||0)} controparti. Storico lasciato invariato: il nuovo default vale per i movimenti futuri.`);
+      }else{
+        const changed=Number(r?.historical_movements_changed||0),checked=Number(r?.historical_movements_checked||0),protectedCount=Number(r?.protected_movements_unchanged||0);
+        msg(messageTarget,`Categoria default aggiornata su ${nfmt(r?.updated||0)} controparti. Storico verificato: ${nfmt(checked)} movimenti non protetti, ${nfmt(changed)} aggiornati${protectedCount?` · ${nfmt(protectedCount)} protetti lasciati invariati`:''}.`);
+      }
+    }
     return r;
   }catch(e){
     if(messageTarget)msg(messageTarget,e.message,true);else alert(e.message);
@@ -2874,15 +2885,23 @@ async function saveInlineCounterpartyCategory(btn){
   if(!select)return;
   try{await setCounterpartyDefaultCategory([id],select.value||null,btn);editingCounterpartyCategoryIds.delete(id);renderMerchantsCatalog()}catch(e){}
 }
+function syncCounterpartyBulkScopeNote(){
+  const future=$('counterpartyBulkScope')?.value==='FUTURE';
+  const note=$('counterpartyBulkScopeNote');
+  if(note)note.textContent=future
+    ?'Solo nuovi: modifica il default senza riclassificare alcun movimento già esistente.'
+    :'Storico + nuovi: riclassifica lo storico non protetto; i movimenti protetti restano invariati.';
+}
 async function applyCounterpartyBulkCategory(){
   const select=$('counterpartyBulkCategory'),raw=select?.value||'';
   if(!selectedCounterpartyIds.size)return;
   if(!raw)return alert('Scegli la categoria da impostare.');
   const categoryId=raw==='__NONE__'?null:raw;
+  const applyExisting=$('counterpartyBulkScope')?.value!=='FUTURE';
   const btn=$('applyCounterpartyBulkCategory');
   try{
-    await setCounterpartyDefaultCategory([...selectedCounterpartyIds],categoryId,btn,$('merchantMsg'));
-    selectedCounterpartyIds.clear();select.value='';syncCounterpartyBulkBar();renderMerchantsCatalog();
+    await setCounterpartyDefaultCategory([...selectedCounterpartyIds],categoryId,btn,$('merchantMsg'),applyExisting);
+    selectedCounterpartyIds.clear();select.value='';if($('counterpartyBulkScope'))$('counterpartyBulkScope').value='ALL';syncCounterpartyBulkScopeNote();syncCounterpartyBulkBar();renderMerchantsCatalog();
   }catch(e){}
 }
 function renderMerchantsCatalog(){
@@ -3167,6 +3186,8 @@ $('movementsTable').addEventListener('click',e=>{const auto=e.target.closest('[d
 $('movementsTable').addEventListener('change',e=>{const cb=e.target.closest('[data-select-movement]');if(!cb)return;cb.checked?selectedMovementIds.add(cb.dataset.selectMovement):selectedMovementIds.delete(cb.dataset.selectMovement);syncBulkSelectionUi()});
 ['categorySearch','categoryL1Filter','merchantSearch','merchantL1Filter','merchantL2Filter','merchantStatusFilter','merchantRecencyFilter','projectSearch','projectTypeFilter','projectStatusFilter','tagSearch','tagStatusFilter','mccSearch','mccStatusFilter','compoundRuleSearch','compoundRuleStatusFilter','parsingRuleSearch'].forEach(id=>$(id)?.addEventListener(id.endsWith('Search')?'input':'change',renderCatalogs));[['classMerchantSearch','classMerchant'],['compoundRuleMerchantSearch','compoundRuleMerchant']].forEach(x=>bindCounterpartySearch(...x));$('expandAllCategories').onclick=()=>{(catData?.categories||[]).filter(x=>Number(x.depth)===1).forEach(x=>expandedCategoryGroups.add(x.level1_name||x.name));renderCategoriesCatalog()};$('collapseAllCategories').onclick=()=>{expandedCategoryGroups.clear();renderCategoriesCatalog()};
 $('applyCounterpartyBulkCategory').onclick=applyCounterpartyBulkCategory;
+$('counterpartyBulkScope')?.addEventListener('change',syncCounterpartyBulkScopeNote);
+syncCounterpartyBulkScopeNote();
 $('selectVisibleCounterparties').onclick=()=>{for(const m of counterpartyFilteredRows())selectedCounterpartyIds.add(m.id);renderMerchantsCatalog()};
 $('clearSelectedCounterparties').onclick=()=>{selectedCounterpartyIds.clear();renderMerchantsCatalog()};
 $('clearMerchantFilters').onclick=()=>{['merchantSearch','merchantL1Filter','merchantL2Filter','merchantStatusFilter','merchantRecencyFilter'].forEach(id=>{if($(id))$(id).value=''});renderCatalogs()};
