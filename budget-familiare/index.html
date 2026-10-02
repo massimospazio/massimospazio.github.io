@@ -96,6 +96,8 @@
 .category-l2-panel{margin:0 8px 10px;border:1px solid #bfdbfe;background:#fff;border-radius:11px;padding:12px}.category-l2-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px}.category-l2-title{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.category-l2-title strong{font-size:15px}.category-l2-actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.category-l2-actions .input{min-width:220px}
 .category-l2-table{width:100%;border-collapse:collapse}.category-l2-table th,.category-l2-table td{padding:7px 8px;border-top:1px solid var(--line);vertical-align:middle}.category-l2-table th{text-align:left;background:#f8fafc;color:#475569;font-size:11px}.category-l2-table td{font-size:12px}.category-l2-table .sortbtn{border:0;background:transparent;font:inherit;font-weight:750;color:inherit;cursor:pointer;padding:0}.category-l2-table .sortbtn.active{color:#1d4ed8}.category-l2-row-selected{background:#eff6ff}.category-l2-name{display:flex;align-items:center;gap:7px;font-weight:750}.category-l2-name .mini-icon{display:inline-flex;width:24px;height:24px;border-radius:7px;align-items:center;justify-content:center;background:#eef2ff;color:#3730a3}.category-direct-row{background:#fafafa}.category-direct-row .category-l2-name{font-style:italic;color:#475569}
 .category-l2-summary{display:flex;gap:18px;flex-wrap:wrap;margin-top:9px;padding:9px 10px;border:1px solid var(--line);border-radius:9px;background:#f8fafc}.category-l2-summary strong{display:block}
+
+.analysis-controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.analysis-direction-control{display:flex;gap:5px;align-items:center;flex-wrap:wrap}.analysis-direction-control>span{margin-right:3px}.counterparty-title-controls{display:flex;align-items:flex-end;gap:10px;flex-direction:column}.analysis-scope-note{display:inline-flex;align-items:center;gap:6px}.analysis-scope-note strong{color:#0f172a}
 @media(max-width:900px){.category-v71-toolbar{grid-template-columns:1fr}.category-action-grid{grid-template-columns:1fr 1fr}.category-action-form{grid-template-columns:1fr}.category-flat-table{min-width:900px}}
 
 </style>
@@ -113,7 +115,7 @@
 
   <div id="appView" class="hidden">
     <div class="top">
-      <div class="brand"><h1>Dashboard Budget Familiare</h1><small>V71.3 · Drill-down L1 → L2</small></div>
+      <div class="brand"><h1>Dashboard Budget Familiare</h1><small>V71.4 · Uscite / Entrate</small></div>
       <div class="userbar"><span id="userEmail"></span><button id="refreshBtn" class="btn ghost">Aggiorna</button><button id="logoutBtn" class="btn ghost">Esci</button></div>
     </div>
     <datalist id="v62CounterpartyOptions"></datalist>
@@ -386,7 +388,7 @@
       <div class="grid catalog-grid">
         <div class="catalog-panel active" data-catalog-panel="categories">
           <div class="card stack catalog-card category-v71">
-            <div class="catalog-intro"><div><h2 style="margin:0 0 4px">Categorie · Gestione V71.3</h2><div class="muted small">Vista operativa piatta per rivedere le categorie trasversalmente agli L1. Rinomina, spostamento e migrazione mantengono storico e dipendenze sotto controllo.</div></div></div>
+            <div class="catalog-intro"><div><h2 style="margin:0 0 4px">Categorie · Gestione V71.4</h2><div class="muted small">Vista operativa piatta per rivedere le categorie trasversalmente agli L1. Rinomina, spostamento e migrazione mantengono storico e dipendenze sotto controllo.</div></div></div>
             <div class="catalog-form">
               <div class="small" style="font-weight:750;margin-bottom:8px">Nuova categoria</div>
               <div class="editor-row">
@@ -403,12 +405,19 @@
                 <button class="btn secondary compact" type="button" data-category-view="OPERATIONAL">Categorie operative</button>
                 <button class="btn ghost compact" type="button" data-category-view="L1">Aggregazione L1</button>
               </div>
-              <div class="category-period-control" aria-label="Intervallo temporale categorie">
-                <span class="muted small">Periodo</span>
-                <button class="btn ghost compact" type="button" data-category-period="6M">6 mesi</button>
-                <button class="btn secondary compact" type="button" data-category-period="12M">12 mesi</button>
-                <button class="btn ghost compact" type="button" data-category-period="24M">24 mesi</button>
-                <button class="btn ghost compact" type="button" data-category-period="ALL">Tutto</button>
+              <div class="analysis-controls">
+                <div class="analysis-direction-control" aria-label="Verso economico">
+                  <span class="muted small">Analisi</span>
+                  <button class="btn secondary compact" type="button" data-analysis-direction="EXPENSE">Uscite</button>
+                  <button class="btn ghost compact" type="button" data-analysis-direction="INCOME">Entrate</button>
+                </div>
+                <div class="category-period-control" aria-label="Intervallo temporale categorie">
+                  <span class="muted small">Periodo</span>
+                  <button class="btn ghost compact" type="button" data-category-period="6M">6 mesi</button>
+                  <button class="btn secondary compact" type="button" data-category-period="12M">12 mesi</button>
+                  <button class="btn ghost compact" type="button" data-category-period="24M">24 mesi</button>
+                  <button class="btn ghost compact" type="button" data-category-period="ALL">Tutto</button>
+                </div>
               </div>
             </div>
             <div class="catalog-toolbar category-v71-toolbar">
@@ -440,8 +449,15 @@
             <div id="counterpartyKpis" class="grid counterparty-kpis"></div>
 
             <div class="counterparty-registry-title">
-              <div><h3>Registro controparti</h3><div id="counterpartyRegistryInfo" class="muted">—</div><div class="muted small">Categoria = percorso completo L1 › L2. Tipo controparte disponibile nel dettaglio.</div></div>
-              <div class="muted">Clicca le intestazioni per ordinare.</div>
+              <div><h3>Registro controparti</h3><div id="counterpartyRegistryInfo" class="muted">—</div><div class="muted small">Categoria = percorso completo L1 › L2. Giroconti interni esclusi dall'analisi.</div></div>
+              <div class="counterparty-title-controls">
+                <div class="analysis-direction-control" aria-label="Verso economico controparti">
+                  <span class="muted small">Analisi</span>
+                  <button class="btn secondary compact" type="button" data-analysis-direction="EXPENSE">Uscite</button>
+                  <button class="btn ghost compact" type="button" data-analysis-direction="INCOME">Entrate</button>
+                </div>
+                <span class="muted small">Clicca le intestazioni per ordinare.</span>
+              </div>
             </div>
             <div class="catalog-toolbar counterparty-filters">
               <input id="merchantSearch" class="input" placeholder="Cerca controparte o alias..." />
@@ -593,7 +609,7 @@
 </div>
 <script>
 const sb=window.appSupabase;
-let overview=null,catData=null,coherenceData=null,engineStatus=null,duplicateSuggestions=[],selectedRow=null,splitData=null,viewMode='list',sortKey='transaction_date',sortDir='desc',catalogTab='categories',deepLinkHandled=false,categoryViewMode='OPERATIONAL',categoryActionState=null,categoryCounterpartyState=null,categoryL1ExpandedId=null,categoryL2SortKey='VALUE',categoryL2SortDir='desc',categoryAuditPeriod='12M',categoryAuditLoading=false,categoryTableSortKey='NAME',categoryTableSortDir='asc',movementCategoryScopeIds=null,movementCategoryScopeLabel='';
+let overview=null,catData=null,coherenceData=null,engineStatus=null,duplicateSuggestions=[],selectedRow=null,splitData=null,viewMode='list',sortKey='transaction_date',sortDir='desc',catalogTab='categories',deepLinkHandled=false,categoryViewMode='OPERATIONAL',categoryActionState=null,categoryCounterpartyState=null,categoryL1ExpandedId=null,categoryL2SortKey='VALUE',categoryL2SortDir='desc',categoryAuditPeriod='12M',categoryAuditLoading=false,analysisDirection='EXPENSE',analysisDirectionLoading=false,categoryTableSortKey='NAME',categoryTableSortDir='asc',movementCategoryScopeIds=null,movementCategoryScopeLabel='';
 const catalogSort={categories:{key:'label',dir:'asc'},merchants:{key:'name',dir:'asc'},projects:{key:'name',dir:'asc'},tags:{key:'name',dir:'asc'},mcc:{key:'mcc_code',dir:'asc'},rules:{key:'priority',dir:'desc'},parsing:{key:'priority',dir:'desc'}};
 const expandedGroups=new Set();
 const expandedCategoryGroups=new Set();
@@ -678,7 +694,7 @@ async function loadMovementsData(){
       rpc('dashboard_rules_read_v1'),
       rpc('dashboard_counterparty_parsing_rules_read_v1'),
       rpc('dashboard_counterparty_duplicate_suggestions_v1').catch(()=>[]),
-      rpc('dashboard_category_audit_v4',{p_period:categoryAuditPeriod})
+      rpc('dashboard_category_audit_v5',{p_period:categoryAuditPeriod,p_direction:analysisDirection})
     ]);
     catData=base||{};
     catData.counterparties=counterparties||[];
@@ -1980,6 +1996,70 @@ function renderCatalogs(){
 
   renderCategoriesCatalog();renderMerchantsCatalog();renderProjectsCatalog();renderTagsCatalog();renderMccCatalog();renderCompoundRulesCatalog();renderParsingRulesCatalog();fillClassificationSelects();updateCatalogCounts();setCatalogTab(catalogTab,false);
 }
+
+function analysisDirectionLabel(){return analysisDirection==='INCOME'?'Entrate':'Uscite'}
+function syncAnalysisDirectionControls(){
+  document.querySelectorAll('[data-analysis-direction]').forEach(b=>{
+    b.className='btn '+(b.dataset.analysisDirection===analysisDirection?'secondary':'ghost')+' compact';
+    b.disabled=analysisDirectionLoading||categoryAuditLoading;
+  });
+}
+function internalTransferCategory(){
+  return (catData?.categories||[]).find(x=>String(x.name||'')==='Giroconto interno'&&String(x.level1_name||'')==='Trasferimenti')
+    ||(catData?.categories||[]).find(x=>String(x.name||'')==='Giroconto interno');
+}
+function isInternalTransferCategory(cat){
+  if(!cat)return false;
+  const internal=internalTransferCategory();
+  return !!internal&&String(cat.id)===String(internal.id);
+}
+function isInternalTransferMovement(row){
+  const internal=internalTransferCategory();
+  if(internal&&String(row?.category_id||'')===String(internal.id))return true;
+  return String(row?.category_path||'')==='Trasferimenti › Giroconto interno';
+}
+function movementMatchesAnalysisDirection(row){
+  if(!row||isInternalTransferMovement(row)||String(row.transaction_type||'')==='OPENING_BALANCE')return false;
+  const amount=Number(row.amount||0);
+  return analysisDirection==='INCOME'?amount>0:amount<0;
+}
+function categoryIsIncomeTaxonomy(cat){
+  return String(categoryL1Name(cat)||'')==='Entrate';
+}
+function categoryDirectionRowVisible(row){
+  if(!row?.cat||isInternalTransferCategory(row.cat))return false;
+  const active=Number(row.metric?.movement_count||0)>0||Number(row.metric?.value||0)>0;
+  const l1=String(row.l1||categoryL1Name(row.cat)||'');
+  if(l1==='Trasferimenti'&&!active)return false;
+  if(analysisDirection==='INCOME')return categoryIsIncomeTaxonomy(row.cat)||active;
+  return !categoryIsIncomeTaxonomy(row.cat)||active;
+}
+async function setAnalysisDirection(direction){
+  const next=String(direction||'').toUpperCase();
+  if(!['EXPENSE','INCOME'].includes(next)||next===analysisDirection||analysisDirectionLoading)return;
+  const previous=analysisDirection;
+  analysisDirection=next;
+  analysisDirectionLoading=true;
+  categoryActionState=null;
+  categoryCounterpartyState=null;
+  categoryL1ExpandedId=null;
+  expandedCounterpartyDetails.clear();
+  expandedCounterpartyMovementDetails.clear();
+  selectedCounterpartyIds.clear();
+  syncAnalysisDirectionControls();
+  if($('categoriesTable'))$('categoriesTable').innerHTML='<div class="category-inline-loading"><span class="spinner"></span>Ricalcolo '+esc(analysisDirectionLabel().toLowerCase())+'…</div>';
+  renderMerchantsCatalog();
+  try{
+    catData.categoryAudit=await rpc('dashboard_category_audit_v5',{p_period:categoryAuditPeriod,p_direction:analysisDirection})||{summary:{},rows:[],period:{},direction:analysisDirection};
+  }catch(e){
+    analysisDirection=previous;
+    alert(e.message);
+  }finally{
+    analysisDirectionLoading=false;
+    renderCatalogs();
+    syncAnalysisDirectionControls();
+  }
+}
 function categoryAuditMap(){
   return new Map((catData?.categoryAudit?.rows||[]).map(x=>[String(x.category_id),x]));
 }
@@ -2099,6 +2179,7 @@ function categoryL1Badge(name){
 function categoryOperationalRows(){
   const audit=categoryAuditMap(),rows=[];
   for(const cat of (catData?.categories||[])){
+    if(isInternalTransferCategory(cat))continue;
     const raw=audit.get(String(cat.id));if(!raw)continue;
     const leaf=Number(raw.child_count||0)===0;
     if(leaf)rows.push({id:cat.id,cat,kind:'CATEGORY',name:categoryOperationalName(cat),l1:categoryL1Name(cat),raw,metric:periodMetric(raw,false)});
@@ -2116,11 +2197,12 @@ function categoryL1Rows(){
 function visibleCategoryRows(){
   const q=($('categorySearch')?.value||'').trim().toLowerCase(),l1=$('categoryL1Filter')?.value||'';
   let rows=categoryViewMode==='L1'?categoryL1Rows():categoryOperationalRows();
+  rows=rows.filter(categoryDirectionRowVisible);
   rows=rows.filter(r=>(!q||textSearchMatches([r.l1,r.name,categoryLabel(r.cat)].join(' '),q))&&(!l1||r.l1===l1));
   return categoryAuditSortRows(rows);
 }
 function renderCategoryAuditKpis(){
-  const rows=categoryViewMode==='L1'?categoryL1Rows():categoryOperationalRows();
+  const rows=(categoryViewMode==='L1'?categoryL1Rows():categoryOperationalRows()).filter(categoryDirectionRowVisible);
   const recurring=rows.filter(r=>Number(r.metric?.active_pct||0)>=50).length;
   const occasional=rows.filter(r=>Number(r.metric?.active_pct||0)>0&&Number(r.metric?.active_pct||0)<25).length;
   const inactive=rows.filter(r=>Number(r.metric?.active_months||0)===0).length;
@@ -2161,7 +2243,7 @@ function categoryPeriodNoteHtml(){
   if(!p.start_date||!p.end_date)return '';
   const requested=p.requested_months==null?null:Number(p.requested_months),coverage=Number(p.coverage_months||0);
   const warn=requested&&coverage<requested?'<span class="coverage-warn">Copertura disponibile: '+nfmt(coverage)+'/'+nfmt(requested)+' mesi</span>':'';
-  return '<div class="category-period-note muted small"><span>Periodo: <strong>'+esc(p.start_date)+'</strong> → <strong>'+esc(p.end_date)+'</strong> · mesi completi</span>'+warn+(p.data_first_date?'<span>Primo dato: '+esc(p.data_first_date)+'</span>':'')+'</div>';
+  return '<div class="category-period-note muted small"><span class="analysis-scope-note"><strong>'+esc(analysisDirectionLabel())+'</strong> · periodo <strong>'+esc(p.start_date)+'</strong> → <strong>'+esc(p.end_date)+'</strong> · mesi completi</span>'+warn+(p.data_first_date?'<span>Primo dato: '+esc(p.data_first_date)+'</span>':'')+'<span>Giroconti interni esclusi</span></div>';
 }
 function categoryActionPanelHtml(cat,action){
   const raw=categoryAuditMap().get(String(cat.id))||{};
@@ -2217,7 +2299,7 @@ function categoryCounterpartyPanelHtml(cat){
   const without=Number(d.without_counterparty_movements||0);
   return '<div class="category-counterparty-panel">'+
     '<div class="category-counterparty-head">'+
-      '<div class="category-counterparty-title"><strong>Controparti per '+esc(cat.name)+'</strong><span class="pill">'+nfmt(d.counterparty_count||0)+' controparti</span><span class="muted small">'+nfmt(d.total_movements||0)+' movimenti · '+euroInt(d.total_value||0)+' · '+esc(categoryPeriodLabel())+'</span></div>'+
+      '<div class="category-counterparty-title"><strong>Controparti per '+esc(cat.name)+'</strong><span class="pill">'+esc(analysisDirectionLabel())+'</span><span class="pill">'+nfmt(d.counterparty_count||0)+' controparti</span><span class="muted small">'+nfmt(d.total_movements||0)+' movimenti · '+euroInt(d.total_value||0)+' · '+esc(categoryPeriodLabel())+'</span></div>'+
       '<div class="category-counterparty-actions"><input class="input" data-category-cp-search placeholder="Cerca controparte..." /><button type="button" class="btn ghost compact" data-category-cp-open-all>Apri tutte nei movimenti</button><button type="button" class="btn compact" data-category-cp-new>Nuova controparte</button></div>'+
     '</div>'+
     '<div class="table-wrap"><table class="category-counterparty-table"><thead><tr>'+
@@ -2236,14 +2318,17 @@ function categoryCounterpartyPanelHtml(cat){
 function categoryL2RowsForL1(l1Id){
   const audit=categoryAuditMap(),rows=[];
   for(const cat of (catData?.categories||[])){
-    if(String(cat.parent_id||'')!==String(l1Id))continue;
+    if(String(cat.parent_id||'')!==String(l1Id)||isInternalTransferCategory(cat))continue;
     const raw=audit.get(String(cat.id));if(!raw)continue;
-    rows.push({id:cat.id,cat,kind:'L2',name:cat.name,raw,metric:periodMetric(raw,false)});
+    const row={id:cat.id,cat,kind:'L2',name:cat.name,l1:categoryL1Name(cat),raw,metric:periodMetric(raw,false)};
+    if(categoryDirectionRowVisible(row))rows.push(row);
   }
   const l1Raw=audit.get(String(l1Id));
-  if(l1Raw&&(Number(l1Raw.direct_movement_count||0)>0||Number(l1Raw.direct_dependency_count||0)>0)){
-    const l1Cat=categoryById(l1Id);
-    rows.unshift({id:l1Id,cat:l1Cat,kind:'DIRECT_L1',name:'Uso diretto su '+(l1Cat?.name||'L1'),raw:l1Raw,metric:periodMetric(l1Raw,true)});
+  if(l1Raw){
+    const l1Cat=categoryById(l1Id),metric=periodMetric(l1Raw,true);
+    if(Number(metric?.movement_count||0)>0){
+      rows.unshift({id:l1Id,cat:l1Cat,kind:'DIRECT_L1',name:'Uso diretto su '+(l1Cat?.name||'L1'),l1:categoryL1Name(l1Cat),raw:l1Raw,metric});
+    }
   }
   return rows;
 }
@@ -2322,7 +2407,7 @@ function categoryL2PanelHtml(l1Row){
   const m=l1Row.metric||{};
   return '<div class="category-l2-panel">'+
     '<div class="category-l2-head">'+
-      '<div class="category-l2-title">'+categoryL1Badge(l1.name)+'<strong>Categorie L2 in '+esc(l1.name)+'</strong><span class="pill">'+nfmt(childCount)+' categorie</span><span class="muted small">'+nfmt(m.movement_count||0)+' movimenti · '+euroInt(m.value||0)+' · '+esc(categoryPeriodLabel())+'</span></div>'+
+      '<div class="category-l2-title">'+categoryL1Badge(l1.name)+'<strong>Categorie L2 in '+esc(l1.name)+'</strong><span class="pill">'+esc(analysisDirectionLabel())+'</span><span class="pill">'+nfmt(childCount)+' categorie</span><span class="muted small">'+nfmt(m.movement_count||0)+' movimenti · '+euroInt(m.value||0)+' · '+esc(categoryPeriodLabel())+'</span></div>'+
       '<div class="category-l2-actions"><input class="input" '+qAttr+' placeholder="Cerca categoria L2..." /><button type="button" class="btn ghost compact" data-category-l2-open-all="'+l1.id+'">Apri tutte nei movimenti</button><button type="button" class="btn compact" data-category-l2-new="'+l1.id+'">Nuova categoria L2</button></div>'+
     '</div>'+
     '<div class="table-wrap"><table class="category-l2-table"><thead><tr>'+
@@ -2341,7 +2426,9 @@ function categoryL2PanelHtml(l1Row){
 }
 function renderCategoriesCatalog(){
   const cats=catData?.categories||[],keepL1=$('categoryL1Filter')?.value||'';
-  const l1s=[...new Set(cats.map(categoryL1Name).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'it',{sensitivity:'base'}));
+  syncAnalysisDirectionControls();
+  const scopeRows=(categoryViewMode==='L1'?categoryL1Rows():categoryOperationalRows()).filter(categoryDirectionRowVisible);
+  const l1s=[...new Set(scopeRows.map(r=>r.l1).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'it',{sensitivity:'base'}));
   if($('categoryL1Filter')){
     $('categoryL1Filter').innerHTML='<option value="">Tutti gli L1</option>'+l1s.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join('');
     $('categoryL1Filter').value=l1s.includes(keepL1)?keepL1:'';
@@ -2358,7 +2445,7 @@ function renderCategoriesCatalog(){
     const l1Expanded=categoryViewMode==='L1'&&String(categoryL1ExpandedId||'')===String(r.cat.id);
     const selected=(categoryActionState&&String(categoryActionState.id)===String(r.cat.id))||(categoryCounterpartyState&&String(categoryCounterpartyState.id)===String(r.cat.id))||l1Expanded;
     const prefix=categoryViewMode==='L1'
-      ?'<td><div style="display:flex;align-items:center;gap:5px"><button type="button" class="category-l1-toggle '+(l1Expanded?'open':'')+'" data-category-l1-toggle="'+r.cat.id+'" title="'+(l1Expanded?'Comprimi L2':'Esplora categorie L2')+'">'+(l1Expanded?'▾':'›')+'</button>'+categoryL1Badge(r.cat.name)+'</div></td><td><button type="button" class="category-counterparty-link zero" data-category-l1-toggle="'+r.cat.id+'" title="Esplora categorie L2">'+nfmt(raw.child_count||0)+'</button></td>'
+      ?'<td><div style="display:flex;align-items:center;gap:5px"><button type="button" class="category-l1-toggle '+(l1Expanded?'open':'')+'" data-category-l1-toggle="'+r.cat.id+'" title="'+(l1Expanded?'Comprimi L2':'Esplora categorie L2')+'">'+(l1Expanded?'▾':'›')+'</button>'+categoryL1Badge(r.cat.name)+'</div></td><td><button type="button" class="category-counterparty-link zero" data-category-l1-toggle="'+r.cat.id+'" title="Esplora categorie L2">'+nfmt(categoryL2RowsForL1(r.cat.id).filter(x=>x.kind==='L2').length)+'</button></td>'
       :'<td>'+categoryL1Badge(r.l1)+'</td><td><div class="cat-main">'+esc(r.name)+(r.kind==='DIRECT'?'<span class="direct-badge">uso diretto L1</span>':'')+(empty?'<span class="category-empty-badge">Vuota</span>':'')+'</div></td>';
     const cpButton='<button type="button" class="category-counterparty-link '+(Number(m.counterparty_count||0)===0?'zero':'')+'" data-category-counterparties="'+r.cat.id+'" title="'+esc((m.without_counterparty_movements?m.without_counterparty_movements+' movimenti senza controparte · ':'')+'Apri elenco controparti')+'">'+nfmt(m.counterparty_count||0)+'</button>';
     let inline='';
@@ -2378,13 +2465,13 @@ function renderCategoriesCatalog(){
       '<td>'+categoryAuditDepsHtml(m)+'</td>'+
       '<td>'+categoryActionsMenu(r)+'</td></tr>'+inline;
   }).join('');
-  $('categoriesTable').innerHTML=categoryPeriodNoteHtml()+'<div class="muted small" style="margin:0 0 7px">'+nfmt(rows.length)+' righe · '+(categoryViewMode==='L1'?'aggregazione L1 · clicca ▸ per esplorare le L2':'categorie operative cross-L1')+' · '+esc(categoryPeriodLabel())+'</div><div class="category-flat-wrap"><table class="table category-flat-table"><thead>'+head+'</thead><tbody>'+(body||'<tr><td colspan="9" class="muted">Nessuna categoria con i filtri selezionati.</td></tr>')+'</tbody></table></div>';
+  $('categoriesTable').innerHTML=categoryPeriodNoteHtml()+'<div class="muted small" style="margin:0 0 7px">'+nfmt(rows.length)+' righe · '+(categoryViewMode==='L1'?'aggregazione L1 · clicca ▸ per esplorare le L2':'categorie operative cross-L1')+' · '+esc(analysisDirectionLabel())+' · '+esc(categoryPeriodLabel())+'</div><div class="category-flat-wrap"><table class="table category-flat-table"><thead>'+head+'</thead><tbody>'+(body||'<tr><td colspan="9" class="muted">Nessuna categoria con i filtri selezionati.</td></tr>')+'</tbody></table></div>';
 }
 async function loadCategoryAuditPeriod(period){
   const next=period||'12M';if(categoryAuditLoading||next===categoryAuditPeriod)return;
   categoryAuditLoading=true;categoryAuditPeriod=next;categoryActionState=null;categoryCounterpartyState=null;categoryL1ExpandedId=null;renderCategoriesCatalog();
   try{
-    catData.categoryAudit=await rpc('dashboard_category_audit_v4',{p_period:categoryAuditPeriod})||{summary:{},rows:[],period:{}};
+    catData.categoryAudit=await rpc('dashboard_category_audit_v5',{p_period:categoryAuditPeriod,p_direction:analysisDirection})||{summary:{},rows:[],period:{},direction:analysisDirection};
   }catch(e){
     alert(e.message);categoryAuditPeriod=catData?.categoryAudit?.period?.key||'12M';
   }finally{
@@ -2437,7 +2524,7 @@ async function toggleCategoryCounterparties(id,includeDescendantsOverride=null){
   categoryCounterpartyState={id:cat.id,includeDescendants,loading:true,error:null,data:null,sortKey:'VALUE',sortDir:'desc'};
   renderCategoriesCatalog();
   try{
-    const data=await rpc('dashboard_category_counterparties_v1',{p_category_id:cat.id,p_period:categoryAuditPeriod,p_include_descendants:includeDescendants});
+    const data=await rpc('dashboard_category_counterparties_v2',{p_category_id:cat.id,p_period:categoryAuditPeriod,p_include_descendants:includeDescendants,p_direction:analysisDirection});
     if(!categoryCounterpartyState||String(categoryCounterpartyState.id)!==String(cat.id))return;
     categoryCounterpartyState.data=data||{rows:[]};categoryCounterpartyState.loading=false;
   }catch(e){
@@ -2607,12 +2694,13 @@ function counterpartyCategoryMeta(m){
 }
 function counterpartyDuplicateSuggestion(id){return (duplicateSuggestions||[]).find(x=>String(x.source_id)===String(id))||null}
 function counterpartyStats(m){
-  const movements=(catData?.movements||[]).filter(x=>x.counterparty_id===m.id);
+  const allMovements=(catData?.movements||[]).filter(x=>x.counterparty_id===m.id);
+  const movements=allMovements.filter(movementMatchesAnalysisDirection);
   const aliases=aliasesForMerchant(m.id);
   const dates=movements.map(x=>x.transaction_date).filter(Boolean).sort();
   const total=movements.reduce((s,x)=>s+Number(x.amount||0),0);
   const volume=movements.reduce((s,x)=>s+Math.abs(Number(x.amount||0)),0);
-  const bootstrap=movements.some(x=>x.automation_origin==='MCC_BOOTSTRAP');
+  const bootstrap=allMovements.some(x=>x.automation_origin==='MCC_BOOTSTRAP');
   return {aliases,alias_count:aliases.length,movements,movement_count:movements.length,total,volume,first_date:dates[0]||'',last_date:dates[dates.length-1]||'',bootstrap,duplicate:counterpartyDuplicateSuggestion(m.id)};
 }
 function counterpartyAgeDays(date){
@@ -2644,8 +2732,8 @@ function counterpartyStatusHtml(m,s){
   return '<div class="counterparty-statuses">'+counterpartyStatusInfo(m,s).map(x=>`<span class="pill ${x.cls}">${esc(x.label)}</span>`).join('')+'</div>';
 }
 function counterpartyNetHtml(s){
-  const cls=s.total<0?'net-negative':s.total>0?'net-positive':'';
-  return `<strong class="${cls}">${euro(s.total)}</strong><br><span class="muted small" title="Somma dei valori assoluti dei movimenti">volume ${euro(s.volume)}</span>`;
+  const cls=analysisDirection==='INCOME'?'net-positive':'net-negative';
+  return `<strong class="${cls}">${euroInt(s.volume)}</strong><br><span class="muted small">${esc(analysisDirectionLabel())}</span>`;
 }
 function counterpartyEnriched(){
   return (catData?.counterparties||[]).map(m=>{
@@ -2659,9 +2747,9 @@ function renderCounterpartyKpis(all){
   const dup=all.filter(x=>!!x._stats.duplicate).length,bootstrap=all.filter(x=>x._stats.bootstrap).length;
   const stale=all.filter(x=>x._stats.last_date&&counterpartyAgeDays(x._stats.last_date)>365).length,never=all.filter(x=>!x._stats.last_date).length;
   $('counterpartyKpis').innerHTML=[
-    ['ALL','Controparti',all.length,'anagrafica completa'],
+    ['ALL','Controparti',all.length,'attive · '+analysisDirectionLabel().toLowerCase()],
     ['ALIASES','Alias',aliases,'valori di riconoscimento'],
-    ['MOVEMENTS','Movimenti',movements,'assegnati a controparti'],
+    ['MOVEMENTS','Movimenti',movements,analysisDirectionLabel().toLowerCase()+' con controparte'],
     ['NO_CATEGORY','Senza categoria',noCategory,'default mancante'],
     ['NO_ALIAS','Senza alias',noAlias,'riconoscimento da verificare'],
     ['DUPLICATE','Possibili duplicati',dup,'suggerimenti euristici'],
@@ -2677,8 +2765,8 @@ function counterpartyDetailHtml(m){
     <div class="counterparty-detail-metrics">
       <div class="counterparty-detail-metric"><div class="k">Alias</div><div class="v">${nfmt(s.alias_count)}</div></div>
       <div class="counterparty-detail-metric"><div class="k">Movimenti</div><div class="v">${nfmt(s.movement_count)}</div></div>
-      <div class="counterparty-detail-metric"><div class="k">Totale netto</div><div class="v">${euro(s.total)}</div></div>
-      <div class="counterparty-detail-metric"><div class="k">Volume</div><div class="v">${euro(s.volume)}</div></div>
+      <div class="counterparty-detail-metric"><div class="k">${esc(analysisDirectionLabel())}</div><div class="v">${euroInt(s.volume)}</div></div>
+      <div class="counterparty-detail-metric"><div class="k">Verso analizzato</div><div class="v">${esc(analysisDirectionLabel())}</div></div>
       <div class="counterparty-detail-metric"><div class="k">Primo movimento</div><div class="v">${esc(s.first_date||'—')}</div></div>
       <div class="counterparty-detail-metric"><div class="k">Ultimo movimento</div><div class="v">${esc(s.last_date||'—')}<br><span class="muted small">${esc(counterpartyRecencyLabel(s.last_date))}</span></div></div>
     </div>
@@ -2697,6 +2785,7 @@ function counterpartyFilteredRows(all=counterpartyEnriched()){
   const q=($('merchantSearch')?.value||'').trim().toLowerCase();
   const l1=$('merchantL1Filter')?.value||'',l2=$('merchantL2Filter')?.value||'',status=$('merchantStatusFilter')?.value||'',recency=$('merchantRecencyFilter')?.value||'';
   let rows=all.filter(m=>{
+    if(Number(m._stats.movement_count||0)===0)return false;
     const aliasText=m._stats.aliases.map(a=>a.pattern).join(' ');
     if(q&&!textSearchMatches([m.name,m._category.path,counterpartyTypeLabel(m.counterparty_type),aliasText].join(' '),q))return false;
     if(l1&&m._category.l1!==l1)return false;
@@ -2713,7 +2802,7 @@ function counterpartyFilteredRows(all=counterpartyEnriched()){
   });
   return genericCatalogSort(rows,'merchants',{
     name:x=>x.name||'',type:x=>counterpartyTypeLabel(x.counterparty_type),l1:x=>x._category.l1,category:x=>x._category.path,
-    aliases:x=>x._stats.alias_count,movements:x=>x._stats.movement_count,total:x=>x._stats.total,last:x=>x._stats.last_date||'0000-00-00',status:x=>x._status_priority
+    aliases:x=>x._stats.alias_count,movements:x=>x._stats.movement_count,total:x=>x._stats.volume,last:x=>x._stats.last_date||'0000-00-00',status:x=>x._status_priority
   });
 }
 function syncCounterpartyBulkBar(){
@@ -2752,17 +2841,18 @@ async function applyCounterpartyBulkCategory(){
   }catch(e){}
 }
 function renderMerchantsCatalog(){
-  const all=counterpartyEnriched();
-  renderCounterpartyKpis(all);
-  const validIds=new Set(all.map(x=>x.id));for(const id of [...selectedCounterpartyIds])if(!validIds.has(id))selectedCounterpartyIds.delete(id);
-  const rows=counterpartyFilteredRows(all);
-  $('counterpartyRegistryInfo').textContent=`${nfmt(rows.length)} controparti visualizzate su ${nfmt(all.length)}`;
+  syncAnalysisDirectionControls();
+  const all=counterpartyEnriched(),active=all.filter(x=>Number(x._stats.movement_count||0)>0);
+  renderCounterpartyKpis(active);
+  const validIds=new Set(active.map(x=>x.id));for(const id of [...selectedCounterpartyIds])if(!validIds.has(id))selectedCounterpartyIds.delete(id);
+  const rows=counterpartyFilteredRows(active);
+  $('counterpartyRegistryInfo').textContent=`${nfmt(rows.length)} controparti visualizzate su ${nfmt(active.length)} attive nelle ${analysisDirectionLabel().toLowerCase()} · giroconti interni esclusi`;
   const body=rows.map(m=>{
     const open=expandedCounterpartyDetails.has(m.id),s=m._stats;
     return `<tr><td><input class="counterparty-select" type="checkbox" data-select-counterparty="${m.id}" ${selectedCounterpartyIds.has(m.id)?'checked':''} /></td><td><strong>${esc(m.name)}</strong></td><td class="category-default-cell">${counterpartyCategoryEditorHtml(m)}</td><td><button class="btn ghost compact" data-toggle-counterparty-detail="${m.id}">${nfmt(s.alias_count)}</button></td><td>${nfmt(s.movement_count)}</td><td>${counterpartyNetHtml(s)}</td><td>${esc(s.last_date||'—')}<br><span class="muted small">${esc(counterpartyRecencyLabel(s.last_date))}</span></td><td>${counterpartyStatusHtml(m,s)}</td><td><button class="btn ${open?'secondary':'ghost'} compact" data-toggle-counterparty-detail="${m.id}">${open?'Chiudi':'Dettagli'}</button></td></tr>${open?`<tr><td colspan="9" style="padding:0">${counterpartyDetailHtml(m)}</td></tr>`:''}`;
   }).join('');
   syncCounterpartyBulkBar();
-  $('merchantsTable').innerHTML=`<div class="table-wrap"><table class="table"><thead><tr><th style="width:38px"><input class="counterparty-select" type="checkbox" data-select-visible-counterparties title="Seleziona le controparti visibili" ${rows.length&&rows.every(x=>selectedCounterpartyIds.has(x.id))?'checked':''} /></th><th style="width:16%">${catalogSortHeader('merchants','Controparte','name')}</th><th style="width:28%">${catalogSortHeader('merchants','Categoria default','category')}</th><th style="width:7%">${catalogSortHeader('merchants','Alias','aliases')}</th><th style="width:8%">${catalogSortHeader('merchants','Movimenti','movements')}</th><th style="width:13%">${catalogSortHeader('merchants','Totale netto','total')}</th><th style="width:12%">${catalogSortHeader('merchants','Ultimo movimento','last')}</th><th style="width:12%">${catalogSortHeader('merchants','Stato','status')}</th><th style="width:80px"></th></tr></thead><tbody>${body||'<tr><td colspan="9" class="muted">Nessuna controparte con i filtri selezionati.</td></tr>'}</tbody></table></div>`;
+  $('merchantsTable').innerHTML=`<div class="table-wrap"><table class="table"><thead><tr><th style="width:38px"><input class="counterparty-select" type="checkbox" data-select-visible-counterparties title="Seleziona le controparti visibili" ${rows.length&&rows.every(x=>selectedCounterpartyIds.has(x.id))?'checked':''} /></th><th style="width:16%">${catalogSortHeader('merchants','Controparte','name')}</th><th style="width:28%">${catalogSortHeader('merchants','Categoria default','category')}</th><th style="width:7%">${catalogSortHeader('merchants','Alias','aliases')}</th><th style="width:8%">${catalogSortHeader('merchants','Movimenti','movements')}</th><th style="width:13%">${catalogSortHeader('merchants','Importo','total')}</th><th style="width:12%">${catalogSortHeader('merchants','Ultimo movimento','last')}</th><th style="width:12%">${catalogSortHeader('merchants','Stato','status')}</th><th style="width:80px"></th></tr></thead><tbody>${body||'<tr><td colspan="9" class="muted">Nessuna controparte con i filtri selezionati.</td></tr>'}</tbody></table></div>`;
 }
 function renderProjectsCatalog(){
   const q=($('projectSearch')?.value||'').trim().toLowerCase(),type=$('projectTypeFilter')?.value||'',status=$('projectStatusFilter')?.value||'';
@@ -3029,6 +3119,7 @@ $('selectVisibleCounterparties').onclick=()=>{for(const m of counterpartyFiltere
 $('clearSelectedCounterparties').onclick=()=>{selectedCounterpartyIds.clear();renderMerchantsCatalog()};
 $('clearMerchantFilters').onclick=()=>{['merchantSearch','merchantL1Filter','merchantL2Filter','merchantStatusFilter','merchantRecencyFilter'].forEach(id=>{if($(id))$(id).value=''});renderCatalogs()};
 $('tab-catalogs').addEventListener('click',e=>{const ct=e.target.closest('[data-catalog-tab]');if(ct){setCatalogTab(ct.dataset.catalogTab);return}
+const ad=e.target.closest('[data-analysis-direction]');if(ad){setAnalysisDirection(ad.dataset.analysisDirection);return}
 const cv=e.target.closest('[data-category-view]');if(cv){categoryViewMode=cv.dataset.categoryView||'OPERATIONAL';categoryActionState=null;categoryCounterpartyState=null;categoryL1ExpandedId=null;renderCategoriesCatalog();return}
 const l1t=e.target.closest('[data-category-l1-toggle]');if(l1t){toggleCategoryL1Drilldown(l1t.dataset.categoryL1Toggle);return}
 const l2sort=e.target.closest('[data-category-l2-sort-key]');if(l2sort){const k=l2sort.dataset.categoryL2SortKey;if(categoryL2SortKey===k)categoryL2SortDir=categoryL2SortDir==='asc'?'desc':'asc';else{categoryL2SortKey=k;categoryL2SortDir=k==='NAME'?'asc':'desc'}renderCategoriesCatalog();return}
