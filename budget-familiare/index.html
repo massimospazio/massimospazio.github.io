@@ -3111,11 +3111,11 @@ async function saveMccCategory(btn){
   try{
     const r=await rpc('dashboard_upsert_mcc_rule_v1',{p_mcc_code:code,p_category_id:category,p_confidence:Number(current?.confidence||.9),p_is_active:true});
     editingMccCodes.delete(code);coherenceData=null;
-    const rr=r?.reclassification||{},scoped=Number(r?.updated_existing_movements||0),boot=Number(r?.bootstrapped_counterparties||0);
-    if(scoped||boot||rr.enabled){
+    const rr=r?.reclassification||{},checked=Number(r?.checked_existing_movements||0),scoped=Number(r?.updated_existing_movements||0),protectedCount=Number(r?.protected_existing_movements||0),boot=Number(r?.bootstrapped_counterparties||0);
+    if(checked||scoped||protectedCount||boot||rr.enabled){
       const parts=[`MCC ${code} salvato.`];
-      if(scoped)parts.push(`${nfmt(scoped)} movimenti senza categoria riallineati subito.`);
-      if(boot)parts.push(`${nfmt(boot)} nuove controparti/alias create dal bootstrap MCC.`);
+      if(checked||scoped||protectedCount)parts.push(`Storico MCC: ${nfmt(checked)} verificati, ${nfmt(scoped)} riallineati${protectedCount?` · ${nfmt(protectedCount)} protetti invariati`:''}.`);
+      if(boot)parts.push(`${nfmt(boot)} controparti/alias creati dal bootstrap MCC.`);
       if(rr.enabled)parts.push(`Motore globale attivo: ${nfmt(rr.changed||0)} ulteriori riallineamenti.`);
       alert(parts.join(' '));
     }
