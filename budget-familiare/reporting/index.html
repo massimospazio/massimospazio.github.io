@@ -731,7 +731,7 @@ function renderReportReturnBar(params){
   const desc=params.get("returnDesc")==="1"?"1":"0",type=params.get("returnType")||"ALL";
   const back=new URLSearchParams({category:returnCategory,dependencies:"1",desc:desc,dependencyType:type});
   bar.classList.remove("hidden");
-  bar.innerHTML='<span>Sei arrivato qui dal controllo dipendenze delle categorie.</span><a class="btn compact" href="../dashboard/?'+back.toString()+'">← Torna alle dipendenze</a>';
+  bar.innerHTML='<span>Sei arrivato qui dal controllo dipendenze delle categorie.</span><a class="btn compact" href="../?'+back.toString()+'">← Torna alle dipendenze</a>';
 }
 function openReportingFromUrl(){
   if(reportDeepLinkHandled)return;
