@@ -6,6 +6,7 @@
 <title>Budget Familiare — Dashboard gestione</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
 <script src="shared/supabase-client.js"></script>
+<script src="shared/app-config.js"></script>
 <style>
 :root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#6b7280;--line:#e5e7eb;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 8px 24px rgba(15,23,42,.06)}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,input,select{font:inherit}.wrap{max-width:1500px;margin:0 auto;padding:22px}.top{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:18px}.brand h1{font-size:24px;margin:0}.brand small{color:var(--muted)}.userbar{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:13px}.tabs{display:flex;gap:8px;margin:0 0 18px;flex-wrap:wrap}.tab{border:1px solid var(--line);background:#fff;padding:9px 14px;border-radius:10px;cursor:pointer}.tab.active{background:var(--text);color:#fff;border-color:var(--text)}.tabs a.tab{text-decoration:none;color:inherit;display:inline-flex;align-items:center}.card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:16px}.grid{display:grid;gap:14px}.kpis{grid-template-columns:repeat(6,minmax(150px,1fr));margin-bottom:14px}.kpi .label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}.kpi .value{font-size:27px;font-weight:750;margin-top:6px}.kpi .sub{font-size:12px;color:var(--muted);margin-top:4px}.section-title{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:4px 0 12px}.section-title h2{font-size:18px;margin:0}.section-title p{margin:4px 0 0;color:var(--muted);font-size:13px}.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.input,.select{border:1px solid var(--line);border-radius:9px;padding:9px 10px;background:#fff;min-height:38px}.input{min-width:220px}.btn{border:0;border-radius:9px;padding:9px 12px;cursor:pointer;background:var(--accent);color:#fff;font-weight:650}.btn.secondary{background:#eef2ff;color:#3730a3}.btn.ghost{background:#fff;color:var(--text);border:1px solid var(--line)}.btn.danger{background:#fee2e2;color:#991b1b}
@@ -74,12 +75,12 @@
 .category-viewbar{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;margin:2px 0 10px}
 .category-period-control{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
 .category-period-control>span{margin-right:3px}
-.category-v71-toolbar{display:grid;grid-template-columns:minmax(260px,1.6fr) minmax(180px,.9fr);gap:8px}.category-v71-toolbar .input,.category-v71-toolbar .select{width:100%;min-width:0}
+.category-v71-toolbar{display:grid;grid-template-columns:minmax(260px,1.6fr) minmax(180px,.9fr) minmax(180px,.9fr);gap:8px}.category-v71-toolbar .input,.category-v71-toolbar .select{width:100%;min-width:0}
 .category-flat-wrap{overflow-x:auto}.category-flat-table{min-width:980px;border-collapse:collapse}.category-flat-table td,.category-flat-table th{vertical-align:middle}.category-flat-table td{padding:6px 8px;line-height:1.15}.category-flat-table th{padding:7px 8px}.category-flat-table .cat-main{font-weight:750;white-space:nowrap}.category-flat-table .direct-row{background:#fafafa}.category-flat-table .direct-badge,.category-empty-badge{display:inline-flex;padding:1px 5px;border-radius:999px;background:#f3f4f6;color:#4b5563;font-size:9px;font-weight:750;margin-left:5px;vertical-align:middle}
 .l1-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border-radius:8px;font-size:11px;font-weight:780;white-space:nowrap;border:1px solid transparent}.l1-icon{font-size:12px;line-height:1}.l1-p0{background:#dbeafe;color:#1e3a8a;border-color:#bfdbfe}.l1-p1{background:#dcfce7;color:#166534;border-color:#bbf7d0}.l1-p2{background:#fef3c7;color:#92400e;border-color:#fde68a}.l1-p3{background:#fce7f3;color:#9d174d;border-color:#fbcfe8}.l1-p4{background:#ede9fe;color:#5b21b6;border-color:#ddd6fe}.l1-p5{background:#cffafe;color:#155e75;border-color:#a5f3fc}.l1-p6{background:#ffedd5;color:#9a3412;border-color:#fed7aa}.l1-p7{background:#e2e8f0;color:#334155;border-color:#cbd5e1}
 .category-amount{min-width:145px}.category-amount-line{display:flex;align-items:center;gap:8px}.category-amount-line strong{min-width:72px;white-space:nowrap}.category-amount-track{height:8px;flex:1;min-width:55px;background:#eef2f7;border-radius:999px;overflow:hidden}.category-amount-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#93c5fd,#2563eb)}
 .category-frequency-compact{display:inline-flex;align-items:center;gap:6px;font-weight:750;white-space:nowrap}.frequency-dot{width:10px;height:10px;border-radius:50%;display:inline-block;flex:0 0 auto}.freq-red .frequency-dot{background:#ef4444}.freq-yellow .frequency-dot{background:#f59e0b}.freq-green .frequency-dot{background:#22c55e}.freq-red{color:#991b1b}.freq-yellow{color:#92400e}.freq-green{color:#166534}
-.audit-deps-compact{font-size:11px;white-space:nowrap}.audit-deps-compact strong{font-weight:780}.category-period-note{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}.category-period-note .coverage-warn{color:#92400e;font-weight:700}
+.audit-deps-compact{display:flex;gap:4px;align-items:center;flex-wrap:wrap;font-size:11px}.dep-total,.dep-chip{border:1px solid #dbe1e8;background:#fff;color:#334155;border-radius:999px;padding:3px 7px;font-size:10px;font-weight:750;cursor:pointer;white-space:nowrap}.dep-total{border-color:#bfdbfe;background:#eff6ff;color:#1d4ed8}.dep-total:hover,.dep-chip:hover{border-color:#60a5fa;background:#dbeafe}.dep-chip.active{background:#1d4ed8;color:#fff;border-color:#1d4ed8}.category-dependency-panel{margin:0 8px 9px;border:1px solid #bfdbfe;background:#fff;border-radius:11px;padding:12px}.category-dependency-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;margin-bottom:9px}.category-dependency-title{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.category-dependency-filter{display:flex;gap:5px;flex-wrap:wrap;margin:7px 0 10px}.category-dependency-table{width:100%;border-collapse:collapse}.category-dependency-table th,.category-dependency-table td{padding:7px 8px;border-top:1px solid var(--line);font-size:12px;vertical-align:middle;text-align:left}.category-dependency-table th{background:#f8fafc;color:#475569;font-size:11px}.category-dependency-kind{font-weight:750;white-space:nowrap}.category-dependency-object{font-weight:750}.category-dependency-path{color:#64748b;font-size:11px}.category-return-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:9px 11px;margin:-6px 0 12px;border:1px solid #bfdbfe;background:#eff6ff;border-radius:10px;color:#1e3a8a;font-size:12px}.category-return-bar .return-actions{display:flex;gap:6px}.category-period-note{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}.category-period-note .coverage-warn{color:#92400e;font-weight:700}
 .category-actions-menu{position:relative;display:inline-block}.category-actions-menu>summary{list-style:none}.category-actions-menu>summary::-webkit-details-marker{display:none}.category-actions-popover{position:absolute;right:0;top:calc(100% + 4px);z-index:30;min-width:190px;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 12px 28px rgba(15,23,42,.14);padding:5px}.category-actions-popover button{display:block;width:100%;border:0;background:#fff;text-align:left;padding:8px 9px;border-radius:7px;cursor:pointer;color:var(--text)}.category-actions-popover button:hover:not(:disabled){background:#f3f4f6}.category-actions-popover button:disabled{color:#9ca3af;cursor:not-allowed}.category-actions-popover button.danger{color:#991b1b}
 .category-action-row td{padding:0!important;border-top:0!important}.category-action-panel{margin:0 8px 8px;border:1px solid #bfdbfe;background:#f8fbff;border-radius:10px;padding:12px}.category-action-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:10px}.category-action-grid{display:grid;grid-template-columns:repeat(4,minmax(120px,1fr));gap:7px;margin:9px 0}.category-impact{border:1px solid var(--line);background:#fff;border-radius:9px;padding:8px}.category-impact .value{font-size:17px;font-weight:780;margin-top:2px}.category-action-form{display:grid;grid-template-columns:minmax(220px,1fr) auto;gap:8px;align-items:end}.category-action-warning{padding:8px 10px;border-radius:9px;background:#fffbeb;border:1px solid #fde68a;color:#92400e;margin-top:8px}.category-action-ok{padding:8px 10px;border-radius:9px;background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;margin-top:8px}
 
@@ -115,7 +116,7 @@
 
   <div id="appView" class="hidden">
     <div class="top">
-      <div class="brand"><h1>Dashboard Budget Familiare</h1><small>V71.4.4 · Ambito categoria anche massivo</small></div>
+      <div class="brand"><h1>Dashboard Budget Familiare</h1><small data-app-version>—</small></div>
       <div class="userbar"><span id="userEmail"></span><button id="refreshBtn" class="btn ghost">Aggiorna</button><button id="logoutBtn" class="btn ghost">Esci</button></div>
     </div>
     <datalist id="v62CounterpartyOptions"></datalist>
@@ -127,6 +128,7 @@
       <button class="tab" data-tab="catalogs">Anagrafiche</button>
       <a class="tab" href="reporting/">Reporting</a>
     </div>
+    <div id="categoryReturnBar" class="category-return-bar hidden"></div>
 
     <section id="tab-overview">
       <div class="grid overview-kpis">
@@ -388,7 +390,7 @@
       <div class="grid catalog-grid">
         <div class="catalog-panel active" data-catalog-panel="categories">
           <div class="card stack catalog-card category-v71">
-            <div class="catalog-intro"><div><h2 style="margin:0 0 4px">Categorie · Gestione V71.4.1</h2><div class="muted small">L1 solo strutturali, L2 assegnabili. Le dropdown usano gli L1 come intestazioni e impediscono la creazione di L3.</div></div></div>
+            <div class="catalog-intro"><div><h2 style="margin:0 0 4px">Categorie</h2><div class="muted small">L1 solo strutturali, L2 assegnabili. Le dropdown usano gli L1 come intestazioni e impediscono la creazione di L3.</div></div></div>
             <div class="catalog-form">
               <div class="small" style="font-weight:750;margin-bottom:8px">Nuova categoria</div>
               <div class="editor-row">
@@ -423,6 +425,11 @@
             <div class="catalog-toolbar category-v71-toolbar">
               <input id="categorySearch" class="input" placeholder="Cerca categoria..." />
               <select id="categoryL1Filter" class="select"><option value="">Tutti gli L1</option></select>
+              <select id="categoryDependencyFilter" class="select">
+                <option value="">Tutte le dipendenze</option>
+                <option value="WITH">Con dipendenze</option>
+                <option value="WITHOUT">Senza dipendenze</option>
+              </select>
               <button id="expandAllCategories" class="hidden" type="button">Espandi</button>
               <button id="collapseAllCategories" class="hidden" type="button">Comprimi</button>
             </div>
@@ -544,7 +551,7 @@
         <div class="catalog-panel" data-catalog-panel="mcc">
           <div class="card stack catalog-card">
             <div class="catalog-intro"><div><h2 style="margin:0 0 4px">Codici MCC</h2><div class="muted small">Tutti gli MCC presenti nei movimenti, anche quelli non ancora configurati. Per ogni codice vedi descrizione, numero di movimenti e categoria automatica.</div></div></div>
-            <div class="rule-help">Configura una categoria per un MCC e verrà proposta automaticamente ai nuovi movimenti. Per gli MCC già configurati usa <strong>Modifica</strong> per cambiare categoria. Il pulsante <strong>Movimenti</strong> mostra il dettaglio dei movimenti collegati. In V60 un MCC configurato può avviare il bootstrap sicuro di controparte + alias + categoria predefinita. Gli MCC non configurati restano esplicitamente <strong>Da classificare</strong>.</div>
+            <div class="rule-help">Configura una categoria per un MCC e verrà proposta automaticamente ai nuovi movimenti. Per gli MCC già configurati usa <strong>Modifica</strong> per cambiare categoria. Il pulsante <strong>Movimenti</strong> mostra il dettaglio dei movimenti collegati. Un MCC configurato può avviare il bootstrap sicuro di controparte + alias + categoria predefinita. Gli MCC non configurati restano esplicitamente <strong>Da classificare</strong>.</div>
             <div class="catalog-toolbar">
               <input id="mccSearch" class="input" placeholder="Filtra per codice, descrizione o categoria..." />
               <select id="mccStatusFilter" class="select"><option value="">Tutti</option><option value="MAPPED">Configurati</option><option value="UNMAPPED">Da configurare</option><option value="ACTIVE">Attivi</option><option value="INACTIVE">Disattivati</option></select>
@@ -621,7 +628,7 @@
 </div>
 <script>
 const sb=window.appSupabase;
-let overview=null,catData=null,coherenceData=null,engineStatus=null,duplicateSuggestions=[],selectedRow=null,splitData=null,viewMode='list',sortKey='transaction_date',sortDir='desc',catalogTab='categories',deepLinkHandled=false,categoryViewMode='OPERATIONAL',categoryActionState=null,categoryCounterpartyState=null,categoryL1ExpandedId=null,categoryL2SortKey='VALUE',categoryL2SortDir='desc',categoryAuditPeriod='12M',categoryAuditLoading=false,analysisDirection='EXPENSE',analysisDirectionLoading=false,categoryTableSortKey='NAME',categoryTableSortDir='asc',movementCategoryScopeIds=null,movementCategoryScopeLabel='';
+let overview=null,catData=null,coherenceData=null,engineStatus=null,duplicateSuggestions=[],selectedRow=null,splitData=null,viewMode='list',sortKey='transaction_date',sortDir='desc',catalogTab='categories',deepLinkHandled=false,categoryDeepLinkHandled=false,categoryViewMode='OPERATIONAL',categoryActionState=null,categoryCounterpartyState=null,categoryDependencyState=null,categoryReturnState=null,categoryL1ExpandedId=null,categoryL2SortKey='VALUE',categoryL2SortDir='desc',categoryAuditPeriod='12M',categoryAuditLoading=false,analysisDirection='EXPENSE',analysisDirectionLoading=false,categoryTableSortKey='NAME',categoryTableSortDir='asc',movementCategoryScopeIds=null,movementCategoryScopeLabel='';
 const catalogSort={categories:{key:'label',dir:'asc'},merchants:{key:'name',dir:'asc'},projects:{key:'name',dir:'asc'},tags:{key:'name',dir:'asc'},mcc:{key:'mcc_code',dir:'asc'},rules:{key:'priority',dir:'desc'},parsing:{key:'priority',dir:'desc'}};
 const expandedGroups=new Set();
 const expandedCategoryGroups=new Set();
@@ -755,6 +762,7 @@ async function loadMovementsData(){
     duplicateSuggestions=duplicates||[];
     renderMovementsPage();
     renderCatalogs();
+    openCategoryDeepLinkFromUrl();
     openMovementFromUrl();
   }catch(e){
     console.error(e);
@@ -1484,7 +1492,7 @@ function renderClassificationSuggestion(){
   if(alias)parts.push('Controparte proposta: <strong>'+esc(alias)+'</strong> · '+esc(source)+' · affidabilità '+esc(q.label));
   else parts.push('<strong>Controparte non rilevata.</strong> '+esc(source)+' non è considerata una sorgente alias affidabile; usa causale/tipo/descrizione in una regola oppure correggi il parsing.');
   parts.push(esc(mccStatusText(row)));
-  if(st.key==='DA_REVISIONARE')parts.push('<strong>V60:</strong> i fallback MCC affidabili vengono trasformati in controparte + alias + categoria predefinita; restano in review solo conflitti o candidati non sicuri.');
+  if(st.key==='DA_REVISIONARE')parts.push('I fallback MCC affidabili vengono trasformati in controparte + alias + categoria predefinita; restano in review solo conflitti o candidati non sicuri.');
   el.innerHTML='<div class="classification-priority '+(st.key==='DA_CLASSIFICARE'?'danger':'warn')+'">'+esc(title)+'</div><div style="margin-top:4px">'+parts.join('<br>')+'</div>';
   el.classList.toggle('danger',st.key==='DA_CLASSIFICARE');el.classList.remove('hidden');
 }
@@ -2183,13 +2191,23 @@ function categoryAuditFrequencyHtml(m){
   const detail=(m.months||[]).filter(x=>x.active).map(x=>String(x.month||'').slice(0,7)).join(', ');
   return '<span class="category-frequency-compact '+categoryFrequencyClass(m)+'" title="'+esc((detail?'Mesi attivi: '+detail+'. ':'')+'Rosso <25%, giallo 25–49%, verde ≥50%')+'"><span class="frequency-dot"></span>'+nfmt(active)+'/'+nfmt(denom)+' · '+nfmt(pct)+'%</span>';
 }
-function categoryAuditDepsHtml(m){
+function categoryAuditDepsHtml(m,categoryId,includeDescendants=false){
   if(!m)return '<span class="muted">—</span>';
-  const cp=Number(m.merchant_defaults||0),rules=Number(m.rules||0),mcc=Number(m.mcc||0),splits=Number(m.splits||0),rep=Number(m.reporting_refs||0),boot=Number(m.bootstrap_refs||0),total=Number(m.dependency_count||0);
-  const title='Controparti default '+cp+' · Regole '+rules+' · MCC '+mcc+' · Split '+splits+' · Reporting '+rep+' · Bootstrap '+boot;
-  if(!total)return '<span class="muted small" title="'+esc(title)+'">0 rif.</span>';
-  const short=['CP '+nfmt(cp),rules?'R '+nfmt(rules):'',mcc?'MCC '+nfmt(mcc):'',splits?'S '+nfmt(splits):'',rep?'Rep '+nfmt(rep):''].filter(Boolean).join(' · ');
-  return '<span class="audit-deps-compact" title="'+esc(title)+'"><strong>'+nfmt(total)+' rif.</strong>'+(short?' · '+short:'')+'</span>';
+  const items=[
+    ['COUNTERPARTY','Controparti',Number(m.merchant_defaults||0)],
+    ['RULE','Regole',Number(m.rules||0)],
+    ['MCC','MCC',Number(m.mcc||0)],
+    ['SPLIT','Split',Number(m.splits||0)],
+    ['REPORTING','Reporting',Number(m.reporting_refs||0)],
+    ['BOOTSTRAP','Bootstrap',Number(m.bootstrap_refs||0)]
+  ].filter(x=>x[2]>0);
+  const total=Number(m.dependency_count||0);
+  if(!total)return '<span class="muted small">—</span>';
+  const desc=includeDescendants?'1':'0';
+  return '<span class="audit-deps-compact">'+
+    '<button type="button" class="dep-total" data-category-deps="'+esc(categoryId)+'" data-deps-desc="'+desc+'" data-deps-type="ALL">'+nfmt(total)+' '+(total===1?'dipendenza':'dipendenze')+' ›</button>'+
+    items.map(x=>'<button type="button" class="dep-chip" data-category-deps="'+esc(categoryId)+'" data-deps-desc="'+desc+'" data-deps-type="'+x[0]+'">'+esc(x[1])+' '+nfmt(x[2])+'</button>').join('')+
+  '</span>';
 }
 function categoryL1Name(cat){return cat?.level1_name||cat?.name||'—'}
 function categoryOperationalName(cat){
@@ -2244,10 +2262,15 @@ function categoryL1Rows(){
   });
 }
 function visibleCategoryRows(){
-  const q=($('categorySearch')?.value||'').trim().toLowerCase(),l1=$('categoryL1Filter')?.value||'';
+  const q=($('categorySearch')?.value||'').trim().toLowerCase(),l1=$('categoryL1Filter')?.value||'',deps=$('categoryDependencyFilter')?.value||'';
   let rows=categoryViewMode==='L1'?categoryL1Rows():categoryOperationalRows();
   rows=rows.filter(categoryDirectionRowVisible);
-  rows=rows.filter(r=>(!q||textSearchMatches([r.l1,r.name,categoryLabel(r.cat)].join(' '),q))&&(!l1||r.l1===l1));
+  rows=rows.filter(r=>{
+    const depCount=Number(r.metric?.dependency_count||0);
+    return (!q||textSearchMatches([r.l1,r.name,categoryLabel(r.cat)].join(' '),q))
+      &&(!l1||r.l1===l1)
+      &&(!deps||(deps==='WITH'?depCount>0:depCount===0));
+  });
   return categoryAuditSortRows(rows);
 }
 function renderCategoryAuditKpis(){
@@ -2413,6 +2436,7 @@ function toggleCategoryL1Drilldown(id){
   categoryL1ExpandedId=same?null:id;
   categoryActionState=null;
   categoryCounterpartyState=null;
+  categoryDependencyState=null;
   renderCategoriesCatalog();
   if(!same)requestAnimationFrame(()=>document.querySelector('.category-l2-panel')?.scrollIntoView({behavior:'smooth',block:'nearest'}));
 }
@@ -2432,7 +2456,7 @@ function categoryL2PanelHtml(l1Row){
   const childCount=rows.filter(r=>r.kind==='L2').length;
   const body=rows.map(r=>{
     const m=r.metric||{},raw=r.raw||{},isDirect=r.kind==='DIRECT_L1';
-    const selected=(categoryActionState&&String(categoryActionState.id)===String(r.cat.id))||(categoryCounterpartyState&&String(categoryCounterpartyState.id)===String(r.cat.id));
+    const selected=(categoryActionState&&String(categoryActionState.id)===String(r.cat.id))||(categoryCounterpartyState&&String(categoryCounterpartyState.id)===String(r.cat.id))||categoryDependencyStateMatches(r.cat.id,false);
     const cpButton='<button type="button" class="category-counterparty-link '+(Number(m.counterparty_count||0)===0?'zero':'')+'" data-category-l2-counterparties="'+r.cat.id+'" data-direct-only="'+(isDirect?'1':'0')+'" title="Apri elenco controparti">'+nfmt(m.counterparty_count||0)+'</button>';
     const actions=isDirect
       ?'<button type="button" class="btn ghost compact" data-category-l2-direct-movements="'+r.cat.id+'">Apri movimenti</button>'
@@ -2442,6 +2466,8 @@ function categoryL2PanelHtml(l1Row){
       inline='<tr class="category-action-row"><td colspan="8">'+categoryActionPanelHtml(r.cat,categoryActionState.action)+'</td></tr>';
     }else if(categoryCounterpartyState&&String(categoryCounterpartyState.id)===String(r.cat.id)){
       inline='<tr class="category-action-row"><td colspan="8">'+categoryCounterpartyPanelHtml(r.cat)+'</td></tr>';
+    }else if(categoryDependencyStateMatches(r.cat.id,false)){
+      inline='<tr class="category-action-row"><td colspan="8">'+categoryDependencyPanelHtml(r.cat)+'</td></tr>';
     }
     return '<tr class="category-l2-data-row '+(isDirect?'category-direct-row ':'')+(selected?'category-l2-row-selected':'')+'" data-search="'+esc(String(r.name||'').toLowerCase())+'">'+
       '<td><div class="category-l2-name"><span class="mini-icon">'+(isDirect?'↳':esc(categoryL1Icon(r.name)))+'</span>'+esc(r.name)+(Number(raw.child_count||0)>0?'<span class="pill">'+nfmt(raw.child_count)+' L3</span>':'')+'</div></td>'+
@@ -2450,7 +2476,7 @@ function categoryL2PanelHtml(l1Row){
       '<td>'+categoryAuditFrequencyHtml(m)+'</td>'+
       '<td>'+(m.last_used?esc(m.last_used):'<span class="muted">mai</span>')+'</td>'+
       '<td>'+cpButton+'</td>'+
-      '<td>'+categoryAuditDepsHtml(m)+'</td>'+
+      '<td>'+categoryAuditDepsHtml(m,r.cat.id,false)+'</td>'+
       '<td>'+actions+'</td></tr>'+inline;
   }).join('');
   const m=l1Row.metric||{};
@@ -2492,7 +2518,8 @@ function renderCategoriesCatalog(){
   const body=rows.map(r=>{
     const m=r.metric||{},raw=r.raw||{},empty=Number(raw.movement_count||0)===0&&Number(raw.dependency_count||0)===0&&Number(raw.child_count||0)===0;
     const l1Expanded=categoryViewMode==='L1'&&String(categoryL1ExpandedId||'')===String(r.cat.id);
-    const selected=(categoryActionState&&String(categoryActionState.id)===String(r.cat.id))||(categoryCounterpartyState&&String(categoryCounterpartyState.id)===String(r.cat.id))||l1Expanded;
+    const depDesc=categoryViewMode==='L1';
+    const selected=(categoryActionState&&String(categoryActionState.id)===String(r.cat.id))||(categoryCounterpartyState&&String(categoryCounterpartyState.id)===String(r.cat.id))||categoryDependencyStateMatches(r.cat.id,depDesc)||l1Expanded;
     const prefix=categoryViewMode==='L1'
       ?'<td><div style="display:flex;align-items:center;gap:5px"><button type="button" class="category-l1-toggle '+(l1Expanded?'open':'')+'" data-category-l1-toggle="'+r.cat.id+'" title="'+(l1Expanded?'Comprimi L2':'Esplora categorie L2')+'">'+(l1Expanded?'▾':'›')+'</button>'+categoryL1Badge(r.cat.name)+'</div></td><td><button type="button" class="category-counterparty-link zero" data-category-l1-toggle="'+r.cat.id+'" title="Esplora categorie L2">'+nfmt(categoryL2RowsForL1(r.cat.id).filter(x=>x.kind==='L2').length)+'</button></td>'
       :'<td>'+categoryL1Badge(r.l1)+'</td><td><div class="cat-main">'+esc(r.name)+(r.kind==='DIRECT'?'<span class="direct-badge">uso diretto L1</span>':'')+(empty?'<span class="category-empty-badge">Vuota</span>':'')+'</div></td>';
@@ -2502,6 +2529,8 @@ function renderCategoriesCatalog(){
       inline='<tr class="category-action-row"><td colspan="9">'+categoryActionPanelHtml(r.cat,categoryActionState.action)+'</td></tr>';
     }else if(categoryCounterpartyState&&String(categoryCounterpartyState.id)===String(r.cat.id)){
       inline='<tr class="category-action-row"><td colspan="9">'+categoryCounterpartyPanelHtml(r.cat)+'</td></tr>';
+    }else if(categoryDependencyStateMatches(r.cat.id,depDesc)){
+      inline='<tr class="category-action-row"><td colspan="9">'+categoryDependencyPanelHtml(r.cat)+'</td></tr>';
     }else if(l1Expanded){
       inline='<tr class="category-action-row"><td colspan="9">'+categoryL2PanelHtml(r)+'</td></tr>';
     }
@@ -2511,14 +2540,14 @@ function renderCategoriesCatalog(){
       '<td>'+categoryAuditFrequencyHtml(m)+'</td>'+
       '<td>'+(m.last_used?esc(m.last_used):'<span class="muted">mai</span>')+'</td>'+
       '<td>'+cpButton+'</td>'+
-      '<td>'+categoryAuditDepsHtml(m)+'</td>'+
+      '<td>'+categoryAuditDepsHtml(m,r.cat.id,depDesc)+'</td>'+
       '<td>'+categoryActionsMenu(r)+'</td></tr>'+inline;
   }).join('');
   $('categoriesTable').innerHTML=categoryPeriodNoteHtml()+'<div class="muted small" style="margin:0 0 7px">'+nfmt(rows.length)+' righe · '+(categoryViewMode==='L1'?'aggregazione L1 · clicca ▸ per esplorare le L2':'categorie operative cross-L1')+' · '+esc(analysisDirectionLabel())+' · '+esc(categoryPeriodLabel())+'</div><div class="category-flat-wrap"><table class="table category-flat-table"><thead>'+head+'</thead><tbody>'+(body||'<tr><td colspan="9" class="muted">Nessuna categoria con i filtri selezionati.</td></tr>')+'</tbody></table></div>';
 }
 async function loadCategoryAuditPeriod(period){
   const next=period||'12M';if(categoryAuditLoading||next===categoryAuditPeriod)return;
-  categoryAuditLoading=true;categoryAuditPeriod=next;categoryActionState=null;categoryCounterpartyState=null;categoryL1ExpandedId=null;renderCategoriesCatalog();
+  categoryAuditLoading=true;categoryAuditPeriod=next;categoryActionState=null;categoryCounterpartyState=null;categoryDependencyState=null;categoryL1ExpandedId=null;renderCategoriesCatalog();
   try{
     catData.categoryAudit=await rpc('dashboard_category_audit_v5',{p_period:categoryAuditPeriod,p_direction:analysisDirection})||{summary:{},rows:[],period:{},direction:analysisDirection};
   }catch(e){
@@ -2549,8 +2578,121 @@ function closeCategoryCounterparties(render=true){
   categoryCounterpartyState=null;
   if(render)renderCategoriesCatalog();
 }
-function openCategoryMovements(id,includeDescendants=false,merchantId=null){
+function categoryDependencyStateMatches(id,includeDescendants){
+  return !!categoryDependencyState
+    && String(categoryDependencyState.id)===String(id)
+    && !!categoryDependencyState.includeDescendants===!!includeDescendants;
+}
+function dependencyTypeLabel(type){
+  return ({ALL:'Tutte',COUNTERPARTY:'Controparti',RULE:'Regole',MCC:'MCC',SPLIT:'Split',REPORTING:'Reporting',BOOTSTRAP:'Bootstrap MCC'})[type]||type||'Dipendenze';
+}
+function dependencyActionLabel(kind){
+  return ({MERCHANT:'Modifica controparte',RULE:'Modifica regola',MCC:'Apri MCC',MOVEMENT:'Apri movimento',REPORTING:'Apri Reporting'})[kind]||'';
+}
+function renderCategoryReturnBar(){
+  const bar=$('categoryReturnBar');if(!bar)return;
+  const st=categoryReturnState;
+  if(!st){bar.classList.add('hidden');bar.innerHTML='';return}
+  const cat=categoryById(st.id);
+  bar.classList.remove('hidden');
+  bar.innerHTML='<span>Stai modificando una dipendenza di <strong>'+esc(cat?categoryLabel(cat):st.label||'categoria')+'</strong>.</span>'+
+    '<span class="return-actions"><button type="button" class="btn compact" data-return-category-dependency>← Torna alle dipendenze</button><button type="button" class="btn ghost compact" data-dismiss-category-return>Chiudi</button></span>';
+}
+function rememberCategoryDependencyReturn(){
+  if(!categoryDependencyState)return;
+  categoryReturnState={
+    id:categoryDependencyState.id,
+    includeDescendants:!!categoryDependencyState.includeDescendants,
+    type:categoryDependencyState.type||'ALL',
+    label:categoryDependencyState.data?.category_path||categoryLabel(categoryById(categoryDependencyState.id))
+  };
+  renderCategoryReturnBar();
+}
+async function openCategoryDependencies(id,includeDescendants=false,type='ALL'){
+  const cat=categoryById(id);if(!cat)return;
   categoryActionState=null;categoryCounterpartyState=null;
+  if(includeDescendants)categoryL1ExpandedId=null;
+  categoryDependencyState={id:cat.id,includeDescendants:!!includeDescendants,type:type||'ALL',loading:true,error:null,data:null};
+  renderCategoriesCatalog();
+  try{
+    const data=await rpc('dashboard_category_dependencies_v1',{p_category_id:cat.id,p_include_descendants:!!includeDescendants});
+    if(!categoryDependencyStateMatches(cat.id,includeDescendants))return;
+    categoryDependencyState.data=data||{rows:[],counts:{},total:0};categoryDependencyState.loading=false;
+  }catch(e){
+    if(categoryDependencyStateMatches(cat.id,includeDescendants)){categoryDependencyState.loading=false;categoryDependencyState.error=e.message}
+  }
+  renderCategoriesCatalog();
+  requestAnimationFrame(()=>document.querySelector('.category-dependency-panel')?.scrollIntoView({behavior:'smooth',block:'nearest'}));
+}
+function toggleCategoryDependencies(id,includeDescendants=false,type='ALL'){
+  if(categoryDependencyStateMatches(id,includeDescendants)){
+    if((categoryDependencyState.type||'ALL')===(type||'ALL')){categoryDependencyState=null;renderCategoriesCatalog();return}
+    categoryDependencyState.type=type||'ALL';renderCategoriesCatalog();return;
+  }
+  openCategoryDependencies(id,includeDescendants,type);
+}
+function categoryDependencyPanelHtml(cat){
+  const st=categoryDependencyState;
+  if(!st||String(st.id)!==String(cat.id))return '';
+  if(st.loading)return '<div class="category-dependency-panel"><div class="category-inline-loading"><span class="spinner"></span>Caricamento dipendenze…</div></div>';
+  if(st.error)return '<div class="category-dependency-panel"><div class="msg error">'+esc(st.error)+'</div></div>';
+  const d=st.data||{},all=d.rows||[],type=st.type||'ALL',rows=type==='ALL'?all:all.filter(x=>x.type===type),counts=d.counts||{};
+  const types=[['ALL','Tutte',Number(d.total||0)],['COUNTERPARTY','Controparti',Number(counts.COUNTERPARTY||0)],['RULE','Regole',Number(counts.RULE||0)],['MCC','MCC',Number(counts.MCC||0)],['SPLIT','Split',Number(counts.SPLIT||0)],['REPORTING','Reporting',Number(counts.REPORTING||0)],['BOOTSTRAP','Bootstrap MCC',Number(counts.BOOTSTRAP||0)]].filter(x=>x[0]==='ALL'||x[2]>0);
+  const body=rows.map(row=>{
+    const idx=all.indexOf(row),actionLabel=dependencyActionLabel(row.action_kind);
+    return '<tr><td><span class="category-dependency-kind">'+esc(row.type_label||dependencyTypeLabel(row.type))+'</span></td>'+
+      '<td><div class="category-dependency-object">'+esc(row.name||'—')+'</div><div class="category-dependency-path">'+esc(row.source_category_path||'')+'</div></td>'+
+      '<td>'+esc(row.detail||'—')+'</td>'+
+      '<td>'+(actionLabel?'<button type="button" class="btn ghost compact" data-category-dep-open="'+idx+'">'+esc(actionLabel)+'</button>':(row.action_kind==='LEGACY_RULE'?'<span class="muted small">Riferimento legacy</span>':'<span class="muted">—</span>'))+'</td></tr>';
+  }).join('');
+  return '<div class="category-dependency-panel">'+
+    '<div class="category-dependency-head"><div class="category-dependency-title"><strong>Dipendenze di '+esc(d.category_path||cat.name)+'</strong><span class="pill">'+nfmt(d.total||0)+' totali</span>'+(st.includeDescendants?'<span class="pill">incluse L2</span>':'')+'</div><button type="button" class="btn ghost compact" data-category-deps-close>Chiudi</button></div>'+
+    '<div class="category-dependency-filter">'+types.map(x=>'<button type="button" class="dep-chip '+(type===x[0]?'active':'')+'" data-category-deps-filter="'+x[0]+'">'+esc(x[1])+' '+nfmt(x[2])+'</button>').join('')+'</div>'+
+    '<div class="table-wrap"><table class="category-dependency-table"><thead><tr><th>Tipo</th><th>Oggetto</th><th>Dettaglio</th><th>Azione</th></tr></thead><tbody>'+(body||'<tr><td colspan="4" class="muted">Nessuna dipendenza di questo tipo.</td></tr>')+'</tbody></table></div>'+
+  '</div>';
+}
+function returnToCategoryDependency(){
+  const st=categoryReturnState;if(!st)return;
+  categoryReturnState=null;renderCategoryReturnBar();
+  activateMainTab('catalogs');setCatalogTab('categories',false);
+  categoryViewMode=st.includeDescendants?'L1':'OPERATIONAL';
+  if($('categorySearch'))$('categorySearch').value='';
+  if($('categoryL1Filter'))$('categoryL1Filter').value='';
+  if($('categoryDependencyFilter'))$('categoryDependencyFilter').value='';
+  openCategoryDependencies(st.id,st.includeDescendants,st.type||'ALL');
+}
+function openCategoryDependencyTarget(index){
+  const st=categoryDependencyState,row=st?.data?.rows?.[Number(index)];if(!st||!row)return;
+  rememberCategoryDependencyReturn();
+  const kind=row.action_kind,key=row.action_key;
+  if(kind==='MERCHANT'){activateMainTab('catalogs');editMerchant(key);return}
+  if(kind==='RULE'){activateMainTab('catalogs');editCompoundRule(key);return}
+  if(kind==='MCC'){
+    activateMainTab('catalogs');setCatalogTab('mcc',false);$('mccSearch').value=key||'';editingMccCodes.add(String(key));renderMccCatalog();
+    requestAnimationFrame(()=>document.querySelector('[data-mcc-row="'+CSS.escape(String(key||''))+'"]')?.scrollIntoView({behavior:'smooth',block:'center'}));return;
+  }
+  if(kind==='MOVEMENT'){
+    const movement=(catData?.movements||[]).find(x=>String(x.id)===String(key));
+    if(movement){activateMainTab('categorization');openClassify(movement)}return;
+  }
+  if(kind==='REPORTING'){
+    const meta=row.metadata||{},direction=meta.direction||(String(row.source_category_path||'').startsWith('Entrate')?'INCOME':'EXPENSE');
+    const p=new URLSearchParams({category:String(key),direction:String(direction),returnCategory:String(st.id),returnDesc:st.includeDescendants?'1':'0',returnType:String(st.type||'ALL')});
+    window.location.href='reporting/?'+p.toString();return;
+  }
+}
+function openCategoryDeepLinkFromUrl(){
+  if(categoryDeepLinkHandled)return;
+  const p=new URLSearchParams(window.location.search),id=p.get('category');
+  if(!id||!categoryById(id))return;
+  categoryDeepLinkHandled=true;
+  activateMainTab('catalogs');setCatalogTab('categories',false);
+  const includeDesc=p.get('desc')==='1';
+  categoryViewMode=includeDesc?'L1':'OPERATIONAL';
+  if(p.get('dependencies')==='1')openCategoryDependencies(id,includeDesc,p.get('dependencyType')||'ALL');
+}
+function openCategoryMovements(id,includeDescendants=false,merchantId=null){
+  categoryActionState=null;categoryCounterpartyState=null;categoryDependencyState=null;
   clearMovementFilters();
   activateMainTab('categorization');
   if(includeDescendants){
@@ -2570,6 +2712,7 @@ async function toggleCategoryCounterparties(id,includeDescendantsOverride=null){
   const cat=categoryById(id);if(!cat)return;
   const includeDescendants=includeDescendantsOverride===null?(categoryViewMode==='L1'):!!includeDescendantsOverride;
   categoryActionState=null;
+  categoryDependencyState=null;
   categoryCounterpartyState={id:cat.id,includeDescendants,loading:true,error:null,data:null,sortKey:'VALUE',sortDir:'desc'};
   renderCategoriesCatalog();
   try{
@@ -2602,6 +2745,7 @@ function openCategoryAction(id,action){
   if(action==='MOVEMENTS'){openCategoryMovements(id,categoryViewMode==='L1');return}
   const cat=categoryById(id);if(!cat)return;
   categoryCounterpartyState=null;
+  categoryDependencyState=null;
   if(Number(cat.depth)===1)categoryL1ExpandedId=null;
   categoryActionState={id:cat.id,action,preview:null};
   renderCategoriesCatalog();
@@ -3184,16 +3328,21 @@ $('cancelQuickCounterparty').onclick=()=>{$('quickCounterpartyBox').classList.ad
 ['movementSearch','movementStatus','movementAutomation','movementBank','movementKind','movementType','movementDirection','movementCategory','movementProject','movementTag','movementDateFrom','movementDateTo'].forEach(id=>$(id).addEventListener(id==='movementSearch'?'input':'change',renderMovements));$('movementCounterpartySearch').addEventListener('input',applyMovementCounterpartySearch);$('movementCounterpartySearch').addEventListener('change',applyMovementCounterpartySearch);$('clearMovementFilters').onclick=clearMovementFilters;$('viewList').onclick=()=>{viewMode='list';renderMovements()};$('viewGrouped').onclick=()=>{viewMode='grouped';renderMovements()};$('bulkSelectVisible').onclick=selectVisibleMovements;$('bulkClearSelection').onclick=clearSelectedMovements;$('bulkApplyCategory').onclick=applyBulkCategory;
 $('movementsTable').addEventListener('click',e=>{const auto=e.target.closest('[data-automation-target]');if(auto){openAutomationTarget(auto.dataset.automationTarget,auto.dataset.automationId);return}const sort=e.target.closest('[data-sort]');if(sort){setSort(sort.dataset.sort);return}const edit=e.target.closest('[data-edit-movement]');if(edit){const row=(catData?.movements||[]).find(x=>x.id===edit.dataset.editMovement);if(row)openClassify(row);return}const tg=e.target.closest('[data-toggle-group]');if(tg){const g=(window.__groupRows||[])[Number(tg.dataset.toggleGroup)];if(!g)return;if(expandedGroups.has(g.key))expandedGroups.delete(g.key);else expandedGroups.add(g.key);renderMovements()}});
 $('movementsTable').addEventListener('change',e=>{const cb=e.target.closest('[data-select-movement]');if(!cb)return;cb.checked?selectedMovementIds.add(cb.dataset.selectMovement):selectedMovementIds.delete(cb.dataset.selectMovement);syncBulkSelectionUi()});
-['categorySearch','categoryL1Filter','merchantSearch','merchantL1Filter','merchantL2Filter','merchantStatusFilter','merchantRecencyFilter','projectSearch','projectTypeFilter','projectStatusFilter','tagSearch','tagStatusFilter','mccSearch','mccStatusFilter','compoundRuleSearch','compoundRuleStatusFilter','parsingRuleSearch'].forEach(id=>$(id)?.addEventListener(id.endsWith('Search')?'input':'change',renderCatalogs));[['classMerchantSearch','classMerchant'],['compoundRuleMerchantSearch','compoundRuleMerchant']].forEach(x=>bindCounterpartySearch(...x));$('expandAllCategories').onclick=()=>{(catData?.categories||[]).filter(x=>Number(x.depth)===1).forEach(x=>expandedCategoryGroups.add(x.level1_name||x.name));renderCategoriesCatalog()};$('collapseAllCategories').onclick=()=>{expandedCategoryGroups.clear();renderCategoriesCatalog()};
+['categorySearch','categoryL1Filter','categoryDependencyFilter','merchantSearch','merchantL1Filter','merchantL2Filter','merchantStatusFilter','merchantRecencyFilter','projectSearch','projectTypeFilter','projectStatusFilter','tagSearch','tagStatusFilter','mccSearch','mccStatusFilter','compoundRuleSearch','compoundRuleStatusFilter','parsingRuleSearch'].forEach(id=>$(id)?.addEventListener(id.endsWith('Search')?'input':'change',renderCatalogs));[['classMerchantSearch','classMerchant'],['compoundRuleMerchantSearch','compoundRuleMerchant']].forEach(x=>bindCounterpartySearch(...x));$('expandAllCategories').onclick=()=>{(catData?.categories||[]).filter(x=>Number(x.depth)===1).forEach(x=>expandedCategoryGroups.add(x.level1_name||x.name));renderCategoriesCatalog()};$('collapseAllCategories').onclick=()=>{expandedCategoryGroups.clear();renderCategoriesCatalog()};
 $('applyCounterpartyBulkCategory').onclick=applyCounterpartyBulkCategory;
 $('counterpartyBulkScope')?.addEventListener('change',syncCounterpartyBulkScopeNote);
 syncCounterpartyBulkScopeNote();
 $('selectVisibleCounterparties').onclick=()=>{for(const m of counterpartyFilteredRows())selectedCounterpartyIds.add(m.id);renderMerchantsCatalog()};
 $('clearSelectedCounterparties').onclick=()=>{selectedCounterpartyIds.clear();renderMerchantsCatalog()};
 $('clearMerchantFilters').onclick=()=>{['merchantSearch','merchantL1Filter','merchantL2Filter','merchantStatusFilter','merchantRecencyFilter'].forEach(id=>{if($(id))$(id).value=''});renderCatalogs()};
+$('categoryReturnBar').addEventListener('click',e=>{if(e.target.closest('[data-return-category-dependency]')){returnToCategoryDependency();return}if(e.target.closest('[data-dismiss-category-return]')){categoryReturnState=null;renderCategoryReturnBar()}});
 $('tab-catalogs').addEventListener('click',e=>{const ct=e.target.closest('[data-catalog-tab]');if(ct){setCatalogTab(ct.dataset.catalogTab);return}
+const dep=e.target.closest('[data-category-deps]');if(dep){toggleCategoryDependencies(dep.dataset.categoryDeps,dep.dataset.depsDesc==='1',dep.dataset.depsType||'ALL');return}
+const depf=e.target.closest('[data-category-deps-filter]');if(depf&&categoryDependencyState){categoryDependencyState.type=depf.dataset.categoryDepsFilter||'ALL';renderCategoriesCatalog();return}
+const depclose=e.target.closest('[data-category-deps-close]');if(depclose){categoryDependencyState=null;renderCategoriesCatalog();return}
+const depopen=e.target.closest('[data-category-dep-open]');if(depopen){openCategoryDependencyTarget(depopen.dataset.categoryDepOpen);return}
 const ad=e.target.closest('[data-analysis-direction]');if(ad){setAnalysisDirection(ad.dataset.analysisDirection);return}
-const cv=e.target.closest('[data-category-view]');if(cv){categoryViewMode=cv.dataset.categoryView||'OPERATIONAL';categoryActionState=null;categoryCounterpartyState=null;categoryL1ExpandedId=null;renderCategoriesCatalog();return}
+const cv=e.target.closest('[data-category-view]');if(cv){categoryViewMode=cv.dataset.categoryView||'OPERATIONAL';categoryActionState=null;categoryCounterpartyState=null;categoryDependencyState=null;categoryL1ExpandedId=null;renderCategoriesCatalog();return}
 const l1t=e.target.closest('[data-category-l1-toggle]');if(l1t){toggleCategoryL1Drilldown(l1t.dataset.categoryL1Toggle);return}
 const l2sort=e.target.closest('[data-category-l2-sort-key]');if(l2sort){const k=l2sort.dataset.categoryL2SortKey;if(categoryL2SortKey===k)categoryL2SortDir=categoryL2SortDir==='asc'?'desc':'asc';else{categoryL2SortKey=k;categoryL2SortDir=k==='NAME'?'asc':'desc'}renderCategoriesCatalog();return}
 const l2all=e.target.closest('[data-category-l2-open-all]');if(l2all){openCategoryMovements(l2all.dataset.categoryL2OpenAll,true);return}
