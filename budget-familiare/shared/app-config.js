@@ -1,5 +1,5 @@
 (function(){
-  const APP_VERSION='V71.5';
+  const APP_VERSION='V71.5.1';
   const APP_RELEASE='Dipendenze categorie e manutenzione rapida';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
