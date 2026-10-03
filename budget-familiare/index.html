@@ -746,7 +746,7 @@ async function loadMovementsData(){
       rpc('dashboard_rules_read_v1'),
       rpc('dashboard_counterparty_parsing_rules_read_v1'),
       rpc('dashboard_counterparty_duplicate_suggestions_v1').catch(()=>[]),
-      rpc('dashboard_category_audit_v5',{p_period:categoryAuditPeriod,p_direction:analysisDirection})
+      rpc('dashboard_category_audit_v6',{p_period:categoryAuditPeriod,p_direction:analysisDirection})
     ]);
     catData=base||{};
     catData.counterparties=counterparties||[];
@@ -2107,7 +2107,7 @@ async function setAnalysisDirection(direction){
   if($('categoriesTable'))$('categoriesTable').innerHTML='<div class="category-inline-loading"><span class="spinner"></span>Ricalcolo '+esc(analysisDirectionLabel().toLowerCase())+'…</div>';
   renderMerchantsCatalog();
   try{
-    catData.categoryAudit=await rpc('dashboard_category_audit_v5',{p_period:categoryAuditPeriod,p_direction:analysisDirection})||{summary:{},rows:[],period:{},direction:analysisDirection};
+    catData.categoryAudit=await rpc('dashboard_category_audit_v6',{p_period:categoryAuditPeriod,p_direction:analysisDirection})||{summary:{},rows:[],period:{},direction:analysisDirection};
   }catch(e){
     analysisDirection=previous;
     alert(e.message);
@@ -2317,7 +2317,7 @@ function categoryActionPanelHtml(cat,action){
   }else if(action==='MOVE'){
     body='<div class="category-action-form"><div class="field"><label>Nuova categoria padre</label><select id="categoryActionParent" class="select">'+categoryParentSelectHtml(cat)+'</select></div><button class="btn" type="button" data-category-action-save="MOVE">Salva spostamento</button></div><div class="note" style="margin-top:7px">Lo stesso ID viene mantenuto. Il backend blocca cicli e profondità oltre 3 livelli.</div>';
   }else if(action==='MERGE'){
-    body='<div class="category-action-form"><div class="field"><label>Categoria destinazione</label><select id="categoryMergeDestination" class="select">'+categoryDestinationSelectHtml(cat)+'</select></div><button id="categoryMergeConfirm" class="btn" type="button" data-category-action-save="MERGE" disabled>Conferma migrazione</button></div><div class="note" style="margin-top:7px">La sorgente resta vuota dopo la migrazione e non viene eliminata automaticamente.</div><div id="categoryMigrationPreview" style="margin-top:8px"><div class="muted">Scegli la destinazione per calcolare gli impatti.</div></div>';
+    body='<div class="category-action-form"><div class="field"><label>Categoria destinazione</label><select id="categoryMergeDestination" class="select">'+categoryDestinationSelectHtml(cat)+'</select></div><button id="categoryMergeConfirm" class="btn" type="button" data-category-action-save="MERGE" disabled>Conferma migrazione</button></div><div class="note" style="margin-top:7px">La sorgente resta vuota dopo la migrazione e non viene eliminata automaticamente. La pianificazione Reporting della categoria risultante ripartirà da zero.</div><div id="categoryMigrationPreview" style="margin-top:8px"><div class="muted">Scegli la destinazione per calcolare gli impatti.</div></div>';
   }else if(action==='DELETE'){
     const canDelete=Number(raw.child_count||0)===0&&Number(raw.movement_count||0)===0&&Number(raw.dependency_count||0)===0;
     body='<div class="'+(canDelete?'category-action-ok':'category-action-warning')+'">'+(canDelete?'Categoria vuota e senza dipendenze. Il backend ricontrollerà prima della cancellazione.':'Categoria non eliminabile: esistono ancora utilizzi, sottocategorie o dipendenze.')+'</div><div class="compact-actions" style="margin-top:8px"><button class="btn danger compact" type="button" data-category-action-save="DELETE" '+(canDelete?'':'disabled')+'>Elimina definitivamente</button></div>';
@@ -2541,7 +2541,7 @@ async function loadCategoryAuditPeriod(period){
   const next=period||'12M';if(categoryAuditLoading||next===categoryAuditPeriod)return;
   categoryAuditLoading=true;categoryAuditPeriod=next;categoryActionState=null;categoryCounterpartyState=null;categoryDependencyState=null;categoryL1ExpandedId=null;renderCategoriesCatalog();
   try{
-    catData.categoryAudit=await rpc('dashboard_category_audit_v5',{p_period:categoryAuditPeriod,p_direction:analysisDirection})||{summary:{},rows:[],period:{},direction:analysisDirection};
+    catData.categoryAudit=await rpc('dashboard_category_audit_v6',{p_period:categoryAuditPeriod,p_direction:analysisDirection})||{summary:{},rows:[],period:{},direction:analysisDirection};
   }catch(e){
     alert(e.message);categoryAuditPeriod=catData?.categoryAudit?.period?.key||'12M';
   }finally{
@@ -2576,10 +2576,10 @@ function categoryDependencyStateMatches(id,includeDescendants){
     && !!categoryDependencyState.includeDescendants===!!includeDescendants;
 }
 function dependencyTypeLabel(type){
-  return ({ALL:'Tutte',COUNTERPARTY:'Controparti',RULE:'Regole',MCC:'MCC',SPLIT:'Split',REPORTING:'Reporting',BOOTSTRAP:'Bootstrap MCC'})[type]||type||'Dipendenze';
+  return ({ALL:'Tutte',COUNTERPARTY:'Controparti',RULE:'Regole',MCC:'MCC',SPLIT:'Split',BOOTSTRAP:'Bootstrap MCC'})[type]||type||'Dipendenze';
 }
 function dependencyActionLabel(kind){
-  return ({MERCHANT:'Modifica controparte',RULE:'Modifica regola',MCC:'Apri MCC',MOVEMENT:'Apri movimento',REPORTING:'Apri Reporting'})[kind]||'';
+  return ({MERCHANT:'Modifica controparte',RULE:'Modifica regola',MCC:'Apri MCC',MOVEMENT:'Apri movimento'})[kind]||'';
 }
 function renderCategoryReturnBar(){
   const bar=$('categoryReturnBar');if(!bar)return;
@@ -2629,7 +2629,7 @@ function categoryDependencyPanelHtml(cat){
   if(st.loading)return '<div class="category-dependency-panel"><div class="category-inline-loading"><span class="spinner"></span>Caricamento dipendenze…</div></div>';
   if(st.error)return '<div class="category-dependency-panel"><div class="msg error">'+esc(st.error)+'</div></div>';
   const d=st.data||{},all=d.rows||[],type=st.type||'ALL',rows=type==='ALL'?all:all.filter(x=>x.type===type),counts=d.counts||{};
-  const types=[['ALL','Tutte',Number(d.total||0)],['COUNTERPARTY','Controparti',Number(counts.COUNTERPARTY||0)],['RULE','Regole',Number(counts.RULE||0)],['MCC','MCC',Number(counts.MCC||0)],['SPLIT','Split',Number(counts.SPLIT||0)],['REPORTING','Reporting',Number(counts.REPORTING||0)],['BOOTSTRAP','Bootstrap MCC',Number(counts.BOOTSTRAP||0)]].filter(x=>x[0]==='ALL'||x[2]>0);
+  const types=[['ALL','Tutte',Number(d.total||0)],['COUNTERPARTY','Controparti',Number(counts.COUNTERPARTY||0)],['RULE','Regole',Number(counts.RULE||0)],['MCC','MCC',Number(counts.MCC||0)],['SPLIT','Split',Number(counts.SPLIT||0)],['BOOTSTRAP','Bootstrap MCC',Number(counts.BOOTSTRAP||0)]].filter(x=>x[0]==='ALL'||x[2]>0);
   const body=rows.map(row=>{
     const idx=all.indexOf(row),actionLabel=dependencyActionLabel(row.action_kind);
     return '<tr><td><span class="category-dependency-kind">'+esc(row.type_label||dependencyTypeLabel(row.type))+'</span></td>'+
@@ -2666,11 +2666,6 @@ function openCategoryDependencyTarget(index){
   if(kind==='MOVEMENT'){
     const movement=(catData?.movements||[]).find(x=>String(x.id)===String(key));
     if(movement){activateMainTab('categorization');openClassify(movement)}return;
-  }
-  if(kind==='REPORTING'){
-    const meta=row.metadata||{},direction=meta.direction||(String(row.source_category_path||'').startsWith('Entrate')?'INCOME':'EXPENSE');
-    const p=new URLSearchParams({category:String(key),direction:String(direction),returnCategory:String(st.id),returnDesc:st.includeDescendants?'1':'0',returnType:String(st.type||'ALL')});
-    window.location.href='reporting/?'+p.toString();return;
   }
 }
 function openCategoryDeepLinkFromUrl(){
@@ -2752,7 +2747,7 @@ async function previewCategoryMigration(){
   try{
     const p=await rpc('dashboard_category_migration_preview_v1',{p_source_id:categoryActionState.id,p_destination_id:dest});
     categoryActionState.preview=p;
-    const i=p.impact||{},cf=p.conflicts||{};
+    const i=p.impact||{};
     box.innerHTML=
       '<div><strong>'+esc(p.source?.path||'')+'</strong> → <strong>'+esc(p.destination?.path||'')+'</strong></div>'+
       '<div class="category-action-grid">'+
@@ -2762,12 +2757,11 @@ async function previewCategoryMigration(){
         '<div class="category-impact"><div class="muted small">Regole</div><div class="value">'+nfmt(i.rules||0)+'</div></div>'+
         '<div class="category-impact"><div class="muted small">MCC</div><div class="value">'+nfmt(i.mcc||0)+'</div></div>'+
         '<div class="category-impact"><div class="muted small">Split</div><div class="value">'+nfmt(i.splits||0)+'</div></div>'+
-        '<div class="category-impact"><div class="muted small">Reporting</div><div class="value">'+nfmt(i.reporting_refs||0)+'</div></div>'+
         '<div class="category-impact"><div class="muted small">Bootstrap</div><div class="value">'+nfmt(i.bootstrap_refs||0)+'</div></div>'+
       '</div>'+
       (p.can_merge
         ?'<div class="category-action-ok"><strong>Operazione consentita.</strong> La migrazione è transazionale: tutto o niente.</div>'
-        :'<div class="category-action-warning"><strong>Migrazione bloccata.</strong> '+esc(p.block_reason||'Conflitto non risolto')+(Number(cf.reporting_settings||0)+Number(cf.expense_override_months||0)+Number(cf.income_override_months||0)?'<div class="small" style="margin-top:4px">Conflitti reporting: impostazioni '+nfmt(cf.reporting_settings||0)+' · mesi spesa '+nfmt(cf.expense_override_months||0)+' · mesi entrata '+nfmt(cf.income_override_months||0)+'</div>':'')+'</div>');
+        :'<div class="category-action-warning"><strong>Migrazione bloccata.</strong> '+esc(p.block_reason||'Conflitto non risolto')+'</div>');
     confirmBtn.disabled=!p.can_merge;
   }catch(e){box.innerHTML='<div class="msg error">'+esc(e.message)+'</div>';confirmBtn.disabled=true}
 }
@@ -2784,7 +2778,7 @@ async function saveCategoryAction(action){
       msg($('categoryMsg'),'Categoria spostata mantenendo lo stesso ID.');
     }else if(action==='MERGE'){
       const dest=$('categoryMergeDestination')?.value||'';if(!dest||!state.preview?.can_merge)return;
-      if(!confirm('Confermare la migrazione? Tutti i riferimenti della categoria sorgente verranno trasferiti alla destinazione. La sorgente resterà vuota.'))return;
+      if(!confirm('Confermare la migrazione? I riferimenti della categoria sorgente verranno trasferiti alla destinazione. La pianificazione Reporting della categoria risultante verrà azzerata. La sorgente resterà vuota.'))return;
       await rpc('dashboard_category_merge_v1',{p_source_id:cat.id,p_destination_id:dest});
       msg($('categoryMsg'),'Migrazione completata. La sorgente è rimasta vuota per il controllo finale.');
     }else if(action==='DELETE'){
