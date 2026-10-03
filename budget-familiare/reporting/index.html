@@ -6,6 +6,7 @@
 <title>Budget Familiare — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
 <script src="../shared/supabase-client.js"></script>
+<script src="../shared/app-config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 :root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#6b7280;--line:#e5e7eb;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 8px 24px rgba(15,23,42,.06)}
@@ -101,6 +102,7 @@ button,input,select{font:inherit}
 .detail-moves td:nth-child(3),.detail-moves td:nth-child(4){text-align:right}
 .plan-table th:nth-child(3),.plan-table td:nth-child(3){min-width:115px;text-align:left}
 .warning-list{margin:8px 0 10px}
+.report-return-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:9px 11px;margin:-6px 0 12px;border:1px solid #bfdbfe;background:#eff6ff;border-radius:10px;color:#1e3a8a;font-size:12px}.dependency-focus td{background:#eff6ff!important;box-shadow:inset 0 1px #93c5fd,inset 0 -1px #93c5fd}.dependency-focus td:first-child{box-shadow:inset 3px 0 #2563eb,inset 0 1px #93c5fd,inset 0 -1px #93c5fd}
 </style>
 </head>
 <body>
@@ -116,13 +118,14 @@ button,input,select{font:inherit}
 
   <div id="appView" class="hidden">
     <div class="top">
-      <div class="brand"><h1>Reporting Budget Familiare</h1><small>V69 · Pianificazione e analisi spesa</small></div>
+      <div class="brand"><h1>Reporting Budget Familiare</h1><small data-app-version>—</small></div>
       <div class="userbar"><span id="userEmail"></span><button id="refreshBtn" class="btn ghost">Aggiorna</button><button id="logoutBtn" class="btn ghost">Esci</button></div>
     </div>
     <div class="tabs">
       <a class="tab" href="../">Dashboard</a>
       <a class="tab active" href="./">Reporting</a>
     </div>
+    <div id="reportReturnBar" class="report-return-bar hidden"></div>
 
     <div id="reportMsg"></div>
 
@@ -175,7 +178,7 @@ button,input,select{font:inherit}
           <label class="small">Margine imprevisti <input id="marginPct" class="input" type="number" min="0" max="100" step="0.5" style="width:82px" /> %</label>
           <button id="saveMargin" class="btn ghost compact">Salva margine</button>
         </div>
-        <div class="notice" style="margin-bottom:10px"><strong>V68:</strong> spese ed entrate straordinarie sono escluse dai suggerimenti automatici. Le entrate sono pianificate per categoria L2 con Media 6m, Media 12m, Stesso mese A-1 o Mediana 12m. Gli importi del reporting sono mostrati in euro interi.</div>
+        <div class="notice" style="margin-bottom:10px">Spese ed entrate straordinarie sono escluse dai suggerimenti automatici. Le entrate sono pianificate per categoria L2 con Media 6m, Media 12m, Stesso mese A-1 o Mediana 12m. Gli importi del reporting sono mostrati in euro interi.</div>
         <div id="incomeExceptions"></div>
         <div id="planMsg"></div>
         <div class="plan-wrap"><table class="plan-table"><thead id="planHead"></thead><tbody id="planBody"></tbody></table></div>
@@ -230,6 +233,7 @@ let categoryDetailMode="TREND";
 let categoryDetailFocus=null;
 let categoryDetailComponent=null;
 let planMode="PLAN";
+let reportDeepLinkHandled=false;
 const collapsedL1=new Set();
 
 const $=function(id){return document.getElementById(id)};
@@ -264,6 +268,7 @@ async function loadReport(){
     report=data[0]||{};
     report.cashflow_monthly=data[1]||[];
     renderAll();
+    openReportingFromUrl();
   }catch(e){
     console.error(e);
     msg($("reportMsg"),e.message||"Errore nel caricamento reporting",true);
@@ -718,6 +723,44 @@ function renderMode(){
 }
 function renderAll(){
   renderKpis();renderExpenseChart();renderCashflowChart();renderBalances();renderExtraordinary();renderMode();renderProjection();
+}
+function renderReportReturnBar(params){
+  const bar=$("reportReturnBar");if(!bar)return;
+  const returnCategory=params&&params.get("returnCategory");
+  if(!returnCategory){bar.classList.add("hidden");bar.innerHTML="";return}
+  const desc=params.get("returnDesc")==="1"?"1":"0",type=params.get("returnType")||"ALL";
+  const back=new URLSearchParams({category:returnCategory,dependencies:"1",desc:desc,dependencyType:type});
+  bar.classList.remove("hidden");
+  bar.innerHTML='<span>Sei arrivato qui dal controllo dipendenze delle categorie.</span><a class="btn compact" href="../dashboard/?'+back.toString()+'">← Torna alle dipendenze</a>';
+}
+function openReportingFromUrl(){
+  if(reportDeepLinkHandled)return;
+  const params=new URLSearchParams(window.location.search),category=params.get("category");
+  renderReportReturnBar(params);
+  if(!category)return;
+  reportDeepLinkHandled=true;
+  const requested=(params.get("direction")||"").toUpperCase();
+  let direction=requested==="INCOME"||requested==="EXPENSE"?requested:"EXPENSE";
+  const incomeRows=report.income_forecast_categories||[],expenseRows=report.forecast_categories||[];
+  if(incomeRows.some(function(x){return String(x.category_id)===String(category)}))direction="INCOME";
+  else if(expenseRows.some(function(x){return String(x.category_id)===String(category)}))direction="EXPENSE";
+  planMode="PLAN";
+  const groups=direction==="INCOME"?groupedIncomeForecast():groupedExpenseForecast();
+  const group=groups.find(function(g){return g.rows.some(function(x){return String(x.category_id)===String(category)})});
+  if(group)collapsedL1.delete(group.id);
+  renderMode();
+  requestAnimationFrame(function(){
+    const selector='[data-method-category="'+CSS.escape(String(category))+'"]';
+    const control=document.querySelector(selector);
+    if(control){
+      const row=control.closest("tr");
+      if(row){row.classList.add("dependency-focus");row.scrollIntoView({behavior:"smooth",block:"center"})}
+      control.focus({preventScroll:true});
+    }else{
+      msg($("planMsg"),"La categoria collegata non è presente nella griglia di pianificazione corrente. Apro il dettaglio analitico.",false);
+      planMode="ANALYSIS";$("analysisDirection").value=direction;renderMode();openCategoryDetail(category,direction);
+    }
+  });
 }
 
 function updateCellLocal(kind,category,month,amount){
