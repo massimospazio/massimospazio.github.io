@@ -1,6 +1,6 @@
 (function(){
-  const APP_VERSION='V71.5.4';
-  const APP_RELEASE='Dipendenze categorie e manutenzione rapida';
+  const APP_VERSION='V72.1';
+  const APP_RELEASE='Revisione controparti e drill-down inline';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});
