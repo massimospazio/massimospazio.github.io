@@ -2193,20 +2193,12 @@ function categoryAuditFrequencyHtml(m){
 }
 function categoryAuditDepsHtml(m,categoryId,includeDescendants=false){
   if(!m)return '<span class="muted">—</span>';
-  const items=[
-    ['COUNTERPARTY','Controparti',Number(m.merchant_defaults||0)],
-    ['RULE','Regole',Number(m.rules||0)],
-    ['MCC','MCC',Number(m.mcc||0)],
-    ['SPLIT','Split',Number(m.splits||0)],
-    ['REPORTING','Reporting',Number(m.reporting_refs||0)],
-    ['BOOTSTRAP','Bootstrap',Number(m.bootstrap_refs||0)]
-  ].filter(x=>x[2]>0);
   const total=Number(m.dependency_count||0);
   if(!total)return '<span class="muted small">—</span>';
   const desc=includeDescendants?'1':'0';
+  const label=total===1?'1 dipendenza':nfmt(total)+' dipendenze';
   return '<span class="audit-deps-compact">'+
-    '<button type="button" class="dep-total" data-category-deps="'+esc(categoryId)+'" data-deps-desc="'+desc+'" data-deps-type="ALL">'+nfmt(total)+' '+(total===1?'dipendenza':'dipendenze')+' ›</button>'+
-    items.map(x=>'<button type="button" class="dep-chip" data-category-deps="'+esc(categoryId)+'" data-deps-desc="'+desc+'" data-deps-type="'+x[0]+'">'+esc(x[1])+' '+nfmt(x[2])+'</button>').join('')+
+    '<button type="button" class="dep-total" data-category-deps="'+esc(categoryId)+'" data-deps-desc="'+desc+'" data-deps-type="ALL" title="Apri '+esc(label)+'">'+nfmt(total)+'</button>'+
   '</span>';
 }
 function categoryL1Name(cat){return cat?.level1_name||cat?.name||'—'}
