@@ -746,7 +746,7 @@ async function loadMovementsData(){
       rpc('dashboard_rules_read_v1'),
       rpc('dashboard_counterparty_parsing_rules_read_v1'),
       rpc('dashboard_counterparty_duplicate_suggestions_v1').catch(()=>[]),
-      rpc('dashboard_category_audit_v6',{p_period:categoryAuditPeriod,p_direction:analysisDirection})
+      rpc('dashboard_category_audit_v7',{p_period:categoryAuditPeriod,p_direction:analysisDirection})
     ]);
     catData=base||{};
     catData.counterparties=counterparties||[];
@@ -2107,7 +2107,7 @@ async function setAnalysisDirection(direction){
   if($('categoriesTable'))$('categoriesTable').innerHTML='<div class="category-inline-loading"><span class="spinner"></span>Ricalcolo '+esc(analysisDirectionLabel().toLowerCase())+'…</div>';
   renderMerchantsCatalog();
   try{
-    catData.categoryAudit=await rpc('dashboard_category_audit_v6',{p_period:categoryAuditPeriod,p_direction:analysisDirection})||{summary:{},rows:[],period:{},direction:analysisDirection};
+    catData.categoryAudit=await rpc('dashboard_category_audit_v7',{p_period:categoryAuditPeriod,p_direction:analysisDirection})||{summary:{},rows:[],period:{},direction:analysisDirection};
   }catch(e){
     analysisDirection=previous;
     alert(e.message);
@@ -2541,7 +2541,7 @@ async function loadCategoryAuditPeriod(period){
   const next=period||'12M';if(categoryAuditLoading||next===categoryAuditPeriod)return;
   categoryAuditLoading=true;categoryAuditPeriod=next;categoryActionState=null;categoryCounterpartyState=null;categoryDependencyState=null;categoryL1ExpandedId=null;renderCategoriesCatalog();
   try{
-    catData.categoryAudit=await rpc('dashboard_category_audit_v6',{p_period:categoryAuditPeriod,p_direction:analysisDirection})||{summary:{},rows:[],period:{},direction:analysisDirection};
+    catData.categoryAudit=await rpc('dashboard_category_audit_v7',{p_period:categoryAuditPeriod,p_direction:analysisDirection})||{summary:{},rows:[],period:{},direction:analysisDirection};
   }catch(e){
     alert(e.message);categoryAuditPeriod=catData?.categoryAudit?.period?.key||'12M';
   }finally{
@@ -2576,7 +2576,7 @@ function categoryDependencyStateMatches(id,includeDescendants){
     && !!categoryDependencyState.includeDescendants===!!includeDescendants;
 }
 function dependencyTypeLabel(type){
-  return ({ALL:'Tutte',COUNTERPARTY:'Controparti',RULE:'Regole',MCC:'MCC',SPLIT:'Split',BOOTSTRAP:'Bootstrap MCC'})[type]||type||'Dipendenze';
+  return ({ALL:'Tutte',COUNTERPARTY:'Controparti',RULE:'Regole',MCC:'MCC',MOVEMENT:'Movimenti',SPLIT:'Ripartizioni'})[type]||type||'Dipendenze';
 }
 function dependencyActionLabel(kind){
   return ({MERCHANT:'Modifica controparte',RULE:'Modifica regola',MCC:'Apri MCC',MOVEMENT:'Apri movimento'})[kind]||'';
@@ -2629,7 +2629,7 @@ function categoryDependencyPanelHtml(cat){
   if(st.loading)return '<div class="category-dependency-panel"><div class="category-inline-loading"><span class="spinner"></span>Caricamento dipendenze…</div></div>';
   if(st.error)return '<div class="category-dependency-panel"><div class="msg error">'+esc(st.error)+'</div></div>';
   const d=st.data||{},all=d.rows||[],type=st.type||'ALL',rows=type==='ALL'?all:all.filter(x=>x.type===type),counts=d.counts||{};
-  const types=[['ALL','Tutte',Number(d.total||0)],['COUNTERPARTY','Controparti',Number(counts.COUNTERPARTY||0)],['RULE','Regole',Number(counts.RULE||0)],['MCC','MCC',Number(counts.MCC||0)],['SPLIT','Split',Number(counts.SPLIT||0)],['BOOTSTRAP','Bootstrap MCC',Number(counts.BOOTSTRAP||0)]].filter(x=>x[0]==='ALL'||x[2]>0);
+  const types=[['ALL','Tutte',Number(d.total||0)],['COUNTERPARTY','Controparti',Number(counts.COUNTERPARTY||0)],['RULE','Regole',Number(counts.RULE||0)],['MCC','MCC',Number(counts.MCC||0)],['MOVEMENT','Movimenti',Number(counts.MOVEMENT||0)],['SPLIT','Ripartizioni',Number(counts.SPLIT||0)]].filter(x=>x[0]==='ALL'||x[2]>0);
   const body=rows.map(row=>{
     const idx=all.indexOf(row),actionLabel=dependencyActionLabel(row.action_kind);
     return '<tr><td><span class="category-dependency-kind">'+esc(row.type_label||dependencyTypeLabel(row.type))+'</span></td>'+
@@ -2756,7 +2756,7 @@ async function previewCategoryMigration(){
         '<div class="category-impact"><div class="muted small">Controparti default</div><div class="value">'+nfmt(i.counterparty_defaults||0)+'</div></div>'+
         '<div class="category-impact"><div class="muted small">Regole</div><div class="value">'+nfmt(i.rules||0)+'</div></div>'+
         '<div class="category-impact"><div class="muted small">MCC</div><div class="value">'+nfmt(i.mcc||0)+'</div></div>'+
-        '<div class="category-impact"><div class="muted small">Split</div><div class="value">'+nfmt(i.splits||0)+'</div></div>'+
+        '<div class="category-impact"><div class="muted small">Ripartizioni</div><div class="value">'+nfmt(i.splits||0)+'</div></div>'+
         '<div class="category-impact"><div class="muted small">Bootstrap</div><div class="value">'+nfmt(i.bootstrap_refs||0)+'</div></div>'+
       '</div>'+
       (p.can_merge
