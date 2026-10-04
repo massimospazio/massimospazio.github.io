@@ -1,6 +1,6 @@
 (function(){
-  const APP_VERSION='V72.1.2';
-  const APP_RELEASE='Controparti compatte, categorie visuali e MCC periodale';
+  const APP_VERSION='V72.1.3';
+  const APP_RELEASE='Alias manuali compatti e conteggi periodo/storico coerenti';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});
