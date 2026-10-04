@@ -1906,11 +1906,11 @@ function renderDuplicateSuggestions(){
 
 async function mergeSuggestedCounterparty(btn){
   const source=btn.dataset.mergeCounterparty,target=btn.dataset.mergeTarget,sourceName=btn.dataset.sourceName,targetName=btn.dataset.targetName;
-  if(!confirm(`Unire “${sourceName}” in “${targetName}”?\n\nAlias e movimenti verranno spostati. L’operazione viene bloccata se categorie, progetti o alias sono in conflitto.`))return;
+  if(!confirm(`Unire “${sourceName}” in “${targetName}”?\n\nAlias e movimenti verranno trasferiti. I movimenti non protetti adotteranno la classificazione prevista per “${targetName}”, inclusa la sua categoria default. Modifiche manuali protette, progetti e tag dei movimenti resteranno invariati.`))return;
   setBusy(btn,true,'Unione');msg($('duplicateMsg'),'');
   try{
     const r=await rpc('dashboard_merge_counterparties_v1',{p_source_merchant_id:source,p_target_merchant_id:target});
-    msg($('duplicateMsg'),`Unione completata: ${nfmt(r.moved_transactions||0)} movimenti spostati; ${nfmt(r.reclassified||0)} riallineati.`);
+    msg($('duplicateMsg'),`Unione completata: ${nfmt(r.moved_transactions||0)} movimenti spostati; ${nfmt(r.reclassification_checked||0)} non protetti verificati, ${nfmt(r.reclassified||0)} riallineati${Number(r.protected_unchanged||0)?` · ${nfmt(r.protected_unchanged)} protetti invariati`:''}.`);
     coherenceData=null;await loadMovementsData();await loadCoherence();
   }catch(e){msg($('duplicateMsg'),e.message,true)}finally{setBusy(btn,false)}
 }
