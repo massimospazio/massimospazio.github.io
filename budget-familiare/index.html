@@ -2841,25 +2841,42 @@ function aliasSourcesHtml(alias){
 function counterpartyAliasesHtml(m){
   const aliases=aliasesForMerchant(m.id);
   const parties=[...(catData?.counterparties||[])].sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'it',{sensitivity:'base'}));
+  const periodInfo=counterpartyPeriodInfo();
+  const directionMovements=(catData?.movements||[]).filter(x=>x.counterparty_id===m.id&&movementMatchesAnalysisDirection(x));
   const warning=aliases.length&&!m.default_category_id
     ?'<div class="msg error" style="margin:0 0 10px">Configurazione incompleta: la controparte viene riconosciuta da uno o più alias, ma non ha una categoria predefinita. Se nessuna regola assegna la categoria, i movimenti restano Da classificare.</div>'
     :'';
   const rows=aliases.map(a=>{
-    const movementCount=Number(a.movements||0);
-    const usage=movementCount
-      ?`<strong>${nfmt(movementCount)} ${movementCount===1?'movimento':'movimenti'}</strong><br><span class="muted small">${esc((a.banks||[]).join(' · ')||'—')}</span>`
+    const key=String(a.pattern||'').trim().toLowerCase();
+    const observed=directionMovements.filter(x=>counterpartyRawKey(x)===key);
+    const backendCount=Number(a.movements||0);
+    const historicalCount=observed.length||backendCount;
+    const periodCount=observed.filter(x=>{
+      const d=String(x.transaction_date||'');
+      return d>=periodInfo.start&&d<=periodInfo.end;
+    }).length;
+    const banks=observed.length?[...new Set(observed.map(x=>x.bank_name).filter(Boolean))]:(a.banks||[]);
+    const dates=observed.map(x=>String(x.transaction_date||'')).filter(Boolean).sort();
+    const firstDate=dates[0]||a.first_date||'';
+    const lastDate=dates[dates.length-1]||a.last_date||'';
+    const usage=historicalCount
+      ?`<strong>${nfmt(periodCount)} / ${nfmt(historicalCount)}</strong><br><span class="muted small">periodo / storico · ${esc(banks.join(' · ')||'—')}</span>`
       :'<span class="muted">mai utilizzato</span>';
-    const period=movementCount
-      ?(a.first_date===a.last_date?esc(a.first_date||'—'):`${esc(a.first_date||'—')} → ${esc(a.last_date||'—')}`)
+    const period=historicalCount
+      ?(firstDate===lastDate?esc(firstDate||'—'):`${esc(firstDate||'—')} → ${esc(lastDate||'—')}`)
       :'—';
     return `<tr data-alias-id="${a.id}"><td><strong class="mono">${esc(a.pattern)}</strong></td><td>${aliasSourcesHtml(a)}</td><td>${usage}</td><td>${period}</td><td><div class="compact-actions"><input class="input alias-move-search" list="v62CounterpartyOptions" data-alias-move-search placeholder="Cerca controparte..." autocomplete="off" /><button class="btn ghost compact" data-move-alias="${a.id}" type="button">Sposta</button><button class="btn danger compact" data-delete-alias="${a.id}" type="button">Elimina</button></div></td></tr>`;
   }).join('');
   return `<div class="alias-panel">
-    <div class="alias-panel-head"><div><strong>Alias di riconoscimento</strong><div class="muted small">Valori grezzi che identificano ${esc(m.name)}. L’origine segue il campo effettivamente usato dal parser; il conteggio considera solo i movimenti in cui l’alias è realmente associato a questa controparte.</div></div><div class="compact-actions"><span class="pill">${nfmt(aliases.length)} alias</span></div></div>
+    <div class="alias-panel-head"><div><strong>Alias di riconoscimento</strong><div class="muted small">Valori grezzi che identificano ${esc(m.name)}. L’origine segue il campo effettivamente usato dal parser; il conteggio mostra i movimenti del periodo selezionato rispetto allo storico.</div></div><div class="compact-actions"><span class="pill">${nfmt(aliases.length)} alias</span></div></div>
     ${warning}
-    <div class="alias-add-row"><input class="input" data-new-alias-for="${m.id}" placeholder="Aggiungi alias esatto..." /><button class="btn compact" data-add-alias="${m.id}" type="button">Aggiungi alias</button></div>
-    <div class="note">Creare/ricordare un alias EXACT riallinea subito tramite la pipeline i movimenti storici non protetti con lo stesso candidato. Spostare invece un alias già esistente tra due controparti corregge solo l’identità e preserva categoria, tipo, progetto e tag storici. Se la vecchia controparte resta vuota, viene rimossa automaticamente.</div>
-    <div class="table-wrap alias-table" style="margin-top:10px"><table class="table"><thead><tr><th>Alias</th><th>Origine osservata</th><th>Movimenti / banche</th><th>Periodo utilizzo</th><th>Azioni</th></tr></thead><tbody>${rows||'<tr><td colspan="5" class="muted">Nessun alias associato. Puoi aggiungerne uno sopra.</td></tr>'}</tbody></table></div>
+    <details class="alias-manual-add">
+      <summary class="btn ghost compact">Aggiungi alias manualmente</summary>
+      <div class="alias-add-row" style="margin-top:8px"><input class="input" data-new-alias-for="${m.id}" placeholder="Aggiungi alias esatto..." /><button class="btn compact" data-add-alias="${m.id}" type="button">Aggiungi alias</button></div>
+      <div class="note">Usa questa funzione solo quando conosci già la stringa esatta da associare. Creare/ricordare un alias EXACT riallinea subito tramite la pipeline i movimenti storici non protetti con lo stesso candidato.</div>
+    </details>
+    <div class="note" style="margin-top:8px">Spostare un alias già esistente tra due controparti corregge solo l’identità e preserva categoria, tipo, progetto e tag storici. Se la vecchia controparte resta vuota, viene rimossa automaticamente.</div>
+    <div class="table-wrap alias-table" style="margin-top:10px"><table class="table"><thead><tr><th>Alias</th><th>Origine osservata</th><th>Mov. periodo / storico · banche</th><th>Periodo utilizzo</th><th>Azioni</th></tr></thead><tbody>${rows||'<tr><td colspan="5" class="muted">Nessun alias associato. Puoi aggiungerne uno manualmente se necessario.</td></tr>'}</tbody></table></div>
   </div>`;
 }
 async function addCounterpartyAlias(btn){
