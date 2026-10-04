@@ -3268,13 +3268,18 @@ async function applyCounterpartyBulkCategory(){
   const select=$('counterpartyBulkCategory'),raw=select?.value||'';
   if(!selectedCounterpartyIds.size)return;
   if(!raw)return alert('Scegli la categoria da impostare.');
+  const ids=[...selectedCounterpartyIds];
   const categoryId=raw==='__NONE__'?null:raw;
   const applyExisting=$('counterpartyBulkScope')?.value!=='FUTURE';
   const btn=$('applyCounterpartyBulkCategory');
+  selectedCounterpartyIds.clear();
   try{
-    await setCounterpartyDefaultCategory([...selectedCounterpartyIds],categoryId,btn,$('merchantMsg'),applyExisting);
-    selectedCounterpartyIds.clear();select.value='';if($('counterpartyBulkCategorySearch'))$('counterpartyBulkCategorySearch').value='';if($('counterpartyBulkScope'))$('counterpartyBulkScope').value='ALL';syncCounterpartyBulkScopeNote();syncCounterpartyBulkBar();renderMerchantsCatalog();
-  }catch(e){}
+    await setCounterpartyDefaultCategory(ids,categoryId,btn,$('merchantMsg'),applyExisting);
+    select.value='';if($('counterpartyBulkCategorySearch'))$('counterpartyBulkCategorySearch').value='';if($('counterpartyBulkScope'))$('counterpartyBulkScope').value='ALL';syncCounterpartyBulkScopeNote();syncCounterpartyBulkBar();renderMerchantsCatalog();
+  }catch(e){
+    ids.forEach(id=>selectedCounterpartyIds.add(id));
+    syncCounterpartyBulkBar();renderMerchantsCatalog();
+  }
 }
 function counterpartyCategoryDisplayHtml(m){
   const meta=m?._category||counterpartyCategoryMeta(m);
