@@ -1,6 +1,6 @@
 (function(){
-  const APP_VERSION='V72.2.1';
-  const APP_RELEASE='Fusione coerente, alias semplificati e pannello modifica stabile';
+  const APP_VERSION='V72.2.2';
+  const APP_RELEASE='Reset selezione dopo modifiche massive alle controparti';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});
