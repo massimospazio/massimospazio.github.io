@@ -1,6 +1,6 @@
 (function(){
-  const APP_VERSION='V72.1.4';
-  const APP_RELEASE='Filtro e ordinamento controparti per data di creazione';
+  const APP_VERSION='V72.2.0';
+  const APP_RELEASE='Fusione manuale sicura di controparti esistenti o nuove';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});
