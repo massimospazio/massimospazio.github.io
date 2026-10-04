@@ -488,6 +488,7 @@
               <select id="merchantL2Filter" class="select"><option value="">Tutti i livelli 2</option></select>
               <select id="merchantStatusFilter" class="select"><option value="">Tutti gli stati</option><option value="ISSUES">Da controllare</option><option value="NO_CATEGORY">Senza categoria default</option><option value="NO_ALIAS">Senza alias</option><option value="DUPLICATE">Possibile duplicato</option><option value="MCC_BOOTSTRAP">Origine MCC nel periodo</option><option value="OK">Configurazione completa</option></select>
               <select id="merchantRecencyFilter" class="select"><option value="">Qualsiasi recenza</option><option value="RECENT_90">Usata negli ultimi 90 giorni</option><option value="RECENT_365">Usata negli ultimi 12 mesi</option><option value="STALE_365">Non usata da oltre 12 mesi</option><option value="NEVER">Mai utilizzata</option></select>
+              <select id="merchantCreatedFilter" class="select"><option value="">Qualsiasi creazione</option><option value="CREATED_30D">Creata negli ultimi 30 gg</option><option value="CREATED_3M">Creata negli ultimi 3 mesi</option><option value="CREATED_6M">Creata negli ultimi 6 mesi</option><option value="CREATED_12M">Creata negli ultimi 12 mesi</option></select>
               <button id="clearMerchantFilters" class="btn ghost compact" type="button">Azzera</button>
             </div>
             <div id="counterpartyBulkBar" class="counterparty-bulk-bar hidden">
@@ -1874,7 +1875,7 @@ function selectVisibleMovements(){
 function clearSelectedMovements(){selectedMovementIds.clear();renderMovements()}
 function counterpartyTypeLabel(t){return ({MERCHANT:'Negozio / fornitore',EMPLOYER:'Datore di lavoro',PERSON:'Persona',ENTITY:'Azienda / ente',PUBLIC_BODY:'Ente pubblico',BANK:'Banca',PLATFORM:'Piattaforma',OTHER:'Altro'})[t]||t||'Altro'}
 function catalogSortHeader(section,label,key){const st=catalogSort[section],arrow=st.key===key?(st.dir==='asc'?' ↑':' ↓'):'';return `<button class="sortbtn" data-catalog-sort="${section}" data-catalog-key="${key}">${esc(label)}${arrow}</button>`}
-function setCatalogSort(section,key){const st=catalogSort[section];if(st.key===key)st.dir=st.dir==='asc'?'desc':'asc';else{st.key=key;st.dir='asc'}renderCatalogs()}
+function setCatalogSort(section,key){const st=catalogSort[section];if(st.key===key)st.dir=st.dir==='asc'?'desc':'asc';else{st.key=key;st.dir=(section==='merchants'&&key==='created')?'desc':'asc'}renderCatalogs()}
 function genericCatalogSort(rows,section,getters={}){const st=catalogSort[section],mult=st.dir==='asc'?1:-1;return [...rows].sort((a,b)=>{const get=getters[st.key]||((x)=>x?.[st.key]);let av=get(a),bv=get(b);if(typeof av==='number'||typeof bv==='number')return (Number(av||0)-Number(bv||0))*mult;return String(av??'').localeCompare(String(bv??''),'it',{numeric:true,sensitivity:'base'})*mult})}
 function projectTypeLabel(t){return ({VACATION:'Vacanza',HOME:'Casa',VEHICLE:'Auto / veicolo',FAMILY:'Famiglia',EVENT:'Evento',OTHER:'Altro'})[t]||t||'Altro'}
 function projectStatusLabel(s){return ({PLANNED:'Pianificato',ACTIVE:'Attivo',CLOSED:'Chiuso'})[s]||s||'—'}
@@ -2965,6 +2966,18 @@ function counterpartyAgeDays(date){
   const d=new Date(date+'T12:00:00'),now=new Date();
   return Math.max(0,Math.floor((now-d)/86400000));
 }
+function counterpartyCreatedWithin(value,mode){
+  if(!mode)return true;
+  if(!value)return false;
+  const raw=String(value).trim(),d=new Date(raw.includes('T')?raw:raw.replace(' ','T'));
+  if(Number.isNaN(d.getTime()))return false;
+  const threshold=new Date();threshold.setHours(0,0,0,0);
+  if(mode==='CREATED_30D')threshold.setDate(threshold.getDate()-30);
+  else if(mode==='CREATED_3M')threshold.setMonth(threshold.getMonth()-3);
+  else if(mode==='CREATED_6M')threshold.setMonth(threshold.getMonth()-6);
+  else if(mode==='CREATED_12M')threshold.setMonth(threshold.getMonth()-12);
+  return d>=threshold;
+}
 function counterpartyRecencyLabel(date){
   if(!date)return 'Mai utilizzata';
   const days=counterpartyAgeDays(date);
@@ -3068,7 +3081,7 @@ function counterpartyCategoryEditorHtml(m){
 }
 function counterpartyFilteredRows(all=counterpartyEnriched()){
   const q=($('merchantSearch')?.value||'').trim().toLowerCase();
-  const l1=$('merchantL1Filter')?.value||'',l2=$('merchantL2Filter')?.value||'',status=$('merchantStatusFilter')?.value||'',recency=$('merchantRecencyFilter')?.value||'';
+  const l1=$('merchantL1Filter')?.value||'',l2=$('merchantL2Filter')?.value||'',status=$('merchantStatusFilter')?.value||'',recency=$('merchantRecencyFilter')?.value||'',created=$('merchantCreatedFilter')?.value||'';
   let rows=all.filter(m=>{
     if(Number(m._stats.movement_count||0)===0)return false;
     const aliasText=m._stats.aliases.map(a=>a.pattern).join(' ');
@@ -3084,11 +3097,12 @@ function counterpartyFilteredRows(all=counterpartyEnriched()){
     if(recency==='RECENT_365'&&(!m._stats.last_date||age>365))return false;
     if(recency==='STALE_365'&&(!m._stats.last_date||age<=365))return false;
     if(recency==='NEVER'&&m._stats.last_date)return false;
+    if(created&&!counterpartyCreatedWithin(m.created_at,created))return false;
     return true;
   });
   return genericCatalogSort(rows,'merchants',{
     name:x=>x.name||'',type:x=>counterpartyTypeLabel(x.counterparty_type),l1:x=>x._category.l1,category:x=>x._category.path,
-    aliases:x=>x._stats.alias_count,movements:x=>x._stats.period_movement_count,total:x=>x._stats.period_volume,last:x=>x._stats.last_date||'0000-00-00',status:x=>x._status_priority
+    aliases:x=>x._stats.alias_count,movements:x=>x._stats.period_movement_count,total:x=>x._stats.period_volume,last:x=>x._stats.last_date||'0000-00-00',created:x=>x.created_at||'0000-00-00',status:x=>x._status_priority
   });
 }
 function syncCounterpartyBulkBar(){
@@ -3198,8 +3212,9 @@ function renderMerchantsCatalog(){
       <td>${counterpartyFrequencyHtml(s)}</td>
       <td>${counterpartyNetHtml({volume:s.period_volume})}</td>
       <td>${esc(s.last_date||'—')}</td>
+      <td>${esc(String(m.created_at||'').slice(0,10)||'—')}</td>
       <td><button class="btn ${editOpen?'secondary':'ghost'} compact" data-toggle-counterparty-detail="${m.id}" type="button">${editOpen?'Chiudi':'Modifica'}</button></td>
-    </tr>${panel?`<tr><td colspan="9" style="padding:0">${panel}</td></tr>`:''}`;
+    </tr>${panel?`<tr><td colspan="10" style="padding:0">${panel}</td></tr>`:''}`;
   }).join('');
   syncCounterpartyBulkBar();
   $('merchantsTable').innerHTML=`<div class="table-wrap"><table class="table counterparty-table"><thead><tr>
@@ -3210,9 +3225,10 @@ function renderMerchantsCatalog(){
     <th style="width:6%">${catalogSortHeader('merchants','Mov.','movements')}</th>
     <th style="width:12%">Frequenza</th>
     <th style="width:9%">${catalogSortHeader('merchants','Importo','total')}</th>
-    <th style="width:11%">${catalogSortHeader('merchants','Ultimo movimento','last')}</th>
+    <th style="width:10%">${catalogSortHeader('merchants','Ultimo movimento','last')}</th>
+    <th style="width:9%">${catalogSortHeader('merchants','Creata','created')}</th>
     <th style="width:82px"></th>
-  </tr></thead><tbody>${body||'<tr><td colspan="9" class="muted">Nessuna controparte con i filtri selezionati.</td></tr>'}</tbody></table></div>`;
+  </tr></thead><tbody>${body||'<tr><td colspan="10" class="muted">Nessuna controparte con i filtri selezionati.</td></tr>'}</tbody></table></div>`;
 }
 function renderProjectsCatalog(){
   const q=($('projectSearch')?.value||'').trim().toLowerCase(),type=$('projectTypeFilter')?.value||'',status=$('projectStatusFilter')?.value||'';
@@ -3480,14 +3496,14 @@ $('cancelQuickCounterparty').onclick=()=>{$('quickCounterpartyBox').classList.ad
 ['movementSearch','movementStatus','movementAutomation','movementBank','movementKind','movementType','movementDirection','movementCategory','movementProject','movementTag','movementDateFrom','movementDateTo'].forEach(id=>$(id).addEventListener(id==='movementSearch'?'input':'change',renderMovements));$('movementCounterpartySearch').addEventListener('input',applyMovementCounterpartySearch);$('movementCounterpartySearch').addEventListener('change',applyMovementCounterpartySearch);$('clearMovementFilters').onclick=clearMovementFilters;$('viewList').onclick=()=>{viewMode='list';renderMovements()};$('viewGrouped').onclick=()=>{viewMode='grouped';renderMovements()};$('bulkSelectVisible').onclick=selectVisibleMovements;$('bulkClearSelection').onclick=clearSelectedMovements;$('bulkApplyCategory').onclick=applyBulkCategory;
 $('movementsTable').addEventListener('click',e=>{const auto=e.target.closest('[data-automation-target]');if(auto){openAutomationTarget(auto.dataset.automationTarget,auto.dataset.automationId);return}const sort=e.target.closest('[data-sort]');if(sort){setSort(sort.dataset.sort);return}const edit=e.target.closest('[data-edit-movement]');if(edit){const row=(catData?.movements||[]).find(x=>x.id===edit.dataset.editMovement);if(row)openClassify(row);return}const tg=e.target.closest('[data-toggle-group]');if(tg){const g=(window.__groupRows||[])[Number(tg.dataset.toggleGroup)];if(!g)return;if(expandedGroups.has(g.key))expandedGroups.delete(g.key);else expandedGroups.add(g.key);renderMovements()}});
 $('movementsTable').addEventListener('change',e=>{const cb=e.target.closest('[data-select-movement]');if(!cb)return;cb.checked?selectedMovementIds.add(cb.dataset.selectMovement):selectedMovementIds.delete(cb.dataset.selectMovement);syncBulkSelectionUi()});
-['categorySearch','categoryL1Filter','categoryDependencyFilter','merchantSearch','merchantL1Filter','merchantL2Filter','merchantStatusFilter','merchantRecencyFilter','projectSearch','projectTypeFilter','projectStatusFilter','tagSearch','tagStatusFilter','mccSearch','mccStatusFilter','compoundRuleSearch','compoundRuleStatusFilter','parsingRuleSearch'].forEach(id=>$(id)?.addEventListener(id.endsWith('Search')?'input':'change',renderCatalogs));[['classMerchantSearch','classMerchant'],['compoundRuleMerchantSearch','compoundRuleMerchant']].forEach(x=>bindCounterpartySearch(...x));$('expandAllCategories').onclick=()=>{(catData?.categories||[]).filter(x=>Number(x.depth)===1).forEach(x=>expandedCategoryGroups.add(x.level1_name||x.name));renderCategoriesCatalog()};$('collapseAllCategories').onclick=()=>{expandedCategoryGroups.clear();renderCategoriesCatalog()};
+['categorySearch','categoryL1Filter','categoryDependencyFilter','merchantSearch','merchantL1Filter','merchantL2Filter','merchantStatusFilter','merchantRecencyFilter','merchantCreatedFilter','projectSearch','projectTypeFilter','projectStatusFilter','tagSearch','tagStatusFilter','mccSearch','mccStatusFilter','compoundRuleSearch','compoundRuleStatusFilter','parsingRuleSearch'].forEach(id=>$(id)?.addEventListener(id.endsWith('Search')?'input':'change',renderCatalogs));[['classMerchantSearch','classMerchant'],['compoundRuleMerchantSearch','compoundRuleMerchant']].forEach(x=>bindCounterpartySearch(...x));$('expandAllCategories').onclick=()=>{(catData?.categories||[]).filter(x=>Number(x.depth)===1).forEach(x=>expandedCategoryGroups.add(x.level1_name||x.name));renderCategoriesCatalog()};$('collapseAllCategories').onclick=()=>{expandedCategoryGroups.clear();renderCategoriesCatalog()};
 $('applyCounterpartyBulkCategory').onclick=applyCounterpartyBulkCategory;
 $('counterpartyBulkScope')?.addEventListener('change',syncCounterpartyBulkScopeNote);
 $('counterpartyBulkCategorySearch')?.addEventListener('input',filterCounterpartyBulkCategories);
 syncCounterpartyBulkScopeNote();
 $('selectVisibleCounterparties').onclick=()=>{for(const m of counterpartyFilteredRows())selectedCounterpartyIds.add(m.id);renderMerchantsCatalog()};
 $('clearSelectedCounterparties').onclick=()=>{selectedCounterpartyIds.clear();renderMerchantsCatalog()};
-$('clearMerchantFilters').onclick=()=>{['merchantSearch','merchantL1Filter','merchantL2Filter','merchantStatusFilter','merchantRecencyFilter'].forEach(id=>{if($(id))$(id).value=''});renderCatalogs()};
+$('clearMerchantFilters').onclick=()=>{['merchantSearch','merchantL1Filter','merchantL2Filter','merchantStatusFilter','merchantRecencyFilter','merchantCreatedFilter'].forEach(id=>{if($(id))$(id).value=''});renderCatalogs()};
 $('categoryReturnBar').addEventListener('click',e=>{if(e.target.closest('[data-return-category-dependency]')){returnToCategoryDependency();return}if(e.target.closest('[data-dismiss-category-return]')){categoryReturnState=null;renderCategoryReturnBar()}});
 $('tab-catalogs').addEventListener('click',e=>{const ct=e.target.closest('[data-catalog-tab]');if(ct){setCatalogTab(ct.dataset.catalogTab);return}
 const dep=e.target.closest('[data-category-deps]');if(dep){toggleCategoryDependencies(dep.dataset.categoryDeps,dep.dataset.depsDesc==='1',dep.dataset.depsType||'ALL');return}
@@ -3516,7 +3532,7 @@ const cas=e.target.closest('[data-category-action-save]');if(cas){saveCategoryAc
 const cpe=e.target.closest('[data-edit-counterparty-category]');if(cpe){editingCounterpartyCategoryIds.add(cpe.dataset.editCounterpartyCategory);renderMerchantsCatalog();return}
 const cpsave=e.target.closest('[data-save-counterparty-category]');if(cpsave){saveInlineCounterpartyCategory(cpsave);return}
 const cpcancel=e.target.closest('[data-cancel-counterparty-category]');if(cpcancel){editingCounterpartyCategoryIds.delete(cpcancel.dataset.cancelCounterpartyCategory);renderMerchantsCatalog();return}
-const cpk=e.target.closest('[data-counterparty-kpi]');if(cpk){const k=cpk.dataset.counterpartyKpi;if(k==='ALL'){['merchantSearch','merchantL1Filter','merchantL2Filter','merchantStatusFilter','merchantRecencyFilter'].forEach(id=>{if($(id))$(id).value=''})}else if(k==='STALE_365'){if($('merchantRecencyFilter'))$('merchantRecencyFilter').value='STALE_365';if($('merchantStatusFilter'))$('merchantStatusFilter').value=''}else{if($('merchantStatusFilter'))$('merchantStatusFilter').value=k;if($('merchantRecencyFilter'))$('merchantRecencyFilter').value='';if(k==='MCC_BOOTSTRAP')catalogSort.merchants={key:'last',dir:'desc'}}renderCatalogs();return}
+const cpk=e.target.closest('[data-counterparty-kpi]');if(cpk){const k=cpk.dataset.counterpartyKpi;if(k==='ALL'){['merchantSearch','merchantL1Filter','merchantL2Filter','merchantStatusFilter','merchantRecencyFilter','merchantCreatedFilter'].forEach(id=>{if($(id))$(id).value=''})}else if(k==='STALE_365'){if($('merchantRecencyFilter'))$('merchantRecencyFilter').value='STALE_365';if($('merchantStatusFilter'))$('merchantStatusFilter').value=''}else{if($('merchantStatusFilter'))$('merchantStatusFilter').value=k;if($('merchantRecencyFilter'))$('merchantRecencyFilter').value='';if(k==='MCC_BOOTSTRAP')catalogSort.merchants={key:'last',dir:'desc'}}renderCatalogs();return}
 const cpp=e.target.closest('[data-counterparty-period]');if(cpp){counterpartyPeriod=cpp.dataset.counterpartyPeriod||'12M';renderMerchantsCatalog();return}
 const cpsinline=e.target.closest('[data-save-counterparty-inline]');if(cpsinline){saveCounterpartyInlineEdit(cpsinline);return}
 const cpd=e.target.closest('[data-toggle-counterparty-detail]');if(cpd){const k=cpd.dataset.toggleCounterpartyDetail;if(expandedCounterpartyDetails.has(k))expandedCounterpartyDetails.delete(k);else{expandedCounterpartyDetails.add(k);expandedCounterpartyMovementDetails.delete(k);expandedCounterpartyAliasDetails.delete(k)}renderMerchantsCatalog();return}
