@@ -500,9 +500,26 @@
                 <option value="FUTURE">Solo nuovi</option>
               </select>
               <button id="applyCounterpartyBulkCategory" class="btn compact" type="button">Imposta categoria default</button>
+              <button id="openCounterpartyMerge" class="btn secondary compact" type="button">Fondi…</button>
               <button id="selectVisibleCounterparties" class="btn ghost compact" type="button">Seleziona visibili</button>
               <button id="clearSelectedCounterparties" class="btn ghost compact" type="button">Annulla selezione</button>
               <span id="counterpartyBulkScopeNote" class="muted small">Storico + nuovi: riclassifica lo storico non protetto; i movimenti protetti restano invariati.</span>
+            </div>
+            <div id="counterpartyMergePanel" class="catalog-form hidden" style="margin:8px 0 10px">
+              <div class="section-title" style="margin-bottom:8px"><div><h3 style="margin:0 0 4px">Fondi controparti</h3><div class="muted small">Sposta alias e identità dei movimenti nella destinazione scelta. Categoria, progetto, tag e protezioni dei movimenti storici restano invariati.</div></div></div>
+              <div id="counterpartyMergeSummary" class="note" style="margin-bottom:8px"></div>
+              <div class="editor-row four">
+                <div class="field"><label>Destinazione</label><select id="counterpartyMergeMode" class="select"><option value="EXISTING">Controparte esistente</option><option value="NEW">Crea nuova controparte</option></select></div>
+                <div id="counterpartyMergeExistingBox" class="field" style="grid-column:span 2"><label>Controparte esistente</label><input id="counterpartyMergeTargetSearch" class="input" list="v62CounterpartyOptions" placeholder="Cerca controparte..." autocomplete="off" /></div>
+                <div id="counterpartyMergeNewNameBox" class="field hidden"><label>Nome nuova controparte</label><input id="counterpartyMergeNewName" class="input" placeholder="Nome canonico..." /></div>
+                <div id="counterpartyMergeNewTypeBox" class="field hidden"><label>Tipo</label><select id="counterpartyMergeNewType" class="select"><option value="MERCHANT">Negozio / fornitore</option><option value="EMPLOYER">Datore di lavoro</option><option value="PERSON">Persona</option><option value="ENTITY">Azienda / ente</option><option value="PUBLIC_BODY">Ente pubblico</option><option value="BANK">Banca</option><option value="PLATFORM">Piattaforma</option><option value="OTHER">Altro</option></select></div>
+                <div id="counterpartyMergeNewCategoryBox" class="field hidden" style="grid-column:span 2"><label>Categoria default nuova controparte</label><select id="counterpartyMergeNewCategory" class="select category-select"></select></div>
+              </div>
+              <div class="compact-actions" style="margin-top:10px">
+                <button id="confirmCounterpartyMerge" class="btn secondary compact" type="button">Conferma fusione</button>
+                <button id="cancelCounterpartyMerge" class="btn ghost compact" type="button">Annulla</button>
+              </div>
+              <div id="counterpartyMergeMsg"></div>
             </div>
             <div id="merchantsTable"></div>
           </div>
@@ -3109,6 +3126,83 @@ function syncCounterpartyBulkBar(){
   const bar=$('counterpartyBulkBar'),count=selectedCounterpartyIds.size;if(!bar)return;
   bar.classList.toggle('hidden',count===0);
   $('counterpartyBulkCount').textContent=nfmt(count)+' '+(count===1?'selezionata':'selezionate');
+  if(count===0)closeCounterpartyMerge();
+  else if(!$('counterpartyMergePanel')?.classList.contains('hidden'))renderCounterpartyMergeSummary();
+}
+function selectedCounterpartyRows(){
+  const ids=selectedCounterpartyIds;
+  return (catData?.counterparties||[]).filter(x=>ids.has(x.id));
+}
+function renderCounterpartyMergeSummary(){
+  const el=$('counterpartyMergeSummary');if(!el)return;
+  const rows=selectedCounterpartyRows(),aliases=rows.reduce((s,x)=>s+aliasesForMerchant(x.id).length,0);
+  const movements=(catData?.movements||[]).filter(x=>selectedCounterpartyIds.has(x.counterparty_id)).length;
+  const names=rows.slice(0,6).map(x=>esc(x.name)).join(' · ')+(rows.length>6?' · …':'');
+  el.innerHTML='<strong>'+nfmt(rows.length)+' '+(rows.length===1?'controparte selezionata':'controparti selezionate')+'</strong> · '+nfmt(aliases)+' alias · '+nfmt(movements)+' movimenti'+(names?'<br><span class="muted small">'+names+'</span>':'')+'<br><span class="muted small">Se la destinazione esistente è tra le selezionate, verranno fuse soltanto le altre.</span>';
+}
+function syncCounterpartyMergeMode(){
+  const isNew=$('counterpartyMergeMode')?.value==='NEW';
+  $('counterpartyMergeExistingBox')?.classList.toggle('hidden',isNew);
+  $('counterpartyMergeNewNameBox')?.classList.toggle('hidden',!isNew);
+  $('counterpartyMergeNewTypeBox')?.classList.toggle('hidden',!isNew);
+  $('counterpartyMergeNewCategoryBox')?.classList.toggle('hidden',!isNew);
+}
+function openCounterpartyMerge(){
+  const rows=selectedCounterpartyRows();
+  if(!rows.length)return alert('Seleziona almeno una controparte da fondere.');
+  renderCounterpartyMergeSummary();
+  msg($('counterpartyMergeMsg'),'');
+  $('counterpartyMergeMode').value='EXISTING';
+  $('counterpartyMergeTargetSearch').value='';
+  $('counterpartyMergeNewName').value='';
+  const types=[...new Set(rows.map(x=>x.counterparty_type).filter(Boolean))];
+  $('counterpartyMergeNewType').value=types.length===1?types[0]:'OTHER';
+  const cats=[...new Set(rows.map(x=>x.default_category_id).filter(Boolean))];
+  $('counterpartyMergeNewCategory').innerHTML=categoryOptionsHtml({emptyLabel:'— inferisci / nessuna —',selected:cats.length===1?cats[0]:'',includeEmpty:true});
+  $('counterpartyMergePanel').classList.remove('hidden');
+  syncCounterpartyMergeMode();
+}
+function closeCounterpartyMerge(){
+  $('counterpartyMergePanel')?.classList.add('hidden');
+  msg($('counterpartyMergeMsg'),'');
+}
+async function confirmCounterpartyMerge(){
+  const mode=$('counterpartyMergeMode')?.value||'EXISTING';
+  const selected=[...selectedCounterpartyIds];
+  if(!selected.length)return alert('Seleziona almeno una controparte da fondere.');
+  let target=null,targetName='',newName=null,newType=null,newCategory=null,sourceIds=[...selected];
+  if(mode==='EXISTING'){
+    const dest=counterpartyBySearchLabel($('counterpartyMergeTargetSearch')?.value||'');
+    if(!dest)return alert('Cerca e scegli una controparte di destinazione valida.');
+    target=dest.id;targetName=dest.name;
+    sourceIds=sourceIds.filter(id=>id!==target);
+  }else{
+    newName=String($('counterpartyMergeNewName')?.value||'').trim();
+    if(!newName)return alert('Inserisci il nome della nuova controparte.');
+    targetName=newName;
+    newType=$('counterpartyMergeNewType')?.value||'OTHER';
+    newCategory=$('counterpartyMergeNewCategory')?.value||null;
+  }
+  if(!sourceIds.length)return alert('Non ci sono controparti sorgente da fondere nella destinazione scelta.');
+  const sourceRows=(catData?.counterparties||[]).filter(x=>sourceIds.includes(x.id));
+  const sourceNames=sourceRows.map(x=>x.name).join(', ');
+  if(!confirm('Fondere '+nfmt(sourceIds.length)+' '+(sourceIds.length===1?'controparte':'controparti')+' in “'+targetName+'”?\n\nSorgenti: '+sourceNames+'\n\nAlias e identità dei movimenti verranno spostati. Categoria, progetto, tag e protezioni dei movimenti storici resteranno invariati.'))return;
+  const btn=$('confirmCounterpartyMerge');setBusy(btn,true,'Fusione');msg($('counterpartyMergeMsg'),'');
+  try{
+    const r=await rpc('dashboard_merge_counterparties_batch_v1',{
+      p_source_merchant_ids:sourceIds,
+      p_target_merchant_id:target,
+      p_new_target_name:newName,
+      p_new_target_type:newType,
+      p_new_target_category_id:newCategory
+    });
+    selectedCounterpartyIds.clear();
+    closeCounterpartyMerge();
+    coherenceData=null;
+    await loadMovementsData();
+    const warning=r?.target_needs_category?' Attenzione: la controparte risultante non ha ancora una categoria default.':'';
+    msg($('merchantMsg'),'Fusione completata: '+nfmt(r?.merged_sources||0)+' sorgenti, '+nfmt(r?.moved_aliases||0)+' alias e '+nfmt(r?.moved_transactions||0)+' movimenti spostati.'+warning);
+  }catch(e){msg($('counterpartyMergeMsg'),e.message,true)}finally{setBusy(btn,false)}
 }
 async function setCounterpartyDefaultCategory(ids,categoryId,button,messageTarget=null,applyExisting=true){
   if(!ids.length)return null;
@@ -3498,6 +3592,10 @@ $('movementsTable').addEventListener('click',e=>{const auto=e.target.closest('[d
 $('movementsTable').addEventListener('change',e=>{const cb=e.target.closest('[data-select-movement]');if(!cb)return;cb.checked?selectedMovementIds.add(cb.dataset.selectMovement):selectedMovementIds.delete(cb.dataset.selectMovement);syncBulkSelectionUi()});
 ['categorySearch','categoryL1Filter','categoryDependencyFilter','merchantSearch','merchantL1Filter','merchantL2Filter','merchantStatusFilter','merchantRecencyFilter','merchantCreatedFilter','projectSearch','projectTypeFilter','projectStatusFilter','tagSearch','tagStatusFilter','mccSearch','mccStatusFilter','compoundRuleSearch','compoundRuleStatusFilter','parsingRuleSearch'].forEach(id=>$(id)?.addEventListener(id.endsWith('Search')?'input':'change',renderCatalogs));[['classMerchantSearch','classMerchant'],['compoundRuleMerchantSearch','compoundRuleMerchant']].forEach(x=>bindCounterpartySearch(...x));$('expandAllCategories').onclick=()=>{(catData?.categories||[]).filter(x=>Number(x.depth)===1).forEach(x=>expandedCategoryGroups.add(x.level1_name||x.name));renderCategoriesCatalog()};$('collapseAllCategories').onclick=()=>{expandedCategoryGroups.clear();renderCategoriesCatalog()};
 $('applyCounterpartyBulkCategory').onclick=applyCounterpartyBulkCategory;
+$('openCounterpartyMerge').onclick=openCounterpartyMerge;
+$('confirmCounterpartyMerge').onclick=confirmCounterpartyMerge;
+$('cancelCounterpartyMerge').onclick=closeCounterpartyMerge;
+$('counterpartyMergeMode').addEventListener('change',syncCounterpartyMergeMode);
 $('counterpartyBulkScope')?.addEventListener('change',syncCounterpartyBulkScopeNote);
 $('counterpartyBulkCategorySearch')?.addEventListener('input',filterCounterpartyBulkCategories);
 syncCounterpartyBulkScopeNote();
