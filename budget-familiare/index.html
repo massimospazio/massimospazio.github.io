@@ -506,7 +506,7 @@
               <span id="counterpartyBulkScopeNote" class="muted small">Storico + nuovi: riclassifica lo storico non protetto; i movimenti protetti restano invariati.</span>
             </div>
             <div id="counterpartyMergePanel" class="catalog-form hidden" style="margin:8px 0 10px">
-              <div class="section-title" style="margin-bottom:8px"><div><h3 style="margin:0 0 4px">Fondi controparti</h3><div class="muted small">Sposta alias e identità dei movimenti nella destinazione scelta. Categoria, progetto, tag e protezioni dei movimenti storici restano invariati.</div></div></div>
+              <div class="section-title" style="margin-bottom:8px"><div><h3 style="margin:0 0 4px">Fondi controparti</h3><div class="muted small">Sposta alias e movimenti nella destinazione scelta. I movimenti storici non protetti vengono riallineati alla categoria default della destinazione; modifiche manuali protette, progetti e tag dei movimenti restano invariati.</div></div></div>
               <div id="counterpartyMergeSummary" class="note" style="margin-bottom:8px"></div>
               <div class="editor-row four">
                 <div class="field"><label>Destinazione</label><select id="counterpartyMergeMode" class="select"><option value="EXISTING">Controparte esistente</option><option value="NEW">Crea nuova controparte</option></select></div>
@@ -2888,13 +2888,8 @@ function counterpartyAliasesHtml(m){
   return `<div class="alias-panel">
     <div class="alias-panel-head"><div><strong>Alias di riconoscimento</strong><div class="muted small">Valori grezzi che identificano ${esc(m.name)}. L’origine segue il campo effettivamente usato dal parser; il conteggio mostra i movimenti del periodo selezionato rispetto allo storico.</div></div><div class="compact-actions"><span class="pill">${nfmt(aliases.length)} alias</span></div></div>
     ${warning}
-    <details class="alias-manual-add">
-      <summary class="btn ghost compact">Aggiungi alias manualmente</summary>
-      <div class="alias-add-row" style="margin-top:8px"><input class="input" data-new-alias-for="${m.id}" placeholder="Aggiungi alias esatto..." /><button class="btn compact" data-add-alias="${m.id}" type="button">Aggiungi alias</button></div>
-      <div class="note">Usa questa funzione solo quando conosci già la stringa esatta da associare. Creare/ricordare un alias EXACT riallinea subito tramite la pipeline i movimenti storici non protetti con lo stesso candidato.</div>
-    </details>
-    <div class="note" style="margin-top:8px">Spostare un alias già esistente tra due controparti corregge solo l’identità e preserva categoria, tipo, progetto e tag storici. Se la vecchia controparte resta vuota, viene rimossa automaticamente.</div>
-    <div class="table-wrap alias-table" style="margin-top:10px"><table class="table"><thead><tr><th>Alias</th><th>Origine osservata</th><th>Mov. periodo / storico · banche</th><th>Periodo utilizzo</th><th>Azioni</th></tr></thead><tbody>${rows||'<tr><td colspan="5" class="muted">Nessun alias associato. Puoi aggiungerne uno manualmente se necessario.</td></tr>'}</tbody></table></div>
+    <div class="note">Gli alias vengono creati dal flusso di revisione dei movimenti. Da qui puoi controllare quelli osservati, spostarli tra controparti o eliminarli. Spostare un alias corregge solo l’identità e preserva categoria, tipo, progetto e tag storici del movimento.</div>
+    <div class="table-wrap alias-table" style="margin-top:10px"><table class="table"><thead><tr><th>Alias</th><th>Origine osservata</th><th>Mov. periodo / storico · banche</th><th>Periodo utilizzo</th><th>Azioni</th></tr></thead><tbody>${rows||'<tr><td colspan="5" class="muted">Nessun alias associato.</td></tr>'}</tbody></table></div>
   </div>`;
 }
 async function addCounterpartyAlias(btn){
@@ -3186,7 +3181,7 @@ async function confirmCounterpartyMerge(){
   if(!sourceIds.length)return alert('Non ci sono controparti sorgente da fondere nella destinazione scelta.');
   const sourceRows=(catData?.counterparties||[]).filter(x=>sourceIds.includes(x.id));
   const sourceNames=sourceRows.map(x=>x.name).join(', ');
-  if(!confirm('Fondere '+nfmt(sourceIds.length)+' '+(sourceIds.length===1?'controparte':'controparti')+' in “'+targetName+'”?\n\nSorgenti: '+sourceNames+'\n\nAlias e identità dei movimenti verranno spostati. Categoria, progetto, tag e protezioni dei movimenti storici resteranno invariati.'))return;
+  if(!confirm('Fondere '+nfmt(sourceIds.length)+' '+(sourceIds.length===1?'controparte':'controparti')+' in “'+targetName+'”?\n\nSorgenti: '+sourceNames+'\n\nAlias e movimenti verranno trasferiti. I movimenti non protetti adotteranno la classificazione prevista per la controparte di destinazione, inclusa la sua categoria default. Modifiche manuali protette, progetti e tag dei movimenti resteranno invariati.'))return;
   const btn=$('confirmCounterpartyMerge');setBusy(btn,true,'Fusione');msg($('counterpartyMergeMsg'),'');
   try{
     const r=await rpc('dashboard_merge_counterparties_batch_v1',{
@@ -3201,7 +3196,8 @@ async function confirmCounterpartyMerge(){
     coherenceData=null;
     await loadMovementsData();
     const warning=r?.target_needs_category?' Attenzione: la controparte risultante non ha ancora una categoria default.':'';
-    msg($('merchantMsg'),'Fusione completata: '+nfmt(r?.merged_sources||0)+' sorgenti, '+nfmt(r?.moved_aliases||0)+' alias e '+nfmt(r?.moved_transactions||0)+' movimenti spostati.'+warning);
+    const protectedText=Number(r?.protected_unchanged||0)?' · '+nfmt(r.protected_unchanged)+' protetti invariati':'';
+    msg($('merchantMsg'),'Fusione completata: '+nfmt(r?.merged_sources||0)+' sorgenti, '+nfmt(r?.moved_aliases||0)+' alias e '+nfmt(r?.moved_transactions||0)+' movimenti spostati · '+nfmt(r?.reclassification_checked||0)+' non protetti verificati, '+nfmt(r?.reclassified||0)+' riallineati'+protectedText+'.'+warning);
   }catch(e){msg($('counterpartyMergeMsg'),e.message,true)}finally{setBusy(btn,false)}
 }
 async function setCounterpartyDefaultCategory(ids,categoryId,button,messageTarget=null,applyExisting=true){
@@ -3241,11 +3237,11 @@ async function saveCounterpartyInlineEdit(btn){
   setBusy(btn,true,'Salvataggio');
   try{
     const r=await rpc('dashboard_upsert_counterparty_v4',{p_id:id,p_name:name,p_counterparty_type:type,p_default_category_id:category,p_apply_to_existing:scope!=='FUTURE'});
+    const rr=r?.reclassification||{},changed=Number(r?.updated_existing_movements??rr.changed??0),checked=Number(r?.checked_existing_movements??rr.checked??0),protectedCount=Number(r?.protected_existing_movements??rr.protected??0);
+    expandedCounterpartyDetails.delete(id);
     coherenceData=null;
     await loadMovementsData();
-    const rr=r?.reclassification||{},changed=Number(r?.updated_existing_movements??rr.changed??0),checked=Number(r?.checked_existing_movements??rr.checked??0),protectedCount=Number(r?.protected_existing_movements??rr.protected??0);
-    const target=document.querySelector('[data-counterparty-edit-msg="'+CSS.escape(id)+'"]');
-    if(target)msg(target,scope==='FUTURE'
+    msg($('merchantMsg'),scope==='FUTURE'
       ?'Controparte salvata. Categoria aggiornata solo per i nuovi movimenti.'
       :`Controparte salvata. Storico verificato: ${nfmt(checked)} non protetti, ${nfmt(changed)} aggiornati${protectedCount?` · ${nfmt(protectedCount)} protetti invariati`:''}.`);
   }catch(e){
