@@ -367,7 +367,7 @@
           </select>
           <select id="movementBank" class="select"><option value="">Tutte le banche</option></select>
           <select id="movementKind" class="select"><option value="">Tutti i canali</option><option value="CARTA">Carta</option><option value="BONIFICO">Bonifico</option><option value="ADDEBITO">Addebito</option><option value="ALTRO">Altro</option></select>
-          <select id="movementType" class="select"><option value="">Tutti i tipi movimento</option><option value="EXPENSE">Spesa</option><option value="INCOME">Entrata</option><option value="TRANSFER">Trasferimento</option><option value="FEE">Commissione</option><option value="INTEREST">Interesse</option><option value="INVESTMENT">Investimento</option><option value="OTHER">Altro</option></select>
+          <select id="movementType" class="select"><option value="">Tutti i tipi movimento</option><option value="EXPENSE">Spesa</option><option value="INCOME">Entrata</option><option value="TRANSFER">Tutti i trasferimenti</option><option value="TRANSFER_INTERNAL">↳ Giroconto interno</option><option value="TRANSFER_PENDING">↳ Bonifico da verificare</option><option value="FEE">Commissione</option><option value="INTEREST">Interesse</option><option value="INVESTMENT">Investimento</option><option value="OTHER">Altro</option></select>
           <input id="movementCounterpartySearch" class="input" list="v62CounterpartyFilterOptions" placeholder="Cerca controparte..." autocomplete="off" />
           <select id="movementCounterparty" class="hidden"><option value="">Tutte le controparti</option></select>
           <select id="movementCategory" class="select"><option value="">Tutte le categorie</option></select>
@@ -1228,9 +1228,24 @@ function directionBadge(x){const d=movementDirection(x);return `<span class="pil
 function movementKindLabel(k){return ({BONIFICO:'Bonifico',CARTA:'Carta',ADDEBITO:'Addebito',ALTRO:'Altro'})[k]||'Altro'}
 function movementKindBadge(x){return `<span class="pill" title="Canale tecnico del movimento">${esc(movementKindLabel(x?.movement_kind))}</span>`}
 function transactionTypeLabel(t){return ({EXPENSE:'Spesa',INCOME:'Entrata',TRANSFER:'Trasferimento',FEE:'Commissione',INTEREST:'Interesse',INVESTMENT:'Investimento',OTHER:'Altro',OPENING_BALANCE:'Saldo iniziale'})[String(t||'').toUpperCase()]||t||'—'}
+function transferSemantic(row){
+  if(String(row?.transaction_type||'').toUpperCase()!=='TRANSFER')return null;
+  if(isInternalTransferMovement(row))return {key:'INTERNAL',label:'Giroconto interno',title:'Trasferimento confermato tra conti interni; escluso da entrate, spese, budget e previsioni.'};
+  return {key:'PENDING',label:'Bonifico da verificare',title:'Bonifico non ancora confermato come giroconto interno né classificato come spesa/entrata reale.'};
+}
+function transactionTypeDisplayLabel(row){
+  return transferSemantic(row)?.label||transactionTypeLabel(row?.transaction_type);
+}
 function transactionTypeBadge(x){
-  const t=String(x?.transaction_type||'OTHER').toUpperCase(),cls=({EXPENSE:'type-expense',INCOME:'type-income',TRANSFER:'type-transfer',INVESTMENT:'type-investment',FEE:'type-fee',INTEREST:'type-interest',OTHER:'type-other'})[t]||'type-other';
-  return `<span class="pill movement-type-pill ${cls}" title="Tipo logico usato dalla pipeline">${esc(transactionTypeLabel(t))}</span>`;
+  const t=String(x?.transaction_type||'OTHER').toUpperCase(),semantic=transferSemantic(x),cls=({EXPENSE:'type-expense',INCOME:'type-income',TRANSFER:'type-transfer',INVESTMENT:'type-investment',FEE:'type-fee',INTEREST:'type-interest',OTHER:'type-other'})[t]||'type-other';
+  const label=semantic?.label||transactionTypeLabel(t),title=semantic?.title||'Tipo logico usato dalla pipeline';
+  return `<span class="pill movement-type-pill ${cls}" title="${esc(title)}">${esc(label)}</span>`;
+}
+function movementTypeMatches(row,filter){
+  if(!filter)return true;
+  if(filter==='TRANSFER_INTERNAL')return transferSemantic(row)?.key==='INTERNAL';
+  if(filter==='TRANSFER_PENDING')return transferSemantic(row)?.key==='PENDING';
+  return String(row?.transaction_type||'')===filter;
 }
 function movementContextHtml(x){const project=x?.project_name?`<div><strong>${esc(x.project_name)}</strong></div>`:'';const tags=(x?.tags||[]).map(t=>`<span class="pill">#${esc(t.name)}</span>`).join('');return project||tags?`${project}${tags}`:'<span class="muted">—</span>'}
 function candidateConfidenceInfo(row){
@@ -1411,13 +1426,13 @@ function movementAutomationMatches(row,filter){
 function filteredMovements(){
   const q=$('movementSearch').value.trim().toLowerCase(),status=$('movementStatus').value,automation=$('movementAutomation').value,bank=$('movementBank').value,kind=$('movementKind').value,type=$('movementType').value,dir=$('movementDirection').value,cp=$('movementCounterparty').value,cat=$('movementCategory').value,project=$('movementProject').value,tag=$('movementTag').value,from=$('movementDateFrom').value,to=$('movementDateTo').value;
   let rows=(catData?.movements||[]).filter(x=>{
-    const hay=[x.description,x.counterparty_name,x.category_path,x.raw_causale,x.raw_type,transactionTypeLabel(x.transaction_type),movementKindLabel(x.movement_kind),x.project_name,futureAutomationInfo(x).label,...(x.tags||[]).map(t=>t.name)].join(' ').toLowerCase();
+    const hay=[x.description,x.counterparty_name,x.category_path,x.raw_causale,x.raw_type,transactionTypeDisplayLabel(x),transactionTypeLabel(x.transaction_type),movementKindLabel(x.movement_kind),x.project_name,futureAutomationInfo(x).label,...(x.tags||[]).map(t=>t.name)].join(' ').toLowerCase();
     if(q&&!textSearchMatches(hay,q))return false;
     if(status&&x.review_status!==status)return false;
     if(automation&&!movementAutomationMatches(x,automation))return false;
     if(bank&&x.bank_name!==bank)return false;
     if(kind&&x.movement_kind!==kind)return false;
-    if(type&&x.transaction_type!==type)return false;
+    if(type&&!movementTypeMatches(x,type))return false;
     if(dir&&movementDirection(x).key!==dir)return false;
     if(cp==='__NONE__'&&x.counterparty_id)return false;
     if(cp&&cp!=='__NONE__'&&x.counterparty_id!==cp)return false;
@@ -2026,7 +2041,7 @@ function openClassify(row,options={}){
   const protectionFact=row.manual_lock?'<span class="fact"><strong>Protezione</strong><span class="pill manual-protected">Manuale protetto</span> <button type="button" class="btn ghost compact" data-header-unlock-manual>Rimuovi</button></span>':'';
   $('movementFacts').innerHTML=[
     ['Canale',movementKindLabel(row.movement_kind)],
-    ['Tipo movimento',transactionTypeLabel(row.transaction_type)],
+    ['Tipo movimento',transactionTypeDisplayLabel(row)],
     ['Causale',row.raw_causale||'—'],
     ['Tipo raw',row.raw_type||'—'],
     ['MCC',row.mcc_code?mccStatusText(row).replace(/^MCC\s*/,''):'—']
