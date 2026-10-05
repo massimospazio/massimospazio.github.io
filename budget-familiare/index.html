@@ -3173,21 +3173,21 @@ function counterpartyCategoryMeta(m){
 }
 function counterpartyDuplicateSuggestion(id){return (duplicateSuggestions||[]).find(x=>String(x.source_id)===String(id))||null}
 function counterpartyPeriodInfo(){
-  const now=new Date(),firstCurrent=new Date(now.getFullYear(),now.getMonth(),1),end=new Date(firstCurrent.getTime()-86400000);
+  const now=new Date(),today=new Date(now.getFullYear(),now.getMonth(),now.getDate()),firstCurrent=new Date(now.getFullYear(),now.getMonth(),1),end=today;
   const fmt=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   const monthKey=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
   let start,requested=null;
   if(counterpartyPeriod==='ALL'){
     const dates=(catData?.movements||[]).filter(movementMatchesAnalysisDirection).map(x=>String(x.transaction_date||'')).filter(Boolean).sort();
-    const first=dates[0]?new Date(dates[0]+'T12:00:00'):new Date(end.getFullYear(),end.getMonth(),1);
+    const first=dates[0]?new Date(dates[0]+'T12:00:00'):firstCurrent;
     start=new Date(first.getFullYear(),first.getMonth(),1);
   }else{
     requested=counterpartyPeriod==='6M'?6:counterpartyPeriod==='24M'?24:12;
-    start=new Date(firstCurrent.getFullYear(),firstCurrent.getMonth()-requested,1);
+    start=new Date(firstCurrent.getFullYear(),firstCurrent.getMonth()-(requested-1),1);
   }
   const months=[];
   for(let d=new Date(start.getFullYear(),start.getMonth(),1);d<=end;d=new Date(d.getFullYear(),d.getMonth()+1,1))months.push(monthKey(d));
-  return {key:counterpartyPeriod,start:fmt(start),end:fmt(end),months,month_count:months.length,requested};
+  return {key:counterpartyPeriod,start:fmt(start),end:fmt(end),months,month_count:months.length,requested,current_month_partial:true};
 }
 function counterpartyPeriodLabel(){
   const p=counterpartyPeriodInfo();
@@ -3342,8 +3342,9 @@ function counterpartyFilteredRows(all=counterpartyEnriched()){
   const q=($('merchantSearch')?.value||'').trim().toLowerCase();
   const l1=$('merchantL1Filter')?.value||'',l2=$('merchantL2Filter')?.value||'',status=$('merchantStatusFilter')?.value||'';
   let rows=all.filter(m=>{
-    if(Number(m._stats.period_movement_count||0)===0)return false;
-    const aliasText=(m._stats.period_aliases||[]).map(a=>a.pattern).join(' ');
+    const inPeriod=Number(m._stats.period_movement_count||0)>0;
+    if(!inPeriod&&!q)return false;
+    const aliasText=(q?m._stats.aliases:m._stats.period_aliases||[]).map(a=>a.pattern).join(' ');
     if(q&&!textSearchMatches([m.name,m._category.path,counterpartyTypeLabel(m.counterparty_type),aliasText].join(' '),q))return false;
     if(l1&&m._category.l1!==l1)return false;
     if(l2&&m._category.l2!==l2)return false;
@@ -3533,15 +3534,17 @@ function renderMerchantsCatalog(){
   syncCounterpartyPeriodControls();
   const all=counterpartyEnriched(),active=all.filter(x=>Number(x._stats.period_movement_count||0)>0);
   renderCounterpartyKpis(active);
-  const validIds=new Set(active.map(x=>x.id));for(const id of [...selectedCounterpartyIds])if(!validIds.has(id))selectedCounterpartyIds.delete(id);
-  const rows=counterpartyFilteredRows(active),period=counterpartyPeriodInfo();
-  $('counterpartyRegistryInfo').textContent=`${nfmt(rows.length)} controparti visualizzate su ${nfmt(active.length)} con movimenti nelle ${analysisDirectionLabel().toLowerCase()} · periodo ${period.start} → ${period.end} · giroconti esclusi`;
+  const rows=counterpartyFilteredRows(all),period=counterpartyPeriodInfo();
+  const validIds=new Set([...active,...rows].map(x=>x.id));for(const id of [...selectedCounterpartyIds])if(!validIds.has(id))selectedCounterpartyIds.delete(id);
+  const hasSearch=!!($('merchantSearch')?.value||'').trim();
+  $('counterpartyRegistryInfo').textContent=`${nfmt(rows.length)} controparti visualizzate · ${nfmt(active.length)} attive nelle ${analysisDirectionLabel().toLowerCase()} · periodo ${period.start} → ${period.end} (fino a oggi)${hasSearch?' · ricerca estesa anche fuori periodo':''} · giroconti esclusi`;
   const body=rows.map(m=>{
     const s=m._stats,aliasOpen=expandedCounterpartyAliasDetails.has(m.id),movOpen=expandedCounterpartyMovementDetails.has(m.id),editOpen=expandedCounterpartyDetails.has(m.id),panel=counterpartyInlinePanelHtml(m);
     const duplicateMark=s.duplicate?' <span class="pill cp-status-issue">Duplicato?</span>':'';
+    const outsideMark=Number(s.period_movement_count||0)===0?' <span class="pill cp-status-stale">Fuori periodo</span>':'';
     return `<tr>
       <td><input class="counterparty-select" type="checkbox" data-select-counterparty="${m.id}" ${selectedCounterpartyIds.has(m.id)?'checked':''} /></td>
-      <td class="counterparty-name-cell" title="${esc(m.name)}"><strong>${esc(m.name)}</strong>${duplicateMark}</td>
+      <td class="counterparty-name-cell" title="${esc(m.name)}"><strong>${esc(m.name)}</strong>${duplicateMark}${outsideMark}</td>
       <td class="category-default-cell">${counterpartyCategoryDisplayHtml(m)}</td>
       <td><button class="counterparty-count-link ${aliasOpen?'active':''}" data-toggle-counterparty-aliases="${m.id}" type="button" title="Apri alias">${nfmt(s.period_alias_count)}</button></td>
       <td><button class="counterparty-count-link ${movOpen?'active':''}" data-toggle-counterparty-movements="${m.id}" type="button" title="Apri movimenti del periodo">${nfmt(s.period_movement_count)}</button></td>
