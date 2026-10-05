@@ -1,6 +1,6 @@
 (function(){
-  const APP_VERSION='V72.3.17';
-  const APP_RELEASE='Caricamento dashboard scaglionato per evitare timeout';
+  const APP_VERSION='V72.3.18';
+  const APP_RELEASE='Alias normalizzati e suggerimenti fuzzy confermabili in elenco';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});
