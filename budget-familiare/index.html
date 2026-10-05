@@ -831,22 +831,27 @@ async function rpc(name,args={}){const {data,error}=await sb.rpc(name,args);if(e
 async function init(){const {data:{session}}=await sb.auth.getSession();if(session)showApp(session.user);else showLogin()}
 function showLogin(){$('loginView').classList.remove('hidden');$('appView').classList.add('hidden')}
 async function showApp(user){$('loginView').classList.add('hidden');$('appView').classList.remove('hidden');$('userEmail').textContent=user.email||user.id;await loadAll()}
-async function loadAll(){await Promise.all([loadOverview(),loadMovementsData()])}
+async function loadAll(){await loadOverview();await loadMovementsData()}
 async function loadOverview(){try{overview=await rpc('dashboard_read_v1');renderOverview()}catch(e){console.error(e);$('accountsTable').innerHTML=`<div class="msg error">${esc(e.message)}</div>`}}
 async function loadMovementsData(){
   try{
-    const [base,counterparties,aliases,movements,transfers,projectsTags,rulesData,parsingRules,duplicates,categoryAudit]=await Promise.all([
+    // Evita di lanciare contemporaneamente tutte le RPC pesanti:
+    // con migliaia di movimenti la concorrenza saturava il DB e faceva superare
+    // lo statement_timeout di 8s anche a query che singolarmente terminano in pochi secondi.
+    const [base,aliases,transfers,projectsTags,rulesData,parsingRules]=await Promise.all([
       rpc('dashboard_categorization_read_v1'),
-      rpc('dashboard_counterparties_read_v1'),
       rpc('dashboard_counterparty_aliases_read_v1'),
-      rpc('dashboard_movements_read_v2'),
       rpc('dashboard_transfers_read_v1'),
       rpc('dashboard_projects_tags_read_v1'),
       rpc('dashboard_rules_read_v1'),
-      rpc('dashboard_counterparty_parsing_rules_read_v1'),
-      rpc('dashboard_counterparty_duplicate_suggestions_v1').catch(()=>[]),
-      rpc('dashboard_category_audit_v7',{p_period:categoryAuditPeriod,p_direction:analysisDirection})
+      rpc('dashboard_counterparty_parsing_rules_read_v1')
     ]);
+
+    const movements=await rpc('dashboard_movements_read_v2');
+    const counterparties=await rpc('dashboard_counterparties_read_v1');
+    const categoryAudit=await rpc('dashboard_category_audit_v7',{p_period:categoryAuditPeriod,p_direction:analysisDirection});
+    const duplicates=await rpc('dashboard_counterparty_duplicate_suggestions_v1').catch(()=>[]);
+
     catData=base||{};
     catData.counterparties=counterparties||[];
     catData.aliases=aliases||[];
@@ -1073,7 +1078,8 @@ async function uploadBankImport(){
       importUploadMessage('<strong>Importazione ancora in corso.</strong>'+progress+' La conferma finale e il pulsante “Vai ai movimenti” compariranno solo quando il file sarà completamente elaborato.','warn');
       return;
     }
-    await Promise.all([loadOverview(),loadMovementsData()]);
+    await loadOverview();
+    await loadMovementsData();
     if(status==='FAILED'){
       importUploadMessage('<strong>Importazione non riuscita.</strong><br>'+esc(found.error_message||'Controlla il formato del file.'),'error');
       return;
