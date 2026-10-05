@@ -1,6 +1,6 @@
 (function(){
-  const APP_VERSION='V72.3.5';
-  const APP_RELEASE='Riallineamento mirato dopo disattivazione o eliminazione regole';
+  const APP_VERSION='V72.3.6';
+  const APP_RELEASE='Giroconti interni distinti dai bonifici da verificare';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});
