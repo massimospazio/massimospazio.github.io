@@ -1,6 +1,6 @@
 (function(){
-  const APP_VERSION='V72.3.20';
-  const APP_RELEASE='Resolver controparti con normalizzazione Amazon e brand distintivi';
+  const APP_VERSION='V72.3.21';
+  const APP_RELEASE='Liquidità storica ancorata ai saldi reali';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});
