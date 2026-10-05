@@ -1,6 +1,6 @@
 (function(){
-  const APP_VERSION='V72.3.10';
-  const APP_RELEASE='Note movimenti visibili, filtrabili e ordinabili in elenco';
+  const APP_VERSION='V72.3.11';
+  const APP_RELEASE='Giroconti riconosciuti subito da IBAN interno';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});
