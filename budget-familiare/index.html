@@ -1416,8 +1416,22 @@ function categoryCellHtml(row){
   const automation=row?.manual_lock?'':`<div class="category-meta">${automationBadgeHtml(row)}</div>`;
   return `${category}${automation}${Number(row.split_count||0)>0?`<span class="split-badge">${nfmt(row.split_count)} quote · residuo ${euro(row.split_remaining||0)}</span>`:''}`;
 }
+function localBrandSuggestionForMovement(row){
+  if(row?.counterparty_name)return null;
+  const raw=String(row?.normalization_raw_value||row?.raw_merchant_name||'').trim();
+  if(!raw)return null;
+  const generic=new Set(['supermercato','supermercati','superstore','market','store','shop','negozio','negozi','parking','park','parcheggio','parcheggi','ristorante','ristoranti','restaurant','restaurants','cafe','caffe','hotel','centro','group','gruppo','service','services','servizi','online','pagamento','payment','paypal','sumup','sum','italia','italy','italian','italiano','italiana','societa','company','branch','srl','srls','spa','sas','snc','ltd','inc']);
+  const tokens=raw.toLowerCase().replace(/[^a-z0-9]+/g,' ').trim().split(/\s+/).filter(Boolean).filter(t=>!generic.has(t)&&!/\d/.test(t)&&t.length>=4);
+  if(tokens.length!==1)return null;
+  const brand=tokens[0];
+  const matches=(catData?.counterparties||[]).filter(m=>String(m.name||'').trim().toLowerCase()===brand);
+  if(matches.length!==1)return null;
+  return {transaction_id:row.id,candidate_value:raw,merchant_id:matches[0].id,merchant_name:matches[0].name,kind:'BRAND',score:null};
+}
 function fuzzySuggestionForMovement(row){
-  return (counterpartyFuzzySuggestions||[]).find(x=>String(x.transaction_id)===String(row?.id))||null;
+  return (counterpartyFuzzySuggestions||[]).find(x=>String(x.transaction_id)===String(row?.id))
+    || localBrandSuggestionForMovement(row)
+    || null;
 }
 function counterpartyCellHtml(row){
   if(row.counterparty_name)return `<strong>${esc(row.counterparty_name)}</strong>`;
@@ -1425,13 +1439,14 @@ function counterpartyCellHtml(row){
   const raw=usable?String(row?.normalization_raw_value||row?.raw_merchant_name||'').trim():'';
   const n=counterpartyOccurrenceCount(row),source=aliasSourceLabel(row?.normalization_source),q=candidateConfidenceInfo(row);
   const fuzzy=fuzzySuggestionForMovement(row);
-  const fuzzyHtml=fuzzy?`<div class="fuzzy-suggestion-inline"><span class="pill status-review">Suggerimento fuzzy</span> <strong>${esc(fuzzy.merchant_name)}</strong> · similarità ${Math.round(Number(fuzzy.score||0)*100)}%<div class="fuzzy-actions"><button type="button" class="btn secondary compact" data-confirm-fuzzy-counterparty="${esc(row.id)}">Conferma</button><span class="muted">Per assegnare altro usa “${esc(movementWorkState(row).action)}”.</span></div></div>`:'';
+  const fuzzyHtml=fuzzy?`<div class="fuzzy-suggestion-inline"><span class="pill status-review">${fuzzy.kind==='BRAND'?'Suggerimento brand':'Suggerimento fuzzy'}</span> <strong>${esc(fuzzy.merchant_name)}</strong>${fuzzy.kind==='BRAND'?'':' · similarità '+Math.round(Number(fuzzy.score||0)*100)+'%'}<div class="fuzzy-actions"><button type="button" class="btn secondary compact" data-confirm-fuzzy-counterparty="${esc(row.id)}">Conferma</button><span class="muted">Per assegnare altro usa “${esc(movementWorkState(row).action)}”.</span></div></div>`:'';
   if(raw)return `<span class="muted">—</span><div class="suggestion-line">Alias candidato: <strong>${esc(raw)}</strong><br>${esc(source)} · <span class="pill ${q.cls}">${esc(q.label)}</span> · ${n} mov.</div>${fuzzyHtml}`;
   return `<span class="muted">—</span><div class="suggestion-line"><strong>Controparte non rilevata</strong><br>${esc(source)} · <span class="pill ${q.cls}">${esc(q.label)}</span></div>${fuzzyHtml}`;
 }
 async function confirmFuzzyCounterparty(button){
   const movementId=button?.dataset?.confirmFuzzyCounterparty||'';
-  const suggestion=(counterpartyFuzzySuggestions||[]).find(x=>String(x.transaction_id)===String(movementId));
+  const row=(catData?.movements||[]).find(x=>String(x.id)===String(movementId));
+  const suggestion=row?fuzzySuggestionForMovement(row):null;
   if(!suggestion)return;
   const candidate=String(suggestion.candidate_value||'').trim();
   if(!candidate||!suggestion.merchant_id)return;
