@@ -120,6 +120,19 @@
 .import-detail-panel{margin-top:12px;padding:12px;border:1px solid #bfdbfe;background:#f8fbff;border-radius:12px}
 .import-detail-grid{display:grid;grid-template-columns:repeat(5,minmax(90px,1fr));gap:7px;margin:10px 0}.import-detail-stat{background:#fff;border:1px solid var(--line);border-radius:9px;padding:8px}.import-detail-stat .label{font-size:10px;color:var(--muted)}.import-detail-stat strong{display:block;font-size:18px;margin-top:2px}
 .import-issues{margin-top:10px}.import-detail-actions{display:flex;gap:7px;flex-wrap:wrap}
+.import-audit-check{margin:9px 0;padding:9px 10px;border-radius:9px;background:#ecfdf5;border:1px solid #bbf7d0;color:#166534;font-size:12px}
+.import-audit-check.warn{background:#fffbeb;border-color:#fde68a;color:#92400e}
+.import-audit-section{margin-top:9px;border:1px solid var(--line);border-radius:10px;background:#fff;overflow:hidden}
+.import-audit-section>summary{cursor:pointer;padding:10px 11px;background:#f8fafc;font-weight:750;display:flex;gap:8px;align-items:center}
+.import-audit-section>summary small{font-weight:500;color:var(--muted);margin-left:auto}
+.import-audit-list{display:grid;gap:0}.import-audit-row{padding:10px 11px;border-top:1px solid var(--line)}
+.import-audit-row:first-child{border-top:0}.import-audit-row.problem{background:#fff7f7}.import-audit-row.informational{background:#fffcf3}
+.import-audit-top,.import-audit-main{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.import-audit-main{margin-top:4px}.import-audit-description{font-weight:700;overflow-wrap:anywhere}.import-audit-amount{font-weight:800;white-space:nowrap}
+.import-audit-meta{font-size:11px;color:var(--muted);margin-top:4px;overflow-wrap:anywhere}.import-audit-classification{font-size:12px;margin-top:5px}
+.import-audit-reason{font-size:12px;margin-top:5px}.import-audit-source{font-size:10px;color:var(--muted);margin-top:5px;overflow-wrap:anywhere}
+.import-audit-actions{margin-top:7px}.import-kind{display:inline-flex;align-items:center;border-radius:999px;padding:2px 7px;font-size:10px;font-weight:750}
+.import-kind.imported{background:#dcfce7;color:#166534}.import-kind.duplicate{background:#e0e7ff;color:#3730a3}.import-kind.informational{background:#fef3c7;color:#92400e}.import-kind.problem{background:#fee2e2;color:#991b1b}
 @media(max-width:850px){.import-upload-grid{grid-template-columns:1fr 1fr}.import-upload-grid .field:nth-child(2){grid-column:1/-1}.import-detail-grid{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:650px){.imports-desktop{display:none}.import-mobile-list{display:block}.import-head-actions{width:100%;justify-content:stretch}.import-head-actions .btn{flex:1}.import-detail-grid{grid-template-columns:1fr 1fr}.import-detail-actions .btn{flex:1}}
 @media(max-width:560px){.import-upload-grid{grid-template-columns:1fr}.import-upload-grid .field:nth-child(2){grid-column:auto}}
@@ -1078,26 +1091,66 @@ function renderImports(imports){
   }).join(''):'<div class="muted">Nessun import</div>')+'</div>';
   $('importsTable').innerHTML=desktop+mobile;
 }
+function importRawAmountLabel(row){
+  const raw=String(row?.raw_amount??'').trim();
+  if(!raw)return '—';
+  const n=Number(raw.replace(/\./g,m=>m).replace(',','.'));
+  return Number.isFinite(n)?euro(n):raw;
+}
+function importKindInfo(kind){
+  return ({
+    IMPORTED:{label:'Nuovo',cls:'imported'},
+    DUPLICATE:{label:'Duplicato',cls:'duplicate'},
+    INFORMATIONAL:{label:'Informativa',cls:'informational'},
+    PROBLEM:{label:'Problema',cls:'problem'}
+  })[String(kind||'').toUpperCase()]||{label:kind||'Altro',cls:'informational'};
+}
+function importAuditRowHtml(row){
+  const k=importKindInfo(row?.result_kind),desc=row?.description||row?.raw_name||row?.causale||'Riga senza descrizione';
+  const classification=[row?.merchant_name,row?.category_path].filter(Boolean).join(' · ');
+  const tech=[row?.causale,row?.detected_type&&row.detected_type!==row.causale?row.detected_type:null,row?.mcc_code?'MCC '+row.mcc_code:null].filter(Boolean).join(' · ');
+  const source=row?.source_transaction_id?'ID sorgente: '+row.source_transaction_id:'';
+  const flags=[row?.excluded_from_budget?'fuori budget':null,row?.requires_transfer_review?'trasferimento da verificare':null,row?.manual_lock?'protetto manualmente':null].filter(Boolean);
+  return '<div class="import-audit-row '+esc(k.cls)+'">'+
+    '<div class="import-audit-top"><div><strong>Riga '+nfmt(row?.row_number)+'</strong> · '+esc(row?.movement_date||'data —')+'</div><span class="import-kind '+esc(k.cls)+'">'+esc(k.label)+'</span></div>'+
+    '<div class="import-audit-main"><div class="import-audit-description">'+esc(desc)+'</div><div class="import-audit-amount">'+esc(importRawAmountLabel(row))+'</div></div>'+
+    (tech?'<div class="import-audit-meta">'+esc(tech)+'</div>':'')+
+    (classification?'<div class="import-audit-classification"><strong>'+esc(classification)+'</strong></div>':'')+
+    (flags.length?'<div class="import-audit-meta">'+flags.map(x=>'• '+esc(x)).join(' ')+'</div>':'')+
+    (row?.result_reason?'<div class="import-audit-reason">'+esc(row.result_reason)+'</div>':'')+
+    (source?'<div class="import-audit-source mono">'+esc(source)+'</div>':'')+
+    (row?.transaction_id?'<div class="import-audit-actions"><button class="btn ghost compact" data-import-open-movement="'+esc(row.transaction_id)+'">Apri movimento</button></div>':'')+
+  '</div>';
+}
+function importAuditSection(kind,title,rows,help,open){
+  const list=(rows||[]).filter(x=>x.result_kind===kind);
+  if(!list.length)return '<details class="import-audit-section"><summary>'+esc(title)+' <span class="pill">0</span><small>'+esc(help||'')+'</small></summary><div class="import-audit-row muted">Nessuna riga.</div></details>';
+  return '<details class="import-audit-section" '+(open?'open':'')+'><summary>'+esc(title)+' <span class="pill">'+nfmt(list.length)+'</span><small>'+esc(help||'')+'</small></summary><div class="import-audit-list">'+list.map(importAuditRowHtml).join('')+'</div></details>';
+}
 function renderImportDetail(detail){
   currentImportDetail=detail;
-  const box=$('importDetailPanel'),s=detail?.summary||{},issues=detail?.issues||[];
+  const box=$('importDetailPanel'),s=detail?.summary||{},rows=detail?.rows||[];
   if(!box)return;
   const state=importStateInfo({...s,open_anomalies:s.problems});
-  const issueHtml=issues.length
-    ? '<div class="import-issues"><strong>Righe da verificare</strong>'+table(['Riga','Stato','Data','Descrizione','Motivo'],issues.map(x=>[nfmt(x.row_number),esc(x.status),esc(x.movement_date||'—'),esc(x.description||x.causale||'—'),esc(x.error_message||'—')]))+'</div>'
-    : '<div class="import-upload-result"><strong>Nessun errore reale nel file.</strong> I duplicati sono stati riconosciuti e ignorati automaticamente.</div>';
-  box.innerHTML='<div class="section-title"><div><h3 style="margin:0">Riepilogo import</h3><p style="margin:3px 0 0">'+esc(displayImportFilename(s.filename))+' · '+esc(String(s.bank||'').replace(/_/g,' '))+'</p></div><button class="btn ghost compact" data-close-import-detail>Chiudi</button></div>'+
+  const imported=Number(s.imported_audit??s.imported_rows??0),duplicates=Number(s.duplicates||0),informational=Number(s.informational??s.excluded??0),problems=Number(s.problems||0);
+  const auditTotal=imported+duplicates+informational+problems,total=Number(s.total_rows||0),auditOk=auditTotal===total;
+  box.innerHTML='<div class="section-title"><div><h3 style="margin:0">Audit import</h3><p style="margin:3px 0 0">'+esc(displayImportFilename(s.filename))+' · '+esc(String(s.bank||'').replace(/_/g,' '))+'</p></div><button class="btn ghost compact" data-close-import-detail>Chiudi</button></div>'+
     '<div>'+('<span class="import-status '+state.cls+'">'+esc(state.label)+'</span>')+' <span class="muted small">Parser '+esc(s.parser_version||'—')+' · stato tecnico '+esc(s.status||'—')+'</span></div>'+
     '<div class="import-detail-grid">'+
-      '<div class="import-detail-stat"><span class="label">Righe file</span><strong>'+nfmt(s.total_rows)+'</strong></div>'+
-      '<div class="import-detail-stat"><span class="label">Nuovi</span><strong>'+nfmt(s.imported_rows)+'</strong></div>'+
-      '<div class="import-detail-stat"><span class="label">Duplicati</span><strong>'+nfmt(s.duplicates)+'</strong></div>'+
-      '<div class="import-detail-stat"><span class="label">Esclusi</span><strong>'+nfmt(s.excluded)+'</strong></div>'+
-      '<div class="import-detail-stat"><span class="label">Problemi</span><strong>'+nfmt(s.problems)+'</strong></div>'+
+      '<div class="import-detail-stat"><span class="label">Righe file</span><strong>'+nfmt(total)+'</strong></div>'+
+      '<div class="import-detail-stat"><span class="label">Nuovi</span><strong>'+nfmt(imported)+'</strong></div>'+
+      '<div class="import-detail-stat"><span class="label">Duplicati</span><strong>'+nfmt(duplicates)+'</strong></div>'+
+      '<div class="import-detail-stat"><span class="label">Righe informative</span><strong>'+nfmt(informational)+'</strong></div>'+
+      '<div class="import-detail-stat"><span class="label">Problemi</span><strong>'+nfmt(problems)+'</strong></div>'+
+      '<div class="import-detail-stat"><span class="label">Nuovi fuori budget</span><strong>'+nfmt(s.budget_excluded||0)+'</strong></div>'+
     '</div>'+
-    (s.error_message&&Number(s.problems)>0?'<div class="msg error">'+esc(s.error_message)+'</div>':'')+
+    '<div class="import-audit-check '+(auditOk?'':'warn')+'"><strong>'+ (auditOk?'Controllo completezza OK':'Controllo completezza da verificare') +'</strong> · '+nfmt(auditTotal)+' righe spiegate su '+nfmt(total)+'.</div>'+
+    (s.error_message&&problems>0?'<div class="msg error">'+esc(s.error_message)+'</div>':'')+
     '<div class="import-detail-actions"><button class="btn ghost compact" data-detail-download>↓ Scarica CSV originale</button></div>'+
-    issueHtml;
+    importAuditSection('PROBLEM','Problemi',rows,'errori / righe non elaborate',problems>0)+
+    importAuditSection('INFORMATIONAL','Righe informative',rows,'non creano un movimento finanziario',problems===0&&informational>0)+
+    importAuditSection('IMPORTED','Nuovi movimenti',rows,'movimenti creati da questo file',false)+
+    importAuditSection('DUPLICATE','Duplicati',rows,'già presenti e ignorati',false);
   box.classList.remove('hidden');
   box.scrollIntoView({behavior:'smooth',block:'nearest'});
 }
@@ -3767,7 +3820,9 @@ $('importsTable').addEventListener('click',e=>{
 });
 $('importDetailPanel').addEventListener('click',e=>{
   if(e.target.closest('[data-close-import-detail]')){$('importDetailPanel').classList.add('hidden');currentImportDetail=null;return}
-  if(e.target.closest('[data-detail-download]'))downloadImportFile(currentImportDetail?.summary)
+  if(e.target.closest('[data-detail-download]')){downloadImportFile(currentImportDetail?.summary);return}
+  const movement=e.target.closest('[data-import-open-movement]');
+  if(movement){activateMainTab('categorization');const row=(catData?.movements||[]).find(x=>x.id===movement.dataset.importOpenMovement);if(row)openClassify(row)}
 });
 $('importUploadPanel').addEventListener('click',e=>{
   const detail=e.target.closest('[data-import-detail]');if(detail){openImportDetail(detail.dataset.importDetail);return}
