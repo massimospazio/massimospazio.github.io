@@ -1,6 +1,6 @@
 (function(){
-  const APP_VERSION='V72.3.2';
-  const APP_RELEASE='Audit dettagliato degli import';
+  const APP_VERSION='V72.3.3';
+  const APP_RELEASE='Archiviazione automatica dei file importati';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});
