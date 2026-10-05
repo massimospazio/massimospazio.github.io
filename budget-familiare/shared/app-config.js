@@ -1,6 +1,6 @@
 (function(){
-  const APP_VERSION='V72.3.22';
-  const APP_RELEASE='Import ING: frammenti di righe riconosciuti come informativi';
+  const APP_VERSION='V72.3.23';
+  const APP_RELEASE='Giroconti: riconoscimento da IBAN interno indipendente dal tipo parser';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});
