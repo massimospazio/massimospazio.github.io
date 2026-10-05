@@ -1,6 +1,6 @@
 (function(){
-  const APP_VERSION='V72.3.14';
-  const APP_RELEASE='Refresh movimenti ottimizzato dopo normalizzazione controparti';
+  const APP_VERSION='V72.3.15';
+  const APP_RELEASE='Controparte del movimento modificabile e sganciabile';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});
