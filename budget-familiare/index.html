@@ -102,6 +102,16 @@
 .analysis-controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.analysis-direction-control{display:flex;gap:5px;align-items:center;flex-wrap:wrap}.analysis-direction-control>span{margin-right:3px}.counterparty-title-controls{display:flex;align-items:flex-end;gap:10px;flex-direction:column}.analysis-scope-note{display:inline-flex;align-items:center;gap:6px}.analysis-scope-note strong{color:#0f172a}.counterparty-history-scope{margin-top:10px;padding:10px 12px;border:1px solid #dbeafe;background:#f8fbff;border-radius:10px}.counterparty-history-scope .scope-title{font-weight:750;margin-bottom:7px}.counterparty-history-scope .scope-options{display:flex;gap:16px;flex-wrap:wrap}.counterparty-history-scope label{display:inline-flex;gap:6px;align-items:center;font-size:12px}.counterparty-history-scope .scope-help{margin-top:6px}
 @media(max-width:900px){.category-v71-toolbar{grid-template-columns:1fr}.category-action-grid{grid-template-columns:1fr 1fr}.category-action-form{grid-template-columns:1fr}.category-flat-table{min-width:900px}}
 
+
+.import-upload-panel{margin:10px 0 14px;padding:12px;border:1px solid #dbeafe;background:#f8fbff;border-radius:12px}
+.import-upload-grid{display:grid;grid-template-columns:minmax(130px,.7fr) minmax(220px,1.7fr) auto auto;gap:8px;align-items:end}
+.import-upload-grid .field{margin:0}
+.import-upload-result{margin-top:10px;padding:10px 12px;border-radius:10px;background:#ecfdf5;border:1px solid #bbf7d0;color:#166534}
+.import-upload-result.warn{background:#fffbeb;border-color:#fde68a;color:#92400e}
+.import-upload-result.error{background:#fef2f2;border-color:#fecaca;color:#991b1b}
+.import-upload-result .actions{margin-top:8px;display:flex;gap:8px;flex-wrap:wrap}
+@media(max-width:850px){.import-upload-grid{grid-template-columns:1fr 1fr}.import-upload-grid .field:nth-child(2){grid-column:1/-1}}
+@media(max-width:560px){.import-upload-grid{grid-template-columns:1fr}.import-upload-grid .field:nth-child(2){grid-column:auto}}
 </style>
 </head>
 <body>
@@ -147,7 +157,18 @@
       </div>
       <div class="grid two">
         <div class="card"><div class="section-title"><div><h2>Conti</h2><p>Copertura temporale e numero movimenti per banca/owner.</p></div></div><div id="accountsTable"></div></div>
-        <div class="card"><div class="section-title"><div><h2>Import recenti</h2><p>Stato dei file caricati.</p></div></div><div id="importsTable"></div></div>
+        <div class="card"><div class="section-title"><div><h2>Import recenti</h2><p>Stato dei file caricati.</p></div><button id="openImportUpload" class="btn compact" type="button">＋ Carica movimenti</button></div>
+          <div id="importUploadPanel" class="import-upload-panel hidden">
+            <div class="import-upload-grid">
+              <div class="field"><label>Proprietario</label><select id="importOwner" class="select"></select></div>
+              <div class="field"><label>File CSV</label><input id="importFile" class="input" type="file" accept=".csv,text/csv" /></div>
+              <button id="uploadImportFile" class="btn compact" type="button">Importa</button>
+              <button id="cancelImportUpload" class="btn ghost compact" type="button">Annulla</button>
+            </div>
+            <div class="note" style="margin-top:8px">Formato ING o Trade Republic riconosciuto automaticamente. I movimenti già presenti vengono ignorati tramite controllo duplicati.</div>
+            <div id="importUploadMsg"></div>
+          </div>
+          <div id="importsTable"></div></div>
       </div>
     </section>
 
@@ -936,8 +957,91 @@ function coherenceOpenMovement(id){
   if(row)openClassify(row);
 }
 
+
+function syncImportOwnerOptions(accounts){
+  const el=$('importOwner');if(!el)return;
+  const previous=el.value;
+  let names=[...new Set((accounts||[]).map(x=>String(x.owner||'').trim()).filter(x=>['Massimo','Luisa'].includes(x)))];
+  if(!names.length)names=['Massimo','Luisa'];
+  el.innerHTML=names.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join('');
+  el.value=names.includes(previous)?previous:(names.includes('Massimo')?'Massimo':names[0]);
+}
+function displayImportFilename(name){
+  return String(name||'').replace(/^\d{8}T\d{6}_[a-f0-9]{8}__/i,'');
+}
+function safeImportFilename(name){
+  const raw=String(name||'movimenti.csv').normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const base=raw.replace(/\.csv$/i,'').replace(/[^a-zA-Z0-9._ -]+/g,'_').replace(/\s+/g,' ').trim().slice(0,120)||'movimenti';
+  return base+'.csv';
+}
+function importOwnerFolder(owner){
+  if(owner==='Massimo')return 'massimo';
+  if(owner==='Luisa')return 'luisa';
+  return '';
+}
+function importUploadMessage(html,kind=''){
+  const el=$('importUploadMsg');if(!el)return;
+  el.innerHTML=html?'<div class="import-upload-result '+esc(kind)+'">'+html+'</div>':'';
+}
+function importStatusSummary(x){
+  const imported=Number(x?.imported_rows||0),dup=Number(x?.duplicates||0);
+  const invalid=Number(x?.invalid_rows||0),errors=Math.max(Number(x?.error_rows||0),Number(x?.raw_error_rows||0));
+  const pending=Number(x?.pending_rows||0),issues=invalid+errors+pending;
+  const bank=String(x?.bank||'').replace(/_/g,' ')||'Banca riconosciuta';
+  return {imported,dup,invalid,errors,pending,issues,bank};
+}
+async function uploadBankImport(){
+  const btn=$('uploadImportFile'),file=$('importFile')?.files?.[0],owner=$('importOwner')?.value||'';
+  if(!file)return importUploadMessage('Seleziona un file CSV.','error');
+  if(!/\.csv$/i.test(file.name))return importUploadMessage('Il file deve essere in formato CSV.','error');
+  if(file.size>20*1024*1024)return importUploadMessage('Il file supera 20 MB.','error');
+  const folder=importOwnerFolder(owner);
+  if(!folder)return importUploadMessage('Proprietario non valido.','error');
+  const now=new Date(),pad=n=>String(n).padStart(2,'0');
+  const stamp=now.getFullYear()+pad(now.getMonth()+1)+pad(now.getDate())+'T'+pad(now.getHours())+pad(now.getMinutes())+pad(now.getSeconds());
+  const token=crypto.randomUUID().slice(0,8);
+  const storedName=stamp+'_'+token+'__'+safeImportFilename(file.name);
+  const storagePath=folder+'/inbox/'+storedName;
+  setBusy(btn,true,'Carico');
+  $('importFile').disabled=true;$('importOwner').disabled=true;$('cancelImportUpload').disabled=true;
+  importUploadMessage('Caricamento di <strong>'+esc(file.name)+'</strong>…','warn');
+  try{
+    const {error}=await sb.storage.from('bank-imports').upload(storagePath,file,{upsert:false,contentType:'text/csv'});
+    if(error)throw error;
+    importUploadMessage('File caricato. Riconoscimento banca ed elaborazione in corso…','warn');
+    const deadline=Date.now()+60000;
+    let found=null;
+    while(Date.now()<deadline){
+      await new Promise(r=>setTimeout(r,1200));
+      try{found=await rpc('dashboard_import_status_v1',{p_filename:storedName})}catch(_){}
+      if(!found)continue;
+      const status=String(found.status||'').toUpperCase(),s=importStatusSummary(found);
+      if(['COMPLETED','COMPLETED_WITH_ERRORS','FAILED'].includes(status))break;
+      importUploadMessage('Elaborazione <strong>'+esc(s.bank)+'</strong> in corso… '+nfmt(s.imported)+' movimenti importati finora.','warn');
+    }
+    await Promise.all([loadOverview(),loadMovementsData()]);
+    if(!found){
+      importUploadMessage('File caricato correttamente. L’elaborazione sta richiedendo più tempo del previsto: usa <strong>Aggiorna</strong> tra qualche secondo.','warn');
+      return;
+    }
+    const status=String(found.status||'').toUpperCase(),s=importStatusSummary(found);
+    if(status==='FAILED'){
+      importUploadMessage('<strong>Importazione non riuscita.</strong><br>'+esc(found.error_message||'Controlla il formato del file.'),'error');
+      return;
+    }
+    const issueText=s.issues?(' · '+nfmt(s.issues)+' da verificare'):'';
+    importUploadMessage('<strong>Importazione completata · '+esc(s.bank)+'</strong><br>'+nfmt(s.imported)+' nuovi movimenti · '+nfmt(s.dup)+' duplicati ignorati'+issueText+'<div class="actions"><button class="btn compact" type="button" data-import-go-movements>Vai ai movimenti</button></div>',s.issues?'warn':'');
+    $('importFile').value='';
+  }catch(e){
+    console.error(e);
+    importUploadMessage('<strong>Caricamento non riuscito.</strong><br>'+esc(e.message||'Errore sconosciuto'),'error');
+  }finally{
+    setBusy(btn,false);$('importFile').disabled=false;$('importOwner').disabled=false;$('cancelImportUpload').disabled=false;
+  }
+}
 function renderOverview(){
   const accounts=overview?.accounts||[],imports=overview?.imports||[],transactions=overview?.transactions||[];
+  syncImportOwnerOptions(accounts);
   const mov=accounts.reduce((s,x)=>s+Number(x.movements||0),0);
   const an=imports.reduce((s,x)=>s+Number(x.open_anomalies||0),0);
   const dates=accounts.flatMap(x=>[x.first_date,x.last_date]).filter(Boolean).sort();
@@ -954,7 +1058,7 @@ function renderOverview(){
   $('ovResidualYear').textContent=euro(residual);
   $('ovInvestmentRate').textContent=income>0?pct(investment/income*100):'—';
   $('accountsTable').innerHTML=table(['Owner','Banca','Conto','Movimenti','Prima data','Ultima data'],accounts.map(x=>[x.owner,x.bank,x.account,nfmt(x.movements),x.first_date||'—',x.last_date||'—']));
-  $('importsTable').innerHTML=table(['Data','File','Banca','Stato','Importati','Anomalie'],imports.slice(0,15).map(x=>[(x.imported_at||'').slice(0,10),x.filename,x.bank,x.status,nfmt(x.imported_rows),nfmt(x.open_anomalies)]));
+  $('importsTable').innerHTML=table(['Data','File','Banca','Stato','Importati','Anomalie'],imports.slice(0,15).map(x=>[(x.imported_at||'').slice(0,10),displayImportFilename(x.filename),x.bank,x.status,nfmt(x.imported_rows),nfmt(x.open_anomalies)]));
 }
 function table(headers,rows){return `<div class="table-wrap"><table class="table"><thead><tr>${headers.map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows.length?rows.map(r=>`<tr>${r.map(c=>`<td>${c??''}</td>`).join('')}</tr>`).join(''):`<tr><td colspan="${headers.length}" class="muted">Nessun dato</td></tr>`}</tbody></table></div>`}
 function categoryLabel(c){return [c.level1_name,c.level2_name,c.level3_name].filter(Boolean).join(' › ')}
@@ -3565,7 +3669,12 @@ $('coherenceTable').addEventListener('click',e=>{
   const rule=e.target.closest('[data-coherence-rule]');if(rule){openAutomationTarget('RULE',rule.dataset.coherenceRule);return}
 });
 $('loginBtn').onclick=async()=>{const b=$('loginBtn');setBusy(b,true,'Accesso');msg($('loginMsg'),'');const {data,error}=await sb.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});setBusy(b,false);if(error)return msg($('loginMsg'),error.message,true);showApp(data.user)};
-$('logoutBtn').onclick=async()=>{await sb.auth.signOut();showLogin()};$('refreshBtn').onclick=async()=>{await loadAll();coherenceData=null;if(!$('tab-coherence').classList.contains('hidden'))await loadCoherence()};$('toggleSplitEditor').onclick=()=>{if($('splitEditor').classList.contains('hidden'))openSplitEditor();else{$('splitEditor').classList.add('hidden');$('toggleSplitEditor').textContent=Number(selectedRow?.split_count||0)>0?`Ripartizione (${nfmt(selectedRow.split_count)})`:'Dividi movimento'}};$('addSplitRow').onclick=()=>addSplitRow({});$('saveSplits').onclick=saveSplits;$('clearSplits').onclick=clearSplits;$('splitRows').addEventListener('click',e=>{const b=e.target.closest('[data-remove-split]');if(b){b.closest('.split-row')?.remove();updateSplitSummary()}});$('addCondition').onclick=()=>addConditionRow();$('previewCompoundRule').onclick=previewCompoundRule;$('saveCompoundRule').onclick=saveCompoundRule;$('compoundConditions').addEventListener('click',e=>{const b=e.target.closest('[data-remove-condition]');if(b){b.closest('.rule-condition')?.remove();if(!document.querySelector('#compoundConditions .rule-condition'))addConditionRow()}});$('saveClassificationNoRule').onclick=()=>{$('saveClassificationNoRule').dataset.mode==='close'?closeClassificationPanel():saveClassification(false)};$('saveClassificationWithRule').onclick=()=>saveClassification(true);$('closeClassify').onclick=closeClassificationPanel;$('addClassificationCondition').onclick=()=>{addClassificationConditionRow();scheduleClassificationPreview()};$('refreshClassificationPreview').onclick=()=>previewClassificationImpact(true);$('classificationConditions').addEventListener('click',e=>{const b=e.target.closest('[data-remove-class-condition]');if(b){b.closest('.rule-condition')?.remove();if(!document.querySelector('#classificationConditions .rule-condition'))addClassificationConditionRow();scheduleClassificationPreview()}});$('saveCategory').onclick=saveCategory;$('saveMerchant').onclick=saveMerchant;$('saveProject').onclick=saveProject;$('saveTag').onclick=saveTag;$('newCounterpartyBtn').onclick=openQuickCounterparty;
+$('logoutBtn').onclick=async()=>{await sb.auth.signOut();showLogin()};
+$('openImportUpload').onclick=()=>{$('importUploadPanel').classList.toggle('hidden');if(!$('importUploadPanel').classList.contains('hidden'))syncImportOwnerOptions(overview?.accounts||[])};
+$('cancelImportUpload').onclick=()=>{$('importUploadPanel').classList.add('hidden');importUploadMessage('');$('importFile').value=''};
+$('uploadImportFile').onclick=uploadBankImport;
+$('importUploadPanel').addEventListener('click',e=>{const b=e.target.closest('[data-import-go-movements]');if(b)activateMainTab('categorization')});
+$('refreshBtn').onclick=async()=>{await loadAll();coherenceData=null;if(!$('tab-coherence').classList.contains('hidden'))await loadCoherence()};$('toggleSplitEditor').onclick=()=>{if($('splitEditor').classList.contains('hidden'))openSplitEditor();else{$('splitEditor').classList.add('hidden');$('toggleSplitEditor').textContent=Number(selectedRow?.split_count||0)>0?`Ripartizione (${nfmt(selectedRow.split_count)})`:'Dividi movimento'}};$('addSplitRow').onclick=()=>addSplitRow({});$('saveSplits').onclick=saveSplits;$('clearSplits').onclick=clearSplits;$('splitRows').addEventListener('click',e=>{const b=e.target.closest('[data-remove-split]');if(b){b.closest('.split-row')?.remove();updateSplitSummary()}});$('addCondition').onclick=()=>addConditionRow();$('previewCompoundRule').onclick=previewCompoundRule;$('saveCompoundRule').onclick=saveCompoundRule;$('compoundConditions').addEventListener('click',e=>{const b=e.target.closest('[data-remove-condition]');if(b){b.closest('.rule-condition')?.remove();if(!document.querySelector('#compoundConditions .rule-condition'))addConditionRow()}});$('saveClassificationNoRule').onclick=()=>{$('saveClassificationNoRule').dataset.mode==='close'?closeClassificationPanel():saveClassification(false)};$('saveClassificationWithRule').onclick=()=>saveClassification(true);$('closeClassify').onclick=closeClassificationPanel;$('addClassificationCondition').onclick=()=>{addClassificationConditionRow();scheduleClassificationPreview()};$('refreshClassificationPreview').onclick=()=>previewClassificationImpact(true);$('classificationConditions').addEventListener('click',e=>{const b=e.target.closest('[data-remove-class-condition]');if(b){b.closest('.rule-condition')?.remove();if(!document.querySelector('#classificationConditions .rule-condition'))addClassificationConditionRow();scheduleClassificationPreview()}});$('saveCategory').onclick=saveCategory;$('saveMerchant').onclick=saveMerchant;$('saveProject').onclick=saveProject;$('saveTag').onclick=saveTag;$('newCounterpartyBtn').onclick=openQuickCounterparty;
 $('previewParsingRule').onclick=previewParsingRule;$('saveParsingRule').onclick=saveParsingRule;$('resetParsingRule').onclick=resetParsingRule;$('futureAutomationBox').addEventListener('change',e=>{
   if(e.target.id!=='setMerchantDefaultCategory')return;
   const box=$('futureAutomationBox'),badge=box.querySelector('.future-title .pill');
