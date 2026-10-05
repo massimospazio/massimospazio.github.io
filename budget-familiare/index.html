@@ -1157,11 +1157,28 @@ function importAuditSection(kind,title,rows,help,open){
   return '<details class="import-audit-section" '+(open?'open':'')+'><summary>'+esc(title)+' <span class="pill">'+nfmt(list.length)+'</span><small>'+esc(help||'')+'</small></summary><div class="import-audit-list">'+list.map(importAuditRowHtml).join('')+'</div></details>';
 }
 function renderImportDetail(detail){
-  currentImportDetail=detail;
-  const box=$('importDetailPanel'),s=detail?.summary||{},rows=detail?.rows||[];
+  const box=$('importDetailPanel'),s=detail?.summary||{};
+  const rows=(detail?.rows||[]).map(function(row){
+    if(String(row?.status||'').toUpperCase()==='PROCESSED'
+       && String(row?.detected_type||'').toUpperCase()==='INFORMATIONAL'
+       && !row?.transaction_id){
+      return {
+        ...row,
+        result_kind:'INFORMATIONAL',
+        description:row?.description||row?.movement_date||'Frammento di riga già incluso',
+        movement_date:'—',
+        result_reason:'Frammento di riga già incluso nel movimento completo · nessun movimento aggiuntivo creato'
+      };
+    }
+    return row;
+  });
+  currentImportDetail={...detail,rows};
   if(!box)return;
-  const state=importStateInfo({...s,open_anomalies:s.problems});
-  const imported=Number(s.imported_audit??s.imported_rows??0),duplicates=Number(s.duplicates||0),informational=Number(s.informational??s.excluded??0),problems=Number(s.problems||0);
+  const imported=rows.filter(x=>x.result_kind==='IMPORTED').length;
+  const duplicates=rows.filter(x=>x.result_kind==='DUPLICATE').length;
+  const informational=rows.filter(x=>x.result_kind==='INFORMATIONAL').length;
+  const problems=rows.filter(x=>x.result_kind==='PROBLEM').length;
+  const state=importStateInfo({...s,open_anomalies:problems});
   const auditTotal=imported+duplicates+informational+problems,total=Number(s.total_rows||0),auditOk=auditTotal===total;
   const technicalStatus=String(s.status||'').toUpperCase(),processing=technicalStatus==='PROCESSING';
   const progressPct=total>0?Math.min(100,Math.round(auditTotal/total*100)):0;
