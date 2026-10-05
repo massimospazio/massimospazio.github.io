@@ -1,6 +1,6 @@
 (function(){
-  const APP_VERSION='V72.3.21';
-  const APP_RELEASE='Liquidità storica ancorata ai saldi reali';
+  const APP_VERSION='V72.3.22';
+  const APP_RELEASE='Import ING: frammenti di righe riconosciuti come informativi';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});
