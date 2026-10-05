@@ -322,8 +322,16 @@
                 <div class="field"><label>Progetto</label><select id="classProject" class="select"></select></div>
                 <div class="field"><label>Tag</label><div id="classTags" class="tag-picker"></div></div>
                 <div class="field"><label>Reporting</label><label style="display:flex;gap:8px;align-items:center;min-height:36px"><input id="classExtraordinary" type="checkbox" /> <strong>Straordinario per il reporting</strong></label><div id="classExtraordinaryState" class="small muted">Caricamento stato…</div></div>
+                <div class="field" style="grid-column:1/-1">
+                  <label>Nota personale</label>
+                  <textarea id="classUserNote" class="input" rows="3" maxlength="4000" placeholder="Es. verificato: acquisto per scuola, pagamento visita, movimento corretto…"></textarea>
+                  <div style="display:flex;gap:8px;align-items:center;justify-content:flex-end;margin-top:6px;flex-wrap:wrap">
+                    <span id="classUserNoteState" class="small muted" style="margin-right:auto">Nota separata dalla classificazione.</span>
+                    <button id="saveMovementNote" class="btn ghost compact" type="button">Salva nota</button>
+                  </div>
+                </div>
               </div>
-              <div class="note">Progetto e tag vengono applicati solo al movimento aperto. Lo stato Straordinario viene salvato subito e non attiva la protezione manuale.</div>
+              <div class="note">Progetto, tag e nota personale si applicano solo al movimento aperto. La nota non modifica classificazione o protezione. Lo stato Straordinario viene salvato subito.</div>
             </div>
 
             <div id="splitBox" class="split-box">
@@ -354,7 +362,7 @@
           <div class="view-toggle"><button id="viewList" class="btn secondary compact">Elenco</button><button id="viewGrouped" class="btn ghost compact">Raggruppa per controparte</button></div>
         </div>
         <div class="movement-filters">
-          <input id="movementSearch" class="input" placeholder="Cerca descrizione, controparte, categoria, causale..." />
+          <input id="movementSearch" class="input" placeholder="Cerca descrizione, controparte, categoria, causale, nota..." />
           <select id="movementStatus" class="select"><option value="">Tutti gli stati</option><option value="DA_CLASSIFICARE">Da classificare</option><option value="DA_REVISIONARE">Da rivedere</option><option value="CONFERMATO">Confermati</option></select>
           <select id="movementAutomation" class="select">
             <option value="">Tutta l'automazione</option>
@@ -1248,6 +1256,13 @@ function movementTypeMatches(row,filter){
   return String(row?.transaction_type||'')===filter;
 }
 function movementContextHtml(x){const project=x?.project_name?`<div><strong>${esc(x.project_name)}</strong></div>`:'';const tags=(x?.tags||[]).map(t=>`<span class="pill">#${esc(t.name)}</span>`).join('');return project||tags?`${project}${tags}`:'<span class="muted">—</span>'}
+function movementNotePreview(row){
+  const note=String(row?.user_note||'').trim();
+  if(!note)return '';
+  const compact=note.replace(/\s+/g,' ');
+  const preview=compact.length>90?compact.slice(0,87)+'…':compact;
+  return `<div class="small" style="margin-top:4px" title="${esc(note)}">📝 <span class="muted">${esc(preview)}</span></div>`;
+}
 function candidateConfidenceInfo(row){
   const conf=Number(row?.normalization_confidence||0),usable=!!row?.normalization_alias_usable;
   if(!usable)return {label:'non affidabile',cls:'candidate-confidence-low'};
@@ -1426,7 +1441,7 @@ function movementAutomationMatches(row,filter){
 function filteredMovements(){
   const q=$('movementSearch').value.trim().toLowerCase(),status=$('movementStatus').value,automation=$('movementAutomation').value,bank=$('movementBank').value,kind=$('movementKind').value,type=$('movementType').value,dir=$('movementDirection').value,cp=$('movementCounterparty').value,cat=$('movementCategory').value,project=$('movementProject').value,tag=$('movementTag').value,from=$('movementDateFrom').value,to=$('movementDateTo').value;
   let rows=(catData?.movements||[]).filter(x=>{
-    const hay=[x.description,x.counterparty_name,x.category_path,x.raw_causale,x.raw_type,transactionTypeDisplayLabel(x),transactionTypeLabel(x.transaction_type),movementKindLabel(x.movement_kind),x.project_name,futureAutomationInfo(x).label,...(x.tags||[]).map(t=>t.name)].join(' ').toLowerCase();
+    const hay=[x.description,x.counterparty_name,x.category_path,x.raw_causale,x.raw_type,x.user_note,transactionTypeDisplayLabel(x),transactionTypeLabel(x.transaction_type),movementKindLabel(x.movement_kind),x.project_name,futureAutomationInfo(x).label,...(x.tags||[]).map(t=>t.name)].join(' ').toLowerCase();
     if(q&&!textSearchMatches(hay,q))return false;
     if(status&&x.review_status!==status)return false;
     if(automation&&!movementAutomationMatches(x,automation))return false;
@@ -1467,7 +1482,7 @@ function syncBulkSelectionUi(){
 }
 function renderMovementList(rows){
   window.__movementRows=rows;
-  $('movementsTable').innerHTML=`<div class="table-wrap"><table class="table movement-table"><thead><tr><th style="width:3%"></th><th style="width:7%">${sortHeader('Data','transaction_date')}</th><th style="width:7%">${sortHeader('Banca','bank_name')}</th><th style="width:6%">${sortHeader('Canale','movement_kind')}</th><th style="width:7%">${sortHeader('Tipo movimento','transaction_type')}</th><th style="width:16%">${sortHeader('Descrizione','description')}</th><th style="width:10%">${sortHeader('Controparte','counterparty_name')}</th><th style="width:11%">${sortHeader('Categoria','category_path')}</th><th style="width:11%">Progetto / Tag</th><th style="width:8%">${sortHeader('Importo','amount')}</th><th style="width:8%">Stato</th><th style="width:6%"></th></tr></thead><tbody>${rows.length?rows.map(x=>`<tr><td><input class="movement-select" type="checkbox" data-select-movement="${x.id}" ${selectedMovementIds.has(x.id)?'checked':''} /></td><td><strong>${esc(x.transaction_date)}</strong><br><span class="muted">${esc(x.owner_name)}</span></td><td>${bankBadge(x.bank_name)}</td><td>${movementKindBadge(x)}</td><td>${transactionTypeBadge(x)}</td><td><div class="desc mono">${esc(x.description)}</div><div class="muted small">${esc(x.raw_causale||x.raw_type||'')}</div>${mccStatusHtml(x)}</td><td>${counterpartyCellHtml(x)}</td><td>${categoryCellHtml(x)}</td><td class="context-cell">${movementContextHtml(x)}</td><td><strong>${euro(x.amount)}</strong><br>${directionBadge(x)}</td><td>${statusBadgeForMovement(x)}</td><td><button class="btn ${movementWorkState(x).key==='CONFERMATO'?'ghost':'secondary'} compact" data-edit-movement="${x.id}">${esc(movementWorkState(x).action)}</button></td></tr>`).join(''):`<tr><td colspan="12" class="muted">Nessun movimento con i filtri selezionati.</td></tr>`}</tbody></table></div>`;
+  $('movementsTable').innerHTML=`<div class="table-wrap"><table class="table movement-table"><thead><tr><th style="width:3%"></th><th style="width:7%">${sortHeader('Data','transaction_date')}</th><th style="width:7%">${sortHeader('Banca','bank_name')}</th><th style="width:6%">${sortHeader('Canale','movement_kind')}</th><th style="width:7%">${sortHeader('Tipo movimento','transaction_type')}</th><th style="width:16%">${sortHeader('Descrizione','description')}</th><th style="width:10%">${sortHeader('Controparte','counterparty_name')}</th><th style="width:11%">${sortHeader('Categoria','category_path')}</th><th style="width:11%">Progetto / Tag</th><th style="width:8%">${sortHeader('Importo','amount')}</th><th style="width:8%">Stato</th><th style="width:6%"></th></tr></thead><tbody>${rows.length?rows.map(x=>`<tr><td><input class="movement-select" type="checkbox" data-select-movement="${x.id}" ${selectedMovementIds.has(x.id)?'checked':''} /></td><td><strong>${esc(x.transaction_date)}</strong><br><span class="muted">${esc(x.owner_name)}</span></td><td>${bankBadge(x.bank_name)}</td><td>${movementKindBadge(x)}</td><td>${transactionTypeBadge(x)}</td><td><div class="desc mono">${esc(x.description)}</div><div class="muted small">${esc(x.raw_causale||x.raw_type||'')}</div>${mccStatusHtml(x)}${movementNotePreview(x)}</td><td>${counterpartyCellHtml(x)}</td><td>${categoryCellHtml(x)}</td><td class="context-cell">${movementContextHtml(x)}</td><td><strong>${euro(x.amount)}</strong><br>${directionBadge(x)}</td><td>${statusBadgeForMovement(x)}</td><td><button class="btn ${movementWorkState(x).key==='CONFERMATO'?'ghost':'secondary'} compact" data-edit-movement="${x.id}">${esc(movementWorkState(x).action)}</button></td></tr>`).join(''):`<tr><td colspan="12" class="muted">Nessun movimento con i filtri selezionati.</td></tr>`}</tbody></table></div>`;
   syncBulkSelectionUi();
 }
 function movementGroupIdentity(row){
@@ -2048,6 +2063,8 @@ function openClassify(row,options={}){
   ].map(([k,v])=>`<span class="fact"><strong>${esc(k)}</strong>${esc(v)}</span>`).join('')+protectionFact;
   renderClassificationSuggestion();
   $('classMerchant').value=row.counterparty_id||'';$('classCategory').value=row.category_id||'';syncClassificationCategoryFromMerchant(false);syncSearchFromSelect('classMerchantSearch','classMerchant');renderClassificationSuggestion();renderMovementAliasBox();renderMovementProtectionBox();renderFutureAutomationBox();if(row.manual_lock)refreshSelectedPipelinePreview();$('classProject').value=row.project_id||'';const selectedTags=new Set((row.tags||[]).map(t=>t.id));document.querySelectorAll('[data-class-tag]').forEach(cb=>cb.checked=selectedTags.has(cb.value));
+  if($('classUserNote'))$('classUserNote').value=row.user_note||'';
+  if($('classUserNoteState'))$('classUserNoteState').textContent=row.user_note?'Nota salvata.':'Nessuna nota.';
   $('classMode').value='all';$('classificationRuleStyle').value='SIMPLE';if($('advancedAutomation'))$('advancedAutomation').open=false;
   if(selectedRow.is_bank_transfer)$('transferTarget').value=classificationTargetForRow(row);
   $('ruleMode').value='CONTAINS';$('rulePattern').value=(row.counterparty_name&&textSearchMatches(row.description||'',row.counterparty_name))?row.counterparty_name:(classificationAliasValue(row)||row.raw_causale||row.description||'');
@@ -2060,6 +2077,26 @@ function openClassify(row,options={}){
   $('onlyUnreviewed').checked=true;updateRuleUi();updateTransferDecisionHint();$('classifyBox').classList.remove('hidden');$('classifyBox').scrollIntoView({behavior:'smooth',block:'start'});msg($('classMsg'),'');$('splitEditor').classList.add('hidden');$('toggleSplitEditor').textContent=Number(row.split_count||0)>0?`Ripartizione (${nfmt(row.split_count)})`:'Dividi movimento';loadSplitsForMovement(row.id);loadReportingExtraordinaryState(row);scheduleClassificationPreview();updateClassificationPipelineState();setClassificationPipelineStep('counterparty',false);updateClassificationSaveBar();
 }
 async function saveMovementContext(){if(!selectedRow)return;const projectId=$('classProject').value||null;const tagIds=[...document.querySelectorAll('[data-class-tag]:checked')].map(x=>x.value);await rpc('dashboard_set_transaction_project_v1',{p_transaction_id:selectedRow.id,p_project_id:projectId});await rpc('dashboard_set_transaction_tags_v1',{p_transaction_id:selectedRow.id,p_tag_ids:tagIds})}
+async function saveMovementNote(){
+  if(!selectedRow)return;
+  const btn=$('saveMovementNote'),state=$('classUserNoteState'),note=$('classUserNote')?.value||'';
+  setBusy(btn,true,'Salvo');
+  if(state)state.textContent='Salvataggio…';
+  try{
+    const saved=await rpc('dashboard_set_transaction_note_v1',{p_transaction_id:selectedRow.id,p_user_note:note});
+    const value=saved?.user_note||'';
+    selectedRow.user_note=value;
+    const local=(catData?.movements||[]).find(x=>x.id===selectedRow.id);
+    if(local)local.user_note=value;
+    if($('classUserNote'))$('classUserNote').value=value;
+    if(state)state.textContent=value?'Nota salvata.':'Nota rimossa.';
+    renderMovements();
+  }catch(e){
+    if(state)state.textContent=e.message;
+  }finally{
+    setBusy(btn,false);
+  }
+}
 async function saveClassification(createRule=false){
   if(!selectedRow)return;
   const wasProtected=!!selectedRow.manual_lock,movementId=selectedRow.id;
@@ -3846,7 +3883,7 @@ $('importUploadPanel').addEventListener('click',e=>{
   const detail=e.target.closest('[data-import-detail]');if(detail){openImportDetail(detail.dataset.importDetail);return}
   const b=e.target.closest('[data-import-go-movements]');if(b)activateMainTab('categorization')
 });
-$('refreshBtn').onclick=async()=>{await loadAll();coherenceData=null;if(!$('tab-coherence').classList.contains('hidden'))await loadCoherence()};$('toggleSplitEditor').onclick=()=>{if($('splitEditor').classList.contains('hidden'))openSplitEditor();else{$('splitEditor').classList.add('hidden');$('toggleSplitEditor').textContent=Number(selectedRow?.split_count||0)>0?`Ripartizione (${nfmt(selectedRow.split_count)})`:'Dividi movimento'}};$('addSplitRow').onclick=()=>addSplitRow({});$('saveSplits').onclick=saveSplits;$('clearSplits').onclick=clearSplits;$('splitRows').addEventListener('click',e=>{const b=e.target.closest('[data-remove-split]');if(b){b.closest('.split-row')?.remove();updateSplitSummary()}});$('addCondition').onclick=()=>addConditionRow();$('previewCompoundRule').onclick=previewCompoundRule;$('saveCompoundRule').onclick=saveCompoundRule;$('compoundConditions').addEventListener('click',e=>{const b=e.target.closest('[data-remove-condition]');if(b){b.closest('.rule-condition')?.remove();if(!document.querySelector('#compoundConditions .rule-condition'))addConditionRow()}});$('saveClassificationNoRule').onclick=()=>{$('saveClassificationNoRule').dataset.mode==='close'?closeClassificationPanel():saveClassification(false)};$('saveClassificationWithRule').onclick=()=>saveClassification(true);$('closeClassify').onclick=closeClassificationPanel;$('addClassificationCondition').onclick=()=>{addClassificationConditionRow();scheduleClassificationPreview()};$('refreshClassificationPreview').onclick=()=>previewClassificationImpact(true);$('classificationConditions').addEventListener('click',e=>{const b=e.target.closest('[data-remove-class-condition]');if(b){b.closest('.rule-condition')?.remove();if(!document.querySelector('#classificationConditions .rule-condition'))addClassificationConditionRow();scheduleClassificationPreview()}});$('saveCategory').onclick=saveCategory;$('saveMerchant').onclick=saveMerchant;$('saveProject').onclick=saveProject;$('saveTag').onclick=saveTag;$('newCounterpartyBtn').onclick=openQuickCounterparty;
+$('refreshBtn').onclick=async()=>{await loadAll();coherenceData=null;if(!$('tab-coherence').classList.contains('hidden'))await loadCoherence()};$('saveMovementNote').onclick=saveMovementNote;$('toggleSplitEditor').onclick=()=>{if($('splitEditor').classList.contains('hidden'))openSplitEditor();else{$('splitEditor').classList.add('hidden');$('toggleSplitEditor').textContent=Number(selectedRow?.split_count||0)>0?`Ripartizione (${nfmt(selectedRow.split_count)})`:'Dividi movimento'}};$('addSplitRow').onclick=()=>addSplitRow({});$('saveSplits').onclick=saveSplits;$('clearSplits').onclick=clearSplits;$('splitRows').addEventListener('click',e=>{const b=e.target.closest('[data-remove-split]');if(b){b.closest('.split-row')?.remove();updateSplitSummary()}});$('addCondition').onclick=()=>addConditionRow();$('previewCompoundRule').onclick=previewCompoundRule;$('saveCompoundRule').onclick=saveCompoundRule;$('compoundConditions').addEventListener('click',e=>{const b=e.target.closest('[data-remove-condition]');if(b){b.closest('.rule-condition')?.remove();if(!document.querySelector('#compoundConditions .rule-condition'))addConditionRow()}});$('saveClassificationNoRule').onclick=()=>{$('saveClassificationNoRule').dataset.mode==='close'?closeClassificationPanel():saveClassification(false)};$('saveClassificationWithRule').onclick=()=>saveClassification(true);$('closeClassify').onclick=closeClassificationPanel;$('addClassificationCondition').onclick=()=>{addClassificationConditionRow();scheduleClassificationPreview()};$('refreshClassificationPreview').onclick=()=>previewClassificationImpact(true);$('classificationConditions').addEventListener('click',e=>{const b=e.target.closest('[data-remove-class-condition]');if(b){b.closest('.rule-condition')?.remove();if(!document.querySelector('#classificationConditions .rule-condition'))addClassificationConditionRow();scheduleClassificationPreview()}});$('saveCategory').onclick=saveCategory;$('saveMerchant').onclick=saveMerchant;$('saveProject').onclick=saveProject;$('saveTag').onclick=saveTag;$('newCounterpartyBtn').onclick=openQuickCounterparty;
 $('previewParsingRule').onclick=previewParsingRule;$('saveParsingRule').onclick=saveParsingRule;$('resetParsingRule').onclick=resetParsingRule;$('futureAutomationBox').addEventListener('change',e=>{
   if(e.target.id!=='setMerchantDefaultCategory')return;
   const box=$('futureAutomationBox'),badge=box.querySelector('.future-title .pill');
