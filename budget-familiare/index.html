@@ -1024,8 +1024,13 @@ function importStatusSummary(x){
   const imported=Number(x?.imported_rows||0),dup=Number(x?.duplicates||0);
   const invalid=Number(x?.invalid_rows||0),errors=Math.max(Number(x?.error_rows||0),Number(x?.raw_error_rows||0));
   const pending=Number(x?.pending_rows||0),issues=invalid+errors+pending;
+  const total=Number(x?.total_rows||0),informational=Number(x?.informational_rows??x?.informational??0);
+  const processed=imported+dup+informational+invalid+errors+pending;
   const bank=String(x?.bank||'').replace(/_/g,' ')||'Banca riconosciuta';
-  return {imported,dup,invalid,errors,pending,issues,bank};
+  return {imported,dup,invalid,errors,pending,issues,total,informational,processed,bank};
+}
+function importStatusIsTerminal(status){
+  return ['COMPLETED','COMPLETED_WITH_ERRORS','FAILED'].includes(String(status||'').toUpperCase());
 }
 async function uploadBankImport(){
   const btn=$('uploadImportFile'),file=$('importFile')?.files?.[0],owner=$('importOwner')?.value||'';
@@ -1046,22 +1051,29 @@ async function uploadBankImport(){
     const {error}=await sb.storage.from('bank-imports').upload(storagePath,file,{upsert:false,contentType:'text/csv'});
     if(error)throw error;
     importUploadMessage('File caricato. Riconoscimento banca ed elaborazione in corso…','warn');
-    const deadline=Date.now()+60000;
+    const deadline=Date.now()+10*60*1000;
     let found=null;
     while(Date.now()<deadline){
-      await new Promise(r=>setTimeout(r,1200));
+      await new Promise(r=>setTimeout(r,1800));
       try{found=await rpc('dashboard_import_status_v1',{p_filename:storedName})}catch(_){}
       if(!found)continue;
       const status=String(found.status||'').toUpperCase(),s=importStatusSummary(found);
-      if(['COMPLETED','COMPLETED_WITH_ERRORS','FAILED'].includes(status))break;
-      importUploadMessage('Elaborazione <strong>'+esc(s.bank)+'</strong> in corso… '+nfmt(s.imported)+' movimenti importati finora.','warn');
+      if(importStatusIsTerminal(status))break;
+      const progress=s.total>0?(' · '+nfmt(Math.min(s.processed,s.total))+' / '+nfmt(s.total)+' righe · '+Math.min(100,Math.round(s.processed/s.total*100))+'%'):'';
+      importUploadMessage('Elaborazione <strong>'+esc(s.bank)+'</strong> in corso… <strong>'+nfmt(s.imported)+' nuovi finora</strong>'+progress+'.','warn');
     }
-    await Promise.all([loadOverview(),loadMovementsData()]);
     if(!found){
-      importUploadMessage('File caricato correttamente. L’elaborazione sta richiedendo più tempo del previsto: usa <strong>Aggiorna</strong> tra qualche secondo.','warn');
+      importUploadMessage('File caricato correttamente. L’elaborazione non è ancora partita o lo stato non è disponibile. Controlla tra poco lo storico import.','warn');
       return;
     }
     const status=String(found.status||'').toUpperCase(),s=importStatusSummary(found);
+    if(!importStatusIsTerminal(status)){
+      await loadOverview();
+      const progress=s.total>0?(' '+nfmt(Math.min(s.processed,s.total))+' / '+nfmt(s.total)+' righe elaborate.'):'';
+      importUploadMessage('<strong>Importazione ancora in corso.</strong>'+progress+' La conferma finale e il pulsante “Vai ai movimenti” compariranno solo quando il file sarà completamente elaborato.','warn');
+      return;
+    }
+    await Promise.all([loadOverview(),loadMovementsData()]);
     if(status==='FAILED'){
       importUploadMessage('<strong>Importazione non riuscita.</strong><br>'+esc(found.error_message||'Controlla il formato del file.'),'error');
       return;
@@ -1143,17 +1155,19 @@ function renderImportDetail(detail){
   const state=importStateInfo({...s,open_anomalies:s.problems});
   const imported=Number(s.imported_audit??s.imported_rows??0),duplicates=Number(s.duplicates||0),informational=Number(s.informational??s.excluded??0),problems=Number(s.problems||0);
   const auditTotal=imported+duplicates+informational+problems,total=Number(s.total_rows||0),auditOk=auditTotal===total;
+  const technicalStatus=String(s.status||'').toUpperCase(),processing=technicalStatus==='PROCESSING';
+  const progressPct=total>0?Math.min(100,Math.round(auditTotal/total*100)):0;
   box.innerHTML='<div class="section-title"><div><h3 style="margin:0">Audit import</h3><p style="margin:3px 0 0">'+esc(displayImportFilename(s.filename))+' · '+esc(String(s.bank||'').replace(/_/g,' '))+'</p></div><button class="btn ghost compact" data-close-import-detail>Chiudi</button></div>'+
     '<div>'+('<span class="import-status '+state.cls+'">'+esc(state.label)+'</span>')+' <span class="muted small">Parser '+esc(s.parser_version||'—')+' · stato tecnico '+esc(s.status||'—')+'</span></div>'+
     '<div class="import-detail-grid">'+
       '<div class="import-detail-stat"><span class="label">Righe file</span><strong>'+nfmt(total)+'</strong></div>'+
-      '<div class="import-detail-stat"><span class="label">Nuovi</span><strong>'+nfmt(imported)+'</strong></div>'+
+      '<div class="import-detail-stat"><span class="label">'+(processing?'Nuovi finora':'Nuovi')+'</span><strong>'+nfmt(imported)+'</strong></div>'+
       '<div class="import-detail-stat"><span class="label">Duplicati</span><strong>'+nfmt(duplicates)+'</strong></div>'+
       '<div class="import-detail-stat"><span class="label">Righe informative</span><strong>'+nfmt(informational)+'</strong></div>'+
       '<div class="import-detail-stat"><span class="label">Problemi</span><strong>'+nfmt(problems)+'</strong></div>'+
       '<div class="import-detail-stat"><span class="label">Nuovi fuori budget</span><strong>'+nfmt(s.budget_excluded||0)+'</strong></div>'+
     '</div>'+
-    '<div class="import-audit-check '+(auditOk?'':'warn')+'"><strong>'+ (auditOk?'Controllo completezza OK':'Controllo completezza da verificare') +'</strong> · '+nfmt(auditTotal)+' righe spiegate su '+nfmt(total)+'.</div>'+
+    '<div class="import-audit-check '+(auditOk?'':'warn')+'"><strong>'+ (processing?'Elaborazione in corso':(auditOk?'Controllo completezza OK':'Controllo completezza da verificare')) +'</strong> · '+nfmt(auditTotal)+' righe '+(processing?'elaborate':'spiegate')+' su '+nfmt(total)+(processing?' · '+nfmt(progressPct)+'%':'')+'.</div>'+
     (s.error_message&&problems>0?'<div class="msg error">'+esc(s.error_message)+'</div>':'')+
     '<div class="import-detail-actions"><button class="btn ghost compact" data-detail-download>↓ Scarica CSV originale</button></div>'+
     importAuditSection('PROBLEM','Problemi',rows,'errori / righe non elaborate',problems>0)+
