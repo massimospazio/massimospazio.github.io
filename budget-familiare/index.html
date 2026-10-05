@@ -110,7 +110,18 @@
 .import-upload-result.warn{background:#fffbeb;border-color:#fde68a;color:#92400e}
 .import-upload-result.error{background:#fef2f2;border-color:#fecaca;color:#991b1b}
 .import-upload-result .actions{margin-top:8px;display:flex;gap:8px;flex-wrap:wrap}
-@media(max-width:850px){.import-upload-grid{grid-template-columns:1fr 1fr}.import-upload-grid .field:nth-child(2){grid-column:1/-1}}
+.import-head-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.import-status{display:inline-flex;align-items:center;border-radius:999px;padding:3px 8px;font-size:11px;font-weight:750}
+.import-status.ok{background:#dcfce7;color:#166534}.import-status.warn{background:#fef3c7;color:#92400e}.import-status.error{background:#fee2e2;color:#991b1b}.import-status.processing{background:#dbeafe;color:#1d4ed8}
+.import-mobile-list{display:none}.import-mobile-card{border:1px solid var(--line);border-radius:11px;padding:11px;margin-top:8px;background:#fff}
+.import-mobile-card .import-mobile-top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.import-mobile-card .import-mobile-name{font-weight:750;overflow-wrap:anywhere}.import-mobile-card .import-mobile-meta{font-size:11px;color:var(--muted);margin-top:3px}
+.import-mobile-card .import-mobile-counts{font-size:12px;margin-top:8px;line-height:1.5}.import-mobile-card .import-mobile-actions{display:flex;gap:6px;margin-top:9px}.import-mobile-card .import-mobile-actions .btn{flex:1}
+.import-detail-panel{margin-top:12px;padding:12px;border:1px solid #bfdbfe;background:#f8fbff;border-radius:12px}
+.import-detail-grid{display:grid;grid-template-columns:repeat(5,minmax(90px,1fr));gap:7px;margin:10px 0}.import-detail-stat{background:#fff;border:1px solid var(--line);border-radius:9px;padding:8px}.import-detail-stat .label{font-size:10px;color:var(--muted)}.import-detail-stat strong{display:block;font-size:18px;margin-top:2px}
+.import-issues{margin-top:10px}.import-detail-actions{display:flex;gap:7px;flex-wrap:wrap}
+@media(max-width:850px){.import-upload-grid{grid-template-columns:1fr 1fr}.import-upload-grid .field:nth-child(2){grid-column:1/-1}.import-detail-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:650px){.imports-desktop{display:none}.import-mobile-list{display:block}.import-head-actions{width:100%;justify-content:stretch}.import-head-actions .btn{flex:1}.import-detail-grid{grid-template-columns:1fr 1fr}.import-detail-actions .btn{flex:1}}
 @media(max-width:560px){.import-upload-grid{grid-template-columns:1fr}.import-upload-grid .field:nth-child(2){grid-column:auto}}
 </style>
 </head>
@@ -157,7 +168,7 @@
       </div>
       <div class="grid two">
         <div class="card"><div class="section-title"><div><h2>Conti</h2><p>Copertura temporale e numero movimenti per banca/owner.</p></div></div><div id="accountsTable"></div></div>
-        <div class="card"><div class="section-title"><div><h2>Import recenti</h2><p>Stato dei file caricati.</p></div><button id="openImportUpload" class="btn compact" type="button">＋ Carica movimenti</button></div>
+        <div class="card"><div class="section-title"><div><h2>Import recenti</h2><p>Stato dei file caricati.</p></div><div class="import-head-actions"><button id="openImportUpload" class="btn compact" type="button">＋ Carica movimenti</button><button id="toggleImportHistory" class="btn ghost compact" type="button">Storico import</button></div></div>
           <div id="importUploadPanel" class="import-upload-panel hidden">
             <div class="import-upload-grid">
               <div class="field"><label>Proprietario</label><select id="importOwner" class="select"></select></div>
@@ -168,7 +179,8 @@
             <div class="note" style="margin-top:8px">Formato ING o Trade Republic riconosciuto automaticamente. I movimenti già presenti vengono ignorati tramite controllo duplicati.</div>
             <div id="importUploadMsg"></div>
           </div>
-          <div id="importsTable"></div></div>
+          <div id="importsTable"></div>
+          <div id="importDetailPanel" class="import-detail-panel hidden"></div></div>
       </div>
     </section>
 
@@ -958,6 +970,9 @@ function coherenceOpenMovement(id){
 }
 
 
+let showAllImports=false;
+let currentImportDetail=null;
+
 function syncImportOwnerOptions(accounts){
   const el=$('importOwner');if(!el)return;
   const previous=el.value;
@@ -1030,7 +1045,7 @@ async function uploadBankImport(){
       return;
     }
     const issueText=s.issues?(' · '+nfmt(s.issues)+' da verificare'):'';
-    importUploadMessage('<strong>Importazione completata · '+esc(s.bank)+'</strong><br>'+nfmt(s.imported)+' nuovi movimenti · '+nfmt(s.dup)+' duplicati ignorati'+issueText+'<div class="actions"><button class="btn compact" type="button" data-import-go-movements>Vai ai movimenti</button></div>',s.issues?'warn':'');
+    importUploadMessage('<strong>Importazione completata · '+esc(s.bank)+'</strong><br>'+nfmt(s.imported)+' nuovi movimenti · '+nfmt(s.dup)+' duplicati ignorati'+issueText+'<div class="actions"><button class="btn compact" type="button" data-import-detail="'+esc(found.id)+'">Vedi riepilogo</button><button class="btn ghost compact" type="button" data-import-go-movements>Vai ai movimenti</button></div>',s.issues?'warn':'');
     $('importFile').value='';
   }catch(e){
     console.error(e);
@@ -1038,6 +1053,78 @@ async function uploadBankImport(){
   }finally{
     setBusy(btn,false);$('importFile').disabled=false;$('importOwner').disabled=false;$('cancelImportUpload').disabled=false;
   }
+}
+
+function importStateInfo(x){
+  const raw=String(x?.status||'').toUpperCase();
+  const problems=Number(x?.open_anomalies??x?.problems??0);
+  if(raw==='FAILED')return {label:'Fallito',cls:'error'};
+  if(raw==='PROCESSING')return {label:'In corso',cls:'processing'};
+  if(problems>0)return {label:'Da verificare',cls:'warn'};
+  return {label:'Completato',cls:'ok'};
+}
+function importStateBadge(x){const s=importStateInfo(x);return '<span class="import-status '+s.cls+'">'+esc(s.label)+'</span>'}
+function renderImports(imports){
+  const all=imports||[],rows=showAllImports?all:all.slice(0,15);
+  if($('toggleImportHistory')){
+    $('toggleImportHistory').textContent=showAllImports?'Solo recenti':('Storico import'+(all.length>15?' ('+nfmt(all.length)+')':''));
+  }
+  const desktop='<div class="imports-desktop table-wrap"><table class="table"><thead><tr><th>Data</th><th>File</th><th>Banca</th><th>Esito</th><th>Nuovi</th><th>Duplicati</th><th>Problemi</th><th></th></tr></thead><tbody>'+
+    (rows.length?rows.map(x=>'<tr><td>'+esc((x.imported_at||'').slice(0,10))+'</td><td>'+esc(displayImportFilename(x.filename))+'</td><td>'+esc(String(x.bank||'').replace(/_/g,' '))+'</td><td>'+importStateBadge(x)+'</td><td>'+nfmt(x.imported_rows)+'</td><td>'+nfmt(x.duplicates)+'</td><td>'+nfmt(x.open_anomalies)+'</td><td><div class="compact-actions"><button class="btn ghost compact" data-import-detail="'+esc(x.id)+'">Dettagli</button><button class="btn ghost compact" data-import-download="'+esc(x.id)+'">↓ CSV</button></div></td></tr>').join(''):'<tr><td colspan="8" class="muted">Nessun import</td></tr>')+
+    '</tbody></table></div>';
+  const mobile='<div class="import-mobile-list">'+(rows.length?rows.map(x=>{
+    const rawOnly=Number(x.raw_only||0),problems=Number(x.open_anomalies||0);
+    return '<div class="import-mobile-card"><div class="import-mobile-top"><div><div class="import-mobile-name">'+esc(displayImportFilename(x.filename))+'</div><div class="import-mobile-meta">'+esc((x.imported_at||'').slice(0,10))+' · '+esc(String(x.bank||'').replace(/_/g,' '))+'</div></div>'+importStateBadge(x)+'</div><div class="import-mobile-counts"><strong>'+nfmt(x.imported_rows)+' nuovi</strong> · '+nfmt(x.duplicates)+' duplicati'+(rawOnly?' · '+nfmt(rawOnly)+' esclusi':'')+(problems?' · <strong>'+nfmt(problems)+' da verificare</strong>':'')+'</div><div class="import-mobile-actions"><button class="btn ghost compact" data-import-detail="'+esc(x.id)+'">Dettagli</button><button class="btn ghost compact" data-import-download="'+esc(x.id)+'">↓ CSV</button></div></div>';
+  }).join(''):'<div class="muted">Nessun import</div>')+'</div>';
+  $('importsTable').innerHTML=desktop+mobile;
+}
+function renderImportDetail(detail){
+  currentImportDetail=detail;
+  const box=$('importDetailPanel'),s=detail?.summary||{},issues=detail?.issues||[];
+  if(!box)return;
+  const state=importStateInfo({...s,open_anomalies:s.problems});
+  const issueHtml=issues.length
+    ? '<div class="import-issues"><strong>Righe da verificare</strong>'+table(['Riga','Stato','Data','Descrizione','Motivo'],issues.map(x=>[nfmt(x.row_number),esc(x.status),esc(x.movement_date||'—'),esc(x.description||x.causale||'—'),esc(x.error_message||'—')]))+'</div>'
+    : '<div class="import-upload-result"><strong>Nessun errore reale nel file.</strong> I duplicati sono stati riconosciuti e ignorati automaticamente.</div>';
+  box.innerHTML='<div class="section-title"><div><h3 style="margin:0">Riepilogo import</h3><p style="margin:3px 0 0">'+esc(displayImportFilename(s.filename))+' · '+esc(String(s.bank||'').replace(/_/g,' '))+'</p></div><button class="btn ghost compact" data-close-import-detail>Chiudi</button></div>'+
+    '<div>'+('<span class="import-status '+state.cls+'">'+esc(state.label)+'</span>')+' <span class="muted small">Parser '+esc(s.parser_version||'—')+' · stato tecnico '+esc(s.status||'—')+'</span></div>'+
+    '<div class="import-detail-grid">'+
+      '<div class="import-detail-stat"><span class="label">Righe file</span><strong>'+nfmt(s.total_rows)+'</strong></div>'+
+      '<div class="import-detail-stat"><span class="label">Nuovi</span><strong>'+nfmt(s.imported_rows)+'</strong></div>'+
+      '<div class="import-detail-stat"><span class="label">Duplicati</span><strong>'+nfmt(s.duplicates)+'</strong></div>'+
+      '<div class="import-detail-stat"><span class="label">Esclusi</span><strong>'+nfmt(s.excluded)+'</strong></div>'+
+      '<div class="import-detail-stat"><span class="label">Problemi</span><strong>'+nfmt(s.problems)+'</strong></div>'+
+    '</div>'+
+    (s.error_message&&Number(s.problems)>0?'<div class="msg error">'+esc(s.error_message)+'</div>':'')+
+    '<div class="import-detail-actions"><button class="btn ghost compact" data-detail-download>↓ Scarica CSV originale</button></div>'+
+    issueHtml;
+  box.classList.remove('hidden');
+  box.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+async function openImportDetail(id){
+  const box=$('importDetailPanel');box.classList.remove('hidden');box.innerHTML='<div class="muted"><span class="spinner"></span>Carico riepilogo import…</div>';
+  try{
+    const detail=await rpc('dashboard_import_detail_v1',{p_import_id:id});
+    renderImportDetail(detail);
+  }catch(e){
+    box.innerHTML='<div class="msg error">'+esc(e.message||'Errore caricamento dettaglio import')+'</div>';
+  }
+}
+async function downloadImportFile(row){
+  if(!row)return;
+  const owner=String(row.owner||'').toLowerCase();
+  if(!['massimo','luisa'].includes(owner)){alert('Proprietario del file non disponibile.');return}
+  const name=String(row.filename||'');
+  let blob=null,lastError=null;
+  for(const folder of ['inbox','archive']){
+    const {data,error}=await sb.storage.from('bank-imports').download(owner+'/'+folder+'/'+name);
+    if(!error&&data){blob=data;break}
+    lastError=error;
+  }
+  if(!blob){alert('File originale non disponibile: '+(lastError?.message||'file non trovato'));return}
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=displayImportFilename(name);document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 function renderOverview(){
   const accounts=overview?.accounts||[],imports=overview?.imports||[],transactions=overview?.transactions||[];
@@ -1058,7 +1145,7 @@ function renderOverview(){
   $('ovResidualYear').textContent=euro(residual);
   $('ovInvestmentRate').textContent=income>0?pct(investment/income*100):'—';
   $('accountsTable').innerHTML=table(['Owner','Banca','Conto','Movimenti','Prima data','Ultima data'],accounts.map(x=>[x.owner,x.bank,x.account,nfmt(x.movements),x.first_date||'—',x.last_date||'—']));
-  $('importsTable').innerHTML=table(['Data','File','Banca','Stato','Importati','Anomalie'],imports.slice(0,15).map(x=>[(x.imported_at||'').slice(0,10),displayImportFilename(x.filename),x.bank,x.status,nfmt(x.imported_rows),nfmt(x.open_anomalies)]));
+  renderImports(imports);
 }
 function table(headers,rows){return `<div class="table-wrap"><table class="table"><thead><tr>${headers.map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows.length?rows.map(r=>`<tr>${r.map(c=>`<td>${c??''}</td>`).join('')}</tr>`).join(''):`<tr><td colspan="${headers.length}" class="muted">Nessun dato</td></tr>`}</tbody></table></div>`}
 function categoryLabel(c){return [c.level1_name,c.level2_name,c.level3_name].filter(Boolean).join(' › ')}
@@ -3671,9 +3758,21 @@ $('coherenceTable').addEventListener('click',e=>{
 $('loginBtn').onclick=async()=>{const b=$('loginBtn');setBusy(b,true,'Accesso');msg($('loginMsg'),'');const {data,error}=await sb.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});setBusy(b,false);if(error)return msg($('loginMsg'),error.message,true);showApp(data.user)};
 $('logoutBtn').onclick=async()=>{await sb.auth.signOut();showLogin()};
 $('openImportUpload').onclick=()=>{$('importUploadPanel').classList.toggle('hidden');if(!$('importUploadPanel').classList.contains('hidden'))syncImportOwnerOptions(overview?.accounts||[])};
+$('toggleImportHistory').onclick=()=>{showAllImports=!showAllImports;renderImports(overview?.imports||[])};
 $('cancelImportUpload').onclick=()=>{$('importUploadPanel').classList.add('hidden');importUploadMessage('');$('importFile').value=''};
 $('uploadImportFile').onclick=uploadBankImport;
-$('importUploadPanel').addEventListener('click',e=>{const b=e.target.closest('[data-import-go-movements]');if(b)activateMainTab('categorization')});
+$('importsTable').addEventListener('click',e=>{
+  const detail=e.target.closest('[data-import-detail]');if(detail){openImportDetail(detail.dataset.importDetail);return}
+  const down=e.target.closest('[data-import-download]');if(down){const row=(overview?.imports||[]).find(x=>x.id===down.dataset.importDownload);downloadImportFile(row)}
+});
+$('importDetailPanel').addEventListener('click',e=>{
+  if(e.target.closest('[data-close-import-detail]')){$('importDetailPanel').classList.add('hidden');currentImportDetail=null;return}
+  if(e.target.closest('[data-detail-download]'))downloadImportFile(currentImportDetail?.summary)
+});
+$('importUploadPanel').addEventListener('click',e=>{
+  const detail=e.target.closest('[data-import-detail]');if(detail){openImportDetail(detail.dataset.importDetail);return}
+  const b=e.target.closest('[data-import-go-movements]');if(b)activateMainTab('categorization')
+});
 $('refreshBtn').onclick=async()=>{await loadAll();coherenceData=null;if(!$('tab-coherence').classList.contains('hidden'))await loadCoherence()};$('toggleSplitEditor').onclick=()=>{if($('splitEditor').classList.contains('hidden'))openSplitEditor();else{$('splitEditor').classList.add('hidden');$('toggleSplitEditor').textContent=Number(selectedRow?.split_count||0)>0?`Ripartizione (${nfmt(selectedRow.split_count)})`:'Dividi movimento'}};$('addSplitRow').onclick=()=>addSplitRow({});$('saveSplits').onclick=saveSplits;$('clearSplits').onclick=clearSplits;$('splitRows').addEventListener('click',e=>{const b=e.target.closest('[data-remove-split]');if(b){b.closest('.split-row')?.remove();updateSplitSummary()}});$('addCondition').onclick=()=>addConditionRow();$('previewCompoundRule').onclick=previewCompoundRule;$('saveCompoundRule').onclick=saveCompoundRule;$('compoundConditions').addEventListener('click',e=>{const b=e.target.closest('[data-remove-condition]');if(b){b.closest('.rule-condition')?.remove();if(!document.querySelector('#compoundConditions .rule-condition'))addConditionRow()}});$('saveClassificationNoRule').onclick=()=>{$('saveClassificationNoRule').dataset.mode==='close'?closeClassificationPanel():saveClassification(false)};$('saveClassificationWithRule').onclick=()=>saveClassification(true);$('closeClassify').onclick=closeClassificationPanel;$('addClassificationCondition').onclick=()=>{addClassificationConditionRow();scheduleClassificationPreview()};$('refreshClassificationPreview').onclick=()=>previewClassificationImpact(true);$('classificationConditions').addEventListener('click',e=>{const b=e.target.closest('[data-remove-class-condition]');if(b){b.closest('.rule-condition')?.remove();if(!document.querySelector('#classificationConditions .rule-condition'))addClassificationConditionRow();scheduleClassificationPreview()}});$('saveCategory').onclick=saveCategory;$('saveMerchant').onclick=saveMerchant;$('saveProject').onclick=saveProject;$('saveTag').onclick=saveTag;$('newCounterpartyBtn').onclick=openQuickCounterparty;
 $('previewParsingRule').onclick=previewParsingRule;$('saveParsingRule').onclick=saveParsingRule;$('resetParsingRule').onclick=resetParsingRule;$('futureAutomationBox').addEventListener('change',e=>{
   if(e.target.id!=='setMerchantDefaultCategory')return;
