@@ -154,13 +154,13 @@ button,input,select{font:inherit}
       <div class="card">
         <div class="section-title"><div><h2>Saldo netto mensile</h2><p>Vista Massimo · Entrate − Uscite reali. I trasferimenti interni Massimo ING↔Trade Republic sono esclusi; straordinarie e investimenti restano nel cash flow.</p></div></div>
         <div class="chart-box compact"><canvas id="cashflowChart"></canvas></div>
-        <div class="legend-note">Barra sopra zero = liquidità generata nel mese. Sotto zero = liquidità consumata. La linea mostra il cumulato dei 12 mesi.</div>
+        <div id="cashflowNote" class="legend-note"></div>
       </div>
 
       <div class="card">
-        <div class="section-title"><div><h2>Liquidità attuale</h2><p>Saldo manuale dei conti. È uno stock e non viene inserito tra i movimenti.</p></div></div>
+        <div class="section-title"><div><h2>Liquidità di partenza</h2><p>Saldo manuale dei conti. È uno stock: ancora la liquidità storica e avvia la proiezione futura, senza creare movimenti.</p></div></div>
         <div id="balanceList" class="balance-list"></div>
-        <div class="balance-total"><span>Totale saldi inseriti</span><span id="balanceTotal">—</span></div>
+        <div class="balance-total"><span>Liquidità di partenza</span><span id="balanceTotal">—</span></div>
         <div id="balanceMsg"></div>
       </div>
     </section>
@@ -263,10 +263,12 @@ async function loadReport(){
   try{
     const data=await Promise.all([
       rpc("dashboard_reporting_read_v4"),
-      rpc("dashboard_reporting_cashflow_v68")
+      rpc("dashboard_reporting_cashflow_v68"),
+      rpc("dashboard_reporting_liquidity_history_v1").catch(function(){return {available:false,reason:"UNAVAILABLE",rows:[]}})
     ]);
     report=data[0]||{};
     report.cashflow_monthly=data[1]||[];
+    report.liquidity_history=data[2]||{available:false,rows:[]};
     renderAll();
     openReportingFromUrl();
   }catch(e){
@@ -351,8 +353,15 @@ function renderExpenseChart(){
 
 function renderCashflowChart(){
   const rows=report.cashflow_monthly||[];
+  const liquidity=report.liquidity_history||{};
+  const liquidityRows=Array.isArray(liquidity.rows)?liquidity.rows:[];
+  const liquidityMap=new Map(liquidityRows.map(function(x){return [x.month_start,num(x.balance)]}));
   let running=0;
   const cumulative=rows.map(function(x){running+=num(x.net);return Math.round(running)});
+  const anchored=!!liquidity.available&&liquidityRows.length>0;
+  const lineData=anchored
+    ?rows.map(function(x){return liquidityMap.has(x.month_start)?liquidityMap.get(x.month_start):null})
+    :cumulative;
   if(cashflowChart)cashflowChart.destroy();
   cashflowChart=new Chart($("cashflowChart"),{
     type:"bar",
@@ -360,7 +369,7 @@ function renderCashflowChart(){
       labels:rows.map(function(x){return monthLabel(x.month_start)}),
       datasets:[
         {type:"bar",label:"Saldo netto mese",data:rows.map(function(x){return num(x.net)}),backgroundColor:rows.map(function(x){return num(x.net)>=0?"hsl(145 48% 48%)":"hsl(4 60% 58%)"}),borderWidth:0},
-        {type:"line",label:"Cumulato 12 mesi",data:cumulative,borderColor:"#2563eb",backgroundColor:"#2563eb",borderWidth:2.5,pointRadius:2.5,tension:.25}
+        {type:"line",label:anchored?"Liquidità ricostruita":"Cumulato 12 mesi",data:lineData,borderColor:"#2563eb",backgroundColor:"#2563eb",borderWidth:2.5,pointRadius:2.5,tension:.25,spanGaps:false}
       ]
     },
     options:{
@@ -369,6 +378,20 @@ function renderCashflowChart(){
       scales:{x:{grid:{display:false}},y:{ticks:{callback:function(v){return money(v)}}}}
     }
   });
+  const note=$("cashflowNote");
+  if(!note)return;
+  if(anchored){
+    const last=liquidityRows[liquidityRows.length-1]||{};
+    note.textContent="Barre: liquidità generata o consumata nel mese. Linea: liquidità ricostruita ancorata a "+money(liquidity.anchor_balance)+" al "+dateLabel(liquidity.anchor_date)+". Ultimo punto al "+dateLabel(last.point_date)+".";
+  }else{
+    const reason=String(liquidity.reason||"");
+    const why=reason==="SNAPSHOT_DATES_DIFFER"
+      ?" I saldi dei conti hanno date diverse: aggiornali alla stessa data per ancorare la curva."
+      :reason==="MISSING_BALANCE"
+        ?" Inserisci il saldo di tutti i conti per ancorare la curva."
+        :"";
+    note.textContent="Barre: liquidità generata o consumata nel mese. La linea mostra temporaneamente il cumulato dei 12 mesi."+why;
+  }
 }
 
 function balancesComplete(){
@@ -707,7 +730,7 @@ function renderProjection(){
     rows.push({month:m,income:income,expenses:expenses,margin:margin,investment:investment,delta:delta,balance:balance});
   });
   const min=rows.reduce(function(a,r){return Math.min(a,r.balance)},rows.length?rows[0].balance:balance),final=rows.length?rows[rows.length-1].balance:balance;
-  box.innerHTML='<div class="grid projection-kpis"><div class="card kpi"><div class="label">Liquidità iniziale</div><div class="value">'+money(currentBalanceTotal())+'</div></div><div class="card kpi"><div class="label">Minimo previsto</div><div class="value '+(min<0?"negative":"")+'">'+money(min)+'</div></div><div class="card kpi"><div class="label">Dopo 6 mesi</div><div class="value '+(final<currentBalanceTotal()?"negative":"positive")+'">'+money(final)+'</div></div></div>'+
+  box.innerHTML='<div class="grid projection-kpis"><div class="card kpi"><div class="label">Liquidità iniziale · saldi manuali</div><div class="value">'+money(currentBalanceTotal())+'</div></div><div class="card kpi"><div class="label">Minimo previsto</div><div class="value '+(min<0?"negative":"")+'">'+money(min)+'</div></div><div class="card kpi"><div class="label">Dopo 6 mesi</div><div class="value '+(final<currentBalanceTotal()?"negative":"positive")+'">'+money(final)+'</div></div></div>'+
     '<div style="overflow:auto"><table class="projection-table"><thead><tr><th>Mese</th><th>Entrate</th><th>Spese ordinarie</th><th>Margine imprevisti</th><th>Investimenti</th><th>Delta</th><th>Saldo previsto</th></tr></thead><tbody>'+
     rows.map(function(r){return "<tr><td>"+esc(monthLabel(r.month))+"</td><td>"+money(r.income)+"</td><td>"+money(r.expenses)+"</td><td>"+money(r.margin)+"</td><td>"+money(r.investment)+'</td><td class="'+(r.delta>=0?"positive":"negative")+'">'+money(r.delta)+"</td><td><strong>"+money(r.balance)+"</strong></td></tr>"}).join("")+
     '</tbody></table></div><div class="legend-note">Previsione operativa: cambia con entrate, spese, margine, investimenti e saldi iniziali.</div>';
@@ -899,7 +922,8 @@ $("balanceList").addEventListener("click",async function(e){
   try{
     await rpc("dashboard_reporting_set_balance_v2",{p_account_id:id,p_balance:amount});
     const row=(report.balances||[]).find(function(x){return x.account_id===id});if(row){row.balance=amount;row.snapshot_date=localDateISO()}
-    renderBalances();renderProjection();msg($("balanceMsg"),"Saldo aggiornato.");
+    report.liquidity_history=await rpc("dashboard_reporting_liquidity_history_v1").catch(function(){return {available:false,reason:"UNAVAILABLE",rows:[]}});
+    renderBalances();renderCashflowChart();renderProjection();msg($("balanceMsg"),"Saldo aggiornato. Curva storica e proiezione ricalcolate.");
   }catch(err){msg($("balanceMsg"),err.message||"Errore salvataggio",true)}
   finally{setBusy(b,false)}
 });
