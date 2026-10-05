@@ -1,6 +1,6 @@
 (function(){
-  const APP_VERSION='V72.3.7';
-  const APP_RELEASE='Bootstrap MCC riallinea subito lo storico dello stesso alias';
+  const APP_VERSION='V72.3.8';
+  const APP_RELEASE='Note personali sui movimenti per review e verifiche';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});
