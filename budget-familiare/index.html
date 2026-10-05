@@ -1065,9 +1065,9 @@ function importStateInfo(x){
 }
 function importStateBadge(x){const s=importStateInfo(x);return '<span class="import-status '+s.cls+'">'+esc(s.label)+'</span>'}
 function renderImports(imports){
-  const all=imports||[],rows=showAllImports?all:all.slice(0,15);
+  const all=imports||[],rows=showAllImports?all:all.slice(0,5);
   if($('toggleImportHistory')){
-    $('toggleImportHistory').textContent=showAllImports?'Solo recenti':('Storico import'+(all.length>15?' ('+nfmt(all.length)+')':''));
+    $('toggleImportHistory').textContent=showAllImports?'Solo recenti':('Storico import'+(all.length>5?' ('+nfmt(all.length)+')':''));
   }
   const desktop='<div class="imports-desktop table-wrap"><table class="table"><thead><tr><th>Data</th><th>File</th><th>Banca</th><th>Esito</th><th>Nuovi</th><th>Duplicati</th><th>Problemi</th><th></th></tr></thead><tbody>'+
     (rows.length?rows.map(x=>'<tr><td>'+esc((x.imported_at||'').slice(0,10))+'</td><td>'+esc(displayImportFilename(x.filename))+'</td><td>'+esc(String(x.bank||'').replace(/_/g,' '))+'</td><td>'+importStateBadge(x)+'</td><td>'+nfmt(x.imported_rows)+'</td><td>'+nfmt(x.duplicates)+'</td><td>'+nfmt(x.open_anomalies)+'</td><td><div class="compact-actions"><button class="btn ghost compact" data-import-detail="'+esc(x.id)+'">Dettagli</button><button class="btn ghost compact" data-import-download="'+esc(x.id)+'">↓ CSV</button></div></td></tr>').join(''):'<tr><td colspan="8" class="muted">Nessun import</td></tr>')+
