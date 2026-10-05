@@ -1,6 +1,6 @@
 (function(){
-  const APP_VERSION='V72.3.12';
-  const APP_RELEASE='Giroconti riconosciuti anche dal nominativo interno affidabile';
+  const APP_VERSION='V72.3.13';
+  const APP_RELEASE='Normalizzazione configurabile delle controparti';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});
