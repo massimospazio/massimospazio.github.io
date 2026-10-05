@@ -1,6 +1,6 @@
 (function(){
-  const APP_VERSION='V72.3.18';
-  const APP_RELEASE='Alias normalizzati e suggerimenti fuzzy confermabili in elenco';
+  const APP_VERSION='V72.3.19';
+  const APP_RELEASE='Giroconti interni protetti dalla riclassificazione generale';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});
