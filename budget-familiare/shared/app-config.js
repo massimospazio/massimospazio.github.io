@@ -1,6 +1,6 @@
 (function(){
-  const APP_VERSION='V72.3.1';
-  const APP_RELEASE='Storico import, riepilogo errori e download CSV';
+  const APP_VERSION='V72.3.2';
+  const APP_RELEASE='Audit dettagliato degli import';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});
