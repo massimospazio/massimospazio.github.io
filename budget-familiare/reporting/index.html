@@ -585,14 +585,22 @@ function detailLabel(r){return r.is_direct?"Diretto su "+r.l1_name:(r.l2_name||r
 function categoryIconHtml(name,kind,group){
   const n=String(name||"").toLowerCase();
   let symbol="●",cls=kind==="income"?"income":kind==="expense"?"expense":"neutral";
-  if(group&&kind==="income")symbol="↑";
-  else if(group&&kind==="expense")symbol="↓";
+  if(group&&kind==="income"&&n.includes("entrate"))symbol="↑";
   else if(n.includes("invest")){symbol="↗";cls="investment"}
+  else if(n==="altro"||n.includes("altre uscite"))symbol="•••";
+  else if(n.includes("animal"))symbol="✦";
   else if(n.includes("casa"))symbol="⌂";
   else if(n.includes("debiti")||n.includes("risparm"))symbol="≋";
   else if(n.includes("famiglia")||n.includes("figli"))symbol="●●";
   else if(n.includes("ristor"))symbol="♨";
-  else if(n.includes("animal"))symbol="✦";
+  else if(n.includes("salute")||n.includes("farmac")||n.includes("medic"))symbol="✚";
+  else if(n.includes("shopping"))symbol="◇";
+  else if(n.includes("aliment"))symbol="▦";
+  else if(n.includes("tasse")||n.includes("commission"))symbol="§";
+  else if(n.includes("tempo libero"))symbol="★";
+  else if(n.includes("trasport")||n.includes("auto")||n.includes("carbur"))symbol="→";
+  else if(n.includes("utenze")||n.includes("energia")||n.includes("gas"))symbol="ϟ";
+  else if(n.includes("vacanze")||n.includes("viaggi"))symbol="✈";
   else if(n.includes("stipend"))symbol="▣";
   else if(n.includes("interess"))symbol="▥";
   else if(n.includes("rimbor"))symbol="↻";
