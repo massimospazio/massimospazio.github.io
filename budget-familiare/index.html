@@ -906,12 +906,11 @@ async function loadCoherence(){
     const [coh,status,duplicates]=await Promise.all([
       rpc('dashboard_classification_coherence_v1'),
       rpc('dashboard_classification_engine_status_v1'),
-      rpc('dashboard_counterparty_duplicate_suggestions_v1').catch(e=>{duplicateSuggestionsError=e?.message||'Errore caricamento detector duplicati';console.error('Duplicate detector',e);return []})
+      rpc('dashboard_counterparty_duplicate_suggestions_v1').catch(e=>{duplicateSuggestionsError=e?.message||'Errore caricamento detector duplicati';console.error('Duplicate detector',e);return null})
     ]);
     coherenceData=coh||{summary:{},rows:[]};
     engineStatus=status||{auto_reclass_enabled:false};
-    if(Array.isArray(duplicates))duplicateSuggestionsError=null;
-    duplicateSuggestions=duplicates||[];
+    if(Array.isArray(duplicates)){duplicateSuggestionsError=null;duplicateSuggestions=duplicates}else duplicateSuggestions=[];
     renderCoherence();
     renderDuplicateSuggestions();
   }catch(e){
