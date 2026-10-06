@@ -708,7 +708,7 @@
 </div>
 <script>
 const sb=window.appSupabase;
-let overview=null,catData=null,coherenceData=null,engineStatus=null,duplicateSuggestions=[],counterpartyFuzzySuggestions=[],selectedRow=null,splitData=null,viewMode='list',sortKey='transaction_date',sortDir='desc',catalogTab='categories',deepLinkHandled=false,categoryDeepLinkHandled=false,categoryViewMode='OPERATIONAL',categoryActionState=null,categoryCounterpartyState=null,categoryDependencyState=null,categoryReturnState=null,categoryL1ExpandedId=null,categoryL2SortKey='VALUE',categoryL2SortDir='desc',categoryAuditPeriod='12M',counterpartyPeriod='12M',categoryAuditLoading=false,analysisDirection='EXPENSE',analysisDirectionLoading=false,categoryTableSortKey='NAME',categoryTableSortDir='asc',movementCategoryScopeIds=null,movementCategoryScopeLabel='';
+let overview=null,catData=null,coherenceData=null,engineStatus=null,duplicateSuggestions=[],duplicateSuggestionsError=null,counterpartyFuzzySuggestions=[],selectedRow=null,splitData=null,viewMode='list',sortKey='transaction_date',sortDir='desc',catalogTab='categories',deepLinkHandled=false,categoryDeepLinkHandled=false,categoryViewMode='OPERATIONAL',categoryActionState=null,categoryCounterpartyState=null,categoryDependencyState=null,categoryReturnState=null,categoryL1ExpandedId=null,categoryL2SortKey='VALUE',categoryL2SortDir='desc',categoryAuditPeriod='12M',counterpartyPeriod='12M',categoryAuditLoading=false,analysisDirection='EXPENSE',analysisDirectionLoading=false,categoryTableSortKey='NAME',categoryTableSortDir='asc',movementCategoryScopeIds=null,movementCategoryScopeLabel='';
 const catalogSort={categories:{key:'label',dir:'asc'},merchants:{key:'name',dir:'asc'},projects:{key:'name',dir:'asc'},tags:{key:'name',dir:'asc'},mcc:{key:'mcc_code',dir:'asc'},rules:{key:'priority',dir:'desc'},parsing:{key:'priority',dir:'desc'}};
 const expandedGroups=new Set();
 const expandedCategoryGroups=new Set();
@@ -851,7 +851,8 @@ async function loadMovementsData(){
     const counterparties=await rpc('dashboard_counterparties_read_v1');
     const categoryAudit=await rpc('dashboard_category_audit_v7',{p_period:categoryAuditPeriod,p_direction:analysisDirection});
     const fuzzySuggestions=await rpc('dashboard_counterparty_fuzzy_suggestions_v1').catch(()=>[]);
-    const duplicates=await rpc('dashboard_counterparty_duplicate_suggestions_v1').catch(()=>[]);
+    duplicateSuggestionsError=null;
+    const duplicates=await rpc('dashboard_counterparty_duplicate_suggestions_v1').catch(e=>{duplicateSuggestionsError=e?.message||'Errore caricamento detector duplicati';console.error('Duplicate detector',e);return []});
 
     catData=base||{};
     catData.counterparties=counterparties||[];
@@ -905,10 +906,11 @@ async function loadCoherence(){
     const [coh,status,duplicates]=await Promise.all([
       rpc('dashboard_classification_coherence_v1'),
       rpc('dashboard_classification_engine_status_v1'),
-      rpc('dashboard_counterparty_duplicate_suggestions_v1')
+      rpc('dashboard_counterparty_duplicate_suggestions_v1').catch(e=>{duplicateSuggestionsError=e?.message||'Errore caricamento detector duplicati';console.error('Duplicate detector',e);return []})
     ]);
     coherenceData=coh||{summary:{},rows:[]};
     engineStatus=status||{auto_reclass_enabled:false};
+    if(Array.isArray(duplicates))duplicateSuggestionsError=null;
     duplicateSuggestions=duplicates||[];
     renderCoherence();
     renderDuplicateSuggestions();
@@ -2290,6 +2292,7 @@ function activeBadge(v){return v?'<span class="pill status-active">Attivo</span>
 function projectStatusBadge(s){const cls=s==='ACTIVE'?'project-active':s==='CLOSED'?'project-closed':'project-planned';return `<span class="pill ${cls}">${esc(projectStatusLabel(s))}</span>`}
 function renderDuplicateSuggestions(){
   const el=$('duplicateTable');if(!el)return;
+  if(duplicateSuggestionsError){el.innerHTML=`<div class="msg error">Detector duplicati non disponibile: ${esc(duplicateSuggestionsError)}</div>`;return}
   const rows=duplicateSuggestions||[];
   el.innerHTML=rows.length?`<div class="table-wrap"><table class="table"><thead><tr><th>Variante → proposta canonica</th><th>Categoria</th><th>Segnale</th><th>Alias / movimenti</th><th></th></tr></thead><tbody>${rows.map(r=>{
     const conflict=r.category_compatible===false?'<br><span class="pill cp-status-warn">Categorie diverse</span>':'';
@@ -3435,7 +3438,8 @@ function counterpartyEnriched(){
 function renderCounterpartyKpis(all,registryAll=all){
   const aliases=all.reduce((s,x)=>s+Number(x._stats.period_alias_count||0),0),movements=all.reduce((s,x)=>s+x._stats.period_movement_count,0);
   const noCategory=all.filter(x=>!x.default_category_id).length,noAlias=all.filter(x=>!x._stats.alias_count).length;
-  const dup=registryAll.filter(x=>!!x._stats.duplicate).length,duplicatePairs=(duplicateSuggestions||[]).length;
+  const duplicateUnavailable=!!duplicateSuggestionsError;
+  const dup=duplicateUnavailable?null:registryAll.filter(x=>!!x._stats.duplicate).length,duplicatePairs=duplicateUnavailable?null:(duplicateSuggestions||[]).length;
   const bootstrapPeriod=all.filter(x=>x._stats.bootstrap).length;
   const items=[
     ['ALL','Controparti',all.length,counterpartyPeriodLabel()+' · '+analysisDirectionLabel().toLowerCase()],
@@ -3443,14 +3447,14 @@ function renderCounterpartyKpis(all,registryAll=all){
     ['MOVEMENTS','Movimenti',movements,counterpartyPeriodLabel()+' · '+analysisDirectionLabel().toLowerCase()],
     ['NO_CATEGORY','Senza categoria',noCategory,'default mancante'],
     ['NO_ALIAS','Senza alias',noAlias,'riconoscimento da verificare'],
-    ['DUPLICATE','Possibili duplicati',dup,nfmt(duplicatePairs)+' coppie · mostra entrambe'],
+    ['DUPLICATE','Possibili duplicati',duplicateUnavailable?'—':dup,duplicateUnavailable?'detector non disponibile':nfmt(duplicatePairs)+' coppie · mostra entrambe'],
     ['MCC_BOOTSTRAP','Origine MCC',bootstrapPeriod,'con movimenti nel periodo']
   ];
   if(counterpartyPeriod==='ALL'){
     const stale=all.filter(x=>x._stats.last_date&&counterpartyAgeDays(x._stats.last_date)>365).length;
     items.push(['STALE_INFO','Inattive >12 mesi',stale,'dato storico · ordinabile da Ultimo movimento']);
   }
-  $('counterpartyKpis').innerHTML=items.map(x=>{const clickable=['ALL','NO_CATEGORY','NO_ALIAS','DUPLICATE','MCC_BOOTSTRAP'].includes(x[0]);return `<div class="counterparty-kpi"${clickable?` data-counterparty-kpi="${x[0]}"`:''}><div class="k">${esc(x[1])}</div><div class="v">${nfmt(x[2])}</div><div class="s">${esc(x[3])}</div></div>`}).join('');
+  $('counterpartyKpis').innerHTML=items.map(x=>{const clickable=['ALL','NO_CATEGORY','NO_ALIAS','DUPLICATE','MCC_BOOTSTRAP'].includes(x[0])&&!(x[0]==='DUPLICATE'&&duplicateUnavailable);const value=typeof x[2]==='number'?nfmt(x[2]):esc(x[2]);return `<div class="counterparty-kpi"${clickable?` data-counterparty-kpi="${x[0]}"`:''}><div class="k">${esc(x[1])}</div><div class="v">${value}</div><div class="s">${esc(x[3])}</div></div>`}).join('');
 }
 function counterpartyFrequencyHtml(s){
   const denom=Number(s?.period?.month_count||0),active=Number(s?.period_active_months||0),pct=Number(s?.period_active_pct||0);
