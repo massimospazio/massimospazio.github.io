@@ -1,6 +1,6 @@
 (function(){
-  const APP_VERSION='V72.3.23';
-  const APP_RELEASE='Giroconti: riconoscimento da IBAN interno indipendente dal tipo parser';
+  const APP_VERSION='V72.3.24';
+  const APP_RELEASE='Detector duplicati controparti completo';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});
