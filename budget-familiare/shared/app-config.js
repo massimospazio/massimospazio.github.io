@@ -1,3 +1,4 @@
+// Canonical source: massimospazio/budget-familiare; public files are deployed automatically.
 (function(){
   const APP_VERSION='V72.3.24';
   const APP_RELEASE='Detector duplicati controparti completo';
