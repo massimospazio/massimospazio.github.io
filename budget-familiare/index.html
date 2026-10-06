@@ -425,8 +425,8 @@
         <div id="coherenceTable"><div class="muted">Apri questa sezione per eseguire il controllo.</div></div>
       </div>
       <div class="card duplicate-card">
-        <div class="section-title"><div><h2>Possibili duplicati controparti</h2><p>Controparti create dal bootstrap MCC che potrebbero essere alias di una controparte già esistente. Nessuna unione è automatica.</p></div><button id="duplicateRefresh" class="btn ghost compact" type="button">Aggiorna</button></div>
-        <div class="note" style="margin-bottom:10px">Il suggerimento considera nome normalizzato e compatibilità della categoria. Prima dell’unione il backend blocca conflitti di categoria, progetto o alias.</div>
+        <div class="section-title"><div><h2>Possibili duplicati controparti</h2><p>Controllo su tutte le controparti: individua varianti dello stesso soggetto usando nome e alias normalizzati. Nessuna unione è automatica.</p></div><button id="duplicateRefresh" class="btn ghost compact" type="button">Aggiorna</button></div>
+        <div class="note" style="margin-bottom:10px">La proposta canonica privilegia la controparte con più alias, poi quella con più movimenti. Puoi invertire la proposta prima dell’unione; i controlli di sicurezza della fusione restano invariati.</div>
         <div id="duplicateMsg"></div>
         <div id="duplicateTable"><div class="muted">Apri Coerenza per cercare possibili duplicati.</div></div>
       </div>
@@ -2291,7 +2291,10 @@ function projectStatusBadge(s){const cls=s==='ACTIVE'?'project-active':s==='CLOS
 function renderDuplicateSuggestions(){
   const el=$('duplicateTable');if(!el)return;
   const rows=duplicateSuggestions||[];
-  el.innerHTML=rows.length?`<div class="table-wrap"><table class="table"><thead><tr><th>Possibile duplicato</th><th>Categoria</th><th>Segnale</th><th>Movimenti</th><th></th></tr></thead><tbody>${rows.map(r=>`<tr><td><strong>${esc(r.source_name)}</strong><span class="coherence-arrow">→</span><strong>${esc(r.target_name)}</strong><br><span class="muted small">${r.mcc_code?'bootstrap MCC '+esc(r.mcc_code):'bootstrap MCC'}</span></td><td>${esc(r.source_category_name||'—')} → ${esc(r.target_category_name||'—')}</td><td><span class="duplicate-score ${Number(r.score)>=95?'high':'medium'}">${Number(r.score)>=95?'Segnale forte':'Da verificare'}</span><br><span class="muted small">${esc(r.reason||'')}</span></td><td>${nfmt(r.source_movements||0)} → ${nfmt(r.target_movements||0)}</td><td><button class="btn secondary compact" data-merge-counterparty="${esc(r.source_id)}" data-merge-target="${esc(r.target_id)}" data-source-name="${esc(r.source_name)}" data-target-name="${esc(r.target_name)}">Unisci</button></td></tr>`).join('')}</tbody></table></div>`:'<div class="msg">Nessun possibile duplicato bootstrap MCC rilevato con i criteri attuali.</div>';
+  el.innerHTML=rows.length?`<div class="table-wrap"><table class="table"><thead><tr><th>Variante → proposta canonica</th><th>Categoria</th><th>Segnale</th><th>Alias / movimenti</th><th></th></tr></thead><tbody>${rows.map(r=>{
+    const conflict=r.category_compatible===false?'<br><span class="pill cp-status-warn">Categorie diverse</span>':'';
+    return `<tr><td><strong>${esc(r.source_name)}</strong><span class="coherence-arrow">→</span><strong>${esc(r.target_name)}</strong><br><span class="muted small">Canonica proposta: ${esc(r.canonical_reason||'più consolidata')}</span></td><td>${esc(r.source_category_name||'—')} → ${esc(r.target_category_name||'—')}${conflict}</td><td><span class="duplicate-score ${Number(r.score)>=95?'high':'medium'}">${Number(r.score)>=95?'Segnale forte':'Da verificare'}</span><br><span class="muted small">${esc(r.reason||'')}</span></td><td>${nfmt(r.source_alias_count||0)} → ${nfmt(r.target_alias_count||0)} alias<br><span class="muted small">${nfmt(r.source_movements||0)} → ${nfmt(r.target_movements||0)} mov.</span></td><td><div class="compact-actions"><button class="btn secondary compact" data-merge-counterparty="${esc(r.source_id)}" data-merge-target="${esc(r.target_id)}" data-source-name="${esc(r.source_name)}" data-target-name="${esc(r.target_name)}">Unisci in ${esc(r.target_name)}</button><button class="btn ghost compact" data-merge-counterparty="${esc(r.target_id)}" data-merge-target="${esc(r.source_id)}" data-source-name="${esc(r.target_name)}" data-target-name="${esc(r.source_name)}">Usa ${esc(r.source_name)} come canonica</button></div></td></tr>`;
+  }).join('')}</tbody></table></div>`:'<div class="msg">Nessun possibile duplicato rilevato con i criteri attuali.</div>';
 }
 
 async function mergeSuggestedCounterparty(btn){
@@ -3319,7 +3322,16 @@ function counterpartyCategoryMeta(m){
   if(!cat)return {l1:'Senza categoria',l2:'',path:counterpartyCategoryLabel(m)};
   return {l1:cat.level1_name||cat.name||'Senza categoria',l2:cat.level2_name||'',path:categoryLabel(cat)};
 }
-function counterpartyDuplicateSuggestion(id){return (duplicateSuggestions||[]).find(x=>String(x.source_id)===String(id))||null}
+function counterpartyDuplicateSuggestion(id){return (duplicateSuggestions||[]).find(x=>String(x.source_id)===String(id)||String(x.target_id)===String(id))||null}
+function counterpartyDuplicatePeerLabel(id,d=counterpartyDuplicateSuggestion(id)){
+  if(!d)return '';
+  return String(d.source_id)===String(id)?d.target_name:d.source_name;
+}
+function counterpartyDuplicateSortKey(m){
+  const d=m?._stats?.duplicate||counterpartyDuplicateSuggestion(m?.id);
+  if(!d)return 'zzzz|'+String(m?.name||'').toLowerCase();
+  return [String(d.target_name||'').toLowerCase(),String(d.source_name||'').toLowerCase(),String(m?.name||'').toLowerCase()].join('|');
+}
 function counterpartyPeriodInfo(){
   const now=new Date(),today=new Date(now.getFullYear(),now.getMonth(),now.getDate()),firstCurrent=new Date(now.getFullYear(),now.getMonth(),1),end=today;
   const fmt=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
@@ -3406,7 +3418,9 @@ function counterpartyStatusInfo(m,s){
 function counterpartyStatusHtml(m,s){
   const items=counterpartyStatusInfo(m,s);
   const issue=items.find(x=>x.key==='DUPLICATE')||items.find(x=>x.key==='NO_CATEGORY')||items.find(x=>x.key==='NO_ALIAS');
-  return issue?`<span class="pill ${issue.cls}">${esc(issue.label)}</span>`:'<span class="muted">—</span>';
+  if(!issue)return '<span class="muted">—</span>';
+  const title=issue.key==='DUPLICATE'&&s.duplicate?` title="Da confrontare con ${esc(counterpartyDuplicatePeerLabel(m.id,s.duplicate))}"`:'';
+  return `<span class="pill ${issue.cls}"${title}>${esc(issue.label)}</span>`;
 }
 function counterpartyNetHtml(s){
   const cls=analysisDirection==='INCOME'?'net-positive':'net-negative';
@@ -3418,10 +3432,10 @@ function counterpartyEnriched(){
     return {...m,_stats:stats,_category:category,_statuses:statuses,_status_priority:statuses.some(x=>x.key==='DUPLICATE')?0:statuses.some(x=>x.key==='NO_CATEGORY')?1:statuses.some(x=>x.key==='NO_ALIAS')?2:statuses.some(x=>x.key==='STALE')?3:8};
   });
 }
-function renderCounterpartyKpis(all){
+function renderCounterpartyKpis(all,registryAll=all){
   const aliases=all.reduce((s,x)=>s+Number(x._stats.period_alias_count||0),0),movements=all.reduce((s,x)=>s+x._stats.period_movement_count,0);
   const noCategory=all.filter(x=>!x.default_category_id).length,noAlias=all.filter(x=>!x._stats.alias_count).length;
-  const dup=all.filter(x=>!!x._stats.duplicate).length;
+  const dup=registryAll.filter(x=>!!x._stats.duplicate).length,duplicatePairs=(duplicateSuggestions||[]).length;
   const bootstrapPeriod=all.filter(x=>x._stats.bootstrap).length;
   const items=[
     ['ALL','Controparti',all.length,counterpartyPeriodLabel()+' · '+analysisDirectionLabel().toLowerCase()],
@@ -3429,7 +3443,7 @@ function renderCounterpartyKpis(all){
     ['MOVEMENTS','Movimenti',movements,counterpartyPeriodLabel()+' · '+analysisDirectionLabel().toLowerCase()],
     ['NO_CATEGORY','Senza categoria',noCategory,'default mancante'],
     ['NO_ALIAS','Senza alias',noAlias,'riconoscimento da verificare'],
-    ['DUPLICATE','Possibili duplicati',dup,'suggerimenti euristici'],
+    ['DUPLICATE','Possibili duplicati',dup,nfmt(duplicatePairs)+' coppie · mostra entrambe'],
     ['MCC_BOOTSTRAP','Origine MCC',bootstrapPeriod,'con movimenti nel periodo']
   ];
   if(counterpartyPeriod==='ALL'){
@@ -3449,7 +3463,7 @@ function counterpartyTypeOptionsHtml(selected=''){
 }
 function counterpartyDetailHtml(m){
   const s=m._stats||counterpartyStats(m),d=s.duplicate;
-  const merge=d?`<div class="counterparty-merge-note"><strong>Possibile duplicato:</strong> ${esc(d.source_name)} → ${esc(d.target_name)} · ${esc(d.reason||'segnale da verificare')} <button class="btn secondary compact" style="margin-left:8px" data-merge-counterparty="${esc(d.source_id)}" data-merge-target="${esc(d.target_id)}" data-source-name="${esc(d.source_name)}" data-target-name="${esc(d.target_name)}">Valuta unione</button></div>`:'';
+  const merge=d?`<div class="counterparty-merge-note"><strong>Possibile duplicato:</strong> ${esc(d.source_name)} → <strong>${esc(d.target_name)}</strong> · ${esc(d.reason||'segnale da verificare')} · canonica proposta: ${esc(d.canonical_reason||'più consolidata')} <div class="compact-actions" style="display:inline-flex;margin-left:8px"><button class="btn secondary compact" data-merge-counterparty="${esc(d.source_id)}" data-merge-target="${esc(d.target_id)}" data-source-name="${esc(d.source_name)}" data-target-name="${esc(d.target_name)}">Valuta unione</button><button class="btn ghost compact" data-merge-counterparty="${esc(d.target_id)}" data-merge-target="${esc(d.source_id)}" data-source-name="${esc(d.target_name)}" data-target-name="${esc(d.source_name)}">Inverti canonica</button></div></div>`:'';
   return `<div class="counterparty-detail">
     <div class="counterparty-detail-head"><div><strong>Modifica · ${esc(m.name)}</strong><div class="muted small">Tutto resta nella riga corrente: nessun salto al form superiore.</div></div></div>
     <div class="counterparty-edit-grid">
@@ -3491,7 +3505,7 @@ function counterpartyFilteredRows(all=counterpartyEnriched()){
   const l1=$('merchantL1Filter')?.value||'',l2=$('merchantL2Filter')?.value||'',status=$('merchantStatusFilter')?.value||'';
   let rows=all.filter(m=>{
     const inPeriod=Number(m._stats.period_movement_count||0)>0;
-    if(!inPeriod&&!q)return false;
+    if(!inPeriod&&!q&&status!=='DUPLICATE')return false;
     const aliasText=(q?m._stats.aliases:m._stats.period_aliases||[]).map(a=>a.pattern).join(' ');
     if(q&&!textSearchMatches([m.name,m._category.path,counterpartyTypeLabel(m.counterparty_type),aliasText].join(' '),q))return false;
     if(l1&&m._category.l1!==l1)return false;
@@ -3502,10 +3516,12 @@ function counterpartyFilteredRows(all=counterpartyEnriched()){
     if(status&&status!=='ISSUES'&&status!=='MCC_BOOTSTRAP'&&!keys.has(status))return false;
     return true;
   });
-  return genericCatalogSort(rows,'merchants',{
+  rows=genericCatalogSort(rows,'merchants',{
     name:x=>x.name||'',type:x=>counterpartyTypeLabel(x.counterparty_type),l1:x=>x._category.l1,category:x=>x._category.path,
     aliases:x=>x._stats.period_alias_count,movements:x=>x._stats.period_movement_count,total:x=>x._stats.period_volume,last:x=>x._stats.period_last_date||'0000-00-00',created:x=>x.created_at||'0000-00-00',status:x=>x._status_priority
   });
+  if(status==='DUPLICATE')rows.sort((a,b)=>counterpartyDuplicateSortKey(a).localeCompare(counterpartyDuplicateSortKey(b),'it',{sensitivity:'base'}));
+  return rows;
 }
 function syncCounterpartyBulkBar(){
   const bar=$('counterpartyBulkBar'),count=selectedCounterpartyIds.size;if(!bar)return;
@@ -3681,14 +3697,16 @@ function renderMerchantsCatalog(){
   syncAnalysisDirectionControls();
   syncCounterpartyPeriodControls();
   const all=counterpartyEnriched(),active=all.filter(x=>Number(x._stats.period_movement_count||0)>0);
-  renderCounterpartyKpis(active);
+  renderCounterpartyKpis(active,all);
   const rows=counterpartyFilteredRows(all),period=counterpartyPeriodInfo();
   const validIds=new Set([...active,...rows].map(x=>x.id));for(const id of [...selectedCounterpartyIds])if(!validIds.has(id))selectedCounterpartyIds.delete(id);
-  const hasSearch=!!($('merchantSearch')?.value||'').trim();
-  $('counterpartyRegistryInfo').textContent=`${nfmt(rows.length)} controparti visualizzate · ${nfmt(active.length)} attive nelle ${analysisDirectionLabel().toLowerCase()} · periodo ${period.start} → ${period.end} (fino a oggi)${hasSearch?' · ricerca estesa anche fuori periodo':''} · giroconti esclusi`;
+  const hasSearch=!!($('merchantSearch')?.value||'').trim(),duplicateReview=$('merchantStatusFilter')?.value==='DUPLICATE';
+  $('counterpartyRegistryInfo').textContent=duplicateReview
+    ?`${nfmt(rows.length)} controparti coinvolte in possibili duplicati · entrambe le controparti di ogni coppia sono mostrate, anche fuori periodo`
+    :`${nfmt(rows.length)} controparti visualizzate · ${nfmt(active.length)} attive nelle ${analysisDirectionLabel().toLowerCase()} · periodo ${period.start} → ${period.end} (fino a oggi)${hasSearch?' · ricerca estesa anche fuori periodo':''} · giroconti esclusi`;
   const body=rows.map(m=>{
     const s=m._stats,aliasOpen=expandedCounterpartyAliasDetails.has(m.id),movOpen=expandedCounterpartyMovementDetails.has(m.id),editOpen=expandedCounterpartyDetails.has(m.id),panel=counterpartyInlinePanelHtml(m);
-    const duplicateMark=s.duplicate?' <span class="pill cp-status-issue">Duplicato?</span>':'';
+    const duplicateMark=s.duplicate?` <span class="pill cp-status-issue" title="Da confrontare con ${esc(counterpartyDuplicatePeerLabel(m.id,s.duplicate))}">Duplicato?</span>`:'';
     const outsideMark=Number(s.period_movement_count||0)===0?' <span class="pill cp-status-stale">Fuori periodo</span>':'';
     return `<tr>
       <td><input class="counterparty-select" type="checkbox" data-select-counterparty="${m.id}" ${selectedCounterpartyIds.has(m.id)?'checked':''} /></td>
@@ -4042,7 +4060,7 @@ const cas=e.target.closest('[data-category-action-save]');if(cas){saveCategoryAc
 const cpe=e.target.closest('[data-edit-counterparty-category]');if(cpe){editingCounterpartyCategoryIds.add(cpe.dataset.editCounterpartyCategory);renderMerchantsCatalog();return}
 const cpsave=e.target.closest('[data-save-counterparty-category]');if(cpsave){saveInlineCounterpartyCategory(cpsave);return}
 const cpcancel=e.target.closest('[data-cancel-counterparty-category]');if(cpcancel){editingCounterpartyCategoryIds.delete(cpcancel.dataset.cancelCounterpartyCategory);renderMerchantsCatalog();return}
-const cpk=e.target.closest('[data-counterparty-kpi]');if(cpk){const k=cpk.dataset.counterpartyKpi;if(k==='ALL'){['merchantSearch','merchantL1Filter','merchantL2Filter','merchantStatusFilter'].forEach(id=>{if($(id))$(id).value=''})}else{if($('merchantStatusFilter'))$('merchantStatusFilter').value=k;if(k==='MCC_BOOTSTRAP')catalogSort.merchants={key:'last',dir:'desc'}}renderCatalogs();return}
+const cpk=e.target.closest('[data-counterparty-kpi]');if(cpk){const k=cpk.dataset.counterpartyKpi;if(k==='ALL'){['merchantSearch','merchantL1Filter','merchantL2Filter','merchantStatusFilter'].forEach(id=>{if($(id))$(id).value=''})}else{if($('merchantStatusFilter'))$('merchantStatusFilter').value=k;if(k==='MCC_BOOTSTRAP')catalogSort.merchants={key:'last',dir:'desc'};if(k==='DUPLICATE')catalogSort.merchants={key:'name',dir:'asc'}}renderCatalogs();return}
 const cpp=e.target.closest('[data-counterparty-period]');if(cpp){counterpartyPeriod=cpp.dataset.counterpartyPeriod||'12M';renderMerchantsCatalog();return}
 const cpsinline=e.target.closest('[data-save-counterparty-inline]');if(cpsinline){saveCounterpartyInlineEdit(cpsinline);return}
 const cpd=e.target.closest('[data-toggle-counterparty-detail]');if(cpd){const k=cpd.dataset.toggleCounterpartyDetail;if(expandedCounterpartyDetails.has(k))expandedCounterpartyDetails.delete(k);else{expandedCounterpartyDetails.add(k);expandedCounterpartyMovementDetails.delete(k);expandedCounterpartyAliasDetails.delete(k)}renderMerchantsCatalog();return}
