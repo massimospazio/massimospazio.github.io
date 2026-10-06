@@ -286,6 +286,7 @@ let categoryDetailMode="TREND";
 let categoryDetailFocus=null;
 let categoryDetailComponent=null;
 let planMode="PLAN";
+let analysisSummaryError=null;
 let reportDeepLinkHandled=false;
 const collapsedL1=new Set();
 
@@ -371,15 +372,23 @@ async function loadReport(){
   const btn=$("refreshBtn");
   setBusy(btn,true,"Aggiorno");
   msg($("reportMsg"),"");
+  analysisSummaryError=null;
   try{
+    const analysisCashflowPromise=rpc("dashboard_reporting_cashflow_analysis_v1").catch(function(e){
+      analysisSummaryError=e&&e.message?e.message:"Riepilogo storico non disponibile";
+      console.error("Analysis cashflow summary",e);
+      return null;
+    });
     const data=await Promise.all([
       rpc("dashboard_reporting_read_v4"),
       rpc("dashboard_reporting_cashflow_v68"),
-      rpc("dashboard_reporting_liquidity_history_v1").catch(function(){return {available:false,reason:"UNAVAILABLE",rows:[]}})
+      rpc("dashboard_reporting_liquidity_history_v1").catch(function(){return {available:false,reason:"UNAVAILABLE",rows:[]}}),
+      analysisCashflowPromise
     ]);
     report=data[0]||{};
     report.cashflow_monthly=data[1]||[];
     report.liquidity_history=data[2]||{available:false,rows:[]};
+    report.analysis_cashflow_monthly=Array.isArray(data[3])?data[3]:null;
     renderAll();
     openReportingFromUrl();
   }catch(e){
@@ -611,7 +620,7 @@ function planHeatStyle(value,avg,kind){
   const alpha=Math.min(.26,.07+Math.abs(dev)*.10);
   return "background:"+(favorable?"rgba(22,163,74,"+alpha+")":"rgba(220,38,38,"+alpha+")");
 }
-function cashSummaryHtml(months,incoming,outgoing,net,cumulative,totalLabel){
+function cashSummaryHtml(months,incoming,outgoing,net,cumulative,totalLabel,outgoingTitle){
   const totalIn=incoming.reduce(function(a,b){return a+b},0);
   const totalOut=outgoing.reduce(function(a,b){return a+b},0);
   const totalNet=net.reduce(function(a,b){return a+b},0);
@@ -620,7 +629,7 @@ function cashSummaryHtml(months,incoming,outgoing,net,cumulative,totalLabel){
   return '<div class="cash-summary-frame"><table class="cash-summary-table"><thead><tr><th>Riepilogo</th>'+
     months.map(function(m){return '<th>'+esc(monthLabel(m))+'</th>'}).join("")+'<th>'+esc(totalLabel)+'</th></tr></thead><tbody>'+
     '<tr class="summary-income"><td><span class="summary-label"><span class="plan-icon income">↑</span>Entrate</span></td>'+incoming.map(function(v){return '<td>'+money(v)+'</td>'}).join("")+'<td class="summary-total">'+money(totalIn)+'</td></tr>'+
-    '<tr class="summary-outgoing"><td><span class="summary-label"><span class="plan-icon expense">↓</span>Uscite</span></td>'+outgoing.map(function(v){return '<td>'+money(v)+'</td>'}).join("")+'<td class="summary-total">'+money(totalOut)+'</td></tr>'+
+    '<tr class="summary-outgoing"><td title="'+esc(outgoingTitle||"Uscite del periodo")+'"><span class="summary-label"><span class="plan-icon expense">↓</span>Uscite</span></td>'+outgoing.map(function(v){return '<td>'+money(v)+'</td>'}).join("")+'<td class="summary-total">'+money(totalOut)+'</td></tr>'+
     '<tr class="summary-net"><td><span class="summary-label"><span class="plan-icon neutral">⚖</span>Saldo mensile</span></td>'+net.map(balanceCell).join("")+'<td class="summary-total '+(totalNet>=0?"summary-positive":"summary-negative")+'">'+money(totalNet)+'</td></tr>'+
     '<tr class="summary-cumulative"><td title="Cumulato del periodo, non liquidità disponibile"><span class="summary-label"><span class="plan-icon neutral">▮</span>Saldo cumulato</span></td>'+cumulative.map(balanceCell).join("")+'<td class="summary-total '+(finalCum>=0?"summary-positive":"summary-negative")+'">'+money(finalCum)+'</td></tr>'+
     '</tbody></table></div>';
@@ -637,16 +646,27 @@ function renderPlanSummary(){
   });
   const net=incoming.map(function(v,i){return v-outgoing[i]});
   let running=0;const cumulative=net.map(function(v){running+=v;return running});
-  $("planSummary").innerHTML=cashSummaryHtml(months,incoming,outgoing,net,cumulative,"Totale 6m");
+  $("planSummary").innerHTML=cashSummaryHtml(months,incoming,outgoing,net,cumulative,"Totale 6m","Spese ordinarie previste + margine imprevisti + investimenti previsti");
 }
 function renderAnalysisSummary(){
-  const rows=report.cashflow_monthly||[];
-  const months=rows.map(function(x){return x.month_start});
-  const incoming=rows.map(function(x){return num(x.incoming)});
-  const outgoing=rows.map(function(x){return num(x.outgoing)});
-  const net=rows.map(function(x){return num(x.net)});
+  const box=$("analysisSummary");if(!box)return;
+  if(analysisSummaryError){
+    box.innerHTML='<div class="notice warn">Riepilogo Entrate/Uscite/Saldo non disponibile: '+esc(analysisSummaryError)+'</div>';
+    return;
+  }
+  const targetMonths=report.analysis_months||[];
+  const rows=Array.isArray(report.analysis_cashflow_monthly)?report.analysis_cashflow_monthly:[];
+  const byMonth=new Map(rows.map(function(x){return [x.month_start,x]}));
+  const missing=targetMonths.filter(function(m){return !byMonth.has(m)});
+  if(missing.length){
+    box.innerHTML='<div class="notice warn">Riepilogo storico non allineato al periodo di analisi.</div>';
+    return;
+  }
+  const incoming=targetMonths.map(function(m){return num(byMonth.get(m).incoming)});
+  const outgoing=targetMonths.map(function(m){return num(byMonth.get(m).outgoing)});
+  const net=targetMonths.map(function(m){return num(byMonth.get(m).net)});
   let running=0;const cumulative=net.map(function(v){running+=v;return running});
-  $("analysisSummary").innerHTML=cashSummaryHtml(months,incoming,outgoing,net,cumulative,"Totale 12m");
+  box.innerHTML=cashSummaryHtml(targetMonths,incoming,outgoing,net,cumulative,"Totale 12m","Uscite effettive del periodo, investimenti inclusi e giroconti interni esclusi");
 }
 function renderPlanRows(groups,kind,cellMapObj){
   const months=futureMonths();
