@@ -139,6 +139,21 @@ button,input,select{font:inherit}
 .plan-table .l1-row td{padding-top:6px;padding-bottom:6px}
 .plan-table tr[data-detail-l1] td{padding-top:4px;padding-bottom:4px}
 @media(max-width:800px){.cash-summary-table{min-width:760px}.cash-summary-table th:first-child,.cash-summary-table td:first-child{width:155px}}
+
+/* V72.4.1 — pianificazione + analisi nello stesso flusso */
+.stacked-section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin:2px 0 7px}
+.stacked-section-head h3{margin:0;font-size:15px;color:#111827}.stacked-section-head p{margin:2px 0 0;color:var(--muted);font-size:12px}
+.analysis-stacked{margin-top:18px;padding-top:14px;border-top:2px solid #dbe4f0}
+.section-jump{white-space:nowrap}
+.secondary-tools{margin-top:10px;padding:2px 2px 0}
+.secondary-details{border-top:1px solid #e5e7eb;padding-top:8px;color:#475569}
+.secondary-details summary{cursor:pointer;display:flex;align-items:center;gap:8px;width:max-content;max-width:100%;font-size:12px;color:#64748b;list-style:none}
+.secondary-details summary::-webkit-details-marker{display:none}
+.secondary-details summary:hover{color:#2563eb;text-decoration:underline}
+.secondary-details[open] summary{color:#334155;font-weight:700}
+.secondary-detail-body{margin-top:8px;padding:10px 12px;border:1px solid #e5e7eb;border-radius:9px;background:#fafafa}
+.secondary-detail-body .extra-table{margin-top:6px}
+.total-heat{font-weight:750}
 </style>
 </head>
 <body>
@@ -203,16 +218,19 @@ button,input,select{font:inherit}
 
     <section class="card section">
       <div class="section-title">
-        <div><h2>Pianificazione e analisi per categoria</h2><p>Lo stesso schema serve per pianificare il futuro e leggere l'andamento passato.</p></div>
+        <div><h2>Pianificazione e analisi per categoria</h2><p>Prima pianifica i prossimi mesi, poi confronta subito con lo storico.</p></div>
         <div class="toolbar">
-          <div class="mode-toggle"><button id="modePlan" class="btn compact">Pianifica 6 mesi</button><button id="modeAnalysis" class="btn ghost compact">Analizza 12 mesi</button></div>
+          <div class="mode-toggle"><button id="modePlan" class="btn ghost compact section-jump">Pianificazione 6 mesi</button><button id="modeAnalysis" class="btn ghost compact section-jump">Analisi 12 mesi</button></div>
           <button id="expandAll" class="btn ghost compact">Espandi tutte</button><button id="collapseAll" class="btn ghost compact">Comprimi tutte</button>
         </div>
       </div>
       <div id="planControls">
-        <div class="toolbar" style="margin-bottom:6px">
-          <label class="small">Margine imprevisti <input id="marginPct" class="input" type="number" min="0" max="100" step="0.5" style="width:82px" /> %</label>
-          <button id="saveMargin" class="btn ghost compact">Salva margine</button>
+        <div class="stacked-section-head">
+          <div><h3>Pianificazione · prossimi 6 mesi</h3><p>Entrate, uscite e saldo previsti con modifica diretta dei valori.</p></div>
+          <div class="toolbar">
+            <label class="small">Margine imprevisti <input id="marginPct" class="input" type="number" min="0" max="100" step="0.5" style="width:82px" /> %</label>
+            <button id="saveMargin" class="btn ghost compact">Salva margine</button>
+          </div>
         </div>
         <div id="planSummary"></div>
         <div id="incomeExceptions"></div>
@@ -220,14 +238,14 @@ button,input,select{font:inherit}
         <div class="plan-wrap"><table class="plan-table"><thead id="planHead"></thead><tbody id="planBody"></tbody></table></div>
         <div class="legend-note plan-help-note">ⓘ Valore vuoto = suggerimento automatico; il bordo blu indica un valore modificato manualmente. Spese ed entrate straordinarie sono escluse dai suggerimenti automatici. Le medie storiche sono disponibili passando sull’icona ⓘ della categoria.</div>
       </div>
-      <div id="analysisControls" class="hidden">
-        <div class="toolbar" style="margin-bottom:6px">
+      <div id="analysisControls" class="analysis-stacked">
+        <div class="stacked-section-head">
+          <div><h3>Analisi storica · ultimi 12 mesi completi</h3><p>Espandi le L1 per leggere le L2; passa da Spese a Entrate senza cambiare pagina.</p></div>
           <label class="small">Analizza <select id="analysisDirection" class="select" style="min-height:30px;padding:5px 8px"><option value="EXPENSE">Spese</option><option value="INCOME">Entrate</option></select></label>
-          <span class="small muted">Ultimi 12 mesi completi · colore rispetto alla media 12 mesi della categoria.</span>
         </div>
         <div id="analysisSummary"></div>
         <div class="plan-wrap"><table class="plan-table heat-table"><thead id="analysisHead"></thead><tbody id="analysisBody"></tbody></table></div>
-        <div class="legend-note">Spese: verde sotto media, rosso sopra media. Entrate: verde sopra media, rosso sotto media. Clicca una cella o una categoria per aprire trend e movimenti esplicativi.</div>
+        <div class="legend-note">Spese: verde sotto media, rosso sopra media. Entrate: verde sopra media, rosso sotto media. I totali usano intensità crescente: rosso per uscite, verde per entrate. Clicca una cella o una categoria per aprire trend e movimenti esplicativi.</div>
         <div id="categoryDetail" class="detail-panel hidden">
           <div class="section-title">
             <div><h2 id="detailTitle">Dettaglio categoria</h2><p id="detailSubtitle"></p></div>
@@ -247,15 +265,20 @@ button,input,select{font:inherit}
     </section>
 
     <section class="card section">
-      <div class="section-title"><div><h2>Movimenti straordinari</h2><p>Classificazione analitica: non cambia categoria o tipo movimento; decide solo se il movimento entra nelle medie e nel forecast ordinario.</p></div></div>
-      <div id="extraordinaryContent"></div>
-      <div id="extraordinaryMsg"></div>
-    </section>
-
-    <section class="card section">
       <div class="section-title"><div><h2>Proiezione liquidità</h2><p>Saldo Massimo + entrate previste − spese ordinarie previste − margine imprevisti − investimenti previsti.</p></div></div>
       <div id="projectionContent"></div>
     </section>
+
+    <div class="secondary-tools">
+      <details id="extraordinaryDetails" class="secondary-details">
+        <summary><span>Movimenti straordinari esclusi dalla previsione</span><span id="extraordinarySummary" class="muted"></span></summary>
+        <div class="secondary-detail-body">
+          <div class="small muted">Qui sono mostrati solo i movimenti già marcati come straordinari. I suggerimenti automatici generici sui “movimenti grandi” sono stati rimossi.</div>
+          <div id="extraordinaryContent"></div>
+          <div id="extraordinaryMsg"></div>
+        </div>
+      </details>
+    </div>
   </div>
 </div>
 
@@ -285,7 +308,6 @@ let categoryDetailData=null;
 let categoryDetailMode="TREND";
 let categoryDetailFocus=null;
 let categoryDetailComponent=null;
-let planMode="PLAN";
 let analysisSummaryError=null;
 let reportDeepLinkHandled=false;
 const collapsedL1=new Set();
@@ -628,6 +650,28 @@ function planHeatStyle(value,avg,kind){
   const alpha=Math.min(.26,.07+Math.abs(dev)*.10);
   return "background:"+(favorable?"rgba(22,163,74,"+alpha+")":"rgba(220,38,38,"+alpha+")");
 }
+function totalIntensityStyle(value,scaleValues,kind){
+  const v=Math.max(0,num(value));
+  const vals=(scaleValues||[]).map(function(x){return Math.max(0,num(x))}).filter(function(x){return x>0}).sort(function(a,b){return a-b});
+  if(v<=0||!vals.length)return "";
+  const cap=vals[Math.min(vals.length-1,Math.floor((vals.length-1)*.90))]||vals[vals.length-1]||v;
+  const ratio=Math.min(1,v/Math.max(cap,1));
+  const alpha=.06+ratio*.26;
+  const rgb=kind==="income"?"22,163,74":"220,38,38";
+  return "background:rgba("+rgb+","+alpha+");";
+}
+function forecastScaleValues(groups,cellMapObj){
+  const months=futureMonths(),out=[];
+  groups.forEach(function(g){
+    let groupTotal=0;
+    g.rows.forEach(function(r){
+      const rowTotal=months.reduce(function(sum,m){return sum+effectiveCell(cellMapObj.get(r.category_id+"|"+m))},0);
+      out.push(rowTotal);groupTotal+=rowTotal;
+    });
+    out.push(groupTotal);
+  });
+  return out;
+}
 function cashSummaryHtml(months,incoming,outgoing,net,cumulative,totalLabel,outgoingTitle){
   const totalIn=incoming.reduce(function(a,b){return a+b},0);
   const totalOut=outgoing.reduce(function(a,b){return a+b},0);
@@ -677,14 +721,14 @@ function renderAnalysisSummary(){
   box.innerHTML=cashSummaryHtml(targetMonths,incoming,outgoing,net,cumulative,"Totale 12m","Uscite effettive del periodo, investimenti inclusi e giroconti interni esclusi");
 }
 function renderPlanRows(groups,kind,cellMapObj){
-  const months=futureMonths();
+  const months=futureMonths(),scaleValues=forecastScaleValues(groups,cellMapObj);
   let html="";
   groups.forEach(function(g){
     const totals=months.map(function(m){return g.rows.reduce(function(sum,r){return sum+effectiveCell(cellMapObj.get(r.category_id+"|"+m))},0)});
     const total6=totals.reduce(function(a,b){return a+b},0);
     const collapsed=collapsedL1.has(g.id);
     html+='<tr class="l1-row"><td><div class="plan-label"><button class="caret" data-toggle-l1="'+esc(g.id)+'">'+(collapsed?"▸":"▾")+'</button>'+categoryIconHtml(g.name,kind,true)+'<strong>'+esc(g.name)+'</strong></div></td><td></td><td></td>'+
-      totals.map(function(v){return "<td>"+money(v)+"</td>"}).join("")+'<td class="total-cell">'+money(total6)+"</td></tr>";
+      totals.map(function(v){return "<td>"+money(v)+"</td>"}).join("")+'<td class="total-cell total-heat" style="'+totalIntensityStyle(total6,scaleValues,kind)+'">'+money(total6)+"</td></tr>";
     if(!collapsed){
       g.rows.forEach(function(r){
         let rowTotal=0;
@@ -699,7 +743,7 @@ function renderPlanRows(groups,kind,cellMapObj){
           return '<td><input class="plan-input'+(manual?" manual":"")+'" style="'+planHeatStyle(v,r.avg12,kind)+'" '+attr+'="'+esc(r.category_id)+'" data-month="'+esc(m)+'" type="number" min="0" step="1" value="'+(manual?Math.round(num(cell.override_amount)):"")+'" placeholder="'+Math.round(v)+'" title="'+esc(title)+'" /></td>';
         });
         const info=categoryStatsTitle(r,kind);
-        html+='<tr data-detail-l1="'+esc(g.id)+'"><td style="padding-left:34px"><span class="plan-label">'+categoryIconHtml(detailLabel(r),kind,false)+'<button class="category-link" data-plan-detail="'+esc(r.category_id)+'" data-plan-direction="'+(kind==="income"?"INCOME":"EXPENSE")+'">'+esc(detailLabel(r))+'</button><span class="plan-info" title="'+esc(info)+'">ⓘ</span></span></td><td>'+methodControl(r,kind,cellMapObj)+'</td><td><button class="btn ghost compact copy-btn plan-action-icon" data-copy-kind="'+kind+'" data-copy-category="'+esc(r.category_id)+'" title="Copia il primo mese sui cinque successivi">⧉</button></td>'+cells.join("")+'<td class="total-cell">'+money(rowTotal)+"</td></tr>";
+        html+='<tr data-detail-l1="'+esc(g.id)+'"><td style="padding-left:34px"><span class="plan-label">'+categoryIconHtml(detailLabel(r),kind,false)+'<button class="category-link" data-plan-detail="'+esc(r.category_id)+'" data-plan-direction="'+(kind==="income"?"INCOME":"EXPENSE")+'">'+esc(detailLabel(r))+'</button><span class="plan-info" title="'+esc(info)+'">ⓘ</span></span></td><td>'+methodControl(r,kind,cellMapObj)+'</td><td><button class="btn ghost compact copy-btn plan-action-icon" data-copy-kind="'+kind+'" data-copy-category="'+esc(r.category_id)+'" title="Copia il primo mese sui cinque successivi">⧉</button></td>'+cells.join("")+'<td class="total-cell total-heat" style="'+totalIntensityStyle(rowTotal,scaleValues,kind)+'">'+money(rowTotal)+"</td></tr>";
       });
     }
   });
@@ -737,14 +781,16 @@ function renderPlan(){
     return '<td><input class="plan-input'+(manual?" manual":"")+'" style="'+planHeatStyle(v,inv.avg12,"expense")+'" data-investment="'+esc(m)+'" type="number" min="0" step="1" value="'+(manual?Math.round(num(ov)):"")+'" placeholder="'+Math.round(v)+'" title="'+esc(title)+'" /></td>';
   });
   const invInfo="Media 6m "+money(inv.avg6)+" · Media 12m "+money(inv.avg12);
-  html+='<tr class="special-row"><td><span class="plan-label">'+categoryIconHtml("Investimenti","investment",true)+'<strong>Investimenti previsti</strong><span class="plan-info" title="'+esc(invInfo)+'">ⓘ</span></span></td><td class="muted">Media 6 mesi</td><td><button class="btn ghost compact copy-btn plan-action-icon" data-copy-kind="investment" title="Copia il primo mese sui cinque successivi">⧉</button></td>'+invCells.join("")+'<td class="total-cell">'+money(invTotal)+"</td></tr>";
+  const expenseScale=forecastScaleValues(groupedExpenseForecast(),expenseCellMap()).concat([invTotal]);
+  html+='<tr class="special-row"><td><span class="plan-label">'+categoryIconHtml("Investimenti","investment",true)+'<strong>Investimenti previsti</strong><span class="plan-info" title="'+esc(invInfo)+'">ⓘ</span></span></td><td class="muted">Media 6 mesi</td><td><button class="btn ghost compact copy-btn plan-action-icon" data-copy-kind="investment" title="Copia il primo mese sui cinque successivi">⧉</button></td>'+invCells.join("")+'<td class="total-cell total-heat" style="'+totalIntensityStyle(invTotal,expenseScale,"expense")+'">'+money(invTotal)+"</td></tr>";
 
   html+=renderPlanRows(groupedExpenseForecast(),"expense",expenseCellMap());
 
   const exp=expenseTotalsByMonth(),marginPct=num(report.meta&&report.meta.unexpected_margin_pct);
   const marginCells=months.map(function(m){return (exp.get(m)||0)*marginPct/100});
+  const marginTotal=marginCells.reduce(function(a,b){return a+b},0);
   html+='<tr class="special-row"><td><span class="plan-label"><span class="plan-icon neutral">±</span><strong>Margine imprevisti</strong><span class="plan-info" title="'+esc(marginPct.toFixed(1)+'% delle spese ordinarie previste')+'">ⓘ</span></span></td><td class="muted">Buffer</td><td></td>'+
-    marginCells.map(function(v){return "<td>"+money(v)+"</td>"}).join("")+'<td class="total-cell">'+money(marginCells.reduce(function(a,b){return a+b},0))+"</td></tr>";
+    marginCells.map(function(v){return "<td>"+money(v)+"</td>"}).join("")+'<td class="total-cell total-heat" style="'+totalIntensityStyle(marginTotal,expenseScale.concat([marginTotal]),"expense")+'">'+money(marginTotal)+"</td></tr>";
   $("planBody").innerHTML=html;
   renderPlanSummary();
   renderIncomeExceptions();
@@ -779,19 +825,23 @@ function renderAnalysis(){
     if(!groups.has(key))groups.set(key,{id:(direction==="INCOME"?"AI:":"AE:")+key,rawId:key,name:r.meta.l1_name,rows:[]});
     groups.get(key).rows.push(r);
   });
+  const groupList=Array.from(groups.values()).sort(function(a,b){return a.name.localeCompare(b.name,"it")});
+  const totalScale=active.map(function(r){return r.total});
+  groupList.forEach(function(g){totalScale.push(g.rows.reduce(function(sum,r){return sum+r.total},0))});
+  const totalKind=direction==="INCOME"?"income":"expense";
   let html="";
-  Array.from(groups.values()).sort(function(a,b){return a.name.localeCompare(b.name,"it")}).forEach(function(g){
+  groupList.forEach(function(g){
     const collapsed=collapsedL1.has(g.id);
     const totals=months.map(function(m){return g.rows.reduce(function(sum,r){return sum+(r.months.get(m)||0)},0)});
     const total=totals.reduce(function(a,b){return a+b},0),avg=total/Math.max(months.length,1);
-    html+='<tr class="l1-row"><td><div class="plan-label"><button class="caret" data-toggle-l1="'+esc(g.id)+'">'+(collapsed?"▸":"▾")+'</button>'+categoryIconHtml(g.name,direction==="INCOME"?"income":"expense",true)+'<button class="category-link" data-analysis-category="'+esc(g.rawId)+'" data-analysis-direction="'+direction+'">'+esc(g.name)+'</button></div></td><td>'+money(avg)+'</td>'+
-      totals.map(function(v,i){return '<td class="heat-cell" style="'+heatStyle(v,avg,direction)+'" data-analysis-category="'+esc(g.rawId)+'" data-analysis-direction="'+direction+'" data-analysis-month="'+esc(months[i])+'">'+money(v)+"</td>"}).join("")+"<td>"+money(total)+"</td></tr>";
+    html+='<tr class="l1-row"><td><div class="plan-label"><button class="caret" data-toggle-l1="'+esc(g.id)+'">'+(collapsed?"▸":"▾")+'</button>'+categoryIconHtml(g.name,totalKind,true)+'<button class="category-link" data-analysis-category="'+esc(g.rawId)+'" data-analysis-direction="'+direction+'">'+esc(g.name)+'</button></div></td><td>'+money(avg)+'</td>'+
+      totals.map(function(v,i){return '<td class="heat-cell" style="'+heatStyle(v,avg,direction)+'" data-analysis-category="'+esc(g.rawId)+'" data-analysis-direction="'+direction+'" data-analysis-month="'+esc(months[i])+'">'+money(v)+"</td>"}).join("")+'<td class="total-heat" style="'+totalIntensityStyle(total,totalScale,totalKind)+'">'+money(total)+"</td></tr>";
     if(!collapsed){
       g.rows.sort(function(a,b){return detailLabel(a.meta).localeCompare(detailLabel(b.meta),"it")}).forEach(function(r){
         const avg12=num(r.meta.avg12),kind=direction==="INCOME"?"income":"expense";
         html+='<tr><td style="padding-left:34px"><span class="plan-label">'+categoryIconHtml(detailLabel(r.meta),kind,false)+'<button class="category-link" data-analysis-category="'+esc(r.meta.category_id)+'" data-analysis-direction="'+direction+'">'+esc(detailLabel(r.meta))+'</button></span></td><td>'+money(avg12)+'</td>'+
           months.map(function(m){const v=r.months.get(m)||0;return '<td class="heat-cell" style="'+heatStyle(v,avg12,direction)+'" data-analysis-category="'+esc(r.meta.category_id)+'" data-analysis-direction="'+direction+'" data-analysis-month="'+esc(m)+'" title="'+esc((direction==="EXPENSE"?"Spesa":"Entrata")+" "+money(v)+" · media "+money(avg12))+'">'+money(v)+"</td>"}).join("")+
-          "<td>"+money(r.total)+"</td></tr>";
+          '<td class="total-heat" style="'+totalIntensityStyle(r.total,totalScale,totalKind)+'">'+money(r.total)+"</td></tr>";
       });
     }
   });
@@ -921,20 +971,21 @@ async function openCategoryDetail(categoryId,direction,selectedMonth){
 
 function renderExtraordinary(){
   const flagged=report.extraordinary_transactions||[];
-  const candidates=report.extraordinary_candidates||[];
-  function row(x,flaggedMode){
-    const label=x.counterparty||x.category||x.transaction_type||"Movimento";
-    const note=flaggedMode?(x.note||"Straordinario"):(x.description||"");
-    return "<tr><td>"+dateLabel(x.transaction_date)+"</td><td>"+esc(label)+'<div class="plan-sub">'+esc(note)+"</div></td><td>"+esc(x.transaction_type)+'</td><td class="amount '+(num(x.amount)>=0?"positive":"negative")+'">'+money(x.amount)+'</td><td><button class="btn ghost compact" data-extra-id="'+esc(x.id)+'" data-extra-mode="'+(flaggedMode?"remove":"add")+'">'+(flaggedMode?"Rendi ordinario":"Segna straordinario")+"</button></td></tr>";
+  const volume=flagged.reduce(function(sum,x){return sum+Math.abs(num(x.amount))},0);
+  if($("extraordinarySummary"))$("extraordinarySummary").textContent=flagged.length
+    ?"· "+flagged.length+" "+(flagged.length===1?"movimento":"movimenti")+" · "+money(volume)
+    :"· nessun movimento";
+  if(!$("extraordinaryContent"))return;
+  if(!flagged.length){
+    $("extraordinaryContent").innerHTML='<div class="muted small" style="margin-top:8px">Nessun movimento marcato come straordinario.</div>';
+    return;
   }
-  $("extraordinaryContent").innerHTML='<div class="extra-grid">'+
-    '<div class="extra-block"><h3>Straordinari attivi</h3><div style="overflow:auto"><table class="extra-table"><thead><tr><th>Data</th><th>Movimento</th><th>Tipo</th><th>Importo</th><th></th></tr></thead><tbody>'+
-    (flagged.length?flagged.map(function(x){return row(x,true)}).join(""):'<tr><td colspan="5" class="muted">Nessun movimento marcato.</td></tr>')+
-    '</tbody></table></div></div><div class="extra-block"><h3>Movimenti grandi da verificare</h3><div class="plan-sub" style="margin-bottom:6px">Suggerimenti, nessuna classificazione automatica.</div><div style="overflow:auto"><table class="extra-table"><thead><tr><th>Data</th><th>Movimento</th><th>Tipo</th><th>Importo</th><th></th></tr></thead><tbody>'+
-    (candidates.length?candidates.map(function(x){return row(x,false)}).join(""):'<tr><td colspan="5" class="muted">Nessun candidato.</td></tr>')+
-    "</tbody></table></div></div></div>";
+  $("extraordinaryContent").innerHTML='<div style="overflow:auto"><table class="extra-table"><thead><tr><th>Data</th><th>Movimento</th><th>Tipo</th><th>Importo</th><th></th></tr></thead><tbody>'+
+    flagged.map(function(x){
+      const label=x.counterparty||x.category||x.transaction_type||"Movimento";
+      return "<tr><td>"+dateLabel(x.transaction_date)+"</td><td>"+esc(label)+'<div class="plan-sub">'+esc(x.note||"Straordinario")+"</div></td><td>"+esc(x.transaction_type)+'</td><td class="amount '+(num(x.amount)>=0?"positive":"negative")+'">'+money(x.amount)+'</td><td><button class="btn ghost compact" data-extra-id="'+esc(x.id)+'" data-extra-mode="remove">Rendi ordinario</button></td></tr>';
+    }).join("")+"</tbody></table></div>";
 }
-
 function renderProjection(){
   const box=$("projectionContent");
   if(!balancesComplete()){
@@ -956,15 +1007,13 @@ function renderProjection(){
 }
 
 function renderMode(){
-  const planning=planMode==="PLAN";
-  $("planControls").classList.toggle("hidden",!planning);
-  $("analysisControls").classList.toggle("hidden",planning);
-  $("modePlan").className="btn "+(planning?"":"ghost ")+"compact";
-  $("modeAnalysis").className="btn "+(!planning?"":"ghost ")+"compact";
-  if(planning)renderPlan();else renderAnalysis();
+  $("planControls").classList.remove("hidden");
+  $("analysisControls").classList.remove("hidden");
+  renderPlan();
+  renderAnalysis();
 }
 function renderAll(){
-  renderKpis();renderExpenseChart();renderCashflowChart();renderBalances();renderExtraordinary();renderMode();renderProjection();
+  renderKpis();renderExpenseChart();renderCashflowChart();renderBalances();renderMode();renderProjection();renderExtraordinary();
 }
 function renderReportReturnBar(params){
   const bar=$("reportReturnBar");if(!bar)return;
@@ -986,11 +1035,10 @@ function openReportingFromUrl(){
   const incomeRows=report.income_forecast_categories||[],expenseRows=report.forecast_categories||[];
   if(incomeRows.some(function(x){return String(x.category_id)===String(category)}))direction="INCOME";
   else if(expenseRows.some(function(x){return String(x.category_id)===String(category)}))direction="EXPENSE";
-  planMode="PLAN";
   const groups=direction==="INCOME"?groupedIncomeForecast():groupedExpenseForecast();
   const group=groups.find(function(g){return g.rows.some(function(x){return String(x.category_id)===String(category)})});
   if(group)collapsedL1.delete(group.id);
-  renderMode();
+  renderPlan();
   requestAnimationFrame(function(){
     const selector='[data-method-category="'+CSS.escape(String(category))+'"]';
     const control=document.querySelector(selector);
@@ -1000,7 +1048,7 @@ function openReportingFromUrl(){
       control.focus({preventScroll:true});
     }else{
       msg($("planMsg"),"La categoria collegata non è presente nella griglia di pianificazione corrente. Apro il dettaglio analitico.",false);
-      planMode="ANALYSIS";$("analysisDirection").value=direction;renderMode();openCategoryDetail(category,direction);
+      $("analysisDirection").value=direction;renderAnalysis();openCategoryDetail(category,direction);
     }
   });
 }
@@ -1056,8 +1104,8 @@ async function copyFirstMonth(kind,category,btn){
 
 $("expenseScope").onchange=renderExpenseChart;
 $("toggleYoY").onchange=renderExpenseChart;
-$("modePlan").onclick=function(){planMode="PLAN";renderMode()};
-$("modeAnalysis").onclick=function(){planMode="ANALYSIS";renderMode()};
+$("modePlan").onclick=function(){$("planControls").scrollIntoView({behavior:"smooth",block:"start"})};
+$("modeAnalysis").onclick=function(){$("analysisControls").scrollIntoView({behavior:"smooth",block:"start"})};
 $("analysisDirection").onchange=function(){renderAnalysis();$("categoryDetail").classList.add("hidden")};
 $("closeDetail").onclick=function(){$("categoryDetail").classList.add("hidden")};
 $("detailTrendMode").onclick=function(){categoryDetailMode="TREND";categoryDetailComponent=null;renderCategoryDetailChart();renderCategoryDetailMovements()};
@@ -1068,15 +1116,13 @@ $("detailMovements").addEventListener("click",function(e){
   categoryDetailComponent=null;
   renderCategoryDetailMovements();
 });
-$("expandAll").onclick=function(){collapsedL1.clear();renderMode()};
+$("expandAll").onclick=function(){collapsedL1.clear();renderPlan();renderAnalysis()};
 $("collapseAll").onclick=function(){
-  if(planMode==="PLAN"){groupedIncomeForecast().concat(groupedExpenseForecast()).forEach(function(g){collapsedL1.add(g.id)})}
-  else{
-    const direction=$("analysisDirection").value,seen=new Set();
-    analysisRows(direction).forEach(function(r){if(r.l1_id)seen.add((direction==="INCOME"?"AI:":"AE:")+r.l1_id)});
-    seen.forEach(function(x){collapsedL1.add(x)});
-  }
-  renderMode();
+  groupedIncomeForecast().concat(groupedExpenseForecast()).forEach(function(g){collapsedL1.add(g.id)});
+  ["EXPENSE","INCOME"].forEach(function(direction){
+    analysisRows(direction).forEach(function(r){if(r.l1_id)collapsedL1.add((direction==="INCOME"?"AI:":"AE:")+r.l1_id)});
+  });
+  renderPlan();renderAnalysis();
 };
 
 $("planBody").addEventListener("click",async function(e){
@@ -1091,7 +1137,7 @@ $("planBody").addEventListener("click",async function(e){
   const copy=e.target.closest("[data-copy-kind]");
   if(copy){await copyFirstMonth(copy.dataset.copyKind,copy.dataset.copyCategory||null,copy);return}
   const detail=e.target.closest("[data-plan-detail]");
-  if(detail){planMode="ANALYSIS";$("analysisDirection").value=detail.dataset.planDirection;renderMode();await openCategoryDetail(detail.dataset.planDetail,detail.dataset.planDirection);return}
+  if(detail){$("analysisDirection").value=detail.dataset.planDirection;renderAnalysis();await openCategoryDetail(detail.dataset.planDetail,detail.dataset.planDirection);return}
 });
 
 $("planBody").addEventListener("change",async function(e){
