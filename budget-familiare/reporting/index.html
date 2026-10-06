@@ -103,6 +103,9 @@ button,input,select{font:inherit}
 .plan-table th:nth-child(3),.plan-table td:nth-child(3){min-width:115px;text-align:left}
 .warning-list{margin:8px 0 10px}
 .report-return-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:9px 11px;margin:-6px 0 12px;border:1px solid #bfdbfe;background:#eff6ff;border-radius:10px;color:#1e3a8a;font-size:12px}.dependency-focus td{background:#eff6ff!important;box-shadow:inset 0 1px #93c5fd,inset 0 -1px #93c5fd}.dependency-focus td:first-child{box-shadow:inset 3px 0 #2563eb,inset 0 1px #93c5fd,inset 0 -1px #93c5fd}
+
+.version-diagnostics{border:0;background:transparent;color:var(--muted);padding:0;margin:0;cursor:pointer;font-size:12px}.version-diagnostics:hover{text-decoration:underline;color:var(--accent)}
+.rpc-diag-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.42);z-index:9998;display:flex;align-items:center;justify-content:center;padding:20px}.rpc-diag-backdrop.hidden{display:none}.rpc-diag-panel{width:min(980px,96vw);max-height:88vh;overflow:auto;background:#fff;border-radius:14px;box-shadow:0 22px 60px rgba(15,23,42,.22);padding:16px}.rpc-diag-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}.rpc-diag-head h2{margin:0;font-size:18px}.rpc-diag-summary{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}.rpc-diag-chip{padding:5px 8px;border-radius:999px;background:#f3f4f6;font-size:12px}.rpc-diag-ok{color:#166534}.rpc-diag-slow{color:#92400e}.rpc-diag-critical,.rpc-diag-error{color:#991b1b}.rpc-diag-table td,.rpc-diag-table th{font-size:12px;vertical-align:top}.rpc-diag-name{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px}.rpc-diag-error-text{max-width:310px;white-space:normal;word-break:break-word}
 </style>
 </head>
 <body>
@@ -118,7 +121,7 @@ button,input,select{font:inherit}
 
   <div id="appView" class="hidden">
     <div class="top">
-      <div class="brand"><h1>Reporting Budget Familiare</h1><small data-app-version>—</small></div>
+      <div class="brand"><h1>Reporting Budget Familiare</h1><button id="rpcDiagnosticsOpen" class="version-diagnostics" type="button" title="Apri diagnostica tecnica"><span data-app-version>—</span></button></div>
       <div class="userbar"><span id="userEmail"></span><button id="refreshBtn" class="btn ghost">Aggiorna</button><button id="logoutBtn" class="btn ghost">Esci</button></div>
     </div>
     <div class="tabs">
@@ -222,6 +225,22 @@ button,input,select{font:inherit}
   </div>
 </div>
 
+
+<div id="rpcDiagnosticsModal" class="rpc-diag-backdrop hidden" aria-hidden="true">
+  <div class="rpc-diag-panel" role="dialog" aria-modal="true" aria-labelledby="rpcDiagnosticsTitle">
+    <div class="rpc-diag-head">
+      <div><h2 id="rpcDiagnosticsTitle">Diagnostica RPC</h2><div class="muted small">Tempi della sessione corrente del Reporting. Un errore resta distinto da un risultato numerico pari a zero.</div></div>
+      <button id="rpcDiagnosticsClose" class="btn ghost compact" type="button">Chiudi</button>
+    </div>
+    <div id="rpcDiagnosticsSummary" class="rpc-diag-summary"></div>
+    <div id="rpcDiagnosticsTable"></div>
+    <div class="toolbar" style="margin-top:10px">
+      <button id="rpcDiagnosticsReset" class="btn ghost compact" type="button">Azzera misure sessione</button>
+      <span class="muted small">Soglie: &lt;2 s OK · 2–5 s lenta · &gt;5 s critica.</span>
+    </div>
+  </div>
+</div>
+
 <script>
 const sb=window.appSupabase;
 let report=null;
@@ -250,7 +269,49 @@ function dateLabel(s){const d=s?new Date(String(s)+"T12:00:00"):null;return d?da
 function localDateISO(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
 function msg(el,text,isError){if(!el)return;el.innerHTML=text?'<div class="msg'+(isError?" error":"")+'">'+esc(text)+'</div>':""}
 function setBusy(btn,on,label){if(!btn)return;if(on){btn.dataset.oldText=btn.textContent;btn.disabled=true;btn.innerHTML='<span class="spinner"></span>'+esc(label||"Attendo")}else{btn.disabled=false;btn.textContent=btn.dataset.oldText||btn.textContent}}
-async function rpc(name,args){const r=await sb.rpc(name,args||{});if(r.error)throw r.error;return r.data}
+const RPC_WARN_MS=2000,RPC_CRITICAL_MS=5000;
+const rpcDiagnostics=new Map();
+function rpcErrorKind(error){const t=String(error&&error.message||error||"").toLowerCase();return /statement timeout|timed out|timeout/.test(t)?"TIMEOUT":"ERROR"}
+function recordRpcMetric(name,duration,status,error){
+  const prev=rpcDiagnostics.get(name)||{name:name,calls:0,last_ms:0,max_ms:0,total_ms:0,errors:0,timeouts:0,last_status:"OK",last_error:"",last_at:""};
+  const ms=Math.max(0,Math.round(Number(duration)||0));
+  const next=Object.assign({},prev,{calls:prev.calls+1,last_ms:ms,max_ms:Math.max(prev.max_ms,ms),total_ms:prev.total_ms+ms,last_status:status,last_error:error?String(error.message||error):"",last_at:new Date().toISOString()});
+  if(status==="ERROR")next.errors++;
+  if(status==="TIMEOUT")next.timeouts++;
+  rpcDiagnostics.set(name,next);
+  if(!$("rpcDiagnosticsModal")?.classList.contains("hidden"))renderRpcDiagnostics();
+}
+function rpcDiagnosticLevel(r){
+  if(r.last_status==="TIMEOUT")return {rank:4,label:"Timeout",cls:"rpc-diag-error"};
+  if(r.last_status==="ERROR")return {rank:4,label:"Errore",cls:"rpc-diag-error"};
+  if(r.max_ms>=RPC_CRITICAL_MS)return {rank:3,label:"Critica",cls:"rpc-diag-critical"};
+  if(r.max_ms>=RPC_WARN_MS)return {rank:2,label:"Lenta",cls:"rpc-diag-slow"};
+  return {rank:1,label:"OK",cls:"rpc-diag-ok"};
+}
+function renderRpcDiagnostics(){
+  const rows=Array.from(rpcDiagnostics.values()).sort(function(a,b){const la=rpcDiagnosticLevel(a),lb=rpcDiagnosticLevel(b);return lb.rank-la.rank||b.max_ms-a.max_ms||a.name.localeCompare(b.name)});
+  const errors=rows.filter(function(x){return x.errors||x.timeouts}).length;
+  const critical=rows.filter(function(x){return !x.errors&&!x.timeouts&&x.max_ms>=RPC_CRITICAL_MS}).length;
+  const slow=rows.filter(function(x){return !x.errors&&!x.timeouts&&x.max_ms>=RPC_WARN_MS&&x.max_ms<RPC_CRITICAL_MS}).length;
+  if($("rpcDiagnosticsSummary"))$("rpcDiagnosticsSummary").innerHTML='<span class="rpc-diag-chip">RPC misurate: <strong>'+rows.length+'</strong></span><span class="rpc-diag-chip rpc-diag-slow">Lente: <strong>'+slow+'</strong></span><span class="rpc-diag-chip rpc-diag-critical">Critiche: <strong>'+critical+'</strong></span><span class="rpc-diag-chip rpc-diag-error">Con errori/timeout: <strong>'+errors+'</strong></span>';
+  if(!$("rpcDiagnosticsTable"))return;
+  $("rpcDiagnosticsTable").innerHTML=rows.length?'<div class="table-wrap"><table class="table rpc-diag-table"><thead><tr><th>RPC</th><th>Ultima</th><th>Max sessione</th><th>Media</th><th>Chiamate</th><th>Stato</th><th>Ultimo errore</th></tr></thead><tbody>'+rows.map(function(r){const l=rpcDiagnosticLevel(r);return '<tr><td class="rpc-diag-name">'+esc(r.name)+'</td><td>'+r.last_ms+' ms</td><td><strong>'+r.max_ms+' ms</strong></td><td>'+Math.round(r.total_ms/Math.max(1,r.calls))+' ms</td><td>'+r.calls+'</td><td><strong class="'+l.cls+'">'+l.label+'</strong></td><td class="rpc-diag-error-text">'+esc(r.last_error||"—")+'</td></tr>'}).join("")+'</tbody></table></div>':'<div class="msg">Nessuna RPC misurata in questa sessione.</div>';
+}
+function openRpcDiagnostics(){renderRpcDiagnostics();$("rpcDiagnosticsModal")?.classList.remove("hidden");$("rpcDiagnosticsModal")?.setAttribute("aria-hidden","false")}
+function closeRpcDiagnostics(){$("rpcDiagnosticsModal")?.classList.add("hidden");$("rpcDiagnosticsModal")?.setAttribute("aria-hidden","true")}
+function resetRpcDiagnostics(){rpcDiagnostics.clear();renderRpcDiagnostics()}
+async function rpc(name,args){
+  const started=performance.now();let recorded=false;
+  try{
+    const r=await sb.rpc(name,args||{});
+    const duration=performance.now()-started;
+    if(r.error){const kind=rpcErrorKind(r.error);recordRpcMetric(name,duration,kind,r.error);recorded=true;throw r.error}
+    recordRpcMetric(name,duration,"OK");recorded=true;return r.data;
+  }catch(error){
+    if(!recorded)recordRpcMetric(name,performance.now()-started,rpcErrorKind(error),error);
+    throw error;
+  }
+}
 
 function showLogin(){$("loginView").classList.remove("hidden");$("appView").classList.add("hidden")}
 function showApp(user){$("loginView").classList.add("hidden");$("appView").classList.remove("hidden");$("userEmail").textContent=user&&user.email?user.email:"";loadReport()}
@@ -956,6 +1017,11 @@ $("loginBtn").onclick=async function(){
 };
 $("logoutBtn").onclick=async function(){await sb.auth.signOut();showLogin()};
 $("refreshBtn").onclick=loadReport;
+$("rpcDiagnosticsOpen")?.addEventListener("click",openRpcDiagnostics);
+$("rpcDiagnosticsClose")?.addEventListener("click",closeRpcDiagnostics);
+$("rpcDiagnosticsReset")?.addEventListener("click",resetRpcDiagnostics);
+$("rpcDiagnosticsModal")?.addEventListener("click",function(e){if(e.target===$("rpcDiagnosticsModal"))closeRpcDiagnostics()});
+document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!$("rpcDiagnosticsModal")?.classList.contains("hidden"))closeRpcDiagnostics()});
 init();
 </script>
 </body>
