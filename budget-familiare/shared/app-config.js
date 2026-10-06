@@ -1,7 +1,7 @@
 // Canonical source: massimospazio/budget-familiare; public files are deployed automatically.
 (function(){
-  const APP_VERSION='V72.3.24';
-  const APP_RELEASE='Detector duplicati controparti completo';
+  const APP_VERSION='V72.3.25';
+  const APP_RELEASE='Detector duplicati rapido e con errori visibili';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});
