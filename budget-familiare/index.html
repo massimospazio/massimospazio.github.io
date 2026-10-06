@@ -136,6 +136,9 @@
 @media(max-width:850px){.import-upload-grid{grid-template-columns:1fr 1fr}.import-upload-grid .field:nth-child(2){grid-column:1/-1}.import-detail-grid{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:650px){.imports-desktop{display:none}.import-mobile-list{display:block}.import-head-actions{width:100%;justify-content:stretch}.import-head-actions .btn{flex:1}.import-detail-grid{grid-template-columns:1fr 1fr}.import-detail-actions .btn{flex:1}}
 @media(max-width:560px){.import-upload-grid{grid-template-columns:1fr}.import-upload-grid .field:nth-child(2){grid-column:auto}}
+
+.version-diagnostics{border:0;background:transparent;color:var(--muted);padding:0;margin:0;cursor:pointer;font-size:12px}.version-diagnostics:hover{text-decoration:underline;color:var(--accent)}
+.rpc-diag-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.42);z-index:9998;display:flex;align-items:center;justify-content:center;padding:20px}.rpc-diag-backdrop.hidden{display:none}.rpc-diag-panel{width:min(980px,96vw);max-height:88vh;overflow:auto;background:#fff;border-radius:14px;box-shadow:0 22px 60px rgba(15,23,42,.22);padding:16px}.rpc-diag-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}.rpc-diag-head h2{margin:0;font-size:18px}.rpc-diag-summary{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}.rpc-diag-chip{padding:5px 8px;border-radius:999px;background:#f3f4f6;font-size:12px}.rpc-diag-ok{color:#166534}.rpc-diag-slow{color:#92400e}.rpc-diag-critical,.rpc-diag-error{color:#991b1b}.rpc-diag-table td,.rpc-diag-table th{font-size:12px;vertical-align:top}.rpc-diag-name{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px}.rpc-diag-error-text{max-width:310px;white-space:normal;word-break:break-word}
 </style>
 </head>
 <body>
@@ -151,7 +154,7 @@
 
   <div id="appView" class="hidden">
     <div class="top">
-      <div class="brand"><h1>Dashboard Budget Familiare</h1><small data-app-version>—</small></div>
+      <div class="brand"><h1>Dashboard Budget Familiare</h1><button id="rpcDiagnosticsOpen" class="version-diagnostics" type="button" title="Apri diagnostica tecnica"><span data-app-version>—</span></button></div>
       <div class="userbar"><span id="userEmail"></span><button id="refreshBtn" class="btn ghost">Aggiorna</button><button id="logoutBtn" class="btn ghost">Esci</button></div>
     </div>
     <datalist id="v62CounterpartyOptions"></datalist>
@@ -706,9 +709,25 @@
     </section>
   </div>
 </div>
+
+<div id="rpcDiagnosticsModal" class="rpc-diag-backdrop hidden" aria-hidden="true">
+  <div class="rpc-diag-panel" role="dialog" aria-modal="true" aria-labelledby="rpcDiagnosticsTitle">
+    <div class="rpc-diag-head">
+      <div><h2 id="rpcDiagnosticsTitle">Diagnostica RPC</h2><div class="muted small">Tempi della sessione corrente. Le soglie servono a individuare le chiamate da analizzare, non modificano automaticamente il database.</div></div>
+      <button id="rpcDiagnosticsClose" class="btn ghost compact" type="button">Chiudi</button>
+    </div>
+    <div id="rpcDiagnosticsSummary" class="rpc-diag-summary"></div>
+    <div id="rpcDiagnosticsTable"></div>
+    <div class="compact-actions" style="margin-top:10px">
+      <button id="rpcDiagnosticsReset" class="btn ghost compact" type="button">Azzera misure sessione</button>
+      <span class="muted small">Soglie: &lt;2 s OK · 2–5 s lenta · &gt;5 s critica.</span>
+    </div>
+  </div>
+</div>
+
 <script>
 const sb=window.appSupabase;
-let overview=null,catData=null,coherenceData=null,engineStatus=null,duplicateSuggestions=[],duplicateSuggestionsError=null,counterpartyFuzzySuggestions=[],selectedRow=null,splitData=null,viewMode='list',sortKey='transaction_date',sortDir='desc',catalogTab='categories',deepLinkHandled=false,categoryDeepLinkHandled=false,categoryViewMode='OPERATIONAL',categoryActionState=null,categoryCounterpartyState=null,categoryDependencyState=null,categoryReturnState=null,categoryL1ExpandedId=null,categoryL2SortKey='VALUE',categoryL2SortDir='desc',categoryAuditPeriod='12M',counterpartyPeriod='12M',categoryAuditLoading=false,analysisDirection='EXPENSE',analysisDirectionLoading=false,categoryTableSortKey='NAME',categoryTableSortDir='asc',movementCategoryScopeIds=null,movementCategoryScopeLabel='';
+let overview=null,catData=null,coherenceData=null,engineStatus=null,duplicateSuggestions=[],duplicateSuggestionsError=null,counterpartyFuzzySuggestions=[],fuzzySuggestionsError=null,selectedRow=null,splitData=null,viewMode='list',sortKey='transaction_date',sortDir='desc',catalogTab='categories',deepLinkHandled=false,categoryDeepLinkHandled=false,categoryViewMode='OPERATIONAL',categoryActionState=null,categoryCounterpartyState=null,categoryDependencyState=null,categoryReturnState=null,categoryL1ExpandedId=null,categoryL2SortKey='VALUE',categoryL2SortDir='desc',categoryAuditPeriod='12M',counterpartyPeriod='12M',categoryAuditLoading=false,analysisDirection='EXPENSE',analysisDirectionLoading=false,categoryTableSortKey='NAME',categoryTableSortDir='asc',movementCategoryScopeIds=null,movementCategoryScopeLabel='';
 const catalogSort={categories:{key:'label',dir:'asc'},merchants:{key:'name',dir:'asc'},projects:{key:'name',dir:'asc'},tags:{key:'name',dir:'asc'},mcc:{key:'mcc_code',dir:'asc'},rules:{key:'priority',dir:'desc'},parsing:{key:'priority',dir:'desc'}};
 const expandedGroups=new Set();
 const expandedCategoryGroups=new Set();
@@ -827,7 +846,47 @@ function textSearchMatches(actual,query){
 }
 function msg(el,text,error=false){el.innerHTML=text?`<div class="msg ${error?'error':''}">${esc(text)}</div>`:''}
 function setBusy(btn,busy,label){if(!btn.dataset.label)btn.dataset.label=btn.textContent;btn.disabled=busy;btn.innerHTML=busy?`<span class="spinner"></span>${esc(label||'Attendere')}`:esc(btn.dataset.label)}
-async function rpc(name,args={}){const {data,error}=await sb.rpc(name,args);if(error)throw error;return data}
+const RPC_WARN_MS=2000,RPC_CRITICAL_MS=5000;
+const rpcDiagnostics=new Map();
+function rpcErrorKind(error){const t=String(error?.message||error||'').toLowerCase();return /statement timeout|timed out|timeout/.test(t)?'TIMEOUT':'ERROR'}
+function recordRpcMetric(name,duration,status,error=null){
+  const prev=rpcDiagnostics.get(name)||{name,calls:0,last_ms:0,max_ms:0,total_ms:0,errors:0,timeouts:0,last_status:'OK',last_error:'',last_at:''};
+  const ms=Math.max(0,Math.round(Number(duration)||0));
+  const next={...prev,calls:prev.calls+1,last_ms:ms,max_ms:Math.max(prev.max_ms,ms),total_ms:prev.total_ms+ms,last_status:status,last_error:error?String(error.message||error):'',last_at:new Date().toISOString()};
+  if(status==='ERROR')next.errors++;
+  if(status==='TIMEOUT')next.timeouts++;
+  rpcDiagnostics.set(name,next);
+  if(!$('rpcDiagnosticsModal')?.classList.contains('hidden'))renderRpcDiagnostics();
+}
+function rpcDiagnosticLevel(r){
+  if(r.last_status==='TIMEOUT')return {rank:4,label:'Timeout',cls:'rpc-diag-error'};
+  if(r.last_status==='ERROR')return {rank:4,label:'Errore',cls:'rpc-diag-error'};
+  if(r.max_ms>=RPC_CRITICAL_MS)return {rank:3,label:'Critica',cls:'rpc-diag-critical'};
+  if(r.max_ms>=RPC_WARN_MS)return {rank:2,label:'Lenta',cls:'rpc-diag-slow'};
+  return {rank:1,label:'OK',cls:'rpc-diag-ok'};
+}
+function renderRpcDiagnostics(){
+  const rows=[...rpcDiagnostics.values()].sort((a,b)=>{const la=rpcDiagnosticLevel(a),lb=rpcDiagnosticLevel(b);return lb.rank-la.rank||b.max_ms-a.max_ms||a.name.localeCompare(b.name)});
+  const errors=rows.filter(x=>x.errors||x.timeouts).length,critical=rows.filter(x=>!x.errors&&!x.timeouts&&x.max_ms>=RPC_CRITICAL_MS).length,slow=rows.filter(x=>!x.errors&&!x.timeouts&&x.max_ms>=RPC_WARN_MS&&x.max_ms<RPC_CRITICAL_MS).length;
+  if($('rpcDiagnosticsSummary'))$('rpcDiagnosticsSummary').innerHTML=`<span class="rpc-diag-chip">RPC misurate: <strong>${nfmt(rows.length)}</strong></span><span class="rpc-diag-chip rpc-diag-slow">Lente: <strong>${nfmt(slow)}</strong></span><span class="rpc-diag-chip rpc-diag-critical">Critiche: <strong>${nfmt(critical)}</strong></span><span class="rpc-diag-chip rpc-diag-error">Con errori/timeout: <strong>${nfmt(errors)}</strong></span>`;
+  if(!$('rpcDiagnosticsTable'))return;
+  $('rpcDiagnosticsTable').innerHTML=rows.length?`<div class="table-wrap"><table class="table rpc-diag-table"><thead><tr><th>RPC</th><th>Ultima</th><th>Max sessione</th><th>Media</th><th>Chiamate</th><th>Stato</th><th>Ultimo errore</th></tr></thead><tbody>${rows.map(r=>{const l=rpcDiagnosticLevel(r);return `<tr><td class="rpc-diag-name">${esc(r.name)}</td><td>${nfmt(r.last_ms)} ms</td><td><strong>${nfmt(r.max_ms)} ms</strong></td><td>${nfmt(Math.round(r.total_ms/Math.max(1,r.calls)))} ms</td><td>${nfmt(r.calls)}</td><td><strong class="${l.cls}">${l.label}</strong></td><td class="rpc-diag-error-text">${esc(r.last_error||'—')}</td></tr>`}).join('')}</tbody></table></div>`:'<div class="msg">Nessuna RPC misurata in questa sessione.</div>';
+}
+function openRpcDiagnostics(){renderRpcDiagnostics();$('rpcDiagnosticsModal')?.classList.remove('hidden');$('rpcDiagnosticsModal')?.setAttribute('aria-hidden','false')}
+function closeRpcDiagnostics(){$('rpcDiagnosticsModal')?.classList.add('hidden');$('rpcDiagnosticsModal')?.setAttribute('aria-hidden','true')}
+function resetRpcDiagnostics(){rpcDiagnostics.clear();renderRpcDiagnostics()}
+async function rpc(name,args={}){
+  const started=performance.now();let recorded=false;
+  try{
+    const {data,error}=await sb.rpc(name,args);
+    const duration=performance.now()-started;
+    if(error){const kind=rpcErrorKind(error);recordRpcMetric(name,duration,kind,error);recorded=true;throw error}
+    recordRpcMetric(name,duration,'OK');recorded=true;return data;
+  }catch(error){
+    if(!recorded)recordRpcMetric(name,performance.now()-started,rpcErrorKind(error),error);
+    throw error;
+  }
+}
 async function init(){const {data:{session}}=await sb.auth.getSession();if(session)showApp(session.user);else showLogin()}
 function showLogin(){$('loginView').classList.remove('hidden');$('appView').classList.add('hidden')}
 async function showApp(user){$('loginView').classList.add('hidden');$('appView').classList.remove('hidden');$('userEmail').textContent=user.email||user.id;await loadAll()}
@@ -850,7 +909,8 @@ async function loadMovementsData(){
     const movements=await rpc('dashboard_movements_read_v2');
     const counterparties=await rpc('dashboard_counterparties_read_v1');
     const categoryAudit=await rpc('dashboard_category_audit_v7',{p_period:categoryAuditPeriod,p_direction:analysisDirection});
-    const fuzzySuggestions=await rpc('dashboard_counterparty_fuzzy_suggestions_v1').catch(()=>[]);
+    fuzzySuggestionsError=null;
+    const fuzzySuggestions=await rpc('dashboard_counterparty_fuzzy_suggestions_v1').catch(e=>{fuzzySuggestionsError=e?.message||'Errore caricamento suggerimenti fuzzy';console.error('Fuzzy suggestions',e);return null});
     duplicateSuggestionsError=null;
     const duplicates=await rpc('dashboard_counterparty_duplicate_suggestions_v1').catch(e=>{duplicateSuggestionsError=e?.message||'Errore caricamento detector duplicati';console.error('Duplicate detector',e);return []});
 
@@ -866,7 +926,7 @@ async function loadMovementsData(){
     catData.parsingRules=parsingRules||[];
     catData.categoryAudit=categoryAudit||{summary:{},months:[],rows:[]};
     duplicateSuggestions=duplicates||[];
-    counterpartyFuzzySuggestions=fuzzySuggestions||[];
+    if(Array.isArray(fuzzySuggestions)){fuzzySuggestionsError=null;counterpartyFuzzySuggestions=fuzzySuggestions}else counterpartyFuzzySuggestions=[];
     renderMovementsPage();
     renderCatalogs();
     openCategoryDeepLinkFromUrl();
@@ -1561,7 +1621,7 @@ function filteredMovements(){
 }
 function sortMovements(rows){const mult=sortDir==='asc'?1:-1;return [...rows].sort((a,b)=>{let av=a[sortKey],bv=b[sortKey];if(sortKey==='amount'){av=Math.abs(Number(a.amount||0));bv=Math.abs(Number(b.amount||0))}if(sortKey==='has_note'){av=String(a.user_note||'').trim()?1:0;bv=String(b.user_note||'').trim()?1:0}if(sortKey==='counterparty_name'){av=a.counterparty_name||'';bv=b.counterparty_name||''}if(sortKey==='category_path'){av=a.category_path||'';bv=b.category_path||''}if(sortKey==='description'){av=a.description||'';bv=b.description||''}if(typeof av==='number'||typeof bv==='number')return (Number(av||0)-Number(bv||0))*mult;return String(av||'').localeCompare(String(bv||''),'it',{numeric:true,sensitivity:'base'})*mult})}
 function sortHeader(label,key){const arrow=sortKey===key?(sortDir==='asc'?' ↑':' ↓'):'';return `<button class="sortbtn" data-sort="${key}">${esc(label)}${arrow}</button>`}
-function renderMovements(){const rows=filteredMovements();$('movementSummary').textContent=`${nfmt(rows.length)} movimenti visualizzati · volume ${euro(rows.reduce((s,x)=>s+Math.abs(Number(x.amount||0)),0))}${movementCategoryScopeLabel?' · categoria '+movementCategoryScopeLabel:''}`;$('viewList').className=`btn ${viewMode==='list'?'secondary':'ghost'} compact`;$('viewGrouped').className=`btn ${viewMode==='grouped'?'secondary':'ghost'} compact`;if(viewMode==='grouped')renderGrouped(rows);else renderMovementList(rows);syncBulkSelectionUi()}
+function renderMovements(){const rows=filteredMovements();$('movementSummary').textContent=`${nfmt(rows.length)} movimenti visualizzati · volume ${euro(rows.reduce((s,x)=>s+Math.abs(Number(x.amount||0)),0))}${movementCategoryScopeLabel?' · categoria '+movementCategoryScopeLabel:''}${fuzzySuggestionsError?' · suggerimenti fuzzy non disponibili':''}`;$('viewList').className=`btn ${viewMode==='list'?'secondary':'ghost'} compact`;$('viewGrouped').className=`btn ${viewMode==='grouped'?'secondary':'ghost'} compact`;if(viewMode==='grouped')renderGrouped(rows);else renderMovementList(rows);syncBulkSelectionUi()}
 function syncBulkSelectionUi(){
   const count=selectedMovementIds.size;
   if($('bulkSelectedCount'))$('bulkSelectedCount').textContent=`${nfmt(count)} ${count===1?'selezionato':'selezionati'}`;
@@ -4101,6 +4161,11 @@ $('tab-catalogs').addEventListener('input',e=>{
 });
 $('tab-catalogs').addEventListener('change',e=>{if(e.target.id==='categoryMergeDestination'){previewCategoryMigration();return}const one=e.target.closest('[data-select-counterparty]');if(one){one.checked?selectedCounterpartyIds.add(one.dataset.selectCounterparty):selectedCounterpartyIds.delete(one.dataset.selectCounterparty);syncCounterpartyBulkBar();return}const all=e.target.closest('[data-select-visible-counterparties]');if(all){for(const m of counterpartyFilteredRows())all.checked?selectedCounterpartyIds.add(m.id):selectedCounterpartyIds.delete(m.id);renderMerchantsCatalog();return}});
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>activateMainTab(b.dataset.tab));
+$('rpcDiagnosticsOpen')?.addEventListener('click',openRpcDiagnostics);
+$('rpcDiagnosticsClose')?.addEventListener('click',closeRpcDiagnostics);
+$('rpcDiagnosticsReset')?.addEventListener('click',resetRpcDiagnostics);
+$('rpcDiagnosticsModal')?.addEventListener('click',e=>{if(e.target===$('rpcDiagnosticsModal'))closeRpcDiagnostics()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('rpcDiagnosticsModal')?.classList.contains('hidden'))closeRpcDiagnostics()});
 addConditionRow();
 init();
 </script>
