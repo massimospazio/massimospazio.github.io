@@ -218,19 +218,16 @@ button,input,select{font:inherit}
 
     <section class="card section">
       <div class="section-title">
-        <div><h2>Pianificazione e analisi per categoria</h2><p>Prima pianifica i prossimi mesi, poi confronta subito con lo storico.</p></div>
+        <div><h2>Pianificazione e analisi per categoria</h2><p>Passa dalla lettura dello storico alla pianificazione senza affollare la pagina.</p></div>
         <div class="toolbar">
-          <div class="mode-toggle"><button id="modePlan" class="btn ghost compact section-jump">Pianificazione 6 mesi</button><button id="modeAnalysis" class="btn ghost compact section-jump">Analisi 12 mesi</button></div>
+          <div class="mode-toggle"><button id="modePlan" class="btn compact">Pianifica 6 mesi</button><button id="modeAnalysis" class="btn ghost compact">Analizza 12 mesi</button></div>
           <button id="expandAll" class="btn ghost compact">Espandi tutte</button><button id="collapseAll" class="btn ghost compact">Comprimi tutte</button>
         </div>
       </div>
       <div id="planControls">
-        <div class="stacked-section-head">
-          <div><h3>Pianificazione · prossimi 6 mesi</h3><p>Entrate, uscite e saldo previsti con modifica diretta dei valori.</p></div>
-          <div class="toolbar">
-            <label class="small">Margine imprevisti <input id="marginPct" class="input" type="number" min="0" max="100" step="0.5" style="width:82px" /> %</label>
-            <button id="saveMargin" class="btn ghost compact">Salva margine</button>
-          </div>
+        <div class="toolbar" style="margin-bottom:6px">
+          <label class="small">Margine imprevisti <input id="marginPct" class="input" type="number" min="0" max="100" step="0.5" style="width:82px" /> %</label>
+          <button id="saveMargin" class="btn ghost compact">Salva margine</button>
         </div>
         <div id="planSummary"></div>
         <div id="incomeExceptions"></div>
@@ -238,10 +235,10 @@ button,input,select{font:inherit}
         <div class="plan-wrap"><table class="plan-table"><thead id="planHead"></thead><tbody id="planBody"></tbody></table></div>
         <div class="legend-note plan-help-note">ⓘ Valore vuoto = suggerimento automatico; il bordo blu indica un valore modificato manualmente. Spese ed entrate straordinarie sono escluse dai suggerimenti automatici. Le medie storiche sono disponibili passando sull’icona ⓘ della categoria.</div>
       </div>
-      <div id="analysisControls" class="analysis-stacked">
-        <div class="stacked-section-head">
-          <div><h3>Analisi storica · ultimi 12 mesi completi</h3><p>Espandi le L1 per leggere le L2; passa da Spese a Entrate senza cambiare pagina.</p></div>
+      <div id="analysisControls" class="hidden">
+        <div class="toolbar" style="margin-bottom:6px">
           <label class="small">Analizza <select id="analysisDirection" class="select" style="min-height:30px;padding:5px 8px"><option value="EXPENSE">Spese</option><option value="INCOME">Entrate</option></select></label>
+          <span class="small muted">Ultimi 12 mesi completi · espandi le L1 per leggere le L2.</span>
         </div>
         <div id="analysisSummary"></div>
         <div class="plan-wrap"><table class="plan-table heat-table"><thead id="analysisHead"></thead><tbody id="analysisBody"></tbody></table></div>
@@ -308,6 +305,7 @@ let categoryDetailData=null;
 let categoryDetailMode="TREND";
 let categoryDetailFocus=null;
 let categoryDetailComponent=null;
+let planMode="PLAN";
 let analysisSummaryError=null;
 let reportDeepLinkHandled=false;
 const collapsedL1=new Set();
@@ -1007,10 +1005,12 @@ function renderProjection(){
 }
 
 function renderMode(){
-  $("planControls").classList.remove("hidden");
-  $("analysisControls").classList.remove("hidden");
-  renderPlan();
-  renderAnalysis();
+  const planning=planMode==="PLAN";
+  $("planControls").classList.toggle("hidden",!planning);
+  $("analysisControls").classList.toggle("hidden",planning);
+  $("modePlan").className="btn "+(planning?"":"ghost ")+"compact";
+  $("modeAnalysis").className="btn "+(!planning?"":"ghost ")+"compact";
+  if(planning)renderPlan();else renderAnalysis();
 }
 function renderAll(){
   renderKpis();renderExpenseChart();renderCashflowChart();renderBalances();renderMode();renderProjection();renderExtraordinary();
@@ -1035,10 +1035,11 @@ function openReportingFromUrl(){
   const incomeRows=report.income_forecast_categories||[],expenseRows=report.forecast_categories||[];
   if(incomeRows.some(function(x){return String(x.category_id)===String(category)}))direction="INCOME";
   else if(expenseRows.some(function(x){return String(x.category_id)===String(category)}))direction="EXPENSE";
+  planMode="PLAN";
   const groups=direction==="INCOME"?groupedIncomeForecast():groupedExpenseForecast();
   const group=groups.find(function(g){return g.rows.some(function(x){return String(x.category_id)===String(category)})});
   if(group)collapsedL1.delete(group.id);
-  renderPlan();
+  renderMode();
   requestAnimationFrame(function(){
     const selector='[data-method-category="'+CSS.escape(String(category))+'"]';
     const control=document.querySelector(selector);
@@ -1048,11 +1049,10 @@ function openReportingFromUrl(){
       control.focus({preventScroll:true});
     }else{
       msg($("planMsg"),"La categoria collegata non è presente nella griglia di pianificazione corrente. Apro il dettaglio analitico.",false);
-      $("analysisDirection").value=direction;renderAnalysis();openCategoryDetail(category,direction);
+      planMode="ANALYSIS";$("analysisDirection").value=direction;renderMode();openCategoryDetail(category,direction);
     }
   });
 }
-
 function updateCellLocal(kind,category,month,amount){
   const list=kind==="income"?report.income_forecast_cells:report.forecast_cells;
   const c=(list||[]).find(function(x){return x.category_id===category&&x.month===month});
@@ -1104,8 +1104,8 @@ async function copyFirstMonth(kind,category,btn){
 
 $("expenseScope").onchange=renderExpenseChart;
 $("toggleYoY").onchange=renderExpenseChart;
-$("modePlan").onclick=function(){$("planControls").scrollIntoView({behavior:"smooth",block:"start"})};
-$("modeAnalysis").onclick=function(){$("analysisControls").scrollIntoView({behavior:"smooth",block:"start"})};
+$("modePlan").onclick=function(){planMode="PLAN";renderMode()};
+$("modeAnalysis").onclick=function(){planMode="ANALYSIS";renderMode()};
 $("analysisDirection").onchange=function(){renderAnalysis();$("categoryDetail").classList.add("hidden")};
 $("closeDetail").onclick=function(){$("categoryDetail").classList.add("hidden")};
 $("detailTrendMode").onclick=function(){categoryDetailMode="TREND";categoryDetailComponent=null;renderCategoryDetailChart();renderCategoryDetailMovements()};
@@ -1116,15 +1116,16 @@ $("detailMovements").addEventListener("click",function(e){
   categoryDetailComponent=null;
   renderCategoryDetailMovements();
 });
-$("expandAll").onclick=function(){collapsedL1.clear();renderPlan();renderAnalysis()};
+$("expandAll").onclick=function(){collapsedL1.clear();renderMode()};
 $("collapseAll").onclick=function(){
-  groupedIncomeForecast().concat(groupedExpenseForecast()).forEach(function(g){collapsedL1.add(g.id)});
-  ["EXPENSE","INCOME"].forEach(function(direction){
-    analysisRows(direction).forEach(function(r){if(r.l1_id)collapsedL1.add((direction==="INCOME"?"AI:":"AE:")+r.l1_id)});
-  });
-  renderPlan();renderAnalysis();
+  if(planMode==="PLAN"){groupedIncomeForecast().concat(groupedExpenseForecast()).forEach(function(g){collapsedL1.add(g.id)})}
+  else{
+    const direction=$("analysisDirection").value,seen=new Set();
+    analysisRows(direction).forEach(function(r){if(r.l1_id)seen.add((direction==="INCOME"?"AI:":"AE:")+r.l1_id)});
+    seen.forEach(function(x){collapsedL1.add(x)});
+  }
+  renderMode();
 };
-
 $("planBody").addEventListener("click",async function(e){
   const toggle=e.target.closest("[data-toggle-l1]");
   if(toggle){const id=toggle.dataset.toggleL1;if(collapsedL1.has(id))collapsedL1.delete(id);else collapsedL1.add(id);renderPlan();return}
@@ -1137,7 +1138,7 @@ $("planBody").addEventListener("click",async function(e){
   const copy=e.target.closest("[data-copy-kind]");
   if(copy){await copyFirstMonth(copy.dataset.copyKind,copy.dataset.copyCategory||null,copy);return}
   const detail=e.target.closest("[data-plan-detail]");
-  if(detail){$("analysisDirection").value=detail.dataset.planDirection;renderAnalysis();await openCategoryDetail(detail.dataset.planDetail,detail.dataset.planDirection);return}
+  if(detail){planMode="ANALYSIS";$("analysisDirection").value=detail.dataset.planDirection;renderMode();await openCategoryDetail(detail.dataset.planDetail,detail.dataset.planDirection);return}
 });
 
 $("planBody").addEventListener("change",async function(e){
