@@ -106,6 +106,39 @@ button,input,select{font:inherit}
 
 .version-diagnostics{border:0;background:transparent;color:var(--muted);padding:0;margin:0;cursor:pointer;font-size:12px}.version-diagnostics:hover{text-decoration:underline;color:var(--accent)}.rpc-version-line{display:flex;align-items:center;gap:6px;margin-top:2px}.rpc-performance-alert{border:0;background:transparent;padding:1px 4px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:800;line-height:1}.rpc-performance-alert.warn{color:#a16207;background:#fef9c3}.rpc-performance-alert.critical{color:#b91c1c;background:#fee2e2}.rpc-performance-alert:hover{filter:brightness(.96)}
 .rpc-diag-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.42);z-index:9998;display:flex;align-items:center;justify-content:center;padding:20px}.rpc-diag-backdrop.hidden{display:none}.rpc-diag-panel{width:min(980px,96vw);max-height:88vh;overflow:auto;background:#fff;border-radius:14px;box-shadow:0 22px 60px rgba(15,23,42,.22);padding:16px}.rpc-diag-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}.rpc-diag-head h2{margin:0;font-size:18px}.rpc-diag-summary{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}.rpc-diag-chip{padding:5px 8px;border-radius:999px;background:#f3f4f6;font-size:12px}.rpc-diag-ok{color:#166534}.rpc-diag-slow{color:#92400e}.rpc-diag-critical,.rpc-diag-error{color:#991b1b}.rpc-diag-table td,.rpc-diag-table th{font-size:12px;vertical-align:top}.rpc-diag-name{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px}.rpc-diag-error-text{max-width:310px;white-space:normal;word-break:break-word}
+
+/* V72.4.0 — pianificazione compatta e riepilogo cash-flow */
+.plan-table th,.plan-table td{padding:5px 7px}
+.plan-table th:first-child,.plan-table td:first-child{min-width:225px;max-width:275px}
+.plan-table th:nth-child(2),.plan-table td:nth-child(2){min-width:145px}
+.plan-table th:nth-child(3),.plan-table td:nth-child(3){min-width:42px!important;width:42px!important;text-align:center!important}
+.plan-input{width:88px;padding:4px 5px;border-radius:6px;background:#fff}
+.plan-input.manual{border:2px solid #2563eb!important;box-shadow:0 0 0 1px rgba(37,99,235,.12);font-weight:750}
+.method-select{padding:4px 5px;border-radius:6px}
+.method-control{display:grid;grid-template-columns:minmax(112px,1fr) auto;gap:5px;align-items:center}
+.plan-action-icon{width:30px;height:27px;padding:0!important;display:inline-flex;align-items:center;justify-content:center;font-size:14px}
+.plan-label{gap:6px}
+.plan-info{display:inline-flex;align-items:center;justify-content:center;border:0;background:transparent;color:#64748b;font-size:12px;padding:0 2px;cursor:help;vertical-align:middle}
+.plan-icon{display:inline-flex;align-items:center;justify-content:center;width:19px;height:19px;min-width:19px;border-radius:50%;font-size:12px;font-weight:850;background:#eaf2ff;color:#2563eb}
+.plan-icon.income{background:#dcfce7;color:#15803d}.plan-icon.expense{background:#fee2e2;color:#dc2626}.plan-icon.investment{background:#fff7ed;color:#ea580c}.plan-icon.neutral{background:#eef2ff;color:#4f46e5}
+.plan-help-note{margin-top:7px;padding:0;border:0;background:transparent}
+.cash-summary-frame{border:1.5px solid #bfdbfe;border-radius:10px;background:#fbfdff;margin:8px 0 10px;overflow:auto;box-shadow:0 2px 8px rgba(37,99,235,.04)}
+.cash-summary-table{width:100%;border-collapse:separate;border-spacing:0;min-width:820px;table-layout:fixed}
+.cash-summary-table th,.cash-summary-table td{padding:6px 8px;border-bottom:1px solid #e5e7eb;text-align:right;font-size:12px;font-weight:700}
+.cash-summary-table thead th{color:#64748b;background:#f8fbff;font-weight:650}
+.cash-summary-table th:first-child,.cash-summary-table td:first-child{text-align:left;width:190px;position:sticky;left:0;z-index:1}
+.cash-summary-table tbody tr:last-child td{border-bottom:0}
+.cash-summary-table .summary-label{display:flex;align-items:center;gap:8px}
+.cash-summary-table .summary-income td{background:#f0fdf4}.cash-summary-table .summary-income td:first-child{background:#f0fdf4}
+.cash-summary-table .summary-outgoing td{background:#fff7f7}.cash-summary-table .summary-outgoing td:first-child{background:#fff7f7}
+.cash-summary-table .summary-net td{background:#f8fbff}.cash-summary-table .summary-net td:first-child{background:#f8fbff}
+.cash-summary-table .summary-cumulative td{background:#f7f5ff}.cash-summary-table .summary-cumulative td:first-child{background:#f7f5ff}
+.cash-summary-table .summary-positive{background:#eaf8ef!important;color:#166534}.cash-summary-table .summary-negative{background:#feecec!important;color:#b91c1c}
+.cash-summary-table .summary-total{font-weight:850}
+.l1-row .plan-icon{margin-left:1px}
+.plan-table .l1-row td{padding-top:6px;padding-bottom:6px}
+.plan-table tr[data-detail-l1] td{padding-top:4px;padding-bottom:4px}
+@media(max-width:800px){.cash-summary-table{min-width:760px}.cash-summary-table th:first-child,.cash-summary-table td:first-child{width:155px}}
 </style>
 </head>
 <body>
@@ -177,21 +210,22 @@ button,input,select{font:inherit}
         </div>
       </div>
       <div id="planControls">
-        <div class="toolbar" style="margin-bottom:10px">
+        <div class="toolbar" style="margin-bottom:6px">
           <label class="small">Margine imprevisti <input id="marginPct" class="input" type="number" min="0" max="100" step="0.5" style="width:82px" /> %</label>
           <button id="saveMargin" class="btn ghost compact">Salva margine</button>
         </div>
-        <div class="notice" style="margin-bottom:10px">Spese ed entrate straordinarie sono escluse dai suggerimenti automatici. Le entrate sono pianificate per categoria L2 con Media 6m, Media 12m, Stesso mese A-1 o Mediana 12m. Gli importi del reporting sono mostrati in euro interi.</div>
+        <div id="planSummary"></div>
         <div id="incomeExceptions"></div>
         <div id="planMsg"></div>
         <div class="plan-wrap"><table class="plan-table"><thead id="planHead"></thead><tbody id="planBody"></tbody></table></div>
-        <div class="legend-note">Valore vuoto = suggerimento automatico. Un valore inserito diventa override manuale. “Copia primo mese” replica il valore effettivo del primo mese sui cinque successivi.</div>
+        <div class="legend-note plan-help-note">ⓘ Valore vuoto = suggerimento automatico; il bordo blu indica un valore modificato manualmente. Spese ed entrate straordinarie sono escluse dai suggerimenti automatici. Le medie storiche sono disponibili passando sull’icona ⓘ della categoria.</div>
       </div>
       <div id="analysisControls" class="hidden">
-        <div class="toolbar" style="margin-bottom:10px">
+        <div class="toolbar" style="margin-bottom:6px">
           <label class="small">Analizza <select id="analysisDirection" class="select" style="min-height:30px;padding:5px 8px"><option value="EXPENSE">Spese</option><option value="INCOME">Entrate</option></select></label>
           <span class="small muted">Ultimi 12 mesi completi · colore rispetto alla media 12 mesi della categoria.</span>
         </div>
+        <div id="analysisSummary"></div>
         <div class="plan-wrap"><table class="plan-table heat-table"><thead id="analysisHead"></thead><tbody id="analysisBody"></tbody></table></div>
         <div class="legend-note">Spese: verde sotto media, rosso sopra media. Entrate: verde sopra media, rosso sotto media. Clicca una cella o una categoria per aprire trend e movimenti esplicativi.</div>
         <div id="categoryDetail" class="detail-panel hidden">
@@ -532,22 +566,96 @@ function manualOverrideCount(kind,category,cellMapObj){
 }
 function methodControl(r,kind,cellMapObj){
   const n=manualOverrideCount(kind,r.category_id,cellMapObj);
-  const state=n>0
-    ?'<div class="plan-sub method-state manual">Manuale su '+n+' '+(n===1?'mese':'mesi')+' · base '+esc(methodLabel(r.forecast_method))+'</div>'
-    :'<div class="plan-sub method-state auto">Automatico · '+esc(methodLabel(r.forecast_method))+'</div>';
-  return '<div class="method-control">'+methodSelect(r,kind)+
-    '<button class="btn ghost compact" type="button" data-apply-method="'+esc(r.category_id)+'" data-apply-kind="'+kind+'" title="Applica il metodo e rimuove gli override futuri della riga">Applica</button>'+
-    state+'</div>';
+  const title=n>0
+    ?n+' '+(n===1?'mese modificato manualmente':'mesi modificati manualmente')+' · metodo base '+methodLabel(r.forecast_method)
+    :'Metodo automatico: '+methodLabel(r.forecast_method);
+  return '<div class="method-control" title="'+esc(title)+'">'+methodSelect(r,kind)+
+    '<button class="btn ghost compact" type="button" data-apply-method="'+esc(r.category_id)+'" data-apply-kind="'+kind+'" title="Applica il metodo e rimuove gli override futuri della riga">Applica</button></div>';
 }
 function detailLabel(r){return r.is_direct?"Diretto su "+r.l1_name:(r.l2_name||r.l1_name)}
+function categoryIconHtml(name,kind,group){
+  const n=String(name||"").toLowerCase();
+  let symbol="●",cls=kind==="income"?"income":kind==="expense"?"expense":"neutral";
+  if(group&&kind==="income")symbol="↑";
+  else if(group&&kind==="expense")symbol="↓";
+  else if(n.includes("invest")){symbol="↗";cls="investment"}
+  else if(n.includes("casa"))symbol="⌂";
+  else if(n.includes("debiti")||n.includes("risparm"))symbol="≋";
+  else if(n.includes("famiglia")||n.includes("figli"))symbol="●●";
+  else if(n.includes("ristor"))symbol="♨";
+  else if(n.includes("animal"))symbol="✦";
+  else if(n.includes("stipend"))symbol="▣";
+  else if(n.includes("interess"))symbol="▥";
+  else if(n.includes("rimbor"))symbol="↻";
+  else if(n.includes("gse"))symbol="☀";
+  else if(n.includes("assicur"))symbol="◆";
+  else if(n.includes("cashback")||n.includes("premi"))symbol="✚";
+  else if(n.includes("giroconto"))symbol="→";
+  else if(n.includes("classific"))symbol="?";
+  return '<span class="plan-icon '+cls+'" aria-hidden="true">'+symbol+'</span>';
+}
+function categoryStatsTitle(r,kind){
+  const parts=["Media 6m "+money(r.avg6),"Media 12m "+money(r.avg12)];
+  if(kind==="income")parts.push("Mediana 12m "+money(r.median12));
+  return parts.join(" · ");
+}
+function planHeatStyle(value,avg,kind){
+  value=num(value);avg=num(avg);
+  if(avg<=0){
+    if(value<=0)return "background:#f8fafc";
+    return "background:"+(kind==="income"?"rgba(22,163,74,.12)":"rgba(220,38,38,.12)");
+  }
+  const dev=(value-avg)/avg;
+  if(Math.abs(dev)<.10)return "background:#f8fafc";
+  const favorable=kind==="expense"?dev<0:dev>0;
+  const alpha=Math.min(.26,.07+Math.abs(dev)*.10);
+  return "background:"+(favorable?"rgba(22,163,74,"+alpha+")":"rgba(220,38,38,"+alpha+")");
+}
+function cashSummaryHtml(months,incoming,outgoing,net,cumulative,totalLabel){
+  const totalIn=incoming.reduce(function(a,b){return a+b},0);
+  const totalOut=outgoing.reduce(function(a,b){return a+b},0);
+  const totalNet=net.reduce(function(a,b){return a+b},0);
+  const finalCum=cumulative.length?cumulative[cumulative.length-1]:0;
+  function balanceCell(v){return '<td class="'+(v>0?"summary-positive":v<0?"summary-negative":"")+'">'+money(v)+'</td>'}
+  return '<div class="cash-summary-frame"><table class="cash-summary-table"><thead><tr><th>Riepilogo</th>'+
+    months.map(function(m){return '<th>'+esc(monthLabel(m))+'</th>'}).join("")+'<th>'+esc(totalLabel)+'</th></tr></thead><tbody>'+
+    '<tr class="summary-income"><td><span class="summary-label"><span class="plan-icon income">↑</span>Entrate</span></td>'+incoming.map(function(v){return '<td>'+money(v)+'</td>'}).join("")+'<td class="summary-total">'+money(totalIn)+'</td></tr>'+
+    '<tr class="summary-outgoing"><td><span class="summary-label"><span class="plan-icon expense">↓</span>Uscite</span></td>'+outgoing.map(function(v){return '<td>'+money(v)+'</td>'}).join("")+'<td class="summary-total">'+money(totalOut)+'</td></tr>'+
+    '<tr class="summary-net"><td><span class="summary-label"><span class="plan-icon neutral">⚖</span>Saldo mensile</span></td>'+net.map(balanceCell).join("")+'<td class="summary-total '+(totalNet>=0?"summary-positive":"summary-negative")+'">'+money(totalNet)+'</td></tr>'+
+    '<tr class="summary-cumulative"><td title="Cumulato del periodo, non liquidità disponibile"><span class="summary-label"><span class="plan-icon neutral">▮</span>Saldo cumulato</span></td>'+cumulative.map(balanceCell).join("")+'<td class="summary-total '+(finalCum>=0?"summary-positive":"summary-negative")+'">'+money(finalCum)+'</td></tr>'+
+    '</tbody></table></div>';
+}
+function renderPlanSummary(){
+  const months=futureMonths(),inc=incomeTotalsByMonth(),exp=expenseTotalsByMonth();
+  const marginPct=num(report.meta&&report.meta.unexpected_margin_pct);
+  const incoming=months.map(function(m){return inc.get(m)||0});
+  const outgoing=months.map(function(m){
+    const expenses=exp.get(m)||0;
+    const margin=expenses*marginPct/100;
+    const investment=effectiveSpecial(report.investment_forecast||{},m);
+    return expenses+margin+investment;
+  });
+  const net=incoming.map(function(v,i){return v-outgoing[i]});
+  let running=0;const cumulative=net.map(function(v){running+=v;return running});
+  $("planSummary").innerHTML=cashSummaryHtml(months,incoming,outgoing,net,cumulative,"Totale 6m");
+}
+function renderAnalysisSummary(){
+  const rows=report.cashflow_monthly||[];
+  const months=rows.map(function(x){return x.month_start});
+  const incoming=rows.map(function(x){return num(x.incoming)});
+  const outgoing=rows.map(function(x){return num(x.outgoing)});
+  const net=rows.map(function(x){return num(x.net)});
+  let running=0;const cumulative=net.map(function(v){running+=v;return running});
+  $("analysisSummary").innerHTML=cashSummaryHtml(months,incoming,outgoing,net,cumulative,"Totale 12m");
+}
 function renderPlanRows(groups,kind,cellMapObj){
   const months=futureMonths();
   let html="";
   groups.forEach(function(g){
-    const totals=months.map(function(m){return g.rows.reduce(function(s,r){return s+effectiveCell(cellMapObj.get(r.category_id+"|"+m))},0)});
+    const totals=months.map(function(m){return g.rows.reduce(function(sum,r){return sum+effectiveCell(cellMapObj.get(r.category_id+"|"+m))},0)});
     const total6=totals.reduce(function(a,b){return a+b},0);
     const collapsed=collapsedL1.has(g.id);
-    html+='<tr class="l1-row"><td><div class="plan-label"><button class="caret" data-toggle-l1="'+esc(g.id)+'">'+(collapsed?"▸":"▾")+'</button>'+esc(g.name)+'</div><div class="plan-sub">Totale derivato dalle voci sottostanti</div></td><td class="muted">Somma dettagli</td><td></td>'+
+    html+='<tr class="l1-row"><td><div class="plan-label"><button class="caret" data-toggle-l1="'+esc(g.id)+'">'+(collapsed?"▸":"▾")+'</button>'+categoryIconHtml(g.name,kind,true)+'<strong>'+esc(g.name)+'</strong></div></td><td></td><td></td>'+
       totals.map(function(v){return "<td>"+money(v)+"</td>"}).join("")+'<td class="total-cell">'+money(total6)+"</td></tr>";
     if(!collapsed){
       g.rows.forEach(function(r){
@@ -556,14 +664,14 @@ function renderPlanRows(groups,kind,cellMapObj){
           const cell=cellMapObj.get(r.category_id+"|"+m);
           const manual=cell&&cell.override_amount!==null&&cell.override_amount!==undefined;
           const v=effectiveCell(cell);rowTotal+=v;
-          const title=manual?"Manuale":(r.forecast_method==="SAME_MONTH_LAST_YEAR"&&cell&&!cell.same_month_available?"A-1 non disponibile: fallback media 12 mesi":"Suggerito: "+methodLabel(r.forecast_method));
+          const title=manual
+            ?"Modificato manualmente · valore automatico "+money(cell&&cell.suggested_amount)
+            :(r.forecast_method==="SAME_MONTH_LAST_YEAR"&&cell&&!cell.same_month_available?"A-1 non disponibile: fallback media 12 mesi":"Suggerito: "+methodLabel(r.forecast_method));
           const attr=kind==="income"?"data-income-category":"data-expense-category";
-          return '<td><input class="plan-input'+(manual?" manual":"")+'" '+attr+'="'+esc(r.category_id)+'" data-month="'+esc(m)+'" type="number" min="0" step="1" value="'+(manual?Math.round(num(cell.override_amount)):"")+'" placeholder="'+Math.round(v)+'" title="'+esc(title)+'" /></td>';
+          return '<td><input class="plan-input'+(manual?" manual":"")+'" style="'+planHeatStyle(v,r.avg12,kind)+'" '+attr+'="'+esc(r.category_id)+'" data-month="'+esc(m)+'" type="number" min="0" step="1" value="'+(manual?Math.round(num(cell.override_amount)):"")+'" placeholder="'+Math.round(v)+'" title="'+esc(title)+'" /></td>';
         });
-        const info=kind==="income"
-          ?"6m "+money(r.avg6)+" · 12m "+money(r.avg12)+" · mediana "+money(r.median12)
-          :"6m "+money(r.avg6)+" · 12m "+money(r.avg12);
-        html+='<tr data-detail-l1="'+esc(g.id)+'"><td style="padding-left:35px"><button class="category-link" data-plan-detail="'+esc(r.category_id)+'" data-plan-direction="'+(kind==="income"?"INCOME":"EXPENSE")+'">'+esc(detailLabel(r))+'</button><div class="plan-sub">'+esc(info)+'</div></td><td>'+methodControl(r,kind,cellMapObj)+'</td><td><button class="btn ghost compact copy-btn" data-copy-kind="'+kind+'" data-copy-category="'+esc(r.category_id)+'">Copia 1° mese</button></td>'+cells.join("")+'<td class="total-cell">'+money(rowTotal)+"</td></tr>";
+        const info=categoryStatsTitle(r,kind);
+        html+='<tr data-detail-l1="'+esc(g.id)+'"><td style="padding-left:34px"><span class="plan-label">'+categoryIconHtml(detailLabel(r),kind,false)+'<button class="category-link" data-plan-detail="'+esc(r.category_id)+'" data-plan-direction="'+(kind==="income"?"INCOME":"EXPENSE")+'">'+esc(detailLabel(r))+'</button><span class="plan-info" title="'+esc(info)+'">ⓘ</span></span></td><td>'+methodControl(r,kind,cellMapObj)+'</td><td><button class="btn ghost compact copy-btn plan-action-icon" data-copy-kind="'+kind+'" data-copy-category="'+esc(r.category_id)+'" title="Copia il primo mese sui cinque successivi">⧉</button></td>'+cells.join("")+'<td class="total-cell">'+money(rowTotal)+"</td></tr>";
       });
     }
   });
@@ -588,7 +696,7 @@ function renderIncomeExceptions(){
 }
 function renderPlan(){
   const months=futureMonths();
-  $("planHead").innerHTML="<tr><th>Categoria</th><th>Metodo</th><th>Azione</th>"+months.map(function(m){return "<th>"+esc(monthLabel(m))+"</th>"}).join("")+"<th>Totale 6m</th></tr>";
+  $("planHead").innerHTML="<tr><th>Categoria / Voce</th><th>Metodo</th><th></th>"+months.map(function(m){return "<th>"+esc(monthLabel(m))+"</th>"}).join("")+"<th>Totale 6m</th></tr>";
   let html="";
   html+=renderPlanRows(groupedIncomeForecast(),"income",incomeCellMap());
 
@@ -597,24 +705,29 @@ function renderPlan(){
   let invTotal=0;
   const invCells=months.map(function(m){
     const ov=invOverrides.get(m),manual=ov!==null&&ov!==undefined,v=manual?num(ov):num(inv.avg6);invTotal+=v;
-    return '<td><input class="plan-input'+(manual?" manual":"")+'" data-investment="'+esc(m)+'" type="number" min="0" step="1" value="'+(manual?Math.round(num(ov)):"")+'" placeholder="'+Math.round(v)+'" /></td>';
+    const title=manual?"Investimento modificato manualmente · automatico "+money(inv.avg6):"Suggerito: Media 6 mesi";
+    return '<td><input class="plan-input'+(manual?" manual":"")+'" style="'+planHeatStyle(v,inv.avg12,"expense")+'" data-investment="'+esc(m)+'" type="number" min="0" step="1" value="'+(manual?Math.round(num(ov)):"")+'" placeholder="'+Math.round(v)+'" title="'+esc(title)+'" /></td>';
   });
-  html+='<tr class="special-row"><td><strong>Investimenti previsti</strong><div class="plan-sub">Media 6m '+money(inv.avg6)+" · 12m "+money(inv.avg12)+'</div></td><td class="muted">Media 6 mesi</td><td><button class="btn ghost compact copy-btn" data-copy-kind="investment">Copia 1° mese</button></td>'+invCells.join("")+'<td class="total-cell">'+money(invTotal)+"</td></tr>";
+  const invInfo="Media 6m "+money(inv.avg6)+" · Media 12m "+money(inv.avg12);
+  html+='<tr class="special-row"><td><span class="plan-label">'+categoryIconHtml("Investimenti","investment",true)+'<strong>Investimenti previsti</strong><span class="plan-info" title="'+esc(invInfo)+'">ⓘ</span></span></td><td class="muted">Media 6 mesi</td><td><button class="btn ghost compact copy-btn plan-action-icon" data-copy-kind="investment" title="Copia il primo mese sui cinque successivi">⧉</button></td>'+invCells.join("")+'<td class="total-cell">'+money(invTotal)+"</td></tr>";
 
   html+=renderPlanRows(groupedExpenseForecast(),"expense",expenseCellMap());
 
   const exp=expenseTotalsByMonth(),marginPct=num(report.meta&&report.meta.unexpected_margin_pct);
   const marginCells=months.map(function(m){return (exp.get(m)||0)*marginPct/100});
-  html+='<tr class="special-row"><td><strong>Margine imprevisti</strong><div class="plan-sub">'+marginPct.toFixed(1)+'% delle spese ordinarie previste</div></td><td class="muted">Buffer separato</td><td></td>'+
+  html+='<tr class="special-row"><td><span class="plan-label"><span class="plan-icon neutral">±</span><strong>Margine imprevisti</strong><span class="plan-info" title="'+esc(marginPct.toFixed(1)+'% delle spese ordinarie previste')+'">ⓘ</span></span></td><td class="muted">Buffer</td><td></td>'+
     marginCells.map(function(v){return "<td>"+money(v)+"</td>"}).join("")+'<td class="total-cell">'+money(marginCells.reduce(function(a,b){return a+b},0))+"</td></tr>";
   $("planBody").innerHTML=html;
+  renderPlanSummary();
   renderIncomeExceptions();
 }
-
 function analysisRows(direction){return direction==="INCOME"?(report.income_history_cells||[]):(report.expense_history_cells||[])}
 function heatStyle(amount,avg,direction){
   amount=num(amount);avg=num(avg);
-  if(avg<=0){if(amount<=0)return "";return "background:rgba(220,38,38,.28)"}
+  if(avg<=0){
+    if(amount<=0)return "";
+    return "background:"+(direction==="INCOME"?"rgba(22,163,74,.28)":"rgba(220,38,38,.28)");
+  }
   const dev=(amount-avg)/avg;
   if(Math.abs(dev)<0.10)return "background:#f8fafc";
   const favorable=direction==="EXPENSE"?dev<0:dev>0;
@@ -641,20 +754,21 @@ function renderAnalysis(){
   let html="";
   Array.from(groups.values()).sort(function(a,b){return a.name.localeCompare(b.name,"it")}).forEach(function(g){
     const collapsed=collapsedL1.has(g.id);
-    const totals=months.map(function(m){return g.rows.reduce(function(s,r){return s+(r.months.get(m)||0)},0)});
+    const totals=months.map(function(m){return g.rows.reduce(function(sum,r){return sum+(r.months.get(m)||0)},0)});
     const total=totals.reduce(function(a,b){return a+b},0),avg=total/Math.max(months.length,1);
-    html+='<tr class="l1-row"><td><div class="plan-label"><button class="caret" data-toggle-l1="'+esc(g.id)+'">'+(collapsed?"▸":"▾")+'</button><button class="category-link" data-analysis-category="'+esc(g.rawId)+'" data-analysis-direction="'+direction+'">'+esc(g.name)+'</button></div></td><td>'+money(avg)+'</td>'+
+    html+='<tr class="l1-row"><td><div class="plan-label"><button class="caret" data-toggle-l1="'+esc(g.id)+'">'+(collapsed?"▸":"▾")+'</button>'+categoryIconHtml(g.name,direction==="INCOME"?"income":"expense",true)+'<button class="category-link" data-analysis-category="'+esc(g.rawId)+'" data-analysis-direction="'+direction+'">'+esc(g.name)+'</button></div></td><td>'+money(avg)+'</td>'+
       totals.map(function(v,i){return '<td class="heat-cell" style="'+heatStyle(v,avg,direction)+'" data-analysis-category="'+esc(g.rawId)+'" data-analysis-direction="'+direction+'" data-analysis-month="'+esc(months[i])+'">'+money(v)+"</td>"}).join("")+"<td>"+money(total)+"</td></tr>";
     if(!collapsed){
       g.rows.sort(function(a,b){return detailLabel(a.meta).localeCompare(detailLabel(b.meta),"it")}).forEach(function(r){
-        const avg12=num(r.meta.avg12);
-        html+='<tr><td style="padding-left:35px"><button class="category-link" data-analysis-category="'+esc(r.meta.category_id)+'" data-analysis-direction="'+direction+'">'+esc(detailLabel(r.meta))+'</button></td><td>'+money(avg12)+'</td>'+
+        const avg12=num(r.meta.avg12),kind=direction==="INCOME"?"income":"expense";
+        html+='<tr><td style="padding-left:34px"><span class="plan-label">'+categoryIconHtml(detailLabel(r.meta),kind,false)+'<button class="category-link" data-analysis-category="'+esc(r.meta.category_id)+'" data-analysis-direction="'+direction+'">'+esc(detailLabel(r.meta))+'</button></span></td><td>'+money(avg12)+'</td>'+
           months.map(function(m){const v=r.months.get(m)||0;return '<td class="heat-cell" style="'+heatStyle(v,avg12,direction)+'" data-analysis-category="'+esc(r.meta.category_id)+'" data-analysis-direction="'+direction+'" data-analysis-month="'+esc(m)+'" title="'+esc((direction==="EXPENSE"?"Spesa":"Entrata")+" "+money(v)+" · media "+money(avg12))+'">'+money(v)+"</td>"}).join("")+
           "<td>"+money(r.total)+"</td></tr>";
       });
     }
   });
   $("analysisBody").innerHTML=html||'<tr><td colspan="'+(months.length+3)+'" class="muted">Nessun dato nel periodo.</td></tr>';
+  renderAnalysisSummary();
 }
 function maxDeviationMonth(detail){
   const avg=num(detail.avg12);let best=null,bestDev=-1;
