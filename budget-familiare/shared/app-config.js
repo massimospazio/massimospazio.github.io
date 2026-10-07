@@ -1,7 +1,7 @@
 // Canonical source: massimospazio/budget-familiare; public files are deployed automatically.
 (function(){
-  const APP_VERSION='V72.6.2';
-  const APP_RELEASE='Fix Analisi trend, note e liquidità';
+  const APP_VERSION='V72.6.3';
+  const APP_RELEASE='Consolidamento grafici e giroconti';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});
