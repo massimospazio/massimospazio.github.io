@@ -770,7 +770,7 @@ function forecastSummaryLabel(r){
   if(r.forecast_source==="NON_REPEAT"||r.forecast_method==="ZERO")return "Non si ripeterà";
   let out=forecastSourceLabel(r.forecast_source)+" · "+forecastMethodLabel(r.forecast_method);
   const adj=num(r.adjustment_pct);
-  if(r.forecast_source==="HISTORY"&&adj)out+=" · "+(adj>0?"+":"")+adj.toLocaleString("it-IT",{maximumFractionDigits:1})+"%";
+  if((r.forecast_source==="HISTORY"||r.forecast_source==="RECURRENCE")&&adj)out+=" · "+(adj>0?"+":"")+adj.toLocaleString("it-IT",{maximumFractionDigits:1})+"%";
   return out;
 }
 function methodControl(r,kind,cellMapObj){
@@ -1319,18 +1319,28 @@ function forecastBaseForRow(row,method,draft){
 }
 function forecastDraftPreview(){
   const d=ensureForecastDraft(),rows=forecastDraftRows();if(!d||!rows.length)return null;
-  const values=rows.map(function(row){let expected=0,low=0,high=0;
+  const estimatedMethods=["AVG6","AVG12","MEDIAN12","SAME_MONTH_LAST_YEAR","LAST_VALUE"];
+  const values=rows.map(function(row){let expected=0,low=0,high=0,base=0;
     if(d.source==="NON_REPEAT"){expected=low=high=0}
     else if(d.source==="MANUAL"){if(d.method==="RANGE"){low=num(d.range_min);high=num(d.range_max);expected=(low+high)/2}else expected=low=high=num(d.fixed_amount)}
-    else if(d.source==="RECURRENCE"){if(d.method==="RANGE"){low=num(d.range_min);high=num(d.range_max);expected=(low+high)/2}else{expected=forecastBaseForRow(row,d.method,d);low=high=expected}}
-    else{expected=Math.max(0,forecastBaseForRow(row,d.method,d)*(1+num(d.adjustment)/100));low=high=expected}
-    return {expected:expected,low:low,high:high,prudent:analysisCurrentDirection()==="EXPENSE"?high:low};
+    else if(d.source==="RECURRENCE"){
+      if(d.method==="RANGE"){low=num(d.range_min);high=num(d.range_max);expected=(low+high)/2}
+      else{
+        base=forecastBaseForRow(row,d.method,d);
+        expected=estimatedMethods.includes(d.method)?Math.max(0,base*(1+num(d.adjustment)/100)):base;
+        low=high=expected;
+      }
+    }
+    else{base=forecastBaseForRow(row,d.method,d);expected=Math.max(0,base*(1+num(d.adjustment)/100));low=high=expected}
+    return {expected:expected,low:low,high:high,base:base,prudent:analysisCurrentDirection()==="EXPENSE"?high:low};
   });
-  return {next:values[0].expected,avg:values.reduce(function(a,x){return a+x.expected},0)/values.length,low:values.reduce(function(a,x){return a+x.low},0)/values.length,high:values.reduce(function(a,x){return a+x.high},0)/values.length,prudent:values.reduce(function(a,x){return a+x.prudent},0)/values.length};
+  return {next:values[0].expected,nextBase:values[0].base,avg:values.reduce(function(a,x){return a+x.expected},0)/values.length,low:values.reduce(function(a,x){return a+x.low},0)/values.length,high:values.reduce(function(a,x){return a+x.high},0)/values.length,prudent:values.reduce(function(a,x){return a+x.prudent},0)/values.length,adjustment:num(d.adjustment),source:d.source,method:d.method};
 }
 function forecastResultHtml(preview){
   if(!preview)return '<div class="forecast-result"><div class="muted small">Anteprima non disponibile.</div></div>';
-  return '<div class="forecast-result"><div><div class="small muted">Anteprima live · media prossimi 12m</div><div class="value">'+money(preview.avg)+'</div></div><div class="meta">Prossimo mese: '+money(preview.next)+(Math.abs(preview.high-preview.low)>.01?'<br>Intervallo medio: '+money(preview.low)+' – '+money(preview.high)+'<br>Prudente: '+money(preview.prudent):"")+'</div></div>';
+  const showVariation=(preview.source==="HISTORY"||preview.source==="RECURRENCE")&&!["FIXED","RANGE"].includes(preview.method)&&Math.abs(num(preview.adjustment))>.0001;
+  const variation=showVariation?'<br>Base: '+money(preview.nextBase)+' → '+(preview.adjustment>0?"+":"")+num(preview.adjustment).toLocaleString("it-IT",{maximumFractionDigits:1})+'% → <strong>'+money(preview.next)+'</strong>':"";
+  return '<div class="forecast-result"><div><div class="small muted">Anteprima live · media prossimi 12m</div><div class="value">'+money(preview.avg)+'</div></div><div class="meta">Prossimo mese: '+money(preview.next)+variation+(Math.abs(preview.high-preview.low)>.01?'<br>Intervallo medio: '+money(preview.low)+' – '+money(preview.high)+'<br>Prudente: '+money(preview.prudent):"")+'</div></div>';
 }
 function updateForecastLiveResult(){const el=$("forecastLiveResult");if(el)el.innerHTML=forecastResultHtml(forecastDraftPreview())}
 function forecastControlsHtml(d){
@@ -1340,7 +1350,8 @@ function forecastControlsHtml(d){
   if(d.source==="RECURRENCE"){
     const fixed=d.method==="FIXED"?'<div class="forecast-field"><label>Importo previsto €</label><input id="forecastFixedAmount" class="input" type="number" min="0" step="1" value="'+esc(d.fixed_amount==null?"":d.fixed_amount)+'" /></div>':"";
     const range=d.method==="RANGE"?'<div class="forecast-field"><label>Intervallo €</label><div class="forecast-range-fields"><input id="forecastRangeMin" class="input" type="number" min="0" step="1" placeholder="Min" value="'+esc(d.range_min==null?"":d.range_min)+'" /><input id="forecastRangeMax" class="input" type="number" min="0" step="1" placeholder="Max" value="'+esc(d.range_max==null?"":d.range_max)+'" /></div></div>':"";
-    return type+'<div class="forecast-field"><label>Stima importo</label><select id="forecastMethod" class="select">'+forecastRecurrenceOptions(d.method)+'</select><div class="forecast-type-note">La ricorrenza è certa; qui stimiamo solo quanto costerà. In questa fase la cadenza operativa è mensile.</div></div>'+fixed+range;
+    const variation=!["FIXED","RANGE"].includes(d.method)?'<div class="forecast-field"><label>Variazione attesa %</label><input id="forecastAdjustment" class="input" type="number" min="-100" max="1000" step="1" value="'+esc(num(d.adjustment))+'" /><div class="forecast-type-note">Applica una variazione prudenziale alla stima base. Non è cumulativa mese su mese.</div></div>':"";
+    return type+'<div class="forecast-field"><label>Stima importo</label><select id="forecastMethod" class="select">'+forecastRecurrenceOptions(d.method)+'</select><div class="forecast-type-note">La ricorrenza è certa; qui stimiamo solo quanto costerà. In questa fase la cadenza operativa è mensile.</div></div>'+variation+fixed+range;
   }
   const manualMode=d.method==="RANGE"?"RANGE":"FIXED";
   return type+'<div class="forecast-field"><label>Importo manuale</label><select id="forecastManualMode" class="select"><option value="FIXED"'+(manualMode==="FIXED"?" selected":"")+'>Importo singolo</option><option value="RANGE"'+(manualMode==="RANGE"?" selected":"")+'>Intervallo</option></select></div>'+(manualMode==="FIXED"?'<div class="forecast-field"><label>Importo previsto €</label><input id="forecastFixedAmount" class="input" type="number" min="0" step="1" value="'+esc(d.fixed_amount==null?"":d.fixed_amount)+'" /></div>':'<div class="forecast-field"><label>Intervallo €</label><div class="forecast-range-fields"><input id="forecastRangeMin" class="input" type="number" min="0" step="1" placeholder="Min" value="'+esc(d.range_min==null?"":d.range_min)+'" /><input id="forecastRangeMax" class="input" type="number" min="0" step="1" placeholder="Max" value="'+esc(d.range_max==null?"":d.range_max)+'" /></div></div>');
@@ -1357,7 +1368,7 @@ function renderForecastEditor(){
 function canonicalSavedSetting(s,scope){
   const x=Object.assign({},s||{}),source=x.forecast_source||"HISTORY";let method=x.forecast_method||"AVG6",model=x.amount_model||"ESTIMATED",fixed=x.fixed_amount,rmin=x.range_min,rmax=x.range_max,adj=num(x.adjustment_pct);
   if(source==="HISTORY"){if(!["AVG6","AVG12","MEDIAN12","SAME_MONTH_LAST_YEAR","LAST_VALUE"].includes(method))method="AVG6";model="ESTIMATED"}
-  else if(source==="RECURRENCE"){if(!["AVG6","AVG12","MEDIAN12","SAME_MONTH_LAST_YEAR","LAST_VALUE","FIXED","RANGE"].includes(method))method="LAST_VALUE";model=method==="FIXED"?"FIXED":method==="RANGE"?"RANGE":"ESTIMATED";adj=0}
+  else if(source==="RECURRENCE"){if(!["AVG6","AVG12","MEDIAN12","SAME_MONTH_LAST_YEAR","LAST_VALUE","FIXED","RANGE"].includes(method))method="LAST_VALUE";model=method==="FIXED"?"FIXED":method==="RANGE"?"RANGE":"ESTIMATED";if(["FIXED","RANGE"].includes(method))adj=0}
   else if(source==="MANUAL"){if(!["FIXED","RANGE"].includes(method))method="FIXED";model=method==="RANGE"?"RANGE":"FIXED";if(method==="FIXED"&&fixed==null)fixed=0;adj=0}
   else if(source==="NON_REPEAT"){method="ZERO";model="ESTIMATED";fixed=null;rmin=null;rmax=null;adj=0}
   else{return canonicalSavedSetting({forecast_source:"HISTORY",forecast_method:"AVG6",adjustment_pct:0},scope)}
@@ -1377,7 +1388,7 @@ async function saveForecastRule(btn){
   if(!analysisForecastEditor||analysisForecastSaving)return;const s=analysisForecastEditor.category_setting||{},scope=s.forecast_scope||"CATEGORY",cp=selectedAnalysisComponent(),entity=scope==="COUNTERPARTIES"?"COUNTERPARTY":"CATEGORY";if(entity==="COUNTERPARTY"&&!cp){msg($("analysisStatus"),"Seleziona una controparte da configurare.",true);return}
   const d=ensureForecastDraft();let source=d.source,method=d.method,model="ESTIMATED",fixed=null,rmin=null,rmax=null,adj=0;
   if(source==="HISTORY"){model="ESTIMATED";adj=num(d.adjustment)}
-  else if(source==="RECURRENCE"){model=method==="FIXED"?"FIXED":method==="RANGE"?"RANGE":"ESTIMATED";fixed=method==="FIXED"?d.fixed_amount:null;rmin=method==="RANGE"?d.range_min:null;rmax=method==="RANGE"?d.range_max:null}
+  else if(source==="RECURRENCE"){model=method==="FIXED"?"FIXED":method==="RANGE"?"RANGE":"ESTIMATED";fixed=method==="FIXED"?d.fixed_amount:null;rmin=method==="RANGE"?d.range_min:null;rmax=method==="RANGE"?d.range_max:null;adj=["FIXED","RANGE"].includes(method)?0:num(d.adjustment)}
   else if(source==="MANUAL"){method=method==="RANGE"?"RANGE":"FIXED";model=method==="RANGE"?"RANGE":"FIXED";fixed=method==="FIXED"?d.fixed_amount:null;rmin=method==="RANGE"?d.range_min:null;rmax=method==="RANGE"?d.range_max:null}
   else if(source==="NON_REPEAT"){method="ZERO";model="ESTIMATED"}
   if(method==="FIXED"&&(fixed===null||fixed===""||!Number.isFinite(Number(fixed)))){msg($("analysisStatus"),"Inserisci l'importo previsto.",true);return}
@@ -1392,7 +1403,7 @@ function renderAnalysisComponents(){
   $("detailComponents").innerHTML=(d.components||[]).map(function(c){
     const sel=String(c.component_id)===String(analysisSelectedComponent),first=isL1?'<button class="analysis-row-button" data-drill-l2="'+esc(c.component_category_id)+'">'+esc(c.component_name)+'</button>':'<button class="analysis-row-button" data-select-component="'+esc(c.component_id)+'">'+esc(c.component_name)+'</button>';let forecast;
     if(isL1)forecast='<span class="analysis-forecast">'+esc(forecastSummaryLabel(analysisForecastMeta(c.component_category_id)||{forecast_method:c.forecast_method,forecast_source:"HISTORY"}))+'</span>';
-    else{const ed=analysisForecastEditor,s=ed&&ed.category_setting||{};if(s.forecast_scope!=="COUNTERPARTIES")forecast='<span class="muted">Informativa</span>';else{const rows=(ed.counterparty_preview||[]).filter(function(x){return c.component_merchant_id?String(x.merchant_id)===String(c.component_merchant_id):(x.merchant_id===null||x.merchant_id===undefined)});forecast=rows.length?'<span class="analysis-forecast">'+esc(forecastSourceLabel(rows[0].forecast_source)+" · "+forecastMethodLabel(rows[0].forecast_method)+" · "+money(rows[0].expected_amount))+'</span>':'—'}}
+    else{const ed=analysisForecastEditor,s=ed&&ed.category_setting||{};if(s.forecast_scope!=="COUNTERPARTIES")forecast='<span class="muted">Informativa</span>';else{const rows=(ed.counterparty_preview||[]).filter(function(x){return c.component_merchant_id?String(x.merchant_id)===String(c.component_merchant_id):(x.merchant_id===null||x.merchant_id===undefined)});forecast=rows.length?'<span class="analysis-forecast">'+esc(forecastSourceLabel(rows[0].forecast_source)+" · "+forecastMethodLabel(rows[0].forecast_method)+(num(rows[0].adjustment_pct)?(" · "+(num(rows[0].adjustment_pct)>0?"+":"")+num(rows[0].adjustment_pct).toLocaleString("it-IT",{maximumFractionDigits:1})+"%"):"")+" · "+money(rows[0].expected_amount))+'</span>':'—'}}
     return '<tr'+(sel?' class="component-selected"':'')+'><td>'+first+'</td><td>'+money(c.total)+'</td><td>'+num(c.share_pct).toLocaleString("it-IT",{maximumFractionDigits:1})+'%</td><td>'+money(c.avg_month)+'</td><td>'+money(c.median_month)+'</td><td>'+frequencyHtml(c.active_months,c.period_months)+'</td><td>'+forecast+'</td></tr>';
   }).join("")||'<tr><td colspan="7" class="muted">Nessuna componente nel periodo.</td></tr>';
 }
@@ -1556,7 +1567,7 @@ $("analysisForecastPanel").addEventListener("click",async function(e){const scop
 $("analysisForecastPanel").addEventListener("change",function(e){
   const d=ensureForecastDraft();if(!d)return;
   if(e.target.id==="forecastType"){d.source=e.target.value;d.adjustment=0;d.fixed_amount=null;d.range_min=null;d.range_max=null;if(d.source==="HISTORY")d.method="AVG6";else if(d.source==="RECURRENCE")d.method="LAST_VALUE";else if(d.source==="MANUAL")d.method="FIXED";else d.method="ZERO";renderForecastEditor();return}
-  if(e.target.id==="forecastMethod"){d.method=e.target.value;d.fixed_amount=null;d.range_min=null;d.range_max=null;renderForecastEditor();return}
+  if(e.target.id==="forecastMethod"){d.method=e.target.value;d.fixed_amount=null;d.range_min=null;d.range_max=null;if(["FIXED","RANGE"].includes(d.method))d.adjustment=0;renderForecastEditor();return}
   if(e.target.id==="forecastManualMode"){d.method=e.target.value;d.fixed_amount=null;d.range_min=null;d.range_max=null;renderForecastEditor();return}
   if(e.target.id==="forecastAdjustment"){d.adjustment=Number(e.target.value||0);updateForecastLiveResult()}
 });
