@@ -221,9 +221,7 @@
           <span class="pipeline-arrow">→</span>
           <button type="button" class="pipeline-nav-btn" data-pipeline-step="category"><strong>2</strong><span>Categoria</span></button>
           <span class="pipeline-arrow">→</span>
-          <button type="button" class="pipeline-nav-btn" data-pipeline-step="rules"><strong>3</strong><span>Regole</span></button>
-          <span class="pipeline-arrow">→</span>
-          <button type="button" class="pipeline-nav-btn" data-pipeline-step="context"><strong>4</strong><span>Dettagli</span></button>
+          <button type="button" class="pipeline-nav-btn" data-pipeline-step="context"><strong>3</strong><span>Dettagli</span></button>
         </div>
 
         <details id="pipelineStepCounterparty" class="pipeline-step" open>
@@ -281,44 +279,19 @@
         </details>
 
         <details id="pipelineStepCategory" class="pipeline-step">
-          <summary><span class="pipeline-step-no">2</span><span><strong>Categoria</strong><small>Default controparte e regole; MCC interviene solo se manca la controparte.</small></span><span id="pipelineCategoryState" class="pipeline-step-state">Da verificare</span></summary>
+          <summary><span class="pipeline-step-no">2</span><span><strong>Categoria</strong><small>Scegli la categoria. Le regole avanzate si gestiscono solo in Anagrafiche.</small></span><span id="pipelineCategoryState" class="pipeline-step-state">Da verificare</span></summary>
           <div class="pipeline-step-body">
             <div class="field">
               <label>Categoria <span class="help" data-tip="Per spese, entrate e investimenti la categoria è richiesta per la conferma. La pipeline usa prima la categoria predefinita della controparte e le regole; MCC interviene solo se non esiste una controparte.">?</span></label>
               <select id="classCategory" class="select category-select"></select>
             </div>
             <div id="futureAutomationBox" class="future-automation-box"></div>
-            <div class="pipeline-actions"><button type="button" class="btn ghost compact" data-pipeline-next="counterparty">← Controparte</button><button type="button" class="btn secondary compact" data-pipeline-next="rules">Avanti: regole →</button></div>
-          </div>
-        </details>
-
-        <details id="advancedAutomation" class="pipeline-step">
-          <summary><span class="pipeline-step-no">3</span><span><strong>Regole</strong><small>Le condizioni possono assegnare direttamente controparte e categoria; l’alias non è necessario.</small></span><span id="pipelineRulesState" class="pipeline-step-state">Opzionale</span></summary>
-          <div class="pipeline-step-body">
-            <div id="ruleArea" class="rule-box" style="margin-top:0">
-              <div class="rule-grid">
-                <div class="field"><label>Tipo regola</label><select id="classificationRuleStyle" class="select"><option value="SIMPLE">Semplice — descrizione</option><option value="ADVANCED">Avanzata — condizioni multiple</option></select></div>
-                <div id="simpleRuleControls" class="field"><label>Corrispondenza</label><select id="ruleMode" class="select"><option value="CONTAINS">La descrizione contiene...</option><option value="EXACT">La descrizione è uguale a...</option></select></div>
-                <div class="field" id="rulePatternField"><label>Testo da cercare <span class="help" data-tip="Usa solo la parte stabile. Più parole separate devono essere tutte presenti; * è un jolly tra parti del testo.">?</span></label><input id="rulePattern" class="input" placeholder="es. NOWATECH" /></div>
-              </div>
-              <div id="advancedClassificationRule" class="hidden" style="margin-top:10px">
-                <div class="rule-grid"><div class="field"><label>Nome regola</label><input id="classificationRuleName" class="input" placeholder="es. Q8 - carburante" /></div><div class="field"><label>Condizioni</label><button id="addClassificationCondition" type="button" class="btn ghost compact">＋ Aggiungi condizione</button></div></div>
-                <div id="classificationConditions" class="condition-list" style="margin-top:8px"></div>
-              </div>
-              <div id="ruleHint" class="note strong-note"></div>
-              <div class="preview-box" style="margin-top:10px">
-                <div class="section-title" style="margin-bottom:6px"><div><strong>Anteprima impatto</strong><p class="muted small">Controlla i movimenti che la regola intercetterà.</p></div><button id="refreshClassificationPreview" type="button" class="btn ghost compact">Aggiorna anteprima</button></div>
-                <div id="classificationPreview"><span class="muted">Configura una regola per vedere l’impatto. I movimenti mostrati saranno aggiornati subito alla creazione della regola.</span></div>
-              </div>
-              <input id="onlyUnreviewed" type="hidden" checked />
-              <div style="margin-top:10px"><button id="saveClassificationWithRule" class="btn" type="button">Crea regola e applica ai movimenti</button></div>
-            </div>
-            <div class="pipeline-actions"><button type="button" class="btn ghost compact" data-pipeline-next="category">← Categoria</button><button type="button" class="btn secondary compact" data-pipeline-next="context">Nessuna regola / avanti →</button></div>
+            <div class="pipeline-actions"><button type="button" class="btn ghost compact" data-pipeline-next="counterparty">← Controparte</button><button id="openRuleCatalogFromMovement" type="button" class="btn ghost compact">Regola avanzata…</button><button type="button" class="btn secondary compact" data-pipeline-next="context">Avanti: dettagli →</button></div>
           </div>
         </details>
 
         <details id="pipelineStepContext" class="pipeline-step">
-          <summary><span class="pipeline-step-no">4</span><span><strong>Dettagli facoltativi</strong><small>Progetto, tag e ripartizione non cambiano la pipeline di classificazione.</small></span><span id="pipelineContextState" class="pipeline-step-state">Facoltativo</span></summary>
+          <summary><span class="pipeline-step-no">3</span><span><strong>Dettagli facoltativi</strong><small>Progetto, tag e ripartizione non cambiano la pipeline di classificazione.</small></span><span id="pipelineContextState" class="pipeline-step-state">Facoltativo</span></summary>
           <div class="pipeline-step-body">
             <div class="rule-box" id="movementContextBox" style="margin-top:0">
               <div class="context-grid">
@@ -347,7 +320,7 @@
                 <div id="splitMsg"></div>
               </div>
             </div>
-            <div class="pipeline-actions"><button type="button" class="btn ghost compact" data-pipeline-next="rules">← Regole</button></div>
+            <div class="pipeline-actions"><button type="button" class="btn ghost compact" data-pipeline-next="category">← Categoria</button></div>
           </div>
         </details>
 
@@ -664,10 +637,11 @@
               <div id="compoundConditions" class="condition-list"></div>
               <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
                 <button id="addCondition" class="btn ghost compact" type="button">+ Condizione</button>
-                <button id="previewCompoundRule" class="btn secondary compact" type="button">Anteprima corrispondenze</button>
-                <button id="saveCompoundRule" class="btn" type="button">Salva regola</button>
+                <button id="previewCompoundRule" class="btn ghost compact" type="button">Anteprima corrispondenze</button>
+                <button id="saveCompoundRule" class="btn secondary compact" type="button">Salva regola</button>
+                <button id="saveAndApplyCompoundRule" class="btn" type="button">Salva e applica allo storico</button>
               </div>
-              <div class="rule-help" style="margin-top:10px"><strong>Applicazione:</strong> quando il motore di coerenza è attivo, il salvataggio della regola ricalcola automaticamente tutti i movimenti non protetti. I movimenti <strong>Manuale protetto</strong> restano invariati.</div>
+              <div class="rule-help" style="margin-top:10px"><strong>Applicazione:</strong> “Salva regola” vale per i nuovi movimenti senza riclassificare lo storico. “Salva e applica allo storico” la esegue subito su tutti i movimenti corrispondenti <strong>non protetti</strong>. I movimenti <strong>Manuale protetto</strong> restano invariati.</div>
               <div id="compoundRuleMsg"></div>
               <div id="compoundRulePreview" class="rule-preview"></div>
               <datalist id="mccOptions"></datalist>
@@ -1917,7 +1891,7 @@ function renderFutureAutomationBox(){
 
   if(aliasAlready&&defaultMatches){
     el.classList.add('state-active');
-    el.innerHTML='<div class="future-title"><span>Automazione futura</span><span class="pill future-state-active">GIÀ ATTIVA</span></div><div class="future-main">'+aliasText+'</div><div class="future-ok" style="margin-top:4px">Categoria futura: <strong>'+esc(categoryNameById(categoryId))+'</strong> è già la categoria predefinita della controparte.</div><div class="future-action-note">Puoi comunque creare una regola al passo 3 se vuoi una logica più specifica.</div>';
+    el.innerHTML='<div class="future-title"><span>Automazione futura</span><span class="pill future-state-active">GIÀ ATTIVA</span></div><div class="future-main">'+aliasText+'</div><div class="future-ok" style="margin-top:4px">Categoria futura: <strong>'+esc(categoryNameById(categoryId))+'</strong> è già la categoria predefinita della controparte.</div><div class="future-action-note">Se serve una logica più specifica, usa “Regola avanzata…” e gestiscila in Anagrafiche → Regole.</div>';
     return;
   }
 
@@ -1929,8 +1903,8 @@ function renderFutureAutomationBox(){
       :'La controparte non ha una categoria predefinita.';
   const defaultControl=defaultMatches||!categoryId
     ?''
-    :'<label><input id="setMerchantDefaultCategory" type="checkbox" /> <span><strong>Usa '+esc(categoryNameById(categoryId))+' come categoria predefinita di '+esc(merchant.name)+'</strong><br><span class="muted">Opzionale: modifica il default al salvataggio. Non serve se la regola del passo 3 assegna già la categoria.</span></span></label>';
-  el.innerHTML='<div class="future-title"><span>Automazione futura</span><span class="pill future-state-partial">DA SCEGLIERE</span></div><div class="future-main">'+aliasText+'</div><div class="future-warn" style="margin-top:4px">'+defaultText+'</div>'+defaultControl+'<div class="future-action-note">Per automatizzare questo caso puoi aggiungere esplicitamente un alias oppure creare una regola al passo 3. La regola può impostare direttamente <strong>controparte + categoria</strong>.</div>';
+    :'<label><input id="setMerchantDefaultCategory" type="checkbox" /> <span><strong>Usa '+esc(categoryNameById(categoryId))+' come categoria predefinita di '+esc(merchant.name)+'</strong><br><span class="muted">Opzionale: modifica il default al salvataggio. Non serve se una regola in Anagrafiche → Regole assegna già la categoria.</span></span></label>';
+  el.innerHTML='<div class="future-title"><span>Automazione futura</span><span class="pill future-state-partial">DA SCEGLIERE</span></div><div class="future-main">'+aliasText+'</div><div class="future-warn" style="margin-top:4px">'+defaultText+'</div>'+defaultControl+'<div class="future-action-note">Per automatizzare questo caso puoi aggiungere esplicitamente un alias oppure creare una regola in <strong>Anagrafiche → Regole</strong>. La regola può impostare direttamente <strong>controparte + categoria</strong>.</div>';
 }
 async function persistSelectedCounterpartyDefaults(merchantId,categoryId){
   if(!merchantId||!$('setMerchantDefaultCategory')?.checked)return null;
@@ -2122,14 +2096,13 @@ function closeClassificationPanel(){
 
 
 function resetClassificationPanel(close=true){
-  clearTimeout(classificationPreviewTimer);selectedRow=null;splitData=null;
+  selectedRow=null;splitData=null;
   $('classificationSuggestion')?.classList.add('hidden');if($('classificationSuggestion'))$('classificationSuggestion').innerHTML='';
   if($('movementAliasBox')){$('movementAliasBox').innerHTML='';$('movementAliasBox').classList.add('hidden')}if($('movementProtectionBox')){$('movementProtectionBox').innerHTML='';$('movementProtectionBox').classList.add('hidden')}if($('parsingCorrectionBox')){$('parsingCorrectionBox').classList.add('hidden');$('parsingCorrectionPreview').innerHTML='';msg($('parsingCorrectionMsg'),'')}if($('futureAutomationBox'))$('futureAutomationBox').innerHTML='';
-  if($('advancedAutomation'))$('advancedAutomation').open=false;if($('pipelineStepCounterparty'))$('pipelineStepCounterparty').open=true;if($('pipelineStepCategory'))$('pipelineStepCategory').open=false;if($('pipelineStepContext'))$('pipelineStepContext').open=false;syncClassificationPipelineNav();
+  if($('pipelineStepCounterparty'))$('pipelineStepCounterparty').open=true;if($('pipelineStepCategory'))$('pipelineStepCategory').open=false;if($('pipelineStepContext'))$('pipelineStepContext').open=false;syncClassificationPipelineNav();
   $('selectedDescription').textContent='';if($('movementFacts'))$('movementFacts').innerHTML='';$('splitRows').innerHTML='';$('splitEditor').classList.add('hidden');$('toggleSplitEditor').textContent='Dividi movimento';msg($('splitMsg'),'');$('classMerchant').value='';$('classCategory').value='';syncSearchFromSelect('classMerchantSearch','classMerchant');if($('clearClassMerchant'))$('clearClassMerchant').classList.add('hidden');$('classProject').value='';
   document.querySelectorAll('[data-class-tag]').forEach(cb=>cb.checked=false);
-  $('classMode').value='all';$('classificationRuleStyle').value='SIMPLE';$('ruleMode').value='CONTAINS';$('rulePattern').value='';$('classificationRuleName').value='';$('classificationConditions').innerHTML='';$('classificationPreview').innerHTML='<span class="muted">Apri e configura la regola per vedere l’impatto.</span>';
-  $('onlyUnreviewed').checked=true;$('quickCounterpartyBox').classList.add('hidden');$('transferTarget').value='EXPENSE';$('transferDecision').classList.add('hidden');$('transferDecisionHint').textContent='';msg($('classMsg'),'');
+  $('classMode').value='all';$('quickCounterpartyBox').classList.add('hidden');$('transferTarget').value='EXPENSE';$('transferDecision').classList.add('hidden');$('transferDecisionHint').textContent='';msg($('classMsg'),'');
   if(close)$('classifyBox').classList.add('hidden');
 }
 
@@ -2146,7 +2119,7 @@ function updateRuleUi(){
   if($('advancedAutomation')?.open)scheduleClassificationPreview();
 }
 
-function classificationPipelineMap(){return {counterparty:'pipelineStepCounterparty',category:'pipelineStepCategory',rules:'advancedAutomation',context:'pipelineStepContext'}}
+function classificationPipelineMap(){return {counterparty:'pipelineStepCounterparty',category:'pipelineStepCategory',context:'pipelineStepContext'}}
 function syncClassificationPipelineNav(){
   const map=classificationPipelineMap();
   let active='counterparty';
@@ -2162,11 +2135,10 @@ function setClassificationPipelineStep(step,scroll=true){
 function updateClassificationPipelineState(){
   const merchantId=$('classMerchant')?.value||'',merchant=(catData?.counterparties||[]).find(x=>x.id===merchantId);
   const categoryId=$('classCategory')?.value||'';
-  const cpState=$('pipelineCounterpartyState'),catState=$('pipelineCategoryState'),ruleState=$('pipelineRulesState'),ctxState=$('pipelineContextState');
+  const cpState=$('pipelineCounterpartyState'),catState=$('pipelineCategoryState'),ctxState=$('pipelineContextState');
   if(cpState)cpState.textContent=merchant?.name||'Nessuna controparte';
   if($('clearClassMerchant'))$('clearClassMerchant').classList.toggle('hidden',!merchantId);
   if(catState)catState.textContent=categoryId?categoryNameById(categoryId):'Categoria mancante';
-  if(ruleState)ruleState.textContent=selectedRow?.matching_rule_id?'Regola attiva':'Opzionale';
   if(ctxState){
     const project=$('classProject')?.value||'',tags=document.querySelectorAll('[data-class-tag]:checked').length,splits=Number(selectedRow?.split_count||0);
     ctxState.textContent=(project||tags||splits)?[project?'progetto':null,tags?tags+' tag':null,splits?splits+' quote':null].filter(Boolean).join(' · '):'Facoltativo';
@@ -2230,16 +2202,9 @@ function openClassify(row,options={}){
   $('classMerchant').value=row.counterparty_id||'';$('classCategory').value=row.category_id||'';syncClassificationCategoryFromMerchant(false);syncSearchFromSelect('classMerchantSearch','classMerchant');renderClassificationSuggestion();renderMovementAliasBox();renderMovementProtectionBox();renderFutureAutomationBox();if(row.manual_lock)refreshSelectedPipelinePreview();$('classProject').value=row.project_id||'';const selectedTags=new Set((row.tags||[]).map(t=>t.id));document.querySelectorAll('[data-class-tag]').forEach(cb=>cb.checked=selectedTags.has(cb.value));
   if($('classUserNote'))$('classUserNote').value=row.user_note||'';
   if($('classUserNoteState'))$('classUserNoteState').textContent=row.user_note?'Nota salvata.':'Nessuna nota.';
-  $('classMode').value='all';$('classificationRuleStyle').value='SIMPLE';if($('advancedAutomation'))$('advancedAutomation').open=false;
+  $('classMode').value='all';
   if(selectedRow.is_bank_transfer)$('transferTarget').value=classificationTargetForRow(row);
-  $('ruleMode').value='CONTAINS';$('rulePattern').value=(row.counterparty_name&&textSearchMatches(row.description||'',row.counterparty_name))?row.counterparty_name:(classificationAliasValue(row)||row.raw_causale||row.description||'');
-  $('classificationRuleName').value=[row.counterparty_name||classificationAliasValue(row)||row.raw_causale||'Regola',row.mcc_code?`MCC ${row.mcc_code}`:''].filter(Boolean).join(' - ');
-  $('classificationConditions').innerHTML='';
-  if(classificationAliasValue(row))addClassificationConditionRow({field_name:'MERCHANT_NAME',operator:'EXACT',comparison_value:classificationAliasValue(row)});
-  if(row.raw_causale)addClassificationConditionRow({field_name:'CAUSALE',operator:'EXACT',comparison_value:row.raw_causale});
-  if(row.mcc_code)addClassificationConditionRow({field_name:'MCC',operator:'EXACT',comparison_value:row.mcc_code});
-  addClassificationConditionRow({field_name:'TRANSACTION_TYPE',operator:'EXACT',comparison_value:row.base_transaction_type||row.transaction_type});
-  $('onlyUnreviewed').checked=true;updateRuleUi();updateTransferDecisionHint();$('classifyBox').classList.remove('hidden');$('classifyBox').scrollIntoView({behavior:'smooth',block:'start'});msg($('classMsg'),'');$('splitEditor').classList.add('hidden');$('toggleSplitEditor').textContent=Number(row.split_count||0)>0?`Ripartizione (${nfmt(row.split_count)})`:'Dividi movimento';loadSplitsForMovement(row.id);loadReportingExtraordinaryState(row);scheduleClassificationPreview();updateClassificationPipelineState();setClassificationPipelineStep('counterparty',false);updateClassificationSaveBar();
+  updateTransferDecisionHint();$('classifyBox').classList.remove('hidden');$('classifyBox').scrollIntoView({behavior:'smooth',block:'start'});msg($('classMsg'),'');$('splitEditor').classList.add('hidden');$('toggleSplitEditor').textContent=Number(row.split_count||0)>0?`Ripartizione (${nfmt(row.split_count)})`:'Dividi movimento';loadSplitsForMovement(row.id);loadReportingExtraordinaryState(row);updateClassificationPipelineState();setClassificationPipelineStep('counterparty',false);updateClassificationSaveBar();
 }
 function clearSelectedMovementCounterparty(){
   if(!selectedRow)return;
@@ -2248,6 +2213,22 @@ function clearSelectedMovementCounterparty(){
   $('classMerchantSearch').value='';
   $('classMerchant').dispatchEvent(new Event('change',{bubbles:true}));
   msg($('classMsg'),(previous?'Controparte “'+previous+'” sganciata dal movimento. ':'Controparte rimossa. ')+'La categoria resta invariata. Premi “Salva movimento” per confermare.');
+}
+function openRuleCatalogFromMovement(){
+  if(!selectedRow)return;
+  const merchantId=$('classMerchant')?.value||'',categoryId=$('classCategory')?.value||'';
+  const merchant=(catData?.counterparties||[]).find(x=>x.id===merchantId);
+  const category=categoryId?categoryNameById(categoryId):'';
+  const target=selectedRow.is_bank_transfer?$('transferTarget').value:selectedRow.transaction_type;
+  activateMainTab('catalogs');setCatalogTab('rules',false);resetCompoundRule();
+  if(merchantId)$('compoundRuleMerchant').value=merchantId;
+  syncSearchFromSelect('compoundRuleMerchantSearch','compoundRuleMerchant');
+  if(categoryId)$('compoundRuleCategory').value=categoryId;
+  if(target&&target!=='TRANSFER')$('compoundRuleType').value=target;
+  $('compoundRuleName').value=['Regola',merchant?.name||category||'movimento'].filter(Boolean).join(' — ');
+  $('compoundConditions').innerHTML='';addConditionRow();
+  msg($('compoundRuleMsg'),'Controparte e categoria sono state precompilate dal movimento. Definisci qui le condizioni, controlla l’anteprima e scegli se applicare anche allo storico.');
+  const panel=document.querySelector('[data-catalog-panel="rules"] .catalog-form');if(panel)panel.scrollIntoView({behavior:'smooth',block:'start'});
 }
 async function saveMovementContext(){if(!selectedRow)return;const projectId=$('classProject').value||null;const tagIds=[...document.querySelectorAll('[data-class-tag]:checked')].map(x=>x.value);await rpc('dashboard_set_transaction_project_v1',{p_transaction_id:selectedRow.id,p_project_id:projectId});await rpc('dashboard_set_transaction_tags_v1',{p_transaction_id:selectedRow.id,p_tag_ids:tagIds})}
 async function saveMovementNote(){
@@ -4021,7 +4002,7 @@ async function saveQuickCounterparty(){
     const selectedCategory=$('classCategory').value;
     catData.counterparties=await rpc('dashboard_counterparties_read_v1')||[];
     fillClassificationSelects();$('classMerchant').value=created.id;$('classCategory').value=selectedCategory||defaultCategory||'';syncClassificationCategoryFromMerchant(false);syncSearchFromSelect('classMerchantSearch','classMerchant');
-    updateRuleUi();renderClassificationSuggestion();renderMovementAliasBox();renderFutureAutomationBox();updateClassificationPipelineState();updateClassificationSaveBar();$('quickCounterpartyBox').classList.add('hidden');
+    renderClassificationSuggestion();renderMovementAliasBox();renderFutureAutomationBox();updateClassificationPipelineState();updateClassificationSaveBar();$('quickCounterpartyBox').classList.add('hidden');
     msg($('classMsg'),'Controparte “'+created.name+'” creata e selezionata. Nessun alias è stato creato automaticamente.');
   }catch(e){msg($('quickCounterpartyMsg'),e.message,true)}finally{setBusy(btn,false)}
 }
@@ -4042,7 +4023,7 @@ function bindCounterpartySearch(inputId,selectId){
 }
 function clearMovementFilters(){movementCategoryScopeIds=null;movementCategoryScopeLabel='';document.querySelectorAll('[data-pipeline-step]').forEach(b=>b.addEventListener('click',()=>setClassificationPipelineStep(b.dataset.pipelineStep)));
 document.querySelectorAll('[data-pipeline-next]').forEach(b=>b.addEventListener('click',()=>setClassificationPipelineStep(b.dataset.pipelineNext)));
-['pipelineStepCounterparty','pipelineStepCategory','advancedAutomation','pipelineStepContext'].forEach(id=>$(id)?.addEventListener('toggle',()=>{if($(id)?.open){for(const other of Object.values(classificationPipelineMap()))if(other!==id&&$(other))$(other).open=false}syncClassificationPipelineNav()}));
+['pipelineStepCounterparty','pipelineStepCategory','pipelineStepContext'].forEach(id=>$(id)?.addEventListener('toggle',()=>{if($(id)?.open){for(const other of Object.values(classificationPipelineMap()))if(other!==id&&$(other))$(other).open=false}syncClassificationPipelineNav()}));
 $('classProject')?.addEventListener('change',()=>{updateClassificationPipelineState();updateClassificationSaveBar()});$('classTags')?.addEventListener('change',()=>{updateClassificationPipelineState();updateClassificationSaveBar()});
 ['movementSearch','movementStatus','movementAutomation','movementBank','movementKind','movementType','movementNote','movementDirection','movementCounterpartySearch','movementCounterparty','movementCategory','movementProject','movementTag','movementDateFrom','movementDateTo'].forEach(id=>$(id).value='');renderMovements()}
 $('coherenceRefresh').onclick=loadCoherence;
