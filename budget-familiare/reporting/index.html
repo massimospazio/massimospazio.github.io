@@ -246,6 +246,14 @@ button,input,select{font:inherit}
 .forecast-type-note{font-size:10px;color:var(--muted);line-height:1.4;margin-top:4px}
 .extra-summary-inline{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 8px}.extra-summary-chip{display:inline-flex;padding:3px 7px;border-radius:999px;font-size:10px;font-weight:800}.extra-expense{background:#fee2e2;color:#b91c1c}.extra-income{background:#dcfce7;color:#166534}.extra-net{background:#dbeafe;color:#1d4ed8}
 
+
+/* V72.6.2 — fix trend dettaglio, note movimenti, Bilancio con liquidità */
+.analysis-balance-net-row{display:grid;gap:0;padding:3px 54px 0 48px;align-items:start}
+.analysis-net-chip{min-width:0;text-align:center;font-size:8.5px;font-weight:800;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:clip}
+.analysis-net-chip.positive{color:#15803d}.analysis-net-chip.negative{color:#b91c1c}.analysis-net-chip.neutral{color:#64748b}
+.movement-note-icon{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;background:#eff6ff;color:#1d4ed8;cursor:help;font-size:13px}
+@media(max-width:900px){.analysis-balance-net-row{padding-left:42px;padding-right:42px}.analysis-net-chip{font-size:7.5px}}
+
 </style>
 </head>
 <body>
@@ -344,9 +352,10 @@ button,input,select{font:inherit}
         <div id="analysisExtraordinaryInline" class="analysis-extra-inline hidden"></div>
         <div id="analysisSummary"></div><div id="analysisStatus"></div>
         <div id="analysisBalanceView" class="analysis-balance-view hidden">
-          <div class="analysis-detail-head"><div><h3>Entrate, uscite e saldo</h3><p>Vista macro del periodo: barre affiancate e gap mensile di saldo.</p></div></div>
+          <div class="analysis-detail-head"><div><h3>Entrate, uscite, saldo e liquidità</h3><p>Barre mensili per entrate/uscite, saldo come indicatore ± e liquidità ricostruita come curva.</p></div></div>
           <div class="analysis-balance-chart"><canvas id="analysisBalanceChart"></canvas></div>
-          <div class="legend-note">Gli straordinari marcati sono esclusi da questa lettura ordinaria.</div>
+          <div id="analysisBalanceNetRow" class="analysis-balance-net-row"></div>
+          <div id="analysisBalanceNote" class="legend-note"></div>
         </div>
         <div id="analysisHierarchyView" class="analysis-workspace-grid">
           <div>
@@ -937,12 +946,30 @@ function renderAnalysisModeButtons(){
 }
 function analysisTrendMap(){return new Map(((analysisWorkspace&&analysisWorkspace.trend_rows)||[]).map(function(x){return [x.level+"|"+x.category_id,x]}))}
 function trendBasisLabel(){return analysisWorkspace&&analysisWorkspace.trend_basis==="LAST_12_VS_PREVIOUS_12"?"12m vs 12m prec.":"vs stesso periodo A-1"}
-function analysisTrendHtml(level,categoryId){
-  const t=analysisTrendMap().get(level+"|"+categoryId);
+function analysisTrendChip(t){
   if(!t||t.trend_pct===null||t.trend_pct===undefined)return '<span class="trend-chip trend-neutral" title="'+esc(trendBasisLabel())+'">—</span>';
   const v=num(t.trend_pct),favorable=analysisCurrentDirection()==="EXPENSE"?v<0:v>0;
   const cls=Math.abs(v)<1?"trend-neutral":favorable?"trend-good":"trend-bad",arrow=v>0?"↑":v<0?"↓":"→";
   return '<span class="trend-chip '+cls+'" title="'+esc(trendBasisLabel())+'">'+(v>0?"+":"")+v.toLocaleString("it-IT",{maximumFractionDigits:1})+'% '+arrow+'</span>';
+}
+function analysisTrendHtml(level,categoryId){
+  return analysisTrendChip(analysisTrendMap().get(level+"|"+categoryId));
+}
+function analysisDetailTrendHtml(d){
+  const rows=analysisWorkspace&&analysisWorkspace.trend_rows||[];
+  let t=rows.find(function(x){return x.level===d.level&&String(x.category_id)===String(d.category_id)});
+  if(!t&&d.level==="L2"){
+    t=rows.find(function(x){
+      return x.level==="L2"&&(
+        String(x.l2_id||"")===String(d.category_id)||
+        (String(x.l2_name||"")===String(d.category_name||"")&&String(x.l1_name||"")===String(d.parent_name||""))
+      );
+    });
+  }
+  if(!t&&d.level==="L1"){
+    t=rows.find(function(x){return x.level==="L1"&&(String(x.l1_id||"")===String(d.category_id)||String(x.l1_name||"")===String(d.category_name||""))});
+  }
+  return analysisTrendChip(t);
 }
 function frequencyHtml(active,total){
   active=num(active);total=Math.max(1,num(total));const r=active/total;
@@ -991,14 +1018,55 @@ function analysisTimeGuidePlugin(months){
     ctx.restore();
   }};
 }
+function compactSignedMoney(v){
+  v=num(v);if(Math.abs(v)<.005)return "0";
+  const sign=v>0?"+":"−";
+  const abs=Math.abs(v);
+  if(abs>=1000000)return sign+(abs/1000000).toLocaleString("it-IT",{maximumFractionDigits:1})+"M";
+  if(abs>=1000)return sign+(abs/1000).toLocaleString("it-IT",{maximumFractionDigits:1})+"k";
+  return sign+Math.round(abs).toLocaleString("it-IT");
+}
+function renderAnalysisBalanceNet(rows){
+  const box=$("analysisBalanceNetRow");if(!box)return;
+  box.style.gridTemplateColumns="repeat("+Math.max(rows.length,1)+",minmax(0,1fr))";
+  box.innerHTML=rows.map(function(x){
+    const v=num(x.net),cls=v>0?"positive":v<0?"negative":"neutral";
+    return '<span class="analysis-net-chip '+cls+'" title="Saldo ordinario '+monthLabel(x.month_start)+': '+money(v)+'">'+compactSignedMoney(v)+'</span>';
+  }).join("");
+}
 function renderAnalysisBalance(){
   $("analysisHierarchyView").classList.add("hidden");$("analysisBalanceView").classList.remove("hidden");
-  const rows=(analysisWorkspace&&analysisWorkspace.balance_monthly)||[],months=rows.map(function(x){return x.month_start});if(analysisBalanceChart)analysisBalanceChart.destroy();
-  analysisBalanceChart=new Chart($("analysisBalanceChart"),{type:"bar",plugins:[analysisTimeGuidePlugin(months)],data:{labels:months.map(monthLabel),datasets:[
-    {type:"bar",label:"Entrate",data:rows.map(function(x){return num(x.incoming)}),backgroundColor:"rgba(22,163,74,.66)",borderWidth:0},
-    {type:"bar",label:"Uscite",data:rows.map(function(x){return num(x.outgoing)}),backgroundColor:"rgba(220,38,38,.60)",borderWidth:0},
-    {type:"line",label:"Saldo",data:rows.map(function(x){return num(x.net)}),borderColor:"#2563eb",backgroundColor:"#2563eb",borderWidth:2.5,pointRadius:3,tension:.22}
-  ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},plugins:{legend:{position:"bottom"},tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+": "+money(ctx.raw)}}}},scales:{x:{grid:{display:false}},y:{beginAtZero:true,ticks:{callback:function(v){return money(v)}}}}}});
+  const rows=(analysisWorkspace&&analysisWorkspace.balance_monthly)||[],months=rows.map(function(x){return x.month_start});
+  const liquidity=analysisWorkspace&&analysisWorkspace.liquidity_history||{available:false,rows:[]};
+  const liquidityRows=Array.isArray(liquidity.rows)?liquidity.rows:[],liquidityMap=new Map(liquidityRows.map(function(x){return [x.month_start,num(x.balance)]}));
+  const anchored=!!liquidity.available&&liquidityRows.length>0;
+  const datasets=[
+    {type:"bar",label:"Entrate",data:rows.map(function(x){return num(x.incoming)}),backgroundColor:"rgba(22,163,74,.66)",borderWidth:0,yAxisID:"y"},
+    {type:"bar",label:"Uscite",data:rows.map(function(x){return num(x.outgoing)}),backgroundColor:"rgba(220,38,38,.60)",borderWidth:0,yAxisID:"y"}
+  ];
+  if(anchored)datasets.push({
+    type:"line",label:"Liquidità ricostruita",
+    data:months.map(function(m){return liquidityMap.has(m)?liquidityMap.get(m):null}),
+    borderColor:"#2563eb",backgroundColor:"#2563eb",borderWidth:2.5,pointRadius:2.5,tension:.22,spanGaps:false,yAxisID:"yLiquidity"
+  });
+  if(analysisBalanceChart)analysisBalanceChart.destroy();
+  analysisBalanceChart=new Chart($("analysisBalanceChart"),{
+    type:"bar",plugins:[analysisTimeGuidePlugin(months)],data:{labels:months.map(monthLabel),datasets:datasets},
+    options:{
+      responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},
+      plugins:{legend:{position:"bottom"},tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+": "+money(ctx.raw)}}}},
+      scales:{
+        x:{grid:{display:false}},
+        y:{beginAtZero:true,position:"left",ticks:{callback:function(v){return money(v)}}},
+        yLiquidity:{display:anchored,position:"right",grid:{drawOnChartArea:false},ticks:{callback:function(v){return money(v)}}}
+      }
+    }
+  });
+  renderAnalysisBalanceNet(rows);
+  const note=$("analysisBalanceNote");if(note){
+    if(anchored)note.textContent="Barre e saldo ±: lettura ordinaria, quindi straordinari esclusi. Linea: liquidità reale ricostruita dai saldi dei conti; include anche gli effetti dei movimenti straordinari.";
+    else note.textContent="Barre e saldo ±: lettura ordinaria. Liquidità ricostruita non disponibile finché i saldi dei conti non sono completi e allineati alla stessa data.";
+  }
 }
 function initializeAnalysisAccordion(){
   if(!analysisWorkspace)return null;const prefix=analysisCurrentDirection()==="INCOME"?"AI:":"AE:";
@@ -1032,8 +1100,11 @@ async function loadAnalysisWorkspace(force,preserveSelection){
   const key=analysisWorkspaceCacheKey();if(!force&&analysisWorkspace&&analysisWorkspaceKey===key){renderAnalysis();return}
   const seq=++analysisLoadSeq;$("analysisBody").innerHTML='<tr><td colspan="8"><div class="analysis-loading"><span class="spinner"></span>Carico analisi…</div></td></tr>';msg($("analysisStatus"),"");
   try{
-    const data=await rpc("dashboard_reporting_analysis_workspace_v2",{p_direction:analysisCurrentDirection(),p_period_months:analysisPeriodMonths()});
-    if(seq!==analysisLoadSeq)return;analysisWorkspace=data||{};analysisWorkspaceKey=key;
+    const data=await Promise.all([
+      rpc("dashboard_reporting_analysis_workspace_v2",{p_direction:analysisCurrentDirection(),p_period_months:analysisPeriodMonths()}),
+      rpc("dashboard_reporting_liquidity_history_v2",{p_period_months:analysisPeriodMonths()}).catch(function(){return {available:false,reason:"UNAVAILABLE",rows:[]}})
+    ]);
+    if(seq!==analysisLoadSeq)return;analysisWorkspace=data[0]||{};analysisWorkspace.liquidity_history=data[1]||{available:false,rows:[]};analysisWorkspaceKey=key;
     if(preserveSelection){
       analysisSelectedMonth=null;analysisDetailData=null;analysisDetailKey="";analysisForecastEditor=null;analysisForecastEditorKey="";analysisForecastDraft=null;analysisForecastDraftKey="";
       if(await restoreAnalysisSelection(preserveSelection))return;
@@ -1074,7 +1145,7 @@ async function openAnalysisDetail(categoryId,level,selectedMonth){
 function selectedAnalysisComponent(){const d=analysisDetailData;if(!d)return null;return (d.components||[]).find(function(x){return String(x.component_id)===String(analysisSelectedComponent)})||null}
 function renderAnalysisDetail(){
   const d=analysisDetailData;if(!d)return;const stats=d.stats||{},selected=selectedAnalysisComponent();let title=d.category_name||"Categoria";if(d.parent_name)title=String(d.parent_name)+" › "+title;if(selected)title+=" › "+selected.component_name;$("detailTitle").textContent=title;
-  const chartMode=selected?"singola controparte":(d.level==="L1"?"L2 impilate":"controparti impilate");$("detailSubtitle").textContent=analysisPeriodLabel()+" · "+chartMode;const st=selected||stats,trend=d.level==="L1"?analysisTrendHtml("L1",d.category_id):analysisTrendHtml("L2",d.category_id);
+  const chartMode=selected?"singola controparte":(d.level==="L1"?"L2 impilate":"controparti impilate");$("detailSubtitle").textContent=analysisPeriodLabel()+" · "+chartMode;const st=selected||stats,trend=analysisDetailTrendHtml(d);
   $("detailStats").innerHTML='<span class="analysis-stat">Totale <strong>'+money(st.total)+'</strong></span><span class="analysis-stat" title="Media mensile su tutti i mesi del periodo, inclusi i mesi a zero">Media <strong>'+money(st.avg_month)+'</strong></span><span class="analysis-stat" title="Mediana mensile su tutti i mesi del periodo, inclusi i mesi a zero">Mediana <strong>'+money(st.median_month)+'</strong></span><span class="analysis-stat">'+frequencyHtml(st.active_months,st.period_months)+'</span>'+(!selected?trend:"");
   renderAnalysisDetailChart();renderForecastEditor();renderAnalysisComponents();renderAnalysisMovements();
 }
@@ -1222,10 +1293,28 @@ function renderAnalysisComponents(){
 }
 function sortedAnalysisMovements(rows){const key=analysisMovementSort.key,dir=analysisMovementSort.dir==="asc"?1:-1;return rows.slice().sort(function(a,b){let av=a[key],bv=b[key];if(key==="amount"){av=num(av);bv=num(bv)}else if(key==="transaction_date"){av=String(av||"");bv=String(bv||"")}else{av=String(av||"").toLocaleLowerCase("it");bv=String(bv||"").toLocaleLowerCase("it")}if(av<bv)return -1*dir;if(av>bv)return 1*dir;return 0})}
 function sortMark(key){return analysisMovementSort.key===key?(analysisMovementSort.dir==="asc"?" ↑":" ↓"):" ↕"}
+function movementNoteHtml(note){
+  if(!note)return '<span class="muted">—</span>';
+  return '<span class="movement-note-icon" title="'+esc(note)+'" aria-label="Nota: '+esc(note)+'">📝</span>';
+}
 function renderAnalysisMovements(){
-  const d=analysisDetailData;if(!d)return;if(!analysisSelectedMonth){$("detailMovements").innerHTML='<div class="analysis-movements-head"><h4>Movimenti del mese</h4></div><div class="muted small">Clicca su un mese del grafico per vedere i movimenti che lo compongono e valutarne la ripetibilità.</div>';return}
-  let rows=(d.movements||[]).filter(function(x){return x.month_start===analysisSelectedMonth});if(analysisSelectedComponent)rows=rows.filter(function(x){return String(x.component_id)===String(analysisSelectedComponent)});rows=sortedAnalysisMovements(rows);const total=rows.reduce(function(sum,x){return sum+num(x.amount)},0);
-  $("detailMovements").innerHTML='<div class="analysis-movements-head"><h4>Movimenti · '+esc(monthLabel(analysisSelectedMonth))+'</h4><span class="small muted">'+rows.length+' movimenti · '+money(total)+'</span></div>'+(rows.length?'<div class="analysis-moves-wrap"><table class="analysis-moves-table"><thead><tr><th class="sortable" data-sort-analysis-moves="transaction_date">Data'+sortMark("transaction_date")+'</th><th class="sortable" data-sort-analysis-moves="counterparty">Controparte'+sortMark("counterparty")+'</th><th class="sortable" data-sort-analysis-moves="category">Categoria'+sortMark("category")+'</th><th class="sortable" data-sort-analysis-moves="amount" style="text-align:right">Importo'+sortMark("amount")+'</th><th>Descrizione</th><th></th></tr></thead><tbody>'+rows.map(function(x){return '<tr><td>'+dateLabel(x.transaction_date)+'</td><td><strong>'+esc(x.counterparty||"—")+'</strong></td><td>'+esc(x.category||"—")+'</td><td class="amount">'+money(x.amount)+'</td><td>'+esc(x.description||"")+'</td><td><a class="btn ghost compact" href="../?movement='+encodeURIComponent(x.id)+'">Apri</a></td></tr>'}).join("")+'</tbody></table></div>':'<div class="muted small">Nessun movimento nel mese selezionato.</div>');
+  const d=analysisDetailData;if(!d)return;
+  if(!analysisSelectedMonth){
+    $("detailMovements").innerHTML='<div class="analysis-movements-head"><h4>Movimenti del mese</h4></div><div class="muted small">Clicca su un mese del grafico per vedere i movimenti che lo compongono e valutarne la ripetibilità.</div>';
+    return;
+  }
+  let rows=(d.movements||[]).filter(function(x){return x.month_start===analysisSelectedMonth});
+  if(analysisSelectedComponent)rows=rows.filter(function(x){return String(x.component_id)===String(analysisSelectedComponent)});
+  rows=sortedAnalysisMovements(rows);const total=rows.reduce(function(sum,x){return sum+num(x.amount)},0);
+  $("detailMovements").innerHTML='<div class="analysis-movements-head"><h4>Movimenti · '+esc(monthLabel(analysisSelectedMonth))+'</h4><span class="small muted">'+rows.length+' movimenti · '+money(total)+'</span></div>'+
+    (rows.length?'<div class="analysis-moves-wrap"><table class="analysis-moves-table"><thead><tr>'+
+      '<th class="sortable" data-sort-analysis-moves="transaction_date">Data'+sortMark("transaction_date")+'</th>'+
+      '<th class="sortable" data-sort-analysis-moves="counterparty">Controparte'+sortMark("counterparty")+'</th>'+
+      '<th class="sortable" data-sort-analysis-moves="category">Categoria'+sortMark("category")+'</th>'+
+      '<th class="sortable" data-sort-analysis-moves="amount" style="text-align:right">Importo'+sortMark("amount")+'</th>'+
+      '<th>Descrizione</th><th>Nota</th></tr></thead><tbody>'+
+      rows.map(function(x){return '<tr><td>'+dateLabel(x.transaction_date)+'</td><td><strong>'+esc(x.counterparty||"—")+'</strong></td><td>'+esc(x.category||"—")+'</td><td class="amount">'+money(x.amount)+'</td><td>'+esc(x.description||"")+'</td><td>'+movementNoteHtml(x.user_note)+'</td></tr>'}).join("")+
+      '</tbody></table></div>':'<div class="muted small">Nessun movimento nel mese selezionato.</div>');
 }
 function openCategoryDetail(categoryId,direction,selectedMonth){planMode="ANALYSIS";analysisViewMode=direction==="INCOME"?"INCOME":"EXPENSE";$("analysisDirection").value=analysisCurrentDirection();renderMode();if(!analysisWorkspace||analysisWorkspaceKey!==analysisWorkspaceCacheKey())loadAnalysisWorkspace(true).then(function(){openAnalysisDetail(categoryId,"L2",selectedMonth||null)});else openAnalysisDetail(categoryId,"L2",selectedMonth||null)}
 
