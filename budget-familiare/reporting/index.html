@@ -760,6 +760,81 @@ function renderPlanSummary(){
   let running=0;const cumulative=net.map(function(v){running+=v;return running});
   $("planSummary").innerHTML=cashSummaryHtml(months,incoming,outgoing,net,cumulative,"Totale 6m","Spese ordinarie previste + margine imprevisti + investimenti previsti");
 }
+function renderPlanRows(groups,kind,cellMapObj){
+  const months=futureMonths(),scaleValues=forecastScaleValues(groups,cellMapObj);
+  let html="";
+  groups.forEach(function(g){
+    const totals=months.map(function(m){return g.rows.reduce(function(sum,r){return sum+effectiveCell(cellMapObj.get(r.category_id+"|"+m))},0)});
+    const total6=totals.reduce(function(a,b){return a+b},0);
+    const collapsed=collapsedL1.has(g.id);
+    html+='<tr class="l1-row"><td><div class="plan-label"><button class="caret" data-toggle-l1="'+esc(g.id)+'">'+(collapsed?"▸":"▾")+'</button>'+categoryIconHtml(g.name,kind,true)+'<strong>'+esc(g.name)+'</strong></div></td><td></td><td></td>'+
+      totals.map(function(v){return "<td>"+money(v)+"</td>"}).join("")+'<td class="total-cell total-heat" style="'+totalIntensityStyle(total6,scaleValues,kind)+'">'+money(total6)+"</td></tr>";
+    if(!collapsed){
+      g.rows.forEach(function(r){
+        let rowTotal=0;
+        const cells=months.map(function(m){
+          const cell=cellMapObj.get(r.category_id+"|"+m);
+          const manual=cell&&cell.override_amount!==null&&cell.override_amount!==undefined;
+          const v=effectiveCell(cell);rowTotal+=v;
+          const title=manual
+            ?"Modificato manualmente · valore automatico "+money(cell&&cell.suggested_amount)
+            :(r.forecast_method==="SAME_MONTH_LAST_YEAR"&&cell&&!cell.same_month_available?"A-1 non disponibile: fallback media 12 mesi":"Suggerito: "+methodLabel(r.forecast_method));
+          const attr=kind==="income"?"data-income-category":"data-expense-category";
+          return '<td><input class="plan-input'+(manual?" manual":"")+'" style="'+planHeatStyle(v,r.avg12,kind)+'" '+attr+'="'+esc(r.category_id)+'" data-month="'+esc(m)+'" type="number" min="0" step="1" value="'+(manual?Math.round(num(cell.override_amount)):"")+'" placeholder="'+Math.round(v)+'" title="'+esc(title)+'" /></td>';
+        });
+        const info=categoryStatsTitle(r,kind);
+        html+='<tr data-detail-l1="'+esc(g.id)+'"><td style="padding-left:34px"><span class="plan-label">'+categoryIconHtml(detailLabel(r),kind,false)+'<button class="category-link" data-plan-detail="'+esc(r.category_id)+'" data-plan-direction="'+(kind==="income"?"INCOME":"EXPENSE")+'">'+esc(detailLabel(r))+'</button><span class="plan-info" title="'+esc(info)+'">ⓘ</span></span></td><td>'+methodControl(r,kind,cellMapObj)+'</td><td><button class="btn ghost compact copy-btn plan-action-icon" data-copy-kind="'+kind+'" data-copy-category="'+esc(r.category_id)+'" title="Copia il primo mese sui cinque successivi">⧉</button></td>'+cells.join("")+'<td class="total-cell total-heat" style="'+totalIntensityStyle(rowTotal,scaleValues,kind)+'">'+money(rowTotal)+"</td></tr>";
+      });
+    }
+  });
+  return html;
+}
+function expenseTotalsByMonth(){
+  const cm=expenseCellMap(),months=futureMonths(),out=new Map();
+  months.forEach(function(m){let v=0;groupedExpenseForecast().forEach(function(g){g.rows.forEach(function(r){v+=effectiveCell(cm.get(r.category_id+"|"+m))})});out.set(m,v)});
+  return out;
+}
+function incomeTotalsByMonth(){
+  const cm=incomeCellMap(),months=futureMonths(),out=new Map();
+  months.forEach(function(m){let v=0;groupedIncomeForecast().forEach(function(g){g.rows.forEach(function(r){v+=effectiveCell(cm.get(r.category_id+"|"+m))})});out.set(m,v)});
+  return out;
+}
+function renderIncomeExceptions(){
+  const rows=(report.income_exceptions||[]).filter(function(x){return !x.is_extraordinary});
+  const box=$("incomeExceptions");
+  if(!rows.length){box.innerHTML="";return}
+  const sum=rows.reduce(function(s,x){return s+num(x.amount)},0);
+  box.innerHTML='<div class="notice warn warning-list"><strong>Entrate fuori dalla gerarchia Entrate: '+rows.length+" movimenti · "+money(sum)+'</strong><br>Non vengono usate nella previsione L2 finché restano fuori da Entrate. Esempi: '+rows.slice(0,5).map(function(x){return esc(x.category)+" "+money(x.amount)+" ("+dateLabel(x.transaction_date)+")"}).join(" · ")+".</div>";
+}
+function renderPlan(){
+  const months=futureMonths();
+  $("planHead").innerHTML="<tr><th>Categoria / Voce</th><th>Metodo</th><th></th>"+months.map(function(m){return "<th>"+esc(monthLabel(m))+"</th>"}).join("")+"<th>Totale 6m</th></tr>";
+  let html="";
+  html+=renderPlanRows(groupedIncomeForecast(),"income",incomeCellMap());
+
+  const inv=report.investment_forecast||{};
+  const invOverrides=overrideMap(inv);
+  let invTotal=0;
+  const invCells=months.map(function(m){
+    const ov=invOverrides.get(m),manual=ov!==null&&ov!==undefined,v=manual?num(ov):num(inv.avg6);invTotal+=v;
+    const title=manual?"Investimento modificato manualmente · automatico "+money(inv.avg6):"Suggerito: Media 6 mesi";
+    return '<td><input class="plan-input'+(manual?" manual":"")+'" style="'+planHeatStyle(v,inv.avg12,"expense")+'" data-investment="'+esc(m)+'" type="number" min="0" step="1" value="'+(manual?Math.round(num(ov)):"")+'" placeholder="'+Math.round(v)+'" title="'+esc(title)+'" /></td>';
+  });
+  const invInfo="Media 6m "+money(inv.avg6)+" · Media 12m "+money(inv.avg12);
+  const expenseScale=forecastScaleValues(groupedExpenseForecast(),expenseCellMap()).concat([invTotal]);
+  html+='<tr class="special-row"><td><span class="plan-label">'+categoryIconHtml("Investimenti","investment",true)+'<strong>Investimenti previsti</strong><span class="plan-info" title="'+esc(invInfo)+'">ⓘ</span></span></td><td class="muted">Media 6 mesi</td><td><button class="btn ghost compact copy-btn plan-action-icon" data-copy-kind="investment" title="Copia il primo mese sui cinque successivi">⧉</button></td>'+invCells.join("")+'<td class="total-cell total-heat" style="'+totalIntensityStyle(invTotal,expenseScale,"expense")+'">'+money(invTotal)+"</td></tr>";
+
+  html+=renderPlanRows(groupedExpenseForecast(),"expense",expenseCellMap());
+
+  const exp=expenseTotalsByMonth(),marginPct=num(report.meta&&report.meta.unexpected_margin_pct);
+  const marginCells=months.map(function(m){return (exp.get(m)||0)*marginPct/100});
+  const marginTotal=marginCells.reduce(function(a,b){return a+b},0);
+  html+='<tr class="special-row"><td><span class="plan-label"><span class="plan-icon neutral">±</span><strong>Margine imprevisti</strong><span class="plan-info" title="'+esc(marginPct.toFixed(1)+'% delle spese ordinarie previste')+'">ⓘ</span></span></td><td class="muted">Buffer</td><td></td>'+
+    marginCells.map(function(v){return "<td>"+money(v)+"</td>"}).join("")+'<td class="total-cell total-heat" style="'+totalIntensityStyle(marginTotal,expenseScale.concat([marginTotal]),"expense")+'">'+money(marginTotal)+"</td></tr>";
+  $("planBody").innerHTML=html;
+  renderPlanSummary();
+  renderIncomeExceptions();
+}
 function analysisPeriodMonths(){return Number($("analysisPeriod")&&$("analysisPeriod").value||12)}
 function analysisWorkspaceCacheKey(){return ($("analysisDirection")?$("analysisDirection").value:"EXPENSE")+"|"+analysisPeriodMonths()}
 function analysisPeriodLabel(){
