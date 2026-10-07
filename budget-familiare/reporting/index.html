@@ -956,6 +956,9 @@ function analysisTrendHtml(level,categoryId){
   return analysisTrendChip(analysisTrendMap().get(level+"|"+categoryId));
 }
 function analysisDetailTrendHtml(d){
+  if(d&&d.trend&&d.trend.trend_pct!==undefined&&d.trend.trend_pct!==null){
+    return analysisTrendChip({trend_pct:d.trend.trend_pct});
+  }
   const rows=analysisWorkspace&&analysisWorkspace.trend_rows||[];
   let t=rows.find(function(x){return x.level===d.level&&String(x.category_id)===String(d.category_id)});
   if(!t&&d.level==="L2"){
