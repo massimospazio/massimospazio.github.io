@@ -1977,37 +1977,7 @@ async function rememberCounterpartyForFuture(btn){
     return saved;
   }catch(e){msg($('classMsg'),e.message,true)}finally{setBusy(btn,false)}
 }
-let classificationPreviewTimer=null;
 function mccReadable(code){if(!code)return '—';const r=(catData?.mccRules||[]).find(x=>String(x.mcc_code)===String(code));return r?`${code} — ${r.description}`:String(code)}
-function addClassificationConditionRow(c={field_name:'MERCHANT_NAME',operator:'EXACT',comparison_value:''}){
-  const wrap=document.createElement('div');wrap.className='rule-condition';
-  wrap.innerHTML=`<div class="field"><label>Campo</label><select class="select" data-class-cond-field><option value="MERCHANT_NAME">Nome merchant</option><option value="DESCRIPTION">Descrizione completa</option><option value="MCC">MCC</option><option value="RAW_TYPE">Tipo raw</option><option value="CAUSALE">Causale</option><option value="BANK">Banca</option><option value="OWNER">Titolare</option><option value="TRANSACTION_TYPE">Tipo movimento</option></select></div><div class="field"><label>Confronto</label><select class="select" data-class-cond-op><option value="EXACT">Uguale a</option><option value="CONTAINS">Contiene</option><option value="STARTS_WITH">Inizia con</option><option value="IN">È uno tra</option></select></div><div class="field"><label>Valore</label><input class="input" data-class-cond-value /></div><button class="btn ghost compact" type="button" data-remove-class-condition>Rimuovi</button>`;
-  wrap.querySelector('[data-class-cond-field]').value=c.field_name||'MERCHANT_NAME';
-  wrap.querySelector('[data-class-cond-op]').value=c.operator||'EXACT';
-  wrap.querySelector('[data-class-cond-value]').value=c.comparison_value||'';
-  const sync=()=>{const f=wrap.querySelector('[data-class-cond-field]').value,inp=wrap.querySelector('[data-class-cond-value]');if(f==='MCC'){inp.setAttribute('list','mccOptions');inp.placeholder='es. 5541 oppure 5541,5542,5983'}else{inp.removeAttribute('list');inp.placeholder=f==='MERCHANT_NAME'?'es. Q8 o STAZIONE Q8':''}scheduleClassificationPreview()};
-  wrap.querySelector('[data-class-cond-field]').onchange=sync;
-  wrap.querySelector('[data-class-cond-op]').onchange=scheduleClassificationPreview;
-  wrap.querySelector('[data-class-cond-value]').oninput=scheduleClassificationPreview;
-  sync();$('classificationConditions').appendChild(wrap);
-}
-function getClassificationConditions(){return [...document.querySelectorAll('#classificationConditions .rule-condition')].map(r=>({field_name:r.querySelector('[data-class-cond-field]').value,operator:r.querySelector('[data-class-cond-op]').value,comparison_value:r.querySelector('[data-class-cond-value]').value.trim()})).filter(x=>x.comparison_value)}
-function simpleClassificationConditions(){if(!selectedRow)return[];const mode=$('ruleMode').value;const pattern=mode==='NONE'?(selectedRow.description||''):$('rulePattern').value.trim();if(!pattern)return[];return [{field_name:'DESCRIPTION',operator:mode==='CONTAINS'?'CONTAINS':'EXACT',comparison_value:pattern},{field_name:'TRANSACTION_TYPE',operator:'EXACT',comparison_value:selectedRow.transaction_type}]}
-function scheduleClassificationPreview(){clearTimeout(classificationPreviewTimer);classificationPreviewTimer=setTimeout(()=>previewClassificationImpact(false),220)}
-async function previewClassificationImpact(showErrors=true){
-  if(!selectedRow||$('classifyBox').classList.contains('hidden'))return;
-  const el=$('classificationPreview');
-  if($('classMode').value==='single'){el.innerHTML='<strong>1 movimento</strong> sarà modificato.';return}
-  const advanced=$('classificationRuleStyle').value==='ADVANCED';
-  const conditions=advanced?getClassificationConditions():simpleClassificationConditions();
-  if(!conditions.length){el.innerHTML='<span class="muted">Completa la regola per calcolare l’impatto.</span>';return}
-  el.innerHTML='<span class="muted">Calcolo anteprima…</span>';
-  try{
-    const r=await rpc('dashboard_preview_compound_rule_v2',{p_conditions:conditions,p_only_unreviewed:$('onlyUnreviewed').checked});
-    const samples=r.samples||[];
-    el.innerHTML=`<div class="note"><strong>${nfmt(r.count)} movimenti saranno coinvolti</strong>${$('onlyUnreviewed').checked?' (esclusi quelli già confermati)':''}.</div>${samples.length?`<div class="table-wrap"><table class="table"><thead><tr><th>Data</th><th>Merchant originale</th><th>MCC</th><th>Descrizione</th><th>Importo</th></tr></thead><tbody>${samples.map(x=>`<tr><td>${esc(x.transaction_date)}</td><td>${esc(x.merchant_name||'—')}</td><td>${x.mcc_code?`<span class="mcc-code" title="${esc(x.mcc_description||'')}">${esc(mccReadable(x.mcc_code))}</span>`:'—'}</td><td>${esc(x.raw_description||'—')}</td><td>${euro(x.amount)}</td></tr>`).join('')}</tbody></table></div>`:''}`;
-  }catch(e){el.innerHTML=`<span class="msg error">${esc(e.message)}</span>`;if(showErrors)msg($('classMsg'),e.message,true)}
-}
 function splitCategoryOptions(selected=''){const cats=catData?.categories||[];return '<option value="">— categoria —</option>'+cats.map(c=>`<option value="${c.id}" ${c.id===selected?'selected':''}>${esc(categoryLabel(c))}</option>`).join('')}
 function splitProjectOptions(selected=''){const projects=(catData?.projects||[]).filter(p=>p.is_active);return '<option value="">— nessun progetto —</option>'+projects.map(p=>`<option value="${p.id}" ${p.id===selected?'selected':''}>${esc(p.name)}</option>`).join('')}
 function splitTagHtml(selected=[]){const set=new Set((selected||[]).map(t=>typeof t==='string'?t:t.id));const tags=(catData?.tags||[]).filter(t=>t.is_active);return tags.map(t=>`<label><input type="checkbox" data-split-tag value="${t.id}" ${set.has(t.id)?'checked':''}/> ${esc(t.name)}</label>`).join('')||'<span class="muted small">Nessun tag attivo.</span>'}
@@ -2106,18 +2076,6 @@ function resetClassificationPanel(close=true){
   if(close)$('classifyBox').classList.add('hidden');
 }
 
-
-function updateRuleUi(){
-  const advanced=$('classificationRuleStyle').value==='ADVANCED',mode=$('ruleMode').value,income=selectedRow?.transaction_type==='INCOME';
-  $('simpleRuleControls').classList.toggle('hidden',advanced);
-  $('rulePatternField').classList.toggle('hidden',advanced);
-  $('advancedClassificationRule').classList.toggle('hidden',!advanced);
-  $('ruleMode').disabled=advanced;$('rulePattern').disabled=advanced;
-  if(advanced)$('ruleHint').textContent='Regola avanzata: tutte le condizioni indicate devono essere vere (AND).';
-  else if(mode==='EXACT')$('ruleHint').textContent='La regola riconoscerà in futuro la stessa descrizione esatta.';
-  else $('ruleHint').textContent='La regola riconoscerà i movimenti '+(income?'in entrata ':'')+'la cui descrizione contiene il testo indicato. Usa una regola solo quando alias + categoria predefinita non bastano.';
-  if($('advancedAutomation')?.open)scheduleClassificationPreview();
-}
 
 function classificationPipelineMap(){return {counterparty:'pipelineStepCounterparty',category:'pipelineStepCategory',context:'pipelineStepContext'}}
 function syncClassificationPipelineNav(){
