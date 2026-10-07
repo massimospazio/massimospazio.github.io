@@ -17,8 +17,8 @@
 .group-caret{display:inline-block;width:15px;color:var(--muted)}.group-meta{font-size:11px;color:var(--muted);font-weight:500;margin-left:8px}
 .compact-actions{display:flex;gap:5px;flex-wrap:wrap}
 .bulk-movement-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px;padding:10px 12px;border:1px solid #c7d2fe;background:#eef2ff;border-radius:10px}
-.bulk-movement-bar .select{min-width:260px}.bulk-movement-bar .count{font-weight:750;color:#3730a3}.movement-select{width:18px;height:18px}
-@media(max-width:900px){.bulk-movement-bar .select{width:100%;min-width:0}}
+.bulk-movement-bar .select{min-width:250px}.bulk-movement-bar .input{min-width:230px}.bulk-movement-bar .count{font-weight:750;color:#3730a3}.bulk-movement-help{flex-basis:100%;margin-top:1px}.movement-select{width:18px;height:18px}
+@media(max-width:900px){.bulk-movement-bar .select,.bulk-movement-bar .input{width:100%;min-width:0}}
 .catalog-section{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:8px}.catalog-section-head{display:grid;grid-template-columns:minmax(220px,1.6fr) 110px 120px 120px 115px;gap:8px;align-items:center;padding:10px 12px;background:#f8fafc;cursor:pointer}.catalog-section-body{border-top:1px solid var(--line)}
 @media(max-width:900px){.catalog-section-head{grid-template-columns:1fr auto}.catalog-section-head .group-stat{display:none}}
 .category-audit-kpis{grid-template-columns:repeat(4,minmax(140px,1fr));gap:8px}
@@ -363,14 +363,16 @@
           <div class="date-filter"><label>A</label><input id="movementDateTo" class="input" type="date" /></div>
           <button id="clearMovementFilters" class="btn ghost compact">Azzera filtri</button>
         </div>
-        <div id="bulkMovementBar" class="bulk-movement-bar hidden">
+        <div id="bulkMovementBar" class="bulk-movement-bar">
           <span id="bulkSelectedCount" class="count">0 selezionati</span>
           <button id="bulkSelectVisible" class="btn ghost compact" type="button">Seleziona visibili</button>
-          <button id="bulkClearSelection" class="btn ghost compact" type="button">Azzera selezione</button>
-          <select id="bulkCategory" class="select"><option value="">— scegli categoria —</option></select>
-          <label class="small" style="display:inline-flex;gap:6px;align-items:center"><input id="bulkMarkReviewed" type="checkbox" checked /> conferma i movimenti</label>
-          <button id="bulkApplyCategory" class="btn compact" type="button">Assegna categoria senza regola</button>
+          <button id="bulkClearSelection" class="btn ghost compact" type="button" disabled>Azzera selezione</button>
+          <input id="bulkCounterpartySearch" class="input" list="v62CounterpartyOptions" placeholder="Controparte: non modificare" autocomplete="off" disabled />
+          <select id="bulkCounterparty" class="hidden"><option value=""></option></select>
+          <select id="bulkCategory" class="select" disabled><option value="">Categoria: non modificare</option></select>
+          <button id="bulkApplyChanges" class="btn compact" type="button" disabled>Applica modifiche</button>
           <span id="bulkMsg" class="small"></span>
+          <span class="muted small bulk-movement-help">I campi lasciati vuoti restano invariati. Le modifiche sono manuali, confermano il movimento e lo rendono protetto; non creano alias o regole.</span>
         </div>
         <div id="movementSummary" class="note"></div>
         <div id="movementsTable" style="margin-top:10px"></div>
@@ -1613,9 +1615,12 @@ function sortMovements(rows){const mult=sortDir==='asc'?1:-1;return [...rows].so
 function sortHeader(label,key){const arrow=sortKey===key?(sortDir==='asc'?' ↑':' ↓'):'';return `<button class="sortbtn" data-sort="${key}">${esc(label)}${arrow}</button>`}
 function renderMovements(){const rows=filteredMovements();$('movementSummary').textContent=`${nfmt(rows.length)} movimenti visualizzati · volume ${euro(rows.reduce((s,x)=>s+Math.abs(Number(x.amount||0)),0))}${movementCategoryScopeLabel?' · categoria '+movementCategoryScopeLabel:''}${fuzzySuggestionsError?' · suggerimenti fuzzy non disponibili':''}`;$('viewList').className=`btn ${viewMode==='list'?'secondary':'ghost'} compact`;$('viewGrouped').className=`btn ${viewMode==='grouped'?'secondary':'ghost'} compact`;if(viewMode==='grouped')renderGrouped(rows);else renderMovementList(rows);syncBulkSelectionUi()}
 function syncBulkSelectionUi(){
-  const count=selectedMovementIds.size;
+  const count=selectedMovementIds.size,disabled=count===0;
   if($('bulkSelectedCount'))$('bulkSelectedCount').textContent=`${nfmt(count)} ${count===1?'selezionato':'selezionati'}`;
-  if($('bulkMovementBar'))$('bulkMovementBar').classList.toggle('hidden',count===0);
+  if($('bulkClearSelection'))$('bulkClearSelection').disabled=disabled;
+  if($('bulkCounterpartySearch'))$('bulkCounterpartySearch').disabled=disabled;
+  if($('bulkCategory'))$('bulkCategory').disabled=disabled;
+  if($('bulkApplyChanges'))$('bulkApplyChanges').disabled=disabled;
   document.querySelectorAll('[data-select-movement]').forEach(cb=>{cb.checked=selectedMovementIds.has(cb.dataset.selectMovement)});
 }
 function renderMovementList(rows){
@@ -1667,8 +1672,9 @@ function setSort(key){if(sortKey===key)sortDir=sortDir==='asc'?'desc':'asc';else
 function fillClassificationSelects(){
   const parties=[...(catData?.counterparties||[])].sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'it',{sensitivity:'base'}));
   $('classMerchant').innerHTML='<option value="">— nessuna controparte —</option>'+parties.map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('');
+  if($('bulkCounterparty'))$('bulkCounterparty').innerHTML='<option value=""></option>'+parties.map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('');
   $('classCategory').innerHTML=categoryOptionsHtml({emptyLabel:'— nessuna categoria —'});
-  if($('bulkCategory'))$('bulkCategory').innerHTML=categoryOptionsHtml({emptyLabel:'— scegli categoria —'});
+  if($('bulkCategory'))$('bulkCategory').innerHTML=categoryOptionsHtml({emptyLabel:'Categoria: non modificare'});
   if($('quickCounterpartyCategory'))$('quickCounterpartyCategory').innerHTML=categoryOptionsHtml({emptyLabel:'— nessuna categoria —'});
   const projects=[...(catData?.projects||[])].filter(p=>p.is_active).sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'it',{sensitivity:'base'}));
   $('classProject').innerHTML='<option value="">— nessun progetto —</option>'+projects.map(p=>`<option value="${p.id}">${esc(p.name)} · ${esc(projectTypeLabel(p.project_type))}</option>`).join('');
@@ -2232,15 +2238,39 @@ async function saveClassification(){
     if(protectedNow&&!wasProtected)alert('Classificazione salvata come Manuale protetto.'+classificationProtectionReasonText(protectionPreview)+' Rimarrà invariata finché non rimuovi esplicitamente la protezione.');
   }catch(e){msg($('classMsg'),e.message,true)}finally{setBusy(btn,false)}
 }
-async function applyBulkCategory(){
-  const btn=$('bulkApplyCategory'),ids=[...selectedMovementIds],category=$('bulkCategory').value||null;
+async function applyBulkMovementChanges(){
+  const btn=$('bulkApplyChanges'),ids=[...selectedMovementIds];
+  const merchantRaw=String($('bulkCounterpartySearch').value||'').trim();
+  const merchant=$('bulkCounterparty').value||null;
+  const category=$('bulkCategory').value||null;
+  const setMerchant=!!merchant,setCategory=!!category;
   if(!ids.length){$('bulkMsg').textContent='Seleziona almeno un movimento.';return}
-  if(!category){$('bulkMsg').textContent='Scegli una categoria.';return}
+  if(merchantRaw&&!merchant){$('bulkMsg').textContent='Seleziona una controparte valida dall’elenco.';return}
+  if(!setMerchant&&!setCategory){$('bulkMsg').textContent='Scegli almeno una modifica tra controparte e categoria.';return}
+  const changes=[];
+  if(setMerchant){
+    const m=(catData?.counterparties||[]).find(x=>x.id===merchant);
+    changes.push('controparte → '+(m?.name||'selezionata'));
+  }
+  if(setCategory){
+    const cat=(catData?.categories||[]).find(x=>x.id===category);
+    changes.push('categoria → '+(cat?categoryLabel(cat):'selezionata'));
+  }
+  if(!confirm(`Applicare a ${ids.length} movimenti:\n• ${changes.join('\n• ')}\n\nI movimenti verranno confermati e diventeranno “Manuale protetto”. Non verranno creati alias o regole.`))return;
   setBusy(btn,true,'Applico');$('bulkMsg').textContent='';
   try{
-    const r=await rpc('dashboard_bulk_update_category_v1',{p_transaction_ids:ids,p_category_id:category,p_is_reviewed:$('bulkMarkReviewed').checked});
+    const r=await rpc('dashboard_bulk_update_movements_v1',{
+      p_transaction_ids:ids,
+      p_set_merchant:setMerchant,
+      p_merchant_id:merchant,
+      p_set_category:setCategory,
+      p_category_id:category
+    });
     selectedMovementIds.clear();
-    $('bulkMsg').textContent=`${nfmt(r.updated)} movimenti aggiornati senza creare regole.`;
+    $('bulkCounterpartySearch').value='';
+    $('bulkCounterparty').value='';
+    $('bulkCategory').value='';
+    $('bulkMsg').textContent=`${nfmt(r.updated)} movimenti aggiornati e protetti manualmente.`;
     await loadMovementsData();
   }catch(e){$('bulkMsg').textContent=e.message}finally{setBusy(btn,false);syncBulkSelectionUi()}
 }
@@ -2248,7 +2278,14 @@ function selectVisibleMovements(){
   for(const x of filteredMovements())selectedMovementIds.add(x.id);
   renderMovements();
 }
-function clearSelectedMovements(){selectedMovementIds.clear();renderMovements()}
+function clearSelectedMovements(){
+  selectedMovementIds.clear();
+  if($('bulkCounterpartySearch'))$('bulkCounterpartySearch').value='';
+  if($('bulkCounterparty'))$('bulkCounterparty').value='';
+  if($('bulkCategory'))$('bulkCategory').value='';
+  if($('bulkMsg'))$('bulkMsg').textContent='';
+  renderMovements()
+}
 function counterpartyTypeLabel(t){return ({MERCHANT:'Negozio / fornitore',EMPLOYER:'Datore di lavoro',PERSON:'Persona',ENTITY:'Azienda / ente',PUBLIC_BODY:'Ente pubblico',BANK:'Banca',PLATFORM:'Piattaforma',OTHER:'Altro'})[t]||t||'Altro'}
 function catalogSortHeader(section,label,key){const st=catalogSort[section],arrow=st.key===key?(st.dir==='asc'?' ↑':' ↓'):'';return `<button class="sortbtn" data-catalog-sort="${section}" data-catalog-key="${key}">${esc(label)}${arrow}</button>`}
 function setCatalogSort(section,key){const st=catalogSort[section];if(st.key===key)st.dir=st.dir==='asc'?'desc':'asc';else{st.key=key;st.dir=(section==='merchants'&&key==='created')?'desc':'asc'}renderCatalogs()}
@@ -3990,10 +4027,10 @@ $('previewParsingCorrection').onclick=previewParsingCorrection;
 $('saveParsingCorrection').onclick=saveParsingCorrection;
 $('movementProtectionBox').addEventListener('click',e=>{const unlock=e.target.closest('[data-unlock-manual]');if(unlock)unlockSelectedManualProtection(unlock)});
 $('movementFacts').addEventListener('click',e=>{const unlock=e.target.closest('[data-header-unlock-manual]');if(unlock)unlockSelectedManualProtection(unlock)});
-$('cancelQuickCounterparty').onclick=()=>{$('quickCounterpartyBox').classList.add('hidden');msg($('quickCounterpartyMsg'),'')};$('saveQuickCounterparty').onclick=saveQuickCounterparty;$('classMerchant').onchange=()=>{syncClassificationCategoryFromMerchant(false);renderClassificationSuggestion();renderMovementAliasBox();renderFutureAutomationBox();updateClassificationPipelineState();updateClassificationSaveBar()};$('classCategory').onchange=()=>{renderClassificationSuggestion();renderFutureAutomationBox();updateClassificationPipelineState();updateClassificationSaveBar()};$('transferTarget').onchange=()=>{updateTransferDecisionHint();renderClassificationSuggestion();renderFutureAutomationBox();updateClassificationPipelineState();updateClassificationSaveBar()};['movementSearch','movementStatus','movementAutomation','movementBank','movementKind','movementType','movementNote','movementDirection','movementCategory','movementProject','movementTag','movementDateFrom','movementDateTo'].forEach(id=>$(id).addEventListener(id==='movementSearch'?'input':'change',renderMovements));$('movementCounterpartySearch').addEventListener('input',applyMovementCounterpartySearch);$('movementCounterpartySearch').addEventListener('change',applyMovementCounterpartySearch);$('clearMovementFilters').onclick=clearMovementFilters;$('viewList').onclick=()=>{viewMode='list';renderMovements()};$('viewGrouped').onclick=()=>{viewMode='grouped';renderMovements()};$('bulkSelectVisible').onclick=selectVisibleMovements;$('bulkClearSelection').onclick=clearSelectedMovements;$('bulkApplyCategory').onclick=applyBulkCategory;
+$('cancelQuickCounterparty').onclick=()=>{$('quickCounterpartyBox').classList.add('hidden');msg($('quickCounterpartyMsg'),'')};$('saveQuickCounterparty').onclick=saveQuickCounterparty;$('classMerchant').onchange=()=>{syncClassificationCategoryFromMerchant(false);renderClassificationSuggestion();renderMovementAliasBox();renderFutureAutomationBox();updateClassificationPipelineState();updateClassificationSaveBar()};$('classCategory').onchange=()=>{renderClassificationSuggestion();renderFutureAutomationBox();updateClassificationPipelineState();updateClassificationSaveBar()};$('transferTarget').onchange=()=>{updateTransferDecisionHint();renderClassificationSuggestion();renderFutureAutomationBox();updateClassificationPipelineState();updateClassificationSaveBar()};['movementSearch','movementStatus','movementAutomation','movementBank','movementKind','movementType','movementNote','movementDirection','movementCategory','movementProject','movementTag','movementDateFrom','movementDateTo'].forEach(id=>$(id).addEventListener(id==='movementSearch'?'input':'change',renderMovements));$('movementCounterpartySearch').addEventListener('input',applyMovementCounterpartySearch);$('movementCounterpartySearch').addEventListener('change',applyMovementCounterpartySearch);$('clearMovementFilters').onclick=clearMovementFilters;$('viewList').onclick=()=>{viewMode='list';renderMovements()};$('viewGrouped').onclick=()=>{viewMode='grouped';renderMovements()};$('bulkSelectVisible').onclick=selectVisibleMovements;$('bulkClearSelection').onclick=clearSelectedMovements;$('bulkApplyChanges').onclick=applyBulkMovementChanges;
 $('movementsTable').addEventListener('click',e=>{const fuzzy=e.target.closest('[data-confirm-fuzzy-counterparty]');if(fuzzy){confirmFuzzyCounterparty(fuzzy);return}const auto=e.target.closest('[data-automation-target]');if(auto){openAutomationTarget(auto.dataset.automationTarget,auto.dataset.automationId);return}const sort=e.target.closest('[data-sort]');if(sort){setSort(sort.dataset.sort);return}const edit=e.target.closest('[data-edit-movement]');if(edit){const row=(catData?.movements||[]).find(x=>x.id===edit.dataset.editMovement);if(row)openClassify(row);return}const tg=e.target.closest('[data-toggle-group]');if(tg){const g=(window.__groupRows||[])[Number(tg.dataset.toggleGroup)];if(!g)return;if(expandedGroups.has(g.key))expandedGroups.delete(g.key);else expandedGroups.add(g.key);renderMovements()}});
 $('movementsTable').addEventListener('change',e=>{const cb=e.target.closest('[data-select-movement]');if(!cb)return;cb.checked?selectedMovementIds.add(cb.dataset.selectMovement):selectedMovementIds.delete(cb.dataset.selectMovement);syncBulkSelectionUi()});
-['categorySearch','categoryL1Filter','categoryDependencyFilter','merchantSearch','merchantL1Filter','merchantL2Filter','merchantStatusFilter','projectSearch','projectTypeFilter','projectStatusFilter','tagSearch','tagStatusFilter','mccSearch','mccStatusFilter','compoundRuleSearch','compoundRuleStatusFilter','parsingRuleSearch'].forEach(id=>$(id)?.addEventListener(id.endsWith('Search')?'input':'change',renderCatalogs));[['classMerchantSearch','classMerchant'],['compoundRuleMerchantSearch','compoundRuleMerchant']].forEach(x=>bindCounterpartySearch(...x));$('expandAllCategories').onclick=()=>{(catData?.categories||[]).filter(x=>Number(x.depth)===1).forEach(x=>expandedCategoryGroups.add(x.level1_name||x.name));renderCategoriesCatalog()};$('collapseAllCategories').onclick=()=>{expandedCategoryGroups.clear();renderCategoriesCatalog()};
+['categorySearch','categoryL1Filter','categoryDependencyFilter','merchantSearch','merchantL1Filter','merchantL2Filter','merchantStatusFilter','projectSearch','projectTypeFilter','projectStatusFilter','tagSearch','tagStatusFilter','mccSearch','mccStatusFilter','compoundRuleSearch','compoundRuleStatusFilter','parsingRuleSearch'].forEach(id=>$(id)?.addEventListener(id.endsWith('Search')?'input':'change',renderCatalogs));[['classMerchantSearch','classMerchant'],['compoundRuleMerchantSearch','compoundRuleMerchant'],['bulkCounterpartySearch','bulkCounterparty']].forEach(x=>bindCounterpartySearch(...x));$('expandAllCategories').onclick=()=>{(catData?.categories||[]).filter(x=>Number(x.depth)===1).forEach(x=>expandedCategoryGroups.add(x.level1_name||x.name));renderCategoriesCatalog()};$('collapseAllCategories').onclick=()=>{expandedCategoryGroups.clear();renderCategoriesCatalog()};
 $('applyCounterpartyBulkCategory').onclick=applyCounterpartyBulkCategory;
 $('openCounterpartyMerge').onclick=openCounterpartyMerge;
 $('confirmCounterpartyMerge').onclick=confirmCounterpartyMerge;
