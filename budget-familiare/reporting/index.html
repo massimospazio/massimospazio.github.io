@@ -254,6 +254,25 @@ button,input,select{font:inherit}
 .movement-note-icon{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;background:#eff6ff;color:#1d4ed8;cursor:help;font-size:13px}
 @media(max-width:900px){.analysis-balance-net-row{padding-left:42px;padding-right:42px}.analysis-net-chip{font-size:7.5px}}
 
+
+/* V72.6.3 — leggibilità grafici e saldi mensili */
+.analysis-chart-hover-detail{min-height:34px;margin:4px 0 7px;padding:6px 8px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:10px}
+.analysis-hover-month{font-weight:850;color:#0f172a;margin-right:2px}
+.analysis-hover-total{font-weight:850;color:#1d4ed8}
+.analysis-hover-item{display:inline-flex;align-items:center;gap:4px;padding:2px 6px;border-radius:999px;background:#fff;border:1px solid #e2e8f0;white-space:nowrap}
+.analysis-balance-net-row{gap:3px;padding-top:5px}
+.analysis-net-chip{display:flex;align-items:center;justify-content:center;gap:2px;border-radius:999px;border:1px solid transparent;padding:3px 4px;font-size:10.5px;font-weight:900;line-height:1;min-height:20px}
+.analysis-net-chip .arrow{font-size:11px;line-height:1}
+.analysis-net-chip.positive.i1{background:#f0fdf4;border-color:#dcfce7;color:#15803d}
+.analysis-net-chip.positive.i2{background:#dcfce7;border-color:#bbf7d0;color:#15803d}
+.analysis-net-chip.positive.i3{background:#bbf7d0;border-color:#86efac;color:#166534}
+.analysis-net-chip.negative.i1{background:#fff1f2;border-color:#ffe4e6;color:#be123c}
+.analysis-net-chip.negative.i2{background:#ffe4e6;border-color:#fecdd3;color:#be123c}
+.analysis-net-chip.negative.i3{background:#fecdd3;border-color:#fda4af;color:#9f1239}
+.analysis-net-chip.neutral{background:#f8fafc;border-color:#e2e8f0;color:#64748b}
+.analysis-balance-net-row.dense .analysis-net-chip{font-size:8.5px;padding:2px 1px;gap:1px}.analysis-balance-net-row.dense .analysis-net-chip .arrow{font-size:9px}
+@media(max-width:900px){.analysis-net-chip{font-size:9px;padding:2px}.analysis-balance-net-row.dense .analysis-net-chip{font-size:7px}}
+
 </style>
 </head>
 <body>
@@ -371,6 +390,7 @@ button,input,select{font:inherit}
             <div id="analysisDetailPlaceholder" class="analysis-placeholder">Seleziona una categoria per analizzare composizione, trend e previsione.</div>
             <div id="analysisDetailContent" class="hidden">
               <div class="analysis-detail-head"><div><h3 id="detailTitle">Dettaglio</h3><p id="detailSubtitle"></p></div><div id="detailStats" class="analysis-detail-stats"></div></div>
+              <div id="analysisChartHoverDetail" class="analysis-chart-hover-detail"><span class="muted">Passa sul grafico per vedere il dettaglio del mese senza coprire le barre.</span></div>
               <div class="analysis-chart-box"><canvas id="categoryTrendChart"></canvas></div>
               <div id="analysisForecastPanel" class="analysis-forecast-panel hidden"></div>
               <div class="analysis-component-head"><h4 id="detailComponentsTitle">Composizione</h4><div id="detailSelection"></div></div>
@@ -1031,10 +1051,13 @@ function compactSignedMoney(v){
 }
 function renderAnalysisBalanceNet(rows){
   const box=$("analysisBalanceNetRow");if(!box)return;
+  const maxAbs=Math.max.apply(null,[1].concat(rows.map(function(x){return Math.abs(num(x.net))})));
   box.style.gridTemplateColumns="repeat("+Math.max(rows.length,1)+",minmax(0,1fr))";
+  box.classList.toggle("dense",rows.length>12);
   box.innerHTML=rows.map(function(x){
-    const v=num(x.net),cls=v>0?"positive":v<0?"negative":"neutral";
-    return '<span class="analysis-net-chip '+cls+'" title="Saldo ordinario '+monthLabel(x.month_start)+': '+money(v)+'">'+compactSignedMoney(v)+'</span>';
+    const v=num(x.net),ratio=Math.abs(v)/maxAbs,level=ratio>=.60?3:ratio>=.25?2:1;
+    const cls=v>0?"positive i"+level:v<0?"negative i"+level:"neutral",arrow=v>0?"↑":v<0?"↓":"→";
+    return '<span class="analysis-net-chip '+cls+'" title="Saldo ordinario '+monthLabel(x.month_start)+': '+money(v)+'"><span class="arrow">'+arrow+'</span><span>'+compactSignedMoney(v)+'</span></span>';
   }).join("");
 }
 function renderAnalysisBalance(){
@@ -1152,16 +1175,96 @@ function renderAnalysisDetail(){
   $("detailStats").innerHTML='<span class="analysis-stat">Totale <strong>'+money(st.total)+'</strong></span><span class="analysis-stat" title="Media mensile su tutti i mesi del periodo, inclusi i mesi a zero">Media <strong>'+money(st.avg_month)+'</strong></span><span class="analysis-stat" title="Mediana mensile su tutti i mesi del periodo, inclusi i mesi a zero">Mediana <strong>'+money(st.median_month)+'</strong></span><span class="analysis-stat">'+frequencyHtml(st.active_months,st.period_months)+'</span>'+(!selected?trend:"");
   renderAnalysisDetailChart();renderForecastEditor();renderAnalysisComponents();renderAnalysisMovements();
 }
+function medianValue(values){
+  const a=(values||[]).map(num).slice().sort(function(x,y){return x-y});if(!a.length)return 0;
+  const mid=Math.floor(a.length/2);return a.length%2?a[mid]:(a[mid-1]+a[mid])/2;
+}
+function analysisVisibleMonthTotals(chart){
+  const componentIndexes=[];
+  chart.data.datasets.forEach(function(ds,i){if(ds.analysisRole==="component"&&chart.isDatasetVisible(i))componentIndexes.push(i)});
+  return chart.data.labels.map(function(_,idx){
+    return componentIndexes.reduce(function(sum,i){return sum+num(chart.data.datasets[i].data[idx])},0);
+  });
+}
+function recalcAnalysisReferenceLines(chart){
+  if(!chart)return;
+  const visibleComponents=chart.data.datasets.map(function(ds,i){return ds.analysisRole==="component"&&chart.isDatasetVisible(i)?i:null}).filter(function(i){return i!==null});
+  const totals=analysisVisibleMonthTotals(chart),has=visibleComponents.length>0;
+  const avg=has?totals.reduce(function(a,v){return a+v},0)/Math.max(totals.length,1):0;
+  const med=has?medianValue(totals):0;
+  if(!chart.$referenceVisibility)chart.$referenceVisibility={mean:true,median:true};
+  chart.data.datasets.forEach(function(ds,i){
+    if(ds.analysisRole==="mean"){
+      ds.data=chart.data.labels.map(function(){return avg});ds.label="Media ("+money(avg)+")";
+      chart.getDatasetMeta(i).hidden=!has||chart.$referenceVisibility.mean===false;
+    }else if(ds.analysisRole==="median"){
+      ds.data=chart.data.labels.map(function(){return med});ds.label="Mediana ("+money(med)+")";
+      chart.getDatasetMeta(i).hidden=!has||chart.$referenceVisibility.median===false;
+    }
+  });
+}
+function renderAnalysisHoverDetail(chart,index,months){
+  const box=$("analysisChartHoverDetail");if(!box||index===undefined||index===null||index<0||index>=months.length)return;
+  const items=[];
+  let total=0;
+  chart.data.datasets.forEach(function(ds,i){
+    if(ds.analysisRole!=="component"||!chart.isDatasetVisible(i))return;
+    const v=num(ds.data[index]);total+=v;
+    if(Math.abs(v)>.004)items.push({label:ds.label,value:v});
+  });
+  items.sort(function(a,b){return b.value-a.value});
+  const visible=items.slice(0,6),rest=Math.max(0,items.length-visible.length);
+  box.innerHTML='<span class="analysis-hover-month">'+esc(monthLabel(months[index]))+'</span><span class="analysis-hover-total">Totale '+money(total)+'</span>'+
+    visible.map(function(x){return '<span class="analysis-hover-item">'+esc(x.label)+' <strong>'+money(x.value)+'</strong></span>'}).join("")+
+    (rest?'<span class="analysis-hover-item">+'+rest+' altre</span>':"");
+}
+function resetAnalysisHoverDetail(){
+  const box=$("analysisChartHoverDetail");if(box)box.innerHTML='<span class="muted">Passa sul grafico per vedere il dettaglio del mese senza coprire le barre.</span>';
+}
+function analysisLegendOnClick(e,legendItem,legend){
+  const chart=legend.chart,idx=legendItem.datasetIndex,ds=chart.data.datasets[idx];
+  Chart.defaults.plugins.legend.onClick(e,legendItem,legend);
+  if(ds.analysisRole==="mean"||ds.analysisRole==="median"){
+    if(!chart.$referenceVisibility)chart.$referenceVisibility={mean:true,median:true};
+    chart.$referenceVisibility[ds.analysisRole]=chart.isDatasetVisible(idx);
+  }else if(ds.analysisRole==="component"){
+    recalcAnalysisReferenceLines(chart);
+  }
+  resetAnalysisHoverDetail();
+  chart.update();
+}
 function renderAnalysisDetailChart(){
-  const d=analysisDetailData;if(!d)return;const months=(d.months||[]).map(function(x){return x.month}),components=d.components||[],selected=selectedAnalysisComponent(),valueMap=new Map((d.component_monthly||[]).map(function(x){return [x.month+"|"+x.component_id,num(x.amount)]}));
+  const d=analysisDetailData;if(!d)return;
+  const months=(d.months||[]).map(function(x){return x.month}),components=d.components||[],selected=selectedAnalysisComponent(),valueMap=new Map((d.component_monthly||[]).map(function(x){return [x.month+"|"+x.component_id,num(x.amount)]}));
   if(categoryTrendChart)categoryTrendChart.destroy();let datasets=[];
-  if(selected)datasets=[{type:"bar",label:selected.component_name,data:months.map(function(m){return valueMap.get(m+"|"+selected.component_id)||0}),backgroundColor:palette(0,1),borderWidth:0,stack:"analysis"}];
-  else datasets=components.map(function(c,i){return {type:"bar",label:c.component_name,data:months.map(function(m){return valueMap.get(m+"|"+c.component_id)||0}),backgroundColor:palette(i,components.length),borderWidth:0,stack:"analysis"}});
-  if(!datasets.length)datasets=[{type:"bar",label:d.category_name||"Totale",data:(d.months||[]).map(function(x){return num(x.amount)}),backgroundColor:palette(0,1),borderWidth:0,stack:"analysis"}];
-  const st=selected||(d.stats||{}),avg=num(st.avg_month),median=num(st.median_month);
-  datasets.push({type:"line",label:"Media ("+money(avg)+")",data:months.map(function(){return avg}),borderColor:"#2563eb",backgroundColor:"#2563eb",borderWidth:1.8,borderDash:[6,4],pointRadius:0,tension:0,stack:"mean-ref"});
-  datasets.push({type:"line",label:"Mediana ("+money(median)+")",data:months.map(function(){return median}),borderColor:"#7c3aed",backgroundColor:"#7c3aed",borderWidth:1.6,borderDash:[2,4],pointRadius:0,tension:0,stack:"median-ref"});
-  categoryTrendChart=new Chart($("categoryTrendChart"),{type:"bar",plugins:[analysisTimeGuidePlugin(months)],data:{labels:months.map(monthLabel),datasets:datasets},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},onClick:function(evt,elements){if(!elements||!elements.length)return;const p=elements[0];analysisSelectedMonth=months[p.index]||null;analysisMovementSort={key:"amount",dir:"desc"};renderAnalysisMovements()},plugins:{legend:{position:"bottom",labels:{boxWidth:11,usePointStyle:true}},tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+": "+money(ctx.raw)}}}},scales:{x:{stacked:!selected,grid:{display:false}},y:{stacked:!selected,beginAtZero:true,ticks:{callback:function(v){return money(v)}}}}}});
+  if(selected)datasets=[{type:"bar",analysisRole:"component",label:selected.component_name,data:months.map(function(m){return valueMap.get(m+"|"+selected.component_id)||0}),backgroundColor:palette(0,1),borderWidth:0,stack:"analysis"}];
+  else datasets=components.map(function(c,i){return {type:"bar",analysisRole:"component",label:c.component_name,data:months.map(function(m){return valueMap.get(m+"|"+c.component_id)||0}),backgroundColor:palette(i,components.length),borderWidth:0,stack:"analysis"}});
+  if(!datasets.length)datasets=[{type:"bar",analysisRole:"component",label:d.category_name||"Totale",data:(d.months||[]).map(function(x){return num(x.amount)}),backgroundColor:palette(0,1),borderWidth:0,stack:"analysis"}];
+  const monthTotals=months.map(function(_,idx){return datasets.reduce(function(sum,ds){return sum+num(ds.data[idx])},0)});
+  const avg=monthTotals.reduce(function(a,v){return a+v},0)/Math.max(monthTotals.length,1),median=medianValue(monthTotals);
+  datasets.push({type:"line",analysisRole:"mean",label:"Media ("+money(avg)+")",data:months.map(function(){return avg}),borderColor:"#2563eb",backgroundColor:"#2563eb",borderWidth:1.8,borderDash:[6,4],pointRadius:0,tension:0,stack:"mean-ref"});
+  datasets.push({type:"line",analysisRole:"median",label:"Mediana ("+money(median)+")",data:months.map(function(){return median}),borderColor:"#7c3aed",backgroundColor:"#7c3aed",borderWidth:1.6,borderDash:[2,4],pointRadius:0,tension:0,stack:"median-ref"});
+  resetAnalysisHoverDetail();
+  categoryTrendChart=new Chart($("categoryTrendChart"),{
+    type:"bar",
+    plugins:[analysisTimeGuidePlugin(months)],
+    data:{labels:months.map(monthLabel),datasets:datasets},
+    options:{
+      responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},
+      onHover:function(evt,elements,chart){
+        const active=chart.getElementsAtEventForMode(evt,"index",{intersect:false},false);
+        if(active&&active.length)renderAnalysisHoverDetail(chart,active[0].index,months);
+      },
+      onClick:function(evt,elements){
+        if(!elements||!elements.length)return;const p=elements[0];analysisSelectedMonth=months[p.index]||null;analysisMovementSort={key:"amount",dir:"desc"};renderAnalysisMovements();
+      },
+      plugins:{
+        legend:{position:"top",maxHeight:82,labels:{boxWidth:11,usePointStyle:true},onClick:analysisLegendOnClick},
+        tooltip:{enabled:false}
+      },
+      scales:{x:{stacked:!selected,grid:{display:false}},y:{stacked:!selected,beginAtZero:true,ticks:{callback:function(v){return money(v)}}}}
+    }
+  });
 }
 function counterpartyPreviewRows(){
   const e=analysisForecastEditor,cp=selectedAnalysisComponent();if(!e||!cp)return [];
