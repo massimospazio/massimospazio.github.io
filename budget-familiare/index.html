@@ -2219,12 +2219,10 @@ function openRuleCatalogFromMovement(){
   const merchantId=$('classMerchant')?.value||'',categoryId=$('classCategory')?.value||'';
   const merchant=(catData?.counterparties||[]).find(x=>x.id===merchantId);
   const category=categoryId?categoryNameById(categoryId):'';
-  const target=selectedRow.is_bank_transfer?$('transferTarget').value:selectedRow.transaction_type;
   activateMainTab('catalogs');setCatalogTab('rules',false);resetCompoundRule();
   if(merchantId)$('compoundRuleMerchant').value=merchantId;
   syncSearchFromSelect('compoundRuleMerchantSearch','compoundRuleMerchant');
   if(categoryId)$('compoundRuleCategory').value=categoryId;
-  if(target&&target!=='TRANSFER')$('compoundRuleType').value=target;
   $('compoundRuleName').value=['Regola',merchant?.name||category||'movimento'].filter(Boolean).join(' — ');
   $('compoundConditions').innerHTML='';addConditionRow();
   msg($('compoundRuleMsg'),'Controparte e categoria sono state precompilate dal movimento. Definisci qui le condizioni, controlla l’anteprima e scegli se applicare anche allo storico.');
@@ -3896,7 +3894,7 @@ function editCompoundRule(id){
   $('compoundRuleId').value=r.id;$('compoundRuleName').value=r.name||'';$('compoundRuleMerchant').value=r.merchant_id||'';$('compoundRuleCategory').value=r.category_id||'';syncSearchFromSelect('compoundRuleMerchantSearch','compoundRuleMerchant');$('compoundRuleType').value=r.target_transaction_type||'';
   $('compoundRulePriority').value=rulePrioritySelectValue(r.priority);$('compoundRuleConfidence').value=r.confidence??1;$('compoundRuleConfirm').checked=true;$('compoundRuleActive').checked=!!r.is_active;
   $('compoundConditions').innerHTML='';(r.conditions||[]).forEach(addConditionRow);if(!(r.conditions||[]).length)addConditionRow();
-  $('saveCompoundRule').textContent='Aggiorna regola';$('compoundRuleName').scrollIntoView({behavior:'smooth',block:'center'});
+  $('saveCompoundRule').textContent='Aggiorna regola';$('saveAndApplyCompoundRule').textContent='Aggiorna e applica allo storico';$('compoundRuleName').scrollIntoView({behavior:'smooth',block:'center'});
 }
 function editCategory(id){const c=(catData.categories||[]).find(x=>x.id===id);if(!c)return;setCatalogTab('categories',false);$('categoryId').value=c.id;$('categoryName').value=c.name;$('categoryParent').value=c.parent_id||'';$('saveCategory').textContent='Aggiorna';$('categoryName').scrollIntoView({behavior:'smooth',block:'center'})}
 function editMerchant(id){const m=(catData.counterparties||[]).find(x=>x.id===id);if(!m)return;setCatalogTab('merchants',false);$('merchantId').value=m.id;$('merchantName').value=m.name;$('merchantType').value=m.counterparty_type||'OTHER';$('merchantCategory').value=m.default_category_id||'';$('merchantApplyExisting').checked=true;document.querySelector('input[name="merchantHistoryScope"][value="ALL"]').checked=true;$('merchantHistoryScope')?.classList.remove('hidden');$('saveMerchant').textContent='Aggiorna';$('merchantName').scrollIntoView({behavior:'smooth',block:'center'})}
