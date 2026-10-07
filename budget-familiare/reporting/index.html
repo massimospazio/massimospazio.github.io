@@ -1252,8 +1252,7 @@ function renderAnalysisDetailChart(){
     options:{
       responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},
       onHover:function(evt,elements,chart){
-        const active=chart.getElementsAtEventForMode(evt,"index",{intersect:false},false);
-        if(active&&active.length)renderAnalysisHoverDetail(chart,active[0].index,months);
+        if(elements&&elements.length)renderAnalysisHoverDetail(chart,elements[0].index,months);
       },
       onClick:function(evt,elements){
         if(!elements||!elements.length)return;const p=elements[0];analysisSelectedMonth=months[p.index]||null;analysisMovementSort={key:"amount",dir:"desc"};renderAnalysisMovements();
