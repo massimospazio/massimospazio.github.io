@@ -2251,73 +2251,28 @@ async function saveMovementNote(){
     setBusy(btn,false);
   }
 }
-async function saveClassification(createRule=false){
+async function saveClassification(){
   if(!selectedRow)return;
   const wasProtected=!!selectedRow.manual_lock,movementId=selectedRow.id;
-  const btn=$(createRule?'saveClassificationWithRule':'saveClassificationNoRule');
-  setBusy(btn,true,createRule?'Creazione regola':'Conferma');msg($('classMsg'),'');
+  const btn=$('saveClassificationNoRule');
+  setBusy(btn,true,'Conferma');msg($('classMsg'),'');
   try{
     const merchant=$('classMerchant').value||null,category=$('classCategory').value||null;
     const target=selectedRow.is_bank_transfer?$('transferTarget').value:selectedRow.transaction_type;
-    const sourceType=selectedRow.base_transaction_type||selectedRow.transaction_type;
     if(target!=='TRANSFER'&&!category)throw new Error('La categoria è obbligatoria per confermare il movimento, inclusi gli investimenti.');
-
     await persistSelectedCounterpartyDefaults(merchant,category);
-
-    if(createRule){
-      const advanced=$('classificationRuleStyle').value==='ADVANCED';
-      let conditions,name,priority=200;
-      if(advanced){
-        conditions=getClassificationConditions();
-        name=$('classificationRuleName').value.trim();
-        if(!name)throw new Error('Inserisci un nome per la regola avanzata.');
-        if(!conditions.length)throw new Error('Inserisci almeno una condizione.');
-      }else{
-        const ruleMode=$('ruleMode').value,rulePattern=$('rulePattern').value.trim();
-        if(!['CONTAINS','EXACT'].includes(ruleMode))throw new Error('Scegli il tipo di corrispondenza.');
-        if(!rulePattern)throw new Error('Inserisci il testo da cercare nella descrizione.');
-        conditions=[
-          {field_name:'DESCRIPTION',operator:ruleMode,comparison_value:rulePattern},
-          {field_name:'TRANSACTION_TYPE',operator:'EXACT',comparison_value:sourceType}
-        ];
-        name='Semplice — '+rulePattern+' ['+sourceType+']';
-      }
-      const preview=await rpc('dashboard_preview_compound_rule_v2',{p_conditions:conditions,p_only_unreviewed:false});
-      if(!Number(preview?.count||0))throw new Error('La regola non intercetta alcun movimento.');
-      const ruleSaved=await rpc('dashboard_upsert_compound_rule_v1',{
-        p_id:null,p_name:name,p_merchant_id:merchant,p_category_id:category,
-        p_target_transaction_type:target!==sourceType?target:null,
-        p_priority:priority,p_confidence:1,p_auto_confirm:true,p_is_active:true,p_conditions:conditions
-      });
-      const applied=await rpc('dashboard_apply_compound_rule_existing_v1',{
-        p_rule_id:ruleSaved.id,
-        p_only_unreviewed:true
-      });
-      selectedRow.__rule_apply_result=applied;
-    }
-
     const saved=await rpc('dashboard_update_movement_v1',{
       p_transaction_id:selectedRow.id,p_target_type:target,p_merchant_id:merchant,p_category_id:category,p_is_reviewed:true
     });
     await saveMovementContext();
     const protectedNow=!!saved?.manual_lock;
-    const ruleApplyResult=selectedRow?.__rule_apply_result||null;
     let protectionPreview=null;
     if(protectedNow&&!wasProtected){
       try{protectionPreview=await rpc('dashboard_transaction_classification_preview_v1',{p_transaction_id:movementId})}catch(_){}
     }
     coherenceData=null;
     await loadMovementsData();
-    const reopenForAutomation=protectedNow&&wasProtected&&createRule;
-    if(reopenForAutomation){
-      const refreshed=(catData?.movements||[]).find(x=>x.id===movementId);
-      if(refreshed)openClassify(refreshed);else resetClassificationPanel(true);
-    }else{
-      resetClassificationPanel(true);
-    }
-    if(createRule&&ruleApplyResult){
-      $('movementSummary').textContent+=` · Regola applicata a ${nfmt(ruleApplyResult.updated||0)} movimenti`;
-    }
+    resetClassificationPanel(true);
     if(protectedNow&&!wasProtected)alert('Classificazione salvata come Manuale protetto.'+classificationProtectionReasonText(protectionPreview)+' Rimarrà invariata finché non rimuovi esplicitamente la protezione.');
   }catch(e){msg($('classMsg'),e.message,true)}finally{setBusy(btn,false)}
 }
@@ -3893,7 +3848,7 @@ function addConditionRow(c={field_name:'MERCHANT_NAME',operator:'EXACT',comparis
 }
 function getCompoundConditions(){return [...document.querySelectorAll('#compoundConditions .rule-condition')].map(r=>({field_name:r.querySelector('[data-cond-field]').value,operator:r.querySelector('[data-cond-op]').value,comparison_value:r.querySelector('[data-cond-value]').value.trim()})).filter(x=>x.comparison_value)}
 function resetCompoundRule(){
-  $('compoundRuleId').value='';$('compoundRuleName').value='';$('compoundRuleMerchant').value='';syncSearchFromSelect('compoundRuleMerchantSearch','compoundRuleMerchant');$('compoundRuleCategory').value='';$('compoundRuleType').value='';$('compoundRulePriority').value='100';$('compoundRuleConfidence').value='1';$('compoundRuleConfirm').checked=true;$('compoundRuleActive').checked=true;$('compoundConditions').innerHTML='';addConditionRow();$('saveCompoundRule').textContent='Salva regola';$('compoundRulePreview').innerHTML='';msg($('compoundRuleMsg'),'');
+  $('compoundRuleId').value='';$('compoundRuleName').value='';$('compoundRuleMerchant').value='';syncSearchFromSelect('compoundRuleMerchantSearch','compoundRuleMerchant');$('compoundRuleCategory').value='';$('compoundRuleType').value='';$('compoundRulePriority').value='100';$('compoundRuleConfidence').value='1';$('compoundRuleConfirm').checked=true;$('compoundRuleActive').checked=true;$('compoundConditions').innerHTML='';addConditionRow();$('saveCompoundRule').textContent='Salva regola';$('saveAndApplyCompoundRule').textContent='Salva e applica allo storico';$('compoundRulePreview').innerHTML='';msg($('compoundRuleMsg'),'');
 }
 function updateCompoundApplyHint(){}
 async function previewCompoundRule(){
@@ -3901,18 +3856,17 @@ async function previewCompoundRule(){
   const btn=$('previewCompoundRule');setBusy(btn,true,'Controllo');
   try{
     const all=await rpc('dashboard_preview_compound_rule_v2',{p_conditions:conditions,p_only_unreviewed:false});
-    const unreviewed=await rpc('dashboard_preview_compound_rule_v2',{p_conditions:conditions,p_only_unreviewed:true});
-    const confirmed=Math.max(0,Number(all?.count||0)-Number(unreviewed?.count||0));
-    const samples=all?.samples||[];
-    $('compoundRulePreview').innerHTML=`<div class="note"><strong>${nfmt(all?.count||0)} movimenti corrispondenti</strong> · ${nfmt(unreviewed?.count||0)} non confermati · ${nfmt(confirmed)} già confermati.<br>Con il motore di coerenza attivo, la configurazione verrà ricalcolata su tutti i movimenti <strong>non protetti</strong>; quelli manuali protetti restano invariati.</div>${samples.length?`<div class="table-wrap"><table class="table"><thead><tr><th>Data</th><th>Merchant originale</th><th>MCC</th><th>Descrizione</th><th>Importo</th></tr></thead><tbody>${samples.map(x=>`<tr><td>${esc(x.transaction_date)}</td><td>${esc(x.merchant_name||'—')}</td><td><span class="mcc-code">${esc(x.mcc_code||'—')}</span></td><td>${esc(x.raw_description||'—')}</td><td>${euro(x.amount)}</td></tr>`).join('')}</tbody></table></div>`:''}`;
+    const samples=all?.samples||[],matched=Number(all?.count||0),applicable=Number(all?.applicable_count??matched),protectedCount=Number(all?.protected_count||0);
+    const rows=samples.map(x=>'<tr><td>'+esc(x.transaction_date)+'</td><td>'+(x.manual_lock?'<span class="pill manual-protected">Protetto</span>':'<span class="pill status-active">Applicabile</span>')+'</td><td>'+esc(x.merchant_name||'—')+'</td><td><span class="mcc-code">'+esc(x.mcc_code||'—')+'</span></td><td>'+esc(x.raw_description||'—')+'</td><td>'+euro(x.amount)+'</td></tr>').join('');
+    $('compoundRulePreview').innerHTML='<div class="note"><strong>'+nfmt(matched)+' movimenti corrispondenti</strong> · <strong>'+nfmt(applicable)+' applicabili ora</strong> · '+nfmt(protectedCount)+' manuali protetti invariati.</div>'+(rows?'<div class="table-wrap"><table class="table"><thead><tr><th>Data</th><th>Stato</th><th>Merchant originale</th><th>MCC</th><th>Descrizione</th><th>Importo</th></tr></thead><tbody>'+rows+'</tbody></table></div>':'');
     msg($('compoundRuleMsg'),'');
   }catch(e){msg($('compoundRuleMsg'),e.message,true)}finally{setBusy(btn,false)}
 }
-async function saveCompoundRule(){
+async function saveCompoundRule(applyHistory=false){
   const conditions=getCompoundConditions();if(!conditions.length)return msg($('compoundRuleMsg'),'Inserisci almeno una condizione.',true);
-  const btn=$('saveCompoundRule');setBusy(btn,true,'Salvataggio');msg($('compoundRuleMsg'),'');
+  const btn=$(applyHistory?'saveAndApplyCompoundRule':'saveCompoundRule');setBusy(btn,true,applyHistory?'Salvo e applico':'Salvataggio');msg($('compoundRuleMsg'),'');
   try{
-    const saved=await rpc('dashboard_upsert_compound_rule_v1',{
+    const saved=await rpc('dashboard_upsert_compound_rule_v2',{
       p_id:$('compoundRuleId').value||null,
       p_name:$('compoundRuleName').value,
       p_merchant_id:$('compoundRuleMerchant').value||null,
@@ -3924,12 +3878,16 @@ async function saveCompoundRule(){
       p_is_active:$('compoundRuleActive').checked,
       p_conditions:conditions
     });
-    const rr=saved?.reclassification||{};
-    const suffix=rr.enabled
-      ?` Motore attivo: controllati ${nfmt(rr.checked||0)}, riallineati ${nfmt(rr.changed||0)} movimenti non protetti.`
-      :' Motore automatico non ancora attivo: verifica la pagina Coerenza prima del riallineamento.';
-    msg($('compoundRuleMsg'),'Regola salvata.'+suffix);
-    resetCompoundRule();coherenceData=null;await loadMovementsData();setCatalogTab('rules',false);
+    let message='Regola salvata. Nessuna applicazione retroattiva eseguita.';
+    if(applyHistory){
+      if(!$('compoundRuleActive').checked)throw new Error('Per applicare allo storico la regola deve essere attiva.');
+      const applied=await rpc('dashboard_apply_compound_rule_existing_v1',{p_rule_id:saved.id,p_only_unreviewed:false});
+      message='Regola salvata e applicata allo storico: '+nfmt(applied.checked||0)+' movimenti non protetti verificati, '+nfmt(applied.updated||0)+' modificati'+(Number(applied.protected_unchanged||0)?' · '+nfmt(applied.protected_unchanged)+' manuali protetti invariati':'')+'.';
+    }else{
+      const scoped=saved?.scoped_reclassification||{};
+      if(Number(scoped.changed||0))message+=' '+nfmt(scoped.changed)+' movimenti sono stati riallineati perché la regola è stata disattivata.';
+    }
+    resetCompoundRule();coherenceData=null;await loadMovementsData();setCatalogTab('rules',false);msg($('compoundRuleMsg'),message);
   }catch(e){msg($('compoundRuleMsg'),e.message,true)}finally{setBusy(btn,false)}
 }
 function editCompoundRule(id){
@@ -4057,7 +4015,7 @@ $('importUploadPanel').addEventListener('click',e=>{
   const detail=e.target.closest('[data-import-detail]');if(detail){openImportDetail(detail.dataset.importDetail);return}
   const b=e.target.closest('[data-import-go-movements]');if(b)activateMainTab('categorization')
 });
-$('refreshBtn').onclick=async()=>{await loadAll();coherenceData=null;if(!$('tab-coherence').classList.contains('hidden'))await loadCoherence()};$('saveMovementNote').onclick=saveMovementNote;$('toggleSplitEditor').onclick=()=>{if($('splitEditor').classList.contains('hidden'))openSplitEditor();else{$('splitEditor').classList.add('hidden');$('toggleSplitEditor').textContent=Number(selectedRow?.split_count||0)>0?`Ripartizione (${nfmt(selectedRow.split_count)})`:'Dividi movimento'}};$('addSplitRow').onclick=()=>addSplitRow({});$('saveSplits').onclick=saveSplits;$('clearSplits').onclick=clearSplits;$('splitRows').addEventListener('click',e=>{const b=e.target.closest('[data-remove-split]');if(b){b.closest('.split-row')?.remove();updateSplitSummary()}});$('addCondition').onclick=()=>addConditionRow();$('previewCompoundRule').onclick=previewCompoundRule;$('saveCompoundRule').onclick=saveCompoundRule;$('compoundConditions').addEventListener('click',e=>{const b=e.target.closest('[data-remove-condition]');if(b){b.closest('.rule-condition')?.remove();if(!document.querySelector('#compoundConditions .rule-condition'))addConditionRow()}});$('saveClassificationNoRule').onclick=()=>{$('saveClassificationNoRule').dataset.mode==='close'?closeClassificationPanel():saveClassification(false)};$('saveClassificationWithRule').onclick=()=>saveClassification(true);$('closeClassify').onclick=closeClassificationPanel;$('addClassificationCondition').onclick=()=>{addClassificationConditionRow();scheduleClassificationPreview()};$('refreshClassificationPreview').onclick=()=>previewClassificationImpact(true);$('classificationConditions').addEventListener('click',e=>{const b=e.target.closest('[data-remove-class-condition]');if(b){b.closest('.rule-condition')?.remove();if(!document.querySelector('#classificationConditions .rule-condition'))addClassificationConditionRow();scheduleClassificationPreview()}});$('saveCategory').onclick=saveCategory;$('saveMerchant').onclick=saveMerchant;$('saveProject').onclick=saveProject;$('saveTag').onclick=saveTag;$('newCounterpartyBtn').onclick=openQuickCounterparty;$('clearClassMerchant').onclick=clearSelectedMovementCounterparty;
+$('refreshBtn').onclick=async()=>{await loadAll();coherenceData=null;if(!$('tab-coherence').classList.contains('hidden'))await loadCoherence()};$('saveMovementNote').onclick=saveMovementNote;$('toggleSplitEditor').onclick=()=>{if($('splitEditor').classList.contains('hidden'))openSplitEditor();else{$('splitEditor').classList.add('hidden');$('toggleSplitEditor').textContent=Number(selectedRow?.split_count||0)>0?`Ripartizione (${nfmt(selectedRow.split_count)})`:'Dividi movimento'}};$('addSplitRow').onclick=()=>addSplitRow({});$('saveSplits').onclick=saveSplits;$('clearSplits').onclick=clearSplits;$('splitRows').addEventListener('click',e=>{const b=e.target.closest('[data-remove-split]');if(b){b.closest('.split-row')?.remove();updateSplitSummary()}});$('addCondition').onclick=()=>addConditionRow();$('previewCompoundRule').onclick=previewCompoundRule;$('saveCompoundRule').onclick=()=>saveCompoundRule(false);$('saveAndApplyCompoundRule').onclick=()=>saveCompoundRule(true);$('compoundConditions').addEventListener('click',e=>{const b=e.target.closest('[data-remove-condition]');if(b){b.closest('.rule-condition')?.remove();if(!document.querySelector('#compoundConditions .rule-condition'))addConditionRow()}});$('saveClassificationNoRule').onclick=()=>{$('saveClassificationNoRule').dataset.mode==='close'?closeClassificationPanel():saveClassification()};$('closeClassify').onclick=closeClassificationPanel;$('openRuleCatalogFromMovement').onclick=openRuleCatalogFromMovement;$('saveCategory').onclick=saveCategory;$('saveMerchant').onclick=saveMerchant;$('saveProject').onclick=saveProject;$('saveTag').onclick=saveTag;$('newCounterpartyBtn').onclick=openQuickCounterparty;$('clearClassMerchant').onclick=clearSelectedMovementCounterparty;
 $('previewParsingRule').onclick=previewParsingRule;$('saveParsingRule').onclick=saveParsingRule;$('resetParsingRule').onclick=resetParsingRule;$('futureAutomationBox').addEventListener('change',e=>{
   if(e.target.id!=='setMerchantDefaultCategory')return;
   const box=$('futureAutomationBox'),badge=box.querySelector('.future-title .pill');
@@ -4076,8 +4034,7 @@ $('previewParsingCorrection').onclick=previewParsingCorrection;
 $('saveParsingCorrection').onclick=saveParsingCorrection;
 $('movementProtectionBox').addEventListener('click',e=>{const unlock=e.target.closest('[data-unlock-manual]');if(unlock)unlockSelectedManualProtection(unlock)});
 $('movementFacts').addEventListener('click',e=>{const unlock=e.target.closest('[data-header-unlock-manual]');if(unlock)unlockSelectedManualProtection(unlock)});
-$('cancelQuickCounterparty').onclick=()=>{$('quickCounterpartyBox').classList.add('hidden');msg($('quickCounterpartyMsg'),'')};$('saveQuickCounterparty').onclick=saveQuickCounterparty;$('classificationRuleStyle').onchange=()=>{if($('classificationRuleStyle').value==='SIMPLE'&&selectedRow&&!$('rulePattern').value.trim())$('rulePattern').value=selectedRow.raw_merchant_name||selectedRow.description||'';updateRuleUi();renderFutureAutomationBox()};$('ruleMode').onchange=()=>{if(selectedRow&&!$('rulePattern').value.trim())$('rulePattern').value=selectedRow.raw_merchant_name||selectedRow.description||'';if($('ruleMode').value==='EXACT'&&selectedRow)$('rulePattern').value=selectedRow.description||'';updateRuleUi()};$('rulePattern').oninput=updateRuleUi;$('onlyUnreviewed').onchange=scheduleClassificationPreview;$('classMerchant').onchange=()=>{syncClassificationCategoryFromMerchant(false);updateRuleUi();renderClassificationSuggestion();renderMovementAliasBox();renderFutureAutomationBox();updateClassificationPipelineState();updateClassificationSaveBar()};$('classCategory').onchange=()=>{renderClassificationSuggestion();renderFutureAutomationBox();updateClassificationPipelineState();updateClassificationSaveBar()};$('transferTarget').onchange=()=>{updateTransferDecisionHint();scheduleClassificationPreview();renderClassificationSuggestion();renderFutureAutomationBox();updateClassificationPipelineState();updateClassificationSaveBar()};$('advancedAutomation').addEventListener('toggle',()=>{if($('advancedAutomation').open){updateRuleUi();scheduleClassificationPreview()}});
-['movementSearch','movementStatus','movementAutomation','movementBank','movementKind','movementType','movementNote','movementDirection','movementCategory','movementProject','movementTag','movementDateFrom','movementDateTo'].forEach(id=>$(id).addEventListener(id==='movementSearch'?'input':'change',renderMovements));$('movementCounterpartySearch').addEventListener('input',applyMovementCounterpartySearch);$('movementCounterpartySearch').addEventListener('change',applyMovementCounterpartySearch);$('clearMovementFilters').onclick=clearMovementFilters;$('viewList').onclick=()=>{viewMode='list';renderMovements()};$('viewGrouped').onclick=()=>{viewMode='grouped';renderMovements()};$('bulkSelectVisible').onclick=selectVisibleMovements;$('bulkClearSelection').onclick=clearSelectedMovements;$('bulkApplyCategory').onclick=applyBulkCategory;
+$('cancelQuickCounterparty').onclick=()=>{$('quickCounterpartyBox').classList.add('hidden');msg($('quickCounterpartyMsg'),'')};$('saveQuickCounterparty').onclick=saveQuickCounterparty;$('classMerchant').onchange=()=>{syncClassificationCategoryFromMerchant(false);renderClassificationSuggestion();renderMovementAliasBox();renderFutureAutomationBox();updateClassificationPipelineState();updateClassificationSaveBar()};$('classCategory').onchange=()=>{renderClassificationSuggestion();renderFutureAutomationBox();updateClassificationPipelineState();updateClassificationSaveBar()};$('transferTarget').onchange=()=>{updateTransferDecisionHint();renderClassificationSuggestion();renderFutureAutomationBox();updateClassificationPipelineState();updateClassificationSaveBar()};['movementSearch','movementStatus','movementAutomation','movementBank','movementKind','movementType','movementNote','movementDirection','movementCategory','movementProject','movementTag','movementDateFrom','movementDateTo'].forEach(id=>$(id).addEventListener(id==='movementSearch'?'input':'change',renderMovements));$('movementCounterpartySearch').addEventListener('input',applyMovementCounterpartySearch);$('movementCounterpartySearch').addEventListener('change',applyMovementCounterpartySearch);$('clearMovementFilters').onclick=clearMovementFilters;$('viewList').onclick=()=>{viewMode='list';renderMovements()};$('viewGrouped').onclick=()=>{viewMode='grouped';renderMovements()};$('bulkSelectVisible').onclick=selectVisibleMovements;$('bulkClearSelection').onclick=clearSelectedMovements;$('bulkApplyCategory').onclick=applyBulkCategory;
 $('movementsTable').addEventListener('click',e=>{const fuzzy=e.target.closest('[data-confirm-fuzzy-counterparty]');if(fuzzy){confirmFuzzyCounterparty(fuzzy);return}const auto=e.target.closest('[data-automation-target]');if(auto){openAutomationTarget(auto.dataset.automationTarget,auto.dataset.automationId);return}const sort=e.target.closest('[data-sort]');if(sort){setSort(sort.dataset.sort);return}const edit=e.target.closest('[data-edit-movement]');if(edit){const row=(catData?.movements||[]).find(x=>x.id===edit.dataset.editMovement);if(row)openClassify(row);return}const tg=e.target.closest('[data-toggle-group]');if(tg){const g=(window.__groupRows||[])[Number(tg.dataset.toggleGroup)];if(!g)return;if(expandedGroups.has(g.key))expandedGroups.delete(g.key);else expandedGroups.add(g.key);renderMovements()}});
 $('movementsTable').addEventListener('change',e=>{const cb=e.target.closest('[data-select-movement]');if(!cb)return;cb.checked?selectedMovementIds.add(cb.dataset.selectMovement):selectedMovementIds.delete(cb.dataset.selectMovement);syncBulkSelectionUi()});
 ['categorySearch','categoryL1Filter','categoryDependencyFilter','merchantSearch','merchantL1Filter','merchantL2Filter','merchantStatusFilter','projectSearch','projectTypeFilter','projectStatusFilter','tagSearch','tagStatusFilter','mccSearch','mccStatusFilter','compoundRuleSearch','compoundRuleStatusFilter','parsingRuleSearch'].forEach(id=>$(id)?.addEventListener(id.endsWith('Search')?'input':'change',renderCatalogs));[['classMerchantSearch','classMerchant'],['compoundRuleMerchantSearch','compoundRuleMerchant']].forEach(x=>bindCounterpartySearch(...x));$('expandAllCategories').onclick=()=>{(catData?.categories||[]).filter(x=>Number(x.depth)===1).forEach(x=>expandedCategoryGroups.add(x.level1_name||x.name));renderCategoriesCatalog()};$('collapseAllCategories').onclick=()=>{expandedCategoryGroups.clear();renderCategoriesCatalog()};
