@@ -1758,16 +1758,17 @@ async function saveForecastScope(scope,btn){
 }
 async function saveForecastRule(btn){
   if(!analysisForecastEditor||analysisForecastSaving)return;const s=analysisForecastEditor.category_setting||{},scope=s.forecast_scope||"CATEGORY",cp=selectedAnalysisComponent(),entity=scope==="COUNTERPARTIES"?"COUNTERPARTY":"CATEGORY";if(entity==="COUNTERPARTY"&&!cp){msg($("analysisStatus"),"Seleziona una controparte da configurare.",true);return}
-  const d=ensureForecastDraft();let source=d.source,method=d.method,model="ESTIMATED",fixed=null,rmin=null,rmax=null,adj=0;
-  if(source==="HISTORY"){model="ESTIMATED";adj=num(d.adjustment)}
-  else if(source==="RECURRENCE"){model=method==="FIXED"?"FIXED":method==="RANGE"?"RANGE":"ESTIMATED";fixed=method==="FIXED"?d.fixed_amount:null;rmin=method==="RANGE"?d.range_min:null;rmax=method==="RANGE"?d.range_max:null;adj=["FIXED","RANGE"].includes(method)?0:num(d.adjustment)}
-  else if(source==="MANUAL"){method=method==="RANGE"?"RANGE":"FIXED";model=method==="RANGE"?"RANGE":"FIXED";fixed=method==="FIXED"?d.fixed_amount:null;rmin=method==="RANGE"?d.range_min:null;rmax=method==="RANGE"?d.range_max:null}
-  else if(source==="NON_REPEAT"){method="ZERO";model="ESTIMATED"}
+  const d=ensureForecastDraft(),method=d.method,source=forecastSourceForMethod(method),model=method==="FIXED"?"FIXED":method==="RANGE"?"RANGE":"ESTIMATED";
+  const fixed=method==="FIXED"?d.fixed_amount:null,rmin=method==="RANGE"?d.range_min:null,rmax=method==="RANGE"?d.range_max:null;
+  const adj=["FIXED","RANGE","ZERO"].includes(method)?0:num(d.adjustment),pattern=forecastPatternFromDraft(d);
   if(method==="FIXED"&&(fixed===null||fixed===""||!Number.isFinite(Number(fixed)))){msg($("analysisStatus"),"Inserisci l'importo previsto.",true);return}
   if(method==="RANGE"&&(!Number.isFinite(Number(rmin))||!Number.isFinite(Number(rmax))||Number(rmin)>Number(rmax))){msg($("analysisStatus"),"Inserisci un intervallo valido.",true);return}
+  if(d.frequency==="MONTHS"&&method!=="SAME_MONTH_LAST_YEAR"&&method!=="ZERO"&&!pattern){msg($("analysisStatus"),"Seleziona almeno un mese previsto.",true);return}
   analysisForecastSaving=true;setBusy(btn,true,"Salvo");
-  try{await rpc("dashboard_reporting_save_forecast_setting_v1",{p_category_id:analysisSelectedCategory,p_direction:analysisCurrentDirection(),p_entity_type:entity,p_merchant_id:entity==="COUNTERPARTY"?(cp.component_merchant_id||null):null,p_forecast_scope:scope,p_forecast_source:source,p_forecast_method:method,p_adjustment_pct:adj,p_amount_model:model,p_fixed_amount:fixed===null?null:Number(fixed),p_range_min:rmin===null?null:Number(rmin),p_range_max:rmax===null?null:Number(rmax),p_recurrence_pattern:source==="RECURRENCE"?"MONTHLY":null});await refreshForecastAfterSave();msg($("analysisStatus"),analysisForecastEditor&&analysisForecastEditor.tracking_enabled?"Previsione aggiornata e tracciata.":"Previsione aggiornata in modalità test: nessuna cronologia ufficiale registrata.")}
-  catch(e){msg($("analysisStatus"),e.message||"Errore salvataggio forecast",true)}finally{analysisForecastSaving=false;setBusy(btn,false)}
+  try{
+    await rpc("dashboard_reporting_save_forecast_setting_v1",{p_category_id:analysisSelectedCategory,p_direction:analysisCurrentDirection(),p_entity_type:entity,p_merchant_id:entity==="COUNTERPARTY"?(cp.component_merchant_id||null):null,p_forecast_scope:scope,p_forecast_source:source,p_forecast_method:method,p_adjustment_pct:adj,p_amount_model:model,p_fixed_amount:fixed===null?null:Number(fixed),p_range_min:rmin===null?null:Number(rmin),p_range_max:rmax===null?null:Number(rmax),p_recurrence_pattern:pattern});
+    await refreshForecastAfterSave();msg($("analysisStatus"),analysisForecastEditor&&analysisForecastEditor.tracking_enabled?"Previsione aggiornata e tracciata.":"Previsione aggiornata in modalità test: nessuna cronologia ufficiale registrata.");
+  }catch(e){msg($("analysisStatus"),e.message||"Errore salvataggio forecast",true)}finally{analysisForecastSaving=false;setBusy(btn,false)}
 }
 function renderAnalysisComponents(){
   const d=analysisDetailData;if(!d)return;const isL1=d.level==="L1";$("detailComponentsTitle").textContent=isL1?"Categorie L2":"Controparti";$("detailSelection").innerHTML=analysisSelectedComponent?'<button class="btn ghost compact" type="button" data-clear-analysis-component>← Tutte le controparti</button>':"";
