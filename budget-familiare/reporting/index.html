@@ -255,6 +255,20 @@ button,input,select{font:inherit}
 @media(max-width:900px){.analysis-balance-net-row{padding-left:42px;padding-right:42px}.analysis-net-chip{font-size:7.5px}}
 
 
+/* V72.7 — Proiezione dentro Analisi */
+.analysis-time-toggle .btn{min-width:82px}
+.analysis-projection-badge{display:inline-flex;align-items:center;padding:3px 7px;border-radius:999px;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;font-size:9.5px;font-weight:800;white-space:nowrap}
+.analysis-master-table .forecast-value{font-weight:800;color:#1d4ed8}
+.analysis-master-table .actual-value{font-weight:750;color:#334155}
+.analysis-master-table .comparison-value{color:#64748b}
+.analysis-projection-month-note{display:inline-flex;gap:5px;align-items:center;font-size:9.5px;color:#64748b}
+.analysis-projection-dot{width:8px;height:8px;border-radius:2px;display:inline-block}
+.analysis-projection-dot.actual{background:#2563eb}.analysis-projection-dot.forecast{background:#bfdbfe;border:1px solid #2563eb}
+.analysis-projection-detail{margin-top:8px;padding:8px 10px;border:1px solid #dbeafe;background:#f8fbff;border-radius:8px}
+.analysis-projection-detail .projection-breakdown{display:flex;gap:7px;flex-wrap:wrap;margin-top:5px}
+.analysis-projection-detail .projection-chip{padding:3px 7px;border-radius:999px;background:#fff;border:1px solid #dbeafe;font-size:10px}
+@media(max-width:760px){.analysis-time-toggle{width:100%}.analysis-time-toggle .btn{flex:1}}
+
 /* V72.6.3 — leggibilità grafici e saldi mensili */
 .analysis-chart-hover-detail{min-height:34px;margin:4px 0 7px;padding:6px 8px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:10px}
 .analysis-hover-month{font-weight:850;color:#0f172a;margin-right:2px}
@@ -361,7 +375,12 @@ button,input,select{font:inherit}
               <button class="btn compact" type="button" data-analysis-view="EXPENSE">Spese</button>
               <button class="btn ghost compact" type="button" data-analysis-view="INCOME">Entrate</button>
             </div>
-            <label class="small">Periodo <select id="analysisPeriod" class="select" style="min-height:30px;padding:5px 8px"><option value="6">6 mesi</option><option value="12" selected>12 mesi</option><option value="24">24 mesi</option><option value="0">Tutto</option></select></label>
+            <div class="mode-toggle analysis-time-toggle">
+              <button class="btn compact" type="button" data-analysis-time="HISTORY">Storico</button>
+              <button class="btn ghost compact" type="button" data-analysis-time="PROJECTION">Proiezione</button>
+            </div>
+            <label id="analysisPeriodWrap" class="small">Periodo <select id="analysisPeriod" class="select" style="min-height:30px;padding:5px 8px"><option value="6">6 mesi</option><option value="12" selected>12 mesi</option><option value="24">24 mesi</option><option value="0">Tutto</option></select></label>
+            <label id="analysisProjectionWrap" class="small hidden">Vista <select id="analysisProjectionView" class="select" style="min-height:30px;padding:5px 8px"><option value="CALENDAR">Anno solare</option><option value="ROLLING_12">12m → 12m</option></select></label>
           </div>
           <div class="analysis-v26-right">
             <span id="analysisPeriodHint" class="small muted">Solo mesi completi.</span>
@@ -380,11 +399,11 @@ button,input,select{font:inherit}
           <div>
             <div class="analysis-master-wrap">
               <table class="analysis-master-table">
-                <thead><tr><th>Categoria / Voce</th><th>Totale</th><th>%</th><th>Δ A-1</th><th title="Media mensile calcolata su tutti i mesi del periodo, inclusi i mesi a zero">Media</th><th title="Mediana mensile calcolata su tutti i mesi del periodo, inclusi i mesi a zero">Mediana</th><th>Frequenza</th><th>Previsione</th></tr></thead>
+                <thead id="analysisMasterHead"><tr><th>Categoria / Voce</th><th>Totale</th><th>%</th><th>Δ A-1</th><th title="Media mensile calcolata su tutti i mesi del periodo, inclusi i mesi a zero">Media</th><th title="Mediana mensile calcolata su tutti i mesi del periodo, inclusi i mesi a zero">Mediana</th><th>Frequenza</th><th>Previsione</th></tr></thead>
                 <tbody id="analysisBody"></tbody>
               </table>
             </div>
-            <div class="legend-note">Una sola L1 resta aperta alla volta. Seleziona una L2 per decidere il forecast con storico, grafico, controparti e movimenti nello stesso contesto.</div>
+            <div id="analysisLegendNote" class="legend-note">Una sola L1 resta aperta alla volta. Seleziona una L2 per decidere il forecast con storico, grafico, controparti e movimenti nello stesso contesto.</div>
           </div>
           <div id="categoryDetail" class="analysis-detail-card">
             <div id="analysisDetailPlaceholder" class="analysis-placeholder">Seleziona una categoria per analizzare composizione, trend e previsione.</div>
@@ -454,6 +473,10 @@ let analysisSelectedMonth=null;
 let analysisMovementSort={key:"amount",dir:"desc"};
 let analysisLoadSeq=0;
 let analysisViewMode="EXPENSE";
+let analysisTimeMode="HISTORY";
+let analysisProjectionView="CALENDAR";
+let analysisProjectionData=new Map();
+let analysisProjectionLoading=new Set();
 let analysisForecastEditor=null;
 let analysisForecastEditorKey="";
 let analysisForecastDraft=null;
