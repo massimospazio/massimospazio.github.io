@@ -1656,20 +1656,34 @@ function forecastDraftRows(){
   if(s.forecast_scope==="COUNTERPARTIES"&&analysisSelectedComponent)return counterpartyPreviewRows();
   return analysisForecastEditor.category_preview||[];
 }
+function forecastUsesCounterpartyTarget(){
+  const s=analysisForecastEditor&&analysisForecastEditor.category_setting||{};
+  return s.forecast_scope==="COUNTERPARTIES"&&!!selectedAnalysisComponent();
+}
+function forecastHistoricalSeries(){
+  const d=analysisDetailData;if(!d)return [];
+  let rows;
+  if(forecastUsesCounterpartyTarget()){
+    rows=(d.component_monthly||[]).filter(function(x){return String(x.component_id)===String(analysisSelectedComponent)}).map(function(x){return {month:x.month,amount:num(x.amount)}});
+  }else rows=(d.months||[]).map(function(x){return {month:x.month,amount:num(x.amount)}});
+  return rows.sort(function(a,b){return String(a.month).localeCompare(String(b.month))}).slice(-12);
+}
+function forecastActiveStats(){
+  const rows=forecastHistoricalSeries(),last6=rows.slice(-6),nz12=rows.map(function(x){return x.amount}).filter(function(v){return v>0}),nz6=last6.map(function(x){return x.amount}).filter(function(v){return v>0});
+  const avg=function(a){return a.length?a.reduce(function(s,v){return s+v},0)/a.length:0};
+  return {avg6:avg(nz6),avg12:avg(nz12),median12:medianValue(nz12)};
+}
 function forecastBaseForRow(row,method,draft){
-  if(method==="AVG12")return num(row.avg12);if(method==="MEDIAN12")return num(row.median12);
+  const nonMonthly=draft&&draft.frequency&&draft.frequency!=="MONTHLY",active=nonMonthly?forecastActiveStats():null;
+  if(method==="AVG12")return nonMonthly?num(active.avg12):num(row.avg12);
+  if(method==="MEDIAN12")return nonMonthly?num(active.median12):num(row.median12);
   if(method==="SAME_MONTH_LAST_YEAR")return row.same_month_last_year===null||row.same_month_last_year===undefined?0:num(row.same_month_last_year);
   if(method==="LAST_VALUE")return num(row.last_value)||num(row.avg12);if(method==="FIXED")return num(draft.fixed_amount);
-  if(method==="RANGE")return (num(draft.range_min)+num(draft.range_max))/2;if(method==="ZERO")return 0;return num(row.avg6);
+  if(method==="RANGE")return (num(draft.range_min)+num(draft.range_max))/2;if(method==="ZERO")return 0;
+  return nonMonthly?num(active.avg6):num(row.avg6);
 }
 function forecastLastActiveMonth(){
-  const d=analysisDetailData;if(!d)return null;
-  if(analysisSelectedComponent){
-    const rows=(d.component_monthly||[]).filter(function(x){return String(x.component_id)===String(analysisSelectedComponent)&&num(x.amount)>0});
-    rows.sort(function(a,b){return String(b.month).localeCompare(String(a.month))});
-    return rows.length?rows[0].month:null;
-  }
-  const rows=(d.months||[]).filter(function(x){return num(x.amount)>0}).slice().sort(function(a,b){return String(b.month).localeCompare(String(a.month))});
+  const rows=forecastHistoricalSeries().filter(function(x){return num(x.amount)>0}).sort(function(a,b){return String(b.month).localeCompare(String(a.month))});
   return rows.length?rows[0].month:null;
 }
 function forecastMonthIndex(v){const d=monthDate(v);return d?d.getFullYear()*12+d.getMonth():0}
