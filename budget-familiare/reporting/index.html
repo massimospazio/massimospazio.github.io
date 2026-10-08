@@ -184,6 +184,23 @@ button,input,select{font:inherit}
 .forecast-explanation{margin-top:8px;padding:8px 9px;border:1px solid #dbeafe;background:#fff;border-radius:8px;font-size:10px;line-height:1.5;color:#475569}
 .forecast-explanation strong{color:#0f172a}
 .forecast-explanation .formula{display:inline-block;margin-top:3px;padding:2px 6px;border-radius:6px;background:#f8fafc;border:1px solid #e2e8f0;color:#334155;font-weight:700}
+.analysis-monthly-plan{margin-top:10px;padding-top:9px;border-top:1px solid #dbeafe}
+.analysis-monthly-plan-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:7px}
+.analysis-monthly-plan-head h5{margin:0;font-size:11.5px;color:#0f172a}
+.analysis-monthly-plan-head p{margin:2px 0 0;font-size:9.5px;color:var(--muted);line-height:1.35}
+.analysis-monthly-plan-summary{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+.analysis-plan-summary-chip{padding:3px 6px;border-radius:999px;border:1px solid #dbeafe;background:#fff;font-size:9.5px;color:#475569;white-space:nowrap}
+.analysis-plan-months{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px}
+.analysis-plan-month{border:1px solid #dbe4f0;border-radius:8px;background:#fff;padding:6px;min-width:0}
+.analysis-plan-month.override{border-color:#93c5fd;background:#eff6ff}
+.analysis-plan-month .month{font-size:9.5px;font-weight:800;color:#334155;text-transform:capitalize}
+.analysis-plan-month .base{font-size:8.5px;color:var(--muted);margin:2px 0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.analysis-plan-month-input-row{display:flex;gap:4px;align-items:center}
+.analysis-plan-month input{width:100%;min-width:0;min-height:29px;padding:4px 5px;font-size:11px;font-weight:750}
+.analysis-plan-reset{border:0;background:transparent;color:#2563eb;padding:2px;cursor:pointer;font-size:13px;line-height:1}
+.analysis-plan-month .override-label{font-size:8.5px;color:#1d4ed8;font-weight:750;margin-top:3px}
+@media(max-width:900px){.analysis-plan-months{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:600px){.analysis-plan-months{grid-template-columns:repeat(2,minmax(0,1fr))}.analysis-monthly-plan-head{display:block}.analysis-monthly-plan-summary{justify-content:flex-start;margin-top:5px}}
 .analysis-chart-box{height:285px;position:relative;margin-top:4px}
 .analysis-component-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:9px 0 5px}
 .analysis-component-head h4,.analysis-movements h4{font-size:12px;margin:0}
@@ -1836,6 +1853,45 @@ function forecastControlsHtml(d){
   }
   return method+frequency+variation+fixed+range+months;
 }
+function planInputValue(v){
+  const n=Number(v);if(!Number.isFinite(n))return "";
+  return Math.abs(n-Math.round(n))<.005?String(Math.round(n)):n.toFixed(2);
+}
+function integratedMonthlyPlanHtml(){
+  if(!analysisForecastEditor)return "";
+  const rows=analysisForecastEditor.monthly_plan||[];if(!rows.length)return "";
+  const baseTotal=rows.reduce(function(s,x){return s+num(x.base_amount)},0);
+  const plannedTotal=rows.reduce(function(s,x){return s+num(x.planned_amount)},0);
+  const overrides=rows.filter(function(x){return x.override_amount!==null&&x.override_amount!==undefined}).length;
+  const months=rows.map(function(x){
+    const manual=x.override_amount!==null&&x.override_amount!==undefined,base=num(x.base_amount),planned=num(x.planned_amount);
+    return '<div class="analysis-plan-month'+(manual?" override":"")+'" data-plan-card-month="'+esc(x.month)+'">'+
+      '<div class="month">'+esc(monthLabel(x.month))+'</div>'+
+      '<div class="base">Regola '+money(base)+'</div>'+
+      '<div class="analysis-plan-month-input-row"><input class="input" type="number" min="0" step="1" value="'+esc(planInputValue(planned))+'" data-analysis-plan-month="'+esc(x.month)+'" data-analysis-plan-base="'+esc(base)+'" aria-label="Piano '+esc(monthLabel(x.month))+'" />'+
+      (manual?'<button class="analysis-plan-reset" type="button" data-reset-analysis-plan="'+esc(x.month)+'" title="Ripristina il valore calcolato dalla regola">↺</button>':"")+
+      '</div>'+(manual?'<div class="override-label">Override · base '+money(base)+'</div>':'<div class="override-label" style="visibility:hidden">Base</div>')+
+      '</div>';
+  }).join("");
+  return '<div class="analysis-monthly-plan"><div class="analysis-monthly-plan-head"><div><h5>Piano mensile L2 · prossimi 12 mesi</h5><p>La regola genera la base. Modifica un mese solo quando vuoi un’eccezione: il valore diventa override e puoi ripristinarlo in qualsiasi momento. Il piano usa l’ultima regola salvata.</p></div><div class="analysis-monthly-plan-summary"><span class="analysis-plan-summary-chip">Base '+money(baseTotal)+'</span><span class="analysis-plan-summary-chip">Piano '+money(plannedTotal)+'</span>'+(overrides?'<span class="analysis-plan-summary-chip">'+overrides+' override</span>':"")+'</div></div><div class="analysis-plan-months">'+months+'</div></div>';
+}
+async function saveIntegratedMonthlyOverride(month,amount,input){
+  if(!analysisSelectedCategory||!analysisForecastEditor)return;
+  const direction=analysisCurrentDirection(),rpcName=direction==="INCOME"?"dashboard_reporting_set_income_category_override_v1":"dashboard_reporting_set_expense_override_v1";
+  if(input)input.disabled=true;
+  try{
+    await rpc(rpcName,{p_month:month,p_category_id:analysisSelectedCategory,p_amount:amount});
+    updateCellLocal(direction==="INCOME"?"income":"expense",analysisSelectedCategory,month,amount);
+    analysisForecastEditor=await rpc("dashboard_reporting_forecast_editor_v1",{p_category_id:analysisSelectedCategory,p_direction:direction,p_horizon_months:12});
+    invalidateAnalysisProjection(direction);
+    renderForecastEditor();renderPlan();renderProjection();
+    if(analysisTimeMode==="PROJECTION")await loadAnalysisProjection(true);
+    msg($("analysisStatus"),amount===null?"Override rimosso: il mese torna al valore calcolato dalla regola.":"Override mensile salvato.");
+  }catch(e){
+    msg($("analysisStatus"),e.message||"Errore salvataggio override",true);
+    if(input)input.disabled=false;
+  }
+}
 function renderForecastEditor(){
   const box=$("analysisForecastPanel"),d=analysisDetailData;if(!box)return;if(!d||d.level!=="L2"){box.classList.add("hidden");box.innerHTML="";return}box.classList.remove("hidden");
   if(!analysisForecastEditor){box.innerHTML='<div class="analysis-loading"><span class="spinner"></span>Carico configurazione forecast…</div>';return}
@@ -1843,7 +1899,7 @@ function renderForecastEditor(){
   if(scope==="COUNTERPARTIES"&&!target){controls='<div class="notice"><strong>Forecast per controparti attivo.</strong><br>La previsione della L2 è la somma delle controparti. Seleziona una controparte sotto per modificarne la regola. “Senza controparte” è una componente esplicita: nessun residuo nascosto.</div>';result=forecastResultHtml(forecastPreviewStats())}
   else{const draft=ensureForecastDraft();controls='<div class="forecast-grid">'+forecastControlsHtml(draft)+'</div><div id="forecastExplanation">'+forecastExplanationHtml(draft)+'</div>';result='<div id="forecastLiveResult">'+forecastResultHtml(forecastDraftPreview())+'</div>'}
   const targetLabel=scope==="COUNTERPARTIES"?(cp?"Controparte: "+cp.component_name:"Somma controparti"):"Categoria L2";
-  box.innerHTML='<div class="forecast-panel-head"><div><h4>Previsione</h4><div class="small muted">Decidi qui la regola; la Pianificazione riceve il risultato e consente solo override mensili.</div></div><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">'+(!tracking?'<span class="forecast-test-badge">Modalità test · tracking OFF</span>':'')+'<div class="forecast-scope-buttons"><button class="btn '+(scope==="CATEGORY"?"":"ghost ")+'compact" type="button" data-forecast-scope="CATEGORY">Categoria L2</button><button class="btn '+(scope==="COUNTERPARTIES"?"":"ghost ")+'compact" type="button" data-forecast-scope="COUNTERPARTIES">Controparti</button></div></div></div>'+controls+result+'<div class="forecast-actions"><span class="forecast-target">'+esc(targetLabel)+'</span>'+(target?'<button class="btn compact" type="button" data-save-forecast>Salva previsione</button>':'')+'</div>';
+  box.innerHTML='<div class="forecast-panel-head"><div><h4>Previsione</h4><div class="small muted">Definisci la regola strutturale e rifinisci direttamente sotto i singoli mesi del piano.</div></div><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">'+(!tracking?'<span class="forecast-test-badge">Modalità test · tracking OFF</span>':'')+'<div class="forecast-scope-buttons"><button class="btn '+(scope==="CATEGORY"?"":"ghost ")+'compact" type="button" data-forecast-scope="CATEGORY">Categoria L2</button><button class="btn '+(scope==="COUNTERPARTIES"?"":"ghost ")+'compact" type="button" data-forecast-scope="COUNTERPARTIES">Controparti</button></div></div></div>'+controls+result+'<div class="forecast-actions"><span class="forecast-target">'+esc(targetLabel)+'</span>'+(target?'<button class="btn compact" type="button" data-save-forecast>Salva previsione</button>':'')+'</div>'+integratedMonthlyPlanHtml();
 }
 function canonicalSavedSetting(s,scope){
   const x=Object.assign({},s||{});let method=x.forecast_method||"AVG6",fixed=x.fixed_amount,rmin=x.range_min,rmax=x.range_max,adj=num(x.adjustment_pct);
