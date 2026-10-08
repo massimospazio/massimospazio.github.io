@@ -235,6 +235,10 @@ button,input,select{font:inherit}
 .forecast-result{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin-top:9px;padding:8px 9px;border-radius:8px;background:#fff;border:1px solid #dbeafe}.forecast-result .value{font-size:19px;font-weight:850}.forecast-result .meta{font-size:10px;color:var(--muted);line-height:1.45}
 .forecast-actions{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px}.forecast-target{font-size:11px;color:#334155}
 .forecast-range-fields{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.forecast-months{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px;margin-top:5px}
+.forecast-month-check{display:flex;align-items:center;gap:4px;padding:4px 5px;border:1px solid #dbe4f0;border-radius:6px;background:#fff;font-size:9.5px;cursor:pointer}
+.forecast-month-check input{margin:0}
+@media(max-width:760px){.forecast-months{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .analysis-detail-stats .trend-chip{font-size:10px}
 .analysis-components-table .analysis-forecast{max-width:160px}
 @media(max-width:1180px){.analysis-workspace-grid{grid-template-columns:1fr}.analysis-master-wrap{max-height:520px}.analysis-balance-chart{height:320px}}
@@ -787,13 +791,24 @@ function forecastMethodLabel(v){
   if(v==="SUM_COUNTERPARTIES")return "Somma controparti";
   return "Media 6m";
 }
+function forecastFrequencyLabel(v){
+  v=v||"MONTHLY";
+  if(v==="EVERY_2_MONTHS")return "Ogni 2 mesi";
+  if(v==="QUARTERLY")return "Trimestrale";
+  if(v==="SEMIANNUAL")return "Semestrale";
+  if(v==="ANNUAL")return "Annuale";
+  if(String(v).startsWith("MONTHS:"))return "Mesi specifici";
+  return "Mensile";
+}
 function forecastSummaryLabel(r){
   if(!r)return "—";
   if(r.forecast_scope==="COUNTERPARTIES"||r.provenance==="COUNTERPARTIES")return "Somma controparti";
-  if(r.forecast_source==="NON_REPEAT"||r.forecast_method==="ZERO")return "Non si ripeterà";
-  let out=forecastSourceLabel(r.forecast_source)+" · "+forecastMethodLabel(r.forecast_method);
+  if(r.forecast_method==="ZERO"||r.forecast_source==="NON_REPEAT")return "Non si ripeterà";
+  let out=forecastMethodLabel(r.forecast_method);
+  if(r.forecast_method==="SAME_MONTH_LAST_YEAR")out+=" · cadenza da storico";
+  else out+=" · "+forecastFrequencyLabel(r.recurrence_pattern);
   const adj=num(r.adjustment_pct);
-  if((r.forecast_source==="HISTORY"||r.forecast_source==="RECURRENCE")&&adj)out+=" · "+(adj>0?"+":"")+adj.toLocaleString("it-IT",{maximumFractionDigits:1})+"%";
+  if(!["FIXED","RANGE"].includes(r.forecast_method)&&adj)out+=" · "+(adj>0?"+":"")+adj.toLocaleString("it-IT",{maximumFractionDigits:1})+"%";
   return out;
 }
 function methodControl(r,kind,cellMapObj){
@@ -1566,34 +1581,72 @@ function forecastPreviewStats(){
   if(!analysisForecastEditor)return null;const s=analysisForecastEditor.category_setting||{};let rows=s.forecast_scope==="COUNTERPARTIES"&&analysisSelectedComponent?counterpartyPreviewRows():(analysisForecastEditor.category_preview||[]);if(!rows.length)return null;
   return {next:num(rows[0].expected_amount),avg:rows.reduce(function(a,x){return a+num(x.expected_amount)},0)/rows.length,prudent:rows.reduce(function(a,x){return a+num(x.prudent_amount)},0)/rows.length,low:rows.reduce(function(a,x){return a+num(x.range_low)},0)/rows.length,high:rows.reduce(function(a,x){return a+num(x.range_high)},0)/rows.length};
 }
-function forecastHistoricalOptions(v){
-  const opts=[["AVG6","Media 6 mesi"],["AVG12","Media 12 mesi"],["MEDIAN12","Mediana 12 mesi"],["SAME_MONTH_LAST_YEAR","Stesso mese A-1"],["LAST_VALUE","Ultimo valore"]];
+function forecastMethodOptions(v){
+  const opts=[
+    ["SAME_MONTH_LAST_YEAR","Stesso mese A-1"],
+    ["LAST_VALUE","Ultimo valore"],
+    ["AVG6","Media 6 mesi"],
+    ["AVG12","Media 12 mesi"],
+    ["MEDIAN12","Mediana 12 mesi"],
+    ["FIXED","Importo manuale"],
+    ["RANGE","Intervallo"],
+    ["ZERO","Non si ripeterà"]
+  ];
   return opts.map(function(o){return '<option value="'+o[0]+'"'+(v===o[0]?" selected":"")+'>'+o[1]+'</option>'}).join("");
 }
-function forecastRecurrenceOptions(v){
-  const opts=[["LAST_VALUE","Ultimo valore"],["AVG6","Media 6 mesi"],["AVG12","Media 12 mesi"],["MEDIAN12","Mediana 12 mesi"],["SAME_MONTH_LAST_YEAR","Stesso mese A-1"],["FIXED","Importo manuale"],["RANGE","Intervallo"]];
-  return opts.map(function(o){return '<option value="'+o[0]+'"'+(v===o[0]?" selected":"")+'>'+o[1]+'</option>'}).join("");
+function forecastFrequencyOptions(v){
+  const base=String(v||"MONTHLY").startsWith("MONTHS:")?"MONTHS":(v||"MONTHLY");
+  const opts=[
+    ["MONTHLY","Mensile"],
+    ["EVERY_2_MONTHS","Ogni 2 mesi"],
+    ["QUARTERLY","Trimestrale"],
+    ["SEMIANNUAL","Semestrale"],
+    ["ANNUAL","Annuale"],
+    ["MONTHS","Mesi specifici"]
+  ];
+  return opts.map(function(o){return '<option value="'+o[0]+'"'+(base===o[0]?" selected":"")+'>'+o[1]+'</option>'}).join("");
 }
-function forecastTypeOptions(v){
-  const opts=[["HISTORY","Storico"],["RECURRENCE","Ricorrenza nota"],["MANUAL","Manuale"],["NON_REPEAT","Non si ripeterà"]];
-  return opts.map(function(o){return '<option value="'+o[0]+'"'+(v===o[0]?" selected":"")+'>'+o[1]+'</option>'}).join("");
+function forecastMonthsFromPattern(v){
+  if(!String(v||"").startsWith("MONTHS:"))return [];
+  return String(v).slice(7).split(",").map(Number).filter(function(x){return x>=1&&x<=12});
+}
+function forecastPatternFromDraft(d){
+  if(d.method==="SAME_MONTH_LAST_YEAR"||d.method==="ZERO")return null;
+  if(d.frequency==="MONTHS"){
+    const m=(d.specific_months||[]).slice().sort(function(a,b){return a-b});
+    return m.length?"MONTHS:"+m.join(","):null;
+  }
+  return d.frequency||"MONTHLY";
+}
+function forecastSourceForMethod(method){
+  if(method==="ZERO")return "NON_REPEAT";
+  if(method==="FIXED"||method==="RANGE")return "MANUAL";
+  return "HISTORY";
 }
 function forecastDraftTargetKey(){
   const s=analysisForecastEditor&&analysisForecastEditor.category_setting||{},cp=selectedAnalysisComponent();
   return (s.forecast_scope||"CATEGORY")+"|"+(cp&&cp.component_id||"CATEGORY");
 }
 function draftFromTarget(target){
-  const t=target||{},source=t.forecast_source||"HISTORY",method=t.forecast_method||"AVG6";
-  return {source:(source==="EVENT"?"MANUAL":source),method:method,adjustment:num(t.adjustment_pct),fixed_amount:t.fixed_amount!==undefined&&t.fixed_amount!==null?num(t.fixed_amount):null,range_min:t.range_min!==undefined&&t.range_min!==null?num(t.range_min):null,range_max:t.range_max!==undefined&&t.range_max!==null?num(t.range_max):null};
+  const t=target||{},method=t.forecast_method||"AVG6",pattern=t.recurrence_pattern||"MONTHLY";
+  return {
+    source:forecastSourceForMethod(method),
+    method:method,
+    frequency:String(pattern).startsWith("MONTHS:")?"MONTHS":pattern,
+    specific_months:forecastMonthsFromPattern(pattern),
+    adjustment:num(t.adjustment_pct),
+    fixed_amount:t.fixed_amount!==undefined&&t.fixed_amount!==null?num(t.fixed_amount):null,
+    range_min:t.range_min!==undefined&&t.range_min!==null?num(t.range_min):null,
+    range_max:t.range_max!==undefined&&t.range_max!==null?num(t.range_max):null
+  };
 }
 function ensureForecastDraft(){
   const key=forecastDraftTargetKey();
   if(!analysisForecastDraft||analysisForecastDraftKey!==key){
     analysisForecastDraft=draftFromTarget(currentForecastTarget());
-    if(analysisForecastDraft.source==="MANUAL"&&!["FIXED","RANGE"].includes(analysisForecastDraft.method))analysisForecastDraft.method="FIXED";
-    if(analysisForecastDraft.source==="RECURRENCE"&&!["AVG6","AVG12","MEDIAN12","SAME_MONTH_LAST_YEAR","LAST_VALUE","FIXED","RANGE"].includes(analysisForecastDraft.method))analysisForecastDraft.method="LAST_VALUE";
-    if(analysisForecastDraft.source==="NON_REPEAT")analysisForecastDraft.method="ZERO";
-    if(analysisForecastDraft.source==="HISTORY"&&!["AVG6","AVG12","MEDIAN12","SAME_MONTH_LAST_YEAR","LAST_VALUE"].includes(analysisForecastDraft.method))analysisForecastDraft.method="AVG6";
+    if(!["AVG6","AVG12","MEDIAN12","SAME_MONTH_LAST_YEAR","LAST_VALUE","FIXED","RANGE","ZERO"].includes(analysisForecastDraft.method))analysisForecastDraft.method="AVG6";
+    analysisForecastDraft.source=forecastSourceForMethod(analysisForecastDraft.method);
+    if(!analysisForecastDraft.frequency)analysisForecastDraft.frequency="MONTHLY";
     analysisForecastDraftKey=key;
   }
   return analysisForecastDraft;
@@ -1609,44 +1662,69 @@ function forecastBaseForRow(row,method,draft){
   if(method==="LAST_VALUE")return num(row.last_value)||num(row.avg12);if(method==="FIXED")return num(draft.fixed_amount);
   if(method==="RANGE")return (num(draft.range_min)+num(draft.range_max))/2;if(method==="ZERO")return 0;return num(row.avg6);
 }
+function forecastLastActiveMonth(){
+  const d=analysisDetailData;if(!d)return null;
+  if(analysisSelectedComponent){
+    const rows=(d.component_monthly||[]).filter(function(x){return String(x.component_id)===String(analysisSelectedComponent)&&num(x.amount)>0});
+    rows.sort(function(a,b){return String(b.month).localeCompare(String(a.month))});
+    return rows.length?rows[0].month:null;
+  }
+  const rows=(d.months||[]).filter(function(x){return num(x.amount)>0}).slice().sort(function(a,b){return String(b.month).localeCompare(String(a.month))});
+  return rows.length?rows[0].month:null;
+}
+function forecastMonthIndex(v){const d=monthDate(v);return d?d.getFullYear()*12+d.getMonth():0}
+function forecastDraftFrequencyActive(month,d){
+  if(d.method==="ZERO")return false;
+  if(d.method==="SAME_MONTH_LAST_YEAR")return true;
+  if(d.frequency==="MONTHLY"||!d.frequency)return true;
+  const md=monthDate(month);if(!md)return true;
+  if(d.frequency==="MONTHS")return (d.specific_months||[]).includes(md.getMonth()+1);
+  const step=d.frequency==="EVERY_2_MONTHS"?2:d.frequency==="QUARTERLY"?3:d.frequency==="SEMIANNUAL"?6:d.frequency==="ANNUAL"?12:1;
+  const rows=forecastDraftRows(),first=rows.length?rows[0].month:month,anchor=forecastLastActiveMonth()||addMonthsISO(first,-1);
+  return ((forecastMonthIndex(month)-forecastMonthIndex(anchor))%step+step)%step===0;
+}
 function forecastDraftPreview(){
   const d=ensureForecastDraft(),rows=forecastDraftRows();if(!d||!rows.length)return null;
-  const estimatedMethods=["AVG6","AVG12","MEDIAN12","SAME_MONTH_LAST_YEAR","LAST_VALUE"];
-  const values=rows.map(function(row){let expected=0,low=0,high=0,base=0;
-    if(d.source==="NON_REPEAT"){expected=low=high=0}
-    else if(d.source==="MANUAL"){if(d.method==="RANGE"){low=num(d.range_min);high=num(d.range_max);expected=(low+high)/2}else expected=low=high=num(d.fixed_amount)}
-    else if(d.source==="RECURRENCE"){
-      if(d.method==="RANGE"){low=num(d.range_min);high=num(d.range_max);expected=(low+high)/2}
-      else{
-        base=forecastBaseForRow(row,d.method,d);
-        expected=estimatedMethods.includes(d.method)?Math.max(0,base*(1+num(d.adjustment)/100)):base;
-        low=high=expected;
-      }
+  const values=rows.map(function(row){
+    let expected=0,low=0,high=0,base=0;
+    const active=forecastDraftFrequencyActive(row.month,d);
+    if(!active||d.method==="ZERO"){expected=low=high=0}
+    else if(d.method==="RANGE"){low=num(d.range_min);high=num(d.range_max);expected=(low+high)/2}
+    else if(d.method==="FIXED"){expected=low=high=num(d.fixed_amount)}
+    else{
+      base=forecastBaseForRow(row,d.method,d);
+      expected=Math.max(0,base*(1+num(d.adjustment)/100));low=high=expected;
     }
-    else{base=forecastBaseForRow(row,d.method,d);expected=Math.max(0,base*(1+num(d.adjustment)/100));low=high=expected}
     return {expected:expected,low:low,high:high,base:base,prudent:analysisCurrentDirection()==="EXPENSE"?high:low};
   });
-  return {next:values[0].expected,nextBase:values[0].base,avg:values.reduce(function(a,x){return a+x.expected},0)/values.length,low:values.reduce(function(a,x){return a+x.low},0)/values.length,high:values.reduce(function(a,x){return a+x.high},0)/values.length,prudent:values.reduce(function(a,x){return a+x.prudent},0)/values.length,adjustment:num(d.adjustment),source:d.source,method:d.method};
+  return {next:values[0].expected,nextBase:values[0].base,avg:values.reduce(function(a,x){return a+x.expected},0)/values.length,low:values.reduce(function(a,x){return a+x.low},0)/values.length,high:values.reduce(function(a,x){return a+x.high},0)/values.length,prudent:values.reduce(function(a,x){return a+x.prudent},0)/values.length,adjustment:num(d.adjustment),source:forecastSourceForMethod(d.method),method:d.method};
 }
 function forecastResultHtml(preview){
   if(!preview)return '<div class="forecast-result"><div class="muted small">Anteprima non disponibile.</div></div>';
-  const showVariation=(preview.source==="HISTORY"||preview.source==="RECURRENCE")&&!["FIXED","RANGE"].includes(preview.method)&&Math.abs(num(preview.adjustment))>.0001;
+  const showVariation=!["FIXED","RANGE","ZERO"].includes(preview.method)&&Math.abs(num(preview.adjustment))>.0001;
   const variation=showVariation?'<br>Base: '+money(preview.nextBase)+' → '+(preview.adjustment>0?"+":"")+num(preview.adjustment).toLocaleString("it-IT",{maximumFractionDigits:1})+'% → <strong>'+money(preview.next)+'</strong>':"";
   return '<div class="forecast-result"><div><div class="small muted">Anteprima live · media prossimi 12m</div><div class="value">'+money(preview.avg)+'</div></div><div class="meta">Prossimo mese: '+money(preview.next)+variation+(Math.abs(preview.high-preview.low)>.01?'<br>Intervallo medio: '+money(preview.low)+' – '+money(preview.high)+'<br>Prudente: '+money(preview.prudent):"")+'</div></div>';
 }
 function updateForecastLiveResult(){const el=$("forecastLiveResult");if(el)el.innerHTML=forecastResultHtml(forecastDraftPreview())}
 function forecastControlsHtml(d){
-  const type='<div class="forecast-field"><label>Tipo di previsione</label><select id="forecastType" class="select">'+forecastTypeOptions(d.source)+'</select></div>';
-  if(d.source==="NON_REPEAT")return type+'<div class="forecast-field"><label>Risultato</label><div class="notice">Questa voce resta nello storico ma non contribuisce al forecast futuro.</div></div>';
-  if(d.source==="HISTORY")return type+'<div class="forecast-field"><label>Metodo</label><select id="forecastMethod" class="select">'+forecastHistoricalOptions(d.method)+'</select></div><div class="forecast-field"><label>Correzione %</label><input id="forecastAdjustment" class="input" type="number" min="-100" max="1000" step="1" value="'+esc(num(d.adjustment))+'" /></div><div class="forecast-field"><label>Importo</label><div class="forecast-type-note">Stimato automaticamente dallo storico; non serve scegliere un modello separato.</div></div>';
-  if(d.source==="RECURRENCE"){
-    const fixed=d.method==="FIXED"?'<div class="forecast-field"><label>Importo previsto €</label><input id="forecastFixedAmount" class="input" type="number" min="0" step="1" value="'+esc(d.fixed_amount==null?"":d.fixed_amount)+'" /></div>':"";
-    const range=d.method==="RANGE"?'<div class="forecast-field"><label>Intervallo €</label><div class="forecast-range-fields"><input id="forecastRangeMin" class="input" type="number" min="0" step="1" placeholder="Min" value="'+esc(d.range_min==null?"":d.range_min)+'" /><input id="forecastRangeMax" class="input" type="number" min="0" step="1" placeholder="Max" value="'+esc(d.range_max==null?"":d.range_max)+'" /></div></div>':"";
-    const variation=!["FIXED","RANGE"].includes(d.method)?'<div class="forecast-field"><label>Variazione attesa %</label><input id="forecastAdjustment" class="input" type="number" min="-100" max="1000" step="1" value="'+esc(num(d.adjustment))+'" /><div class="forecast-type-note">Applica una variazione prudenziale alla stima base. Non è cumulativa mese su mese.</div></div>':"";
-    return type+'<div class="forecast-field"><label>Stima importo</label><select id="forecastMethod" class="select">'+forecastRecurrenceOptions(d.method)+'</select><div class="forecast-type-note">La ricorrenza è certa; qui stimiamo solo quanto costerà. In questa fase la cadenza operativa è mensile.</div></div>'+variation+fixed+range;
+  const method='<div class="forecast-field"><label>Metodo di previsione</label><select id="forecastMethod" class="select">'+forecastMethodOptions(d.method)+'</select></div>';
+  if(d.method==="ZERO")return method+'<div class="forecast-field"><label>Risultato</label><div class="notice">Questa voce resta nello storico ma non contribuisce alla previsione futura.</div></div>';
+  const historical=!["FIXED","RANGE","ZERO"].includes(d.method);
+  const variation=historical?'<div class="forecast-field"><label>Variazione attesa %</label><input id="forecastAdjustment" class="input" type="number" min="-100" max="1000" step="1" value="'+esc(num(d.adjustment))+'" /><div class="forecast-type-note">Applica la variazione alla stima base; non è cumulativa mese su mese.</div></div>':"";
+  let frequency;
+  if(d.method==="SAME_MONTH_LAST_YEAR"){
+    frequency='<div class="forecast-field"><label>Frequenza prevista</label><div class="forecast-type-note"><strong>Ereditata dallo storico.</strong><br>Ogni mese replica esattamente lo stesso mese A-1, inclusi i mesi a 0 €.</div></div>';
+  }else{
+    frequency='<div class="forecast-field"><label>Frequenza prevista</label><select id="forecastFrequency" class="select">'+forecastFrequencyOptions(d.frequency)+'</select><div class="forecast-type-note">Per le frequenze periodiche la cadenza viene agganciata all’ultimo mese in cui la voce è comparsa.</div></div>';
   }
-  const manualMode=d.method==="RANGE"?"RANGE":"FIXED";
-  return type+'<div class="forecast-field"><label>Importo manuale</label><select id="forecastManualMode" class="select"><option value="FIXED"'+(manualMode==="FIXED"?" selected":"")+'>Importo singolo</option><option value="RANGE"'+(manualMode==="RANGE"?" selected":"")+'>Intervallo</option></select></div>'+(manualMode==="FIXED"?'<div class="forecast-field"><label>Importo previsto €</label><input id="forecastFixedAmount" class="input" type="number" min="0" step="1" value="'+esc(d.fixed_amount==null?"":d.fixed_amount)+'" /></div>':'<div class="forecast-field"><label>Intervallo €</label><div class="forecast-range-fields"><input id="forecastRangeMin" class="input" type="number" min="0" step="1" placeholder="Min" value="'+esc(d.range_min==null?"":d.range_min)+'" /><input id="forecastRangeMax" class="input" type="number" min="0" step="1" placeholder="Max" value="'+esc(d.range_max==null?"":d.range_max)+'" /></div></div>');
+  const fixed=d.method==="FIXED"?'<div class="forecast-field"><label>Importo previsto €</label><input id="forecastFixedAmount" class="input" type="number" min="0" step="1" value="'+esc(d.fixed_amount==null?"":d.fixed_amount)+'" /></div>':"";
+  const range=d.method==="RANGE"?'<div class="forecast-field"><label>Intervallo €</label><div class="forecast-range-fields"><input id="forecastRangeMin" class="input" type="number" min="0" step="1" placeholder="Min" value="'+esc(d.range_min==null?"":d.range_min)+'" /><input id="forecastRangeMax" class="input" type="number" min="0" step="1" placeholder="Max" value="'+esc(d.range_max==null?"":d.range_max)+'" /></div></div>':"";
+  let months="";
+  if(d.method!=="SAME_MONTH_LAST_YEAR"&&d.frequency==="MONTHS"){
+    const names=["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
+    months='<div class="forecast-field" style="grid-column:1/-1"><label>Mesi previsti</label><div class="forecast-months">'+names.map(function(n,i){const m=i+1;return '<label class="forecast-month-check"><input type="checkbox" data-forecast-month="'+m+'"'+((d.specific_months||[]).includes(m)?" checked":"")+' />'+n+'</label>'}).join("")+'</div></div>';
+  }
+  return method+frequency+variation+fixed+range+months;
 }
 function renderForecastEditor(){
   const box=$("analysisForecastPanel"),d=analysisDetailData;if(!box)return;if(!d||d.level!=="L2"){box.classList.add("hidden");box.innerHTML="";return}box.classList.remove("hidden");
@@ -1658,13 +1736,13 @@ function renderForecastEditor(){
   box.innerHTML='<div class="forecast-panel-head"><div><h4>Previsione</h4><div class="small muted">Decidi qui la regola; la Pianificazione riceve il risultato e consente solo override mensili.</div></div><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">'+(!tracking?'<span class="forecast-test-badge">Modalità test · tracking OFF</span>':'')+'<div class="forecast-scope-buttons"><button class="btn '+(scope==="CATEGORY"?"":"ghost ")+'compact" type="button" data-forecast-scope="CATEGORY">Categoria L2</button><button class="btn '+(scope==="COUNTERPARTIES"?"":"ghost ")+'compact" type="button" data-forecast-scope="COUNTERPARTIES">Controparti</button></div></div></div>'+controls+result+'<div class="forecast-actions"><span class="forecast-target">'+esc(targetLabel)+'</span>'+(target?'<button class="btn compact" type="button" data-save-forecast>Salva previsione</button>':'')+'</div>';
 }
 function canonicalSavedSetting(s,scope){
-  const x=Object.assign({},s||{}),source=x.forecast_source||"HISTORY";let method=x.forecast_method||"AVG6",model=x.amount_model||"ESTIMATED",fixed=x.fixed_amount,rmin=x.range_min,rmax=x.range_max,adj=num(x.adjustment_pct);
-  if(source==="HISTORY"){if(!["AVG6","AVG12","MEDIAN12","SAME_MONTH_LAST_YEAR","LAST_VALUE"].includes(method))method="AVG6";model="ESTIMATED"}
-  else if(source==="RECURRENCE"){if(!["AVG6","AVG12","MEDIAN12","SAME_MONTH_LAST_YEAR","LAST_VALUE","FIXED","RANGE"].includes(method))method="LAST_VALUE";model=method==="FIXED"?"FIXED":method==="RANGE"?"RANGE":"ESTIMATED";if(["FIXED","RANGE"].includes(method))adj=0}
-  else if(source==="MANUAL"){if(!["FIXED","RANGE"].includes(method))method="FIXED";model=method==="RANGE"?"RANGE":"FIXED";if(method==="FIXED"&&fixed==null)fixed=0;adj=0}
-  else if(source==="NON_REPEAT"){method="ZERO";model="ESTIMATED";fixed=null;rmin=null;rmax=null;adj=0}
-  else{return canonicalSavedSetting({forecast_source:"HISTORY",forecast_method:"AVG6",adjustment_pct:0},scope)}
-  return {p_forecast_scope:scope,p_forecast_source:source,p_forecast_method:method,p_adjustment_pct:adj,p_amount_model:model,p_fixed_amount:fixed,p_range_min:rmin,p_range_max:rmax,p_recurrence_pattern:source==="RECURRENCE"?"MONTHLY":null};
+  const x=Object.assign({},s||{});let method=x.forecast_method||"AVG6",fixed=x.fixed_amount,rmin=x.range_min,rmax=x.range_max,adj=num(x.adjustment_pct);
+  if(!["AVG6","AVG12","MEDIAN12","SAME_MONTH_LAST_YEAR","LAST_VALUE","FIXED","RANGE","ZERO"].includes(method))method="AVG6";
+  const source=forecastSourceForMethod(method),model=method==="FIXED"?"FIXED":method==="RANGE"?"RANGE":"ESTIMATED";
+  if(method==="FIXED"&&fixed==null)fixed=0;
+  if(["FIXED","RANGE","ZERO"].includes(method))adj=0;
+  if(method==="ZERO"){fixed=null;rmin=null;rmax=null}
+  return {p_forecast_scope:scope,p_forecast_source:source,p_forecast_method:method,p_adjustment_pct:adj,p_amount_model:model,p_fixed_amount:fixed,p_range_min:rmin,p_range_max:rmax,p_recurrence_pattern:(method==="SAME_MONTH_LAST_YEAR"||method==="ZERO")?null:(x.recurrence_pattern||"MONTHLY")};
 }
 async function refreshForecastAfterSave(){
   const direction=analysisCurrentDirection(),oldCash=report.cashflow_monthly,oldLiquidity=report.liquidity_history,fresh=await rpc("dashboard_reporting_read_v5");report=fresh||{};report.cashflow_monthly=oldCash||report.cashflow_monthly||[];report.liquidity_history=oldLiquidity||{available:false,rows:[]};
