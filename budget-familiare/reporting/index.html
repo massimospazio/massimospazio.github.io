@@ -1761,7 +1761,61 @@ function forecastResultHtml(preview){
   const variation=showVariation?'<br>Base: '+money(preview.nextBase)+' → '+(preview.adjustment>0?"+":"")+num(preview.adjustment).toLocaleString("it-IT",{maximumFractionDigits:1})+'% → <strong>'+money(preview.next)+'</strong>':"";
   return '<div class="forecast-result"><div><div class="small muted">Anteprima live · media prossimi 12m</div><div class="value">'+money(preview.avg)+'</div></div><div class="meta">Prossimo mese: '+money(preview.next)+variation+(Math.abs(preview.high-preview.low)>.01?'<br>Intervallo medio: '+money(preview.low)+' – '+money(preview.high)+'<br>Prudente: '+money(preview.prudent):"")+'</div></div>';
 }
-function updateForecastLiveResult(){const el=$("forecastLiveResult");if(el)el.innerHTML=forecastResultHtml(forecastDraftPreview())}
+function forecastFrequencyExplanation(d){
+  if(d.method==="SAME_MONTH_LAST_YEAR")return "La cadenza è ereditata dallo storico: ogni mese futuro guarda lo stesso mese dell’anno precedente.";
+  if(d.frequency==="EVERY_2_MONTHS")return "L’importo viene applicato ogni 2 mesi, mantenendo la cadenza rispetto all’ultima occorrenza.";
+  if(d.frequency==="QUARTERLY")return "L’importo viene applicato ogni 3 mesi, mantenendo la cadenza rispetto all’ultima occorrenza.";
+  if(d.frequency==="SEMIANNUAL")return "L’importo viene applicato ogni 6 mesi, mantenendo la cadenza rispetto all’ultima occorrenza.";
+  if(d.frequency==="ANNUAL")return "L’importo viene applicato ogni 12 mesi, mantenendo la cadenza rispetto all’ultima occorrenza.";
+  if(d.frequency==="MONTHS"){
+    const names=["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"],sel=(d.specific_months||[]).map(function(m){return names[m-1]}).filter(Boolean);
+    return sel.length?"L’importo viene applicato solo nei mesi selezionati: "+sel.join(", ")+".":"Seleziona almeno un mese in cui applicare la previsione.";
+  }
+  return "L’importo viene applicato ogni mese.";
+}
+function forecastExplanationHtml(d){
+  if(!d)return "";
+  let calc="",formula="",base=null;
+  const nonMonthly=d.method!=="SAME_MONTH_LAST_YEAR"&&d.frequency&&d.frequency!=="MONTHLY";
+  const rows=forecastDraftRows(),sample=rows.length?rows[0]:null;
+  if(d.method==="SAME_MONTH_LAST_YEAR"){
+    calc="Ogni mese copia esattamente l’importo dello stesso mese dell’anno precedente. Se quel mese era a 0 €, resta a 0 €.";
+  }else if(d.method==="LAST_VALUE"){
+    base=sample?forecastBaseForRow(sample,d.method,d):0;
+    calc="Usa l’ultimo importo osservato come base nei mesi previsti dalla frequenza scelta.";
+  }else if(d.method==="AVG6"){
+    base=sample?forecastBaseForRow(sample,d.method,d):0;
+    calc=nonMonthly?"Calcola la media dei soli mesi attivi negli ultimi 6 mesi e usa quell’importo nelle occorrenze previste. I mesi a 0 € non abbassano l’importo medio.":"Calcola la media degli ultimi 6 mesi completi, includendo anche i mesi a 0 €, e la applica ogni mese.";
+  }else if(d.method==="AVG12"){
+    base=sample?forecastBaseForRow(sample,d.method,d):0;
+    calc=nonMonthly?"Calcola la media dei soli mesi attivi negli ultimi 12 mesi e usa quell’importo nelle occorrenze previste. I mesi a 0 € non abbassano l’importo medio.":"Calcola la media degli ultimi 12 mesi completi, includendo anche i mesi a 0 €, e la applica ogni mese.";
+  }else if(d.method==="MEDIAN12"){
+    base=sample?forecastBaseForRow(sample,d.method,d):0;
+    calc=nonMonthly?"Calcola la mediana dei soli mesi attivi negli ultimi 12 mesi e la usa nelle occorrenze previste.":"Calcola la mediana dei 12 mesi completi, includendo i mesi a 0 €, e la applica ogni mese.";
+  }else if(d.method==="FIXED"){
+    base=d.fixed_amount==null?null:num(d.fixed_amount);
+    calc="Usa esattamente l’importo manuale inserito nei mesi previsti dalla frequenza.";
+  }else if(d.method==="RANGE"){
+    const lo=d.range_min==null?null:num(d.range_min),hi=d.range_max==null?null:num(d.range_max);
+    calc="Usa minimo e massimo come intervallo; la previsione centrale è il punto medio tra i due.";
+    if(lo!==null&&hi!==null)formula="("+money(lo)+" + "+money(hi)+") ÷ 2 = "+money((lo+hi)/2);
+  }else if(d.method==="ZERO"){
+    calc="La voce resta nello storico ma contribuisce 0 € a tutti i mesi futuri.";
+  }
+  if(!formula&&base!==null&&d.method!=="ZERO"){
+    if(!["FIXED","RANGE"].includes(d.method)&&Math.abs(num(d.adjustment))>.0001){
+      formula=money(base)+" × "+(1+num(d.adjustment)/100).toLocaleString("it-IT",{maximumFractionDigits:3})+" = "+money(Math.max(0,base*(1+num(d.adjustment)/100)));
+    }else formula="Importo base: "+money(base);
+  }
+  const adjustment=(!["FIXED","RANGE","ZERO"].includes(d.method)&&Math.abs(num(d.adjustment))>.0001)
+    ?" La variazione "+(num(d.adjustment)>0?"+":"")+num(d.adjustment).toLocaleString("it-IT",{maximumFractionDigits:1})+"% viene applicata una sola volta alla base di ciascun mese attivo e non si cumula nel tempo."
+    :"";
+  return '<div class="forecast-explanation"><strong>Come funziona:</strong> '+esc(calc)+'<br><strong>Frequenza:</strong> '+esc(forecastFrequencyExplanation(d))+esc(adjustment)+(formula?'<br><span class="formula">'+esc(formula)+'</span>':"")+'</div>';
+}
+function updateForecastLiveResult(){
+  const el=$("forecastLiveResult");if(el)el.innerHTML=forecastResultHtml(forecastDraftPreview());
+  const help=$("forecastExplanation");if(help)help.outerHTML='<div id="forecastExplanation">'+forecastExplanationHtml(ensureForecastDraft())+'</div>';
+}
 function forecastControlsHtml(d){
   const method='<div class="forecast-field"><label>Metodo di previsione</label><select id="forecastMethod" class="select">'+forecastMethodOptions(d.method)+'</select></div>';
   if(d.method==="ZERO")return method+'<div class="forecast-field"><label>Risultato</label><div class="notice">Questa voce resta nello storico ma non contribuisce alla previsione futura.</div></div>';
@@ -1787,7 +1841,7 @@ function renderForecastEditor(){
   if(!analysisForecastEditor){box.innerHTML='<div class="analysis-loading"><span class="spinner"></span>Carico configurazione forecast…</div>';return}
   const s=analysisForecastEditor.category_setting||{},scope=s.forecast_scope||"CATEGORY",target=currentForecastTarget(),cp=selectedAnalysisComponent(),tracking=!!analysisForecastEditor.tracking_enabled;let controls="",result="";
   if(scope==="COUNTERPARTIES"&&!target){controls='<div class="notice"><strong>Forecast per controparti attivo.</strong><br>La previsione della L2 è la somma delle controparti. Seleziona una controparte sotto per modificarne la regola. “Senza controparte” è una componente esplicita: nessun residuo nascosto.</div>';result=forecastResultHtml(forecastPreviewStats())}
-  else{const draft=ensureForecastDraft();controls='<div class="forecast-grid">'+forecastControlsHtml(draft)+'</div>';result='<div id="forecastLiveResult">'+forecastResultHtml(forecastDraftPreview())+'</div>'}
+  else{const draft=ensureForecastDraft();controls='<div class="forecast-grid">'+forecastControlsHtml(draft)+'</div><div id="forecastExplanation">'+forecastExplanationHtml(draft)+'</div>';result='<div id="forecastLiveResult">'+forecastResultHtml(forecastDraftPreview())+'</div>'}
   const targetLabel=scope==="COUNTERPARTIES"?(cp?"Controparte: "+cp.component_name:"Somma controparti"):"Categoria L2";
   box.innerHTML='<div class="forecast-panel-head"><div><h4>Previsione</h4><div class="small muted">Decidi qui la regola; la Pianificazione riceve il risultato e consente solo override mensili.</div></div><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">'+(!tracking?'<span class="forecast-test-badge">Modalità test · tracking OFF</span>':'')+'<div class="forecast-scope-buttons"><button class="btn '+(scope==="CATEGORY"?"":"ghost ")+'compact" type="button" data-forecast-scope="CATEGORY">Categoria L2</button><button class="btn '+(scope==="COUNTERPARTIES"?"":"ghost ")+'compact" type="button" data-forecast-scope="COUNTERPARTIES">Controparti</button></div></div></div>'+controls+result+'<div class="forecast-actions"><span class="forecast-target">'+esc(targetLabel)+'</span>'+(target?'<button class="btn compact" type="button" data-save-forecast>Salva previsione</button>':'')+'</div>';
 }
@@ -2023,6 +2077,11 @@ $("analysisBody").addEventListener("click",function(e){
 });
 $("detailComponents").addEventListener("click",function(e){const l2=e.target.closest("[data-drill-l2]");if(l2){openAnalysisDetail(l2.dataset.drillL2,"L2",null);return}const cp=e.target.closest("[data-select-component]");if(cp){analysisSelectedComponent=cp.dataset.selectComponent;analysisSelectedMonth=null;analysisMovementSort={key:"amount",dir:"desc"};analysisForecastDraft=null;analysisForecastDraftKey="";renderAnalysisDetail()}});
 $("detailSelection").addEventListener("click",function(e){if(e.target.closest("[data-clear-analysis-component]")){analysisSelectedComponent=null;analysisSelectedMonth=null;analysisForecastDraft=null;analysisForecastDraftKey="";renderAnalysisDetail()}});
+$("detailStats").addEventListener("click",function(e){
+  if(!e.target.closest("[data-reset-analysis-series]")||!categoryTrendChart)return;
+  categoryTrendChart.data.datasets.forEach(function(ds,i){if(ds.analysisRole==="component")categoryTrendChart.setDatasetVisibility(i,true)});
+  recalcAnalysisReferenceLines(categoryTrendChart);renderAnalysisVisibleStats(categoryTrendChart);resetAnalysisHoverDetail();categoryTrendChart.update();
+});
 $("detailMovements").addEventListener("click",function(e){const th=e.target.closest("[data-sort-analysis-moves]");if(!th)return;const key=th.dataset.sortAnalysisMoves;if(analysisMovementSort.key===key)analysisMovementSort.dir=analysisMovementSort.dir==="asc"?"desc":"asc";else{analysisMovementSort.key=key;analysisMovementSort.dir=key==="transaction_date"?"desc":"asc"}renderAnalysisMovements()});
 $("analysisForecastPanel").addEventListener("click",async function(e){const scope=e.target.closest("[data-forecast-scope]");if(scope){await saveForecastScope(scope.dataset.forecastScope,scope);return}const save=e.target.closest("[data-save-forecast]");if(save){await saveForecastRule(save);return}});
 $("analysisForecastPanel").addEventListener("change",function(e){
