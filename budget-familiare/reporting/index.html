@@ -1667,9 +1667,11 @@ function canonicalSavedSetting(s,scope){
   return {p_forecast_scope:scope,p_forecast_source:source,p_forecast_method:method,p_adjustment_pct:adj,p_amount_model:model,p_fixed_amount:fixed,p_range_min:rmin,p_range_max:rmax,p_recurrence_pattern:source==="RECURRENCE"?"MONTHLY":null};
 }
 async function refreshForecastAfterSave(){
-  const oldCash=report.cashflow_monthly,oldLiquidity=report.liquidity_history,fresh=await rpc("dashboard_reporting_read_v5");report=fresh||{};report.cashflow_monthly=oldCash||report.cashflow_monthly||[];report.liquidity_history=oldLiquidity||{available:false,rows:[]};
-  if(analysisSelectedLevel==="L2"&&analysisSelectedCategory)analysisForecastEditor=await rpc("dashboard_reporting_forecast_editor_v1",{p_category_id:analysisSelectedCategory,p_direction:analysisCurrentDirection(),p_horizon_months:12});
-  analysisForecastDraft=null;analysisForecastDraftKey="";renderAnalysisMaster();renderAnalysisDetail();renderProjection();
+  const direction=analysisCurrentDirection(),oldCash=report.cashflow_monthly,oldLiquidity=report.liquidity_history,fresh=await rpc("dashboard_reporting_read_v5");report=fresh||{};report.cashflow_monthly=oldCash||report.cashflow_monthly||[];report.liquidity_history=oldLiquidity||{available:false,rows:[]};
+  if(analysisSelectedLevel==="L2"&&analysisSelectedCategory)analysisForecastEditor=await rpc("dashboard_reporting_forecast_editor_v1",{p_category_id:analysisSelectedCategory,p_direction:direction,p_horizon_months:12});
+  analysisForecastDraft=null;analysisForecastDraftKey="";invalidateAnalysisProjection(direction);
+  if(analysisTimeMode==="PROJECTION")await loadAnalysisProjection(true);else{renderAnalysisMaster();renderAnalysisDetail()}
+  renderProjection();
 }
 async function saveForecastScope(scope,btn){
   if(!analysisForecastEditor||analysisForecastSaving)return;const s=analysisForecastEditor.category_setting||{};if(scope===s.forecast_scope)return;analysisForecastSaving=true;setBusy(btn,true,"Salvo");
@@ -1708,8 +1710,27 @@ function movementNoteHtml(note){
 function renderAnalysisMovements(){
   const d=analysisDetailData;if(!d)return;
   if(!analysisSelectedMonth){
-    $("detailMovements").innerHTML='<div class="analysis-movements-head"><h4>Movimenti del mese</h4></div><div class="muted small">Clicca su un mese del grafico per vedere i movimenti che lo compongono e valutarne la ripetibilità.</div>';
+    $("detailMovements").innerHTML='<div class="analysis-movements-head"><h4>'+(analysisTimeMode==="PROJECTION"?"Dettaglio del mese":"Movimenti del mese")+'</h4></div><div class="muted small">'+(analysisTimeMode==="PROJECTION"?"Clicca un mese del grafico: sui mesi reali vedi i movimenti, sui mesi futuri la composizione della previsione.":"Clicca su un mese del grafico per vedere i movimenti che lo compongono e valutarne la ripetibilità.")+'</div>';
     return;
+  }
+  if(analysisTimeMode==="PROJECTION"){
+    const data=projectionDataFor(analysisCurrentDirection());
+    if(data&&analysisSelectedMonth>=data.current_month){
+      let rows=(data.forecast_monthly||[]).filter(function(x){
+        return x.month===analysisSelectedMonth&&(analysisSelectedLevel==="L1"?String(x.l1_id)===String(analysisSelectedCategory):String(x.category_id)===String(analysisSelectedCategory));
+      }).sort(function(a,b){return num(b.effective_amount)-num(a.effective_amount)});
+      const total=rows.reduce(function(s,x){return s+num(x.effective_amount)},0);
+      $("detailMovements").innerHTML='<div class="analysis-movements-head"><h4>Composizione previsione · '+esc(monthLabel(analysisSelectedMonth))+'</h4><span class="small muted">Totale '+money(total)+'</span></div>'+
+        '<div class="analysis-projection-detail"><div class="small muted">Valori read-only: includono gli override già impostati in Pianificazione.</div><div class="projection-breakdown">'+
+        (rows.length?rows.map(function(x){
+          const label=analysisSelectedLevel==="L1"?x.l2_name:(d.category_name||x.l2_name);
+          const method=forecastSourceLabel(x.forecast_source)+" · "+forecastMethodLabel(x.forecast_method)+(num(x.adjustment_pct)?(" · "+(num(x.adjustment_pct)>0?"+":"")+num(x.adjustment_pct).toLocaleString("it-IT",{maximumFractionDigits:1})+"%"):"");
+          const ov=x.override_amount!==null&&x.override_amount!==undefined?' · <strong>override '+money(x.override_amount)+'</strong>':"";
+          return '<span class="projection-chip"><strong>'+esc(label)+'</strong> · '+money(x.effective_amount)+' · '+esc(method)+ov+'</span>';
+        }).join(""):'<span class="muted small">Nessuna previsione per questo mese.</span>')+
+        '</div></div>';
+      return;
+    }
   }
   let rows=(d.movements||[]).filter(function(x){return x.month_start===analysisSelectedMonth});
   if(analysisSelectedComponent)rows=rows.filter(function(x){return String(x.component_id)===String(analysisSelectedComponent)});
@@ -1794,6 +1815,7 @@ function updateCellLocal(kind,category,month,amount){
   const list=kind==="income"?report.income_forecast_cells:report.forecast_cells;
   const c=(list||[]).find(function(x){return x.category_id===category&&x.month===month});
   if(c)c.override_amount=amount;
+  invalidateAnalysisProjection(kind==="income"?"INCOME":"EXPENSE");
 }
 async function copyFirstMonth(kind,category,btn){
   const months=futureMonths();if(months.length<2)return;
@@ -1824,17 +1846,29 @@ $("expenseScope").onchange=renderExpenseChart;
 $("toggleYoY").onchange=renderExpenseChart;
 $("modePlan").onclick=function(){planMode="PLAN";renderMode()};
 $("modeAnalysis").onclick=function(){planMode="ANALYSIS";renderMode()};
-$("analysisPeriod").onchange=function(){const keep=captureAnalysisSelection();analysisSelectedMonth=null;analysisWorkspace=null;analysisWorkspaceKey="";loadAnalysisWorkspace(true,keep)};
+$("analysisPeriod").onchange=function(){if(analysisTimeMode!=="HISTORY")return;const keep=captureAnalysisSelection();analysisSelectedMonth=null;analysisWorkspace=null;analysisWorkspaceKey="";loadAnalysisWorkspace(true,keep)};
+$("analysisProjectionView").onchange=function(){analysisProjectionView=this.value||"CALENDAR";analysisSelectedMonth=null;renderAnalysis()};
 $("analysisControls").addEventListener("click",function(e){
+  const time=e.target.closest("[data-analysis-time]");
+  if(time){
+    const next=time.dataset.analysisTime;if(next===analysisTimeMode||analysisViewMode==="BALANCE"&&next==="PROJECTION")return;
+    analysisTimeMode=next;analysisSelectedMonth=null;
+    if(next==="PROJECTION")loadAnalysisProjection(false);else renderAnalysis();
+    return;
+  }
   const view=e.target.closest("[data-analysis-view]");
-  if(view){const next=view.dataset.analysisView;if(next===analysisViewMode)return;analysisViewMode=next;$("analysisDirection").value=analysisCurrentDirection();resetAnalysisSelection();analysisWorkspace=null;analysisWorkspaceKey="";loadAnalysisWorkspace(true);return}
+  if(view){
+    const next=view.dataset.analysisView;if(next===analysisViewMode)return;
+    analysisViewMode=next;if(next==="BALANCE")analysisTimeMode="HISTORY";
+    $("analysisDirection").value=analysisCurrentDirection();resetAnalysisSelection();analysisWorkspace=null;analysisWorkspaceKey="";loadAnalysisWorkspace(true);return;
+  }
   if(e.target.closest("#analysisExtraordinaryBtn")){$("analysisExtraordinaryInline").classList.toggle("hidden");return}
   if(e.target.closest("[data-close-analysis-extra]")){$("analysisExtraordinaryInline").classList.add("hidden");return}
 });
 $("expandAll").onclick=function(){if(planMode==="PLAN"){collapsedL1.clear();renderPlan()}};
 $("collapseAll").onclick=function(){
   if(planMode==="PLAN"){groupedIncomeForecast().concat(groupedExpenseForecast()).forEach(function(g){collapsedL1.add(g.id)});renderPlan();return}
-  if(analysisWorkspace){const prefix=analysisCurrentDirection()==="INCOME"?"AI:":"AE:";(analysisWorkspace.rows||[]).filter(function(r){return r.level==="L1"}).forEach(function(r){collapsedL1.add(prefix+r.category_id)});renderAnalysisMaster()}
+  if(analysisWorkspace){const prefix=analysisCurrentDirection()==="INCOME"?"AI:":"AE:",rows=analysisTimeMode==="PROJECTION"&&projectionDataFor(analysisCurrentDirection())?projectionHierarchyRows(projectionDataFor(analysisCurrentDirection())):(analysisWorkspace.rows||[]);rows.filter(function(r){return r.level==="L1"}).forEach(function(r){collapsedL1.add(prefix+r.category_id)});renderAnalysisMaster()}
 };
 $("planBody").addEventListener("click",async function(e){
   const toggle=e.target.closest("[data-toggle-l1]");if(toggle){const id=toggle.dataset.toggleL1;if(collapsedL1.has(id))collapsedL1.delete(id);else collapsedL1.add(id);renderPlan();return}
