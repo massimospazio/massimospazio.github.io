@@ -1458,7 +1458,74 @@ function analysisLegendOnClick(e,legendItem,legend){
   resetAnalysisHoverDetail();
   chart.update();
 }
+
+function projectionSelectionCategoryIds(data){
+  if(!data||!analysisSelectedCategory)return [];
+  if(analysisSelectedLevel==="L1")return (data.categories||[]).filter(function(x){return String(x.l1_id)===String(analysisSelectedCategory)}).map(function(x){return x.category_id});
+  return [analysisSelectedCategory];
+}
+function projectionSeriesValue(data,ids,month,kind){
+  if(!data||!ids.length)return 0;
+  if(kind==="actual"){
+    const map=new Map((data.actual_monthly||[]).map(function(x){return [x.category_id+"|"+x.month,num(x.amount)]}));
+    return ids.reduce(function(s,id){return s+num(map.get(id+"|"+month))},0);
+  }
+  const map=new Map((data.forecast_monthly||[]).map(function(x){return [x.category_id+"|"+x.month,x]}));
+  return ids.reduce(function(s,id){const x=map.get(id+"|"+month);return s+num(x&&x.effective_amount)},0);
+}
+function analysisProjectionBoundaryPlugin(boundaryIndex){
+  return {id:"analysisProjectionBoundary"+boundaryIndex,afterDraw:function(chart){
+    if(boundaryIndex<=0||boundaryIndex>=chart.data.labels.length)return;
+    const x=chart.scales&&chart.scales.x;if(!x)return;
+    const a=x.getPixelForTick(boundaryIndex-1),b=x.getPixelForTick(boundaryIndex),px=(a+b)/2,ctx=chart.ctx,area=chart.chartArea;
+    ctx.save();ctx.strokeStyle="rgba(37,99,235,.58)";ctx.lineWidth=1.5;ctx.setLineDash([5,4]);ctx.beginPath();ctx.moveTo(px,area.top);ctx.lineTo(px,area.bottom);ctx.stroke();ctx.restore();
+  }};
+}
+function renderProjectionHoverDetail(chart,index,months){
+  const box=$("analysisChartHoverDetail");if(!box||index<0||index>=months.length)return;
+  const items=[];chart.data.datasets.forEach(function(ds,i){if(!chart.isDatasetVisible(i))return;const v=num(ds.data[index]);if(Math.abs(v)>.004)items.push({label:ds.label,value:v})});
+  box.innerHTML='<span class="analysis-hover-month">'+esc(monthLabel(months[index]))+'</span>'+items.map(function(x){return '<span class="analysis-hover-item">'+esc(x.label)+' <strong>'+money(x.value)+'</strong></span>'}).join("");
+}
+function renderProjectionDetailChart(){
+  const data=projectionDataFor(analysisCurrentDirection());if(!data||!analysisSelectedCategory)return;
+  const def=projectionDefinition(data),ids=projectionSelectionCategoryIds(data);
+  if(categoryTrendChart)categoryTrendChart.destroy();
+  let labels=[],months=[],datasets=[],boundary=0;
+  if(analysisProjectionView==="ROLLING_12"){
+    months=def.comparisonMonths.concat(def.targetMonths);labels=months.map(monthLabel);boundary=12;
+    datasets=[
+      {type:"bar",analysisRole:"projection",label:"Reale · ultimi 12m",data:def.comparisonMonths.map(function(m){return projectionSeriesValue(data,ids,m,"actual")}).concat(def.targetMonths.map(function(){return 0})),backgroundColor:"rgba(37,99,235,.72)",borderWidth:0,stack:"timeline"},
+      {type:"bar",analysisRole:"projection",label:"Previsto · prossimi 12m",data:def.comparisonMonths.map(function(){return 0}).concat(def.targetMonths.map(function(m){return projectionSeriesValue(data,ids,m,"forecast")})),backgroundColor:"rgba(147,197,253,.58)",borderColor:"#2563eb",borderWidth:1.2,stack:"timeline"}
+    ];
+  }else{
+    months=def.targetMonths;labels=months.map(function(m){return monthDate(m).toLocaleDateString("it-IT",{month:"short"})});boundary=def.targetMonths.findIndex(function(m){return m>=data.current_month});
+    datasets=[
+      {type:"bar",analysisRole:"projection",label:def.comparisonLabel+" reale",data:def.comparisonMonths.map(function(m){return projectionSeriesValue(data,ids,m,"actual")}),backgroundColor:"rgba(100,116,139,.48)",borderWidth:0,stack:"previous"},
+      {type:"bar",analysisRole:"projection",label:def.targetLabel+" reale",data:def.targetMonths.map(function(m){return m<data.current_month?projectionSeriesValue(data,ids,m,"actual"):0}),backgroundColor:"rgba(37,99,235,.72)",borderWidth:0,stack:"current"},
+      {type:"bar",analysisRole:"projection",label:def.targetLabel+" previsto",data:def.targetMonths.map(function(m){return m>=data.current_month?projectionSeriesValue(data,ids,m,"forecast"):0}),backgroundColor:"rgba(147,197,253,.58)",borderColor:"#2563eb",borderWidth:1.2,stack:"current"}
+    ];
+  }
+  resetAnalysisHoverDetail();
+  categoryTrendChart=new Chart($("categoryTrendChart"),{
+    type:"bar",plugins:[analysisProjectionBoundaryPlugin(boundary)],
+    data:{labels:labels,datasets:datasets},
+    options:{
+      responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},
+      onHover:function(evt,elements,chart){if(elements&&elements.length)renderProjectionHoverDetail(chart,elements[0].index,months)},
+      onClick:function(evt,elements){
+        if(!elements||!elements.length)return;
+        const idx=elements[0].index;
+        analysisSelectedMonth=analysisProjectionView==="ROLLING_12"?months[idx]:def.targetMonths[idx];
+        analysisMovementSort={key:"amount",dir:"desc"};renderAnalysisMovements();
+      },
+      plugins:{legend:{position:"top",maxHeight:74,labels:{boxWidth:11,usePointStyle:true}},tooltip:{enabled:false}},
+      scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,beginAtZero:true,ticks:{callback:function(v){return money(v)}}}}
+    }
+  });
+}
+
 function renderAnalysisDetailChart(){
+  if(analysisTimeMode==="PROJECTION"){renderProjectionDetailChart();return}
   const d=analysisDetailData;if(!d)return;
   const months=(d.months||[]).map(function(x){return x.month}),components=d.components||[],selected=selectedAnalysisComponent(),valueMap=new Map((d.component_monthly||[]).map(function(x){return [x.month+"|"+x.component_id,num(x.amount)]}));
   if(categoryTrendChart)categoryTrendChart.destroy();let datasets=[];
