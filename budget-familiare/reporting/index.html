@@ -2139,8 +2139,22 @@ $("detailStats").addEventListener("click",function(e){
   recalcAnalysisReferenceLines(categoryTrendChart);renderAnalysisVisibleStats(categoryTrendChart);resetAnalysisHoverDetail();categoryTrendChart.update();
 });
 $("detailMovements").addEventListener("click",function(e){const th=e.target.closest("[data-sort-analysis-moves]");if(!th)return;const key=th.dataset.sortAnalysisMoves;if(analysisMovementSort.key===key)analysisMovementSort.dir=analysisMovementSort.dir==="asc"?"desc":"asc";else{analysisMovementSort.key=key;analysisMovementSort.dir=key==="transaction_date"?"desc":"asc"}renderAnalysisMovements()});
-$("analysisForecastPanel").addEventListener("click",async function(e){const scope=e.target.closest("[data-forecast-scope]");if(scope){await saveForecastScope(scope.dataset.forecastScope,scope);return}const save=e.target.closest("[data-save-forecast]");if(save){await saveForecastRule(save);return}});
-$("analysisForecastPanel").addEventListener("change",function(e){
+$("analysisForecastPanel").addEventListener("click",async function(e){
+  const reset=e.target.closest("[data-reset-analysis-plan]");
+  if(reset){await saveIntegratedMonthlyOverride(reset.dataset.resetAnalysisPlan,null,reset);return}
+  const scope=e.target.closest("[data-forecast-scope]");if(scope){await saveForecastScope(scope.dataset.forecastScope,scope);return}
+  const save=e.target.closest("[data-save-forecast]");if(save){await saveForecastRule(save);return}
+});
+$("analysisForecastPanel").addEventListener("change",async function(e){
+  const planInput=e.target.closest("[data-analysis-plan-month]");
+  if(planInput){
+    const raw=String(planInput.value||"").trim(),base=num(planInput.dataset.analysisPlanBase);
+    if(raw===""){await saveIntegratedMonthlyOverride(planInput.dataset.analysisPlanMonth,null,planInput);return}
+    const amount=Number(raw);
+    if(!Number.isFinite(amount)||amount<0){msg($("analysisStatus"),"Inserisci un importo mensile valido.",true);renderForecastEditor();return}
+    await saveIntegratedMonthlyOverride(planInput.dataset.analysisPlanMonth,Math.abs(amount-base)<.005?null:amount,planInput);
+    return;
+  }
   const d=ensureForecastDraft();if(!d)return;
   if(e.target.id==="forecastMethod"){
     d.method=e.target.value;d.source=forecastSourceForMethod(d.method);
