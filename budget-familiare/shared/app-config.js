@@ -1,7 +1,7 @@
 // Canonical source: massimospazio/budget-familiare; public files are deployed automatically.
 (function(){
-  const APP_VERSION='V72.9';
-  const APP_RELEASE='Piano mensile integrato in Analisi';
+  const APP_VERSION='V72.9.1';
+  const APP_RELEASE='Chiusura fase Analisi';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});
