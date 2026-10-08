@@ -1931,7 +1931,10 @@ async function saveIntegratedMonthlyOverride(month,amount,input){
     invalidateAnalysisProjection(direction);
     renderForecastEditor();renderPlan();renderProjection();
     if(analysisTimeMode==="PROJECTION")await loadAnalysisProjection(true);
-    msg($("analysisStatus"),amount===null?"Override rimosso: il mese torna al valore calcolato dalla regola.":"Override mensile salvato.");
+    const manualMode=savedPlanIsManual();
+    msg($("analysisStatus"),amount===null
+      ?(manualMode?"Valore mensile ripristinato allo standard della regola.":"Override rimosso: il mese torna al valore calcolato dalla regola.")
+      :(manualMode?"Valore mensile del piano salvato.":"Override mensile salvato."));
   }catch(e){
     msg($("analysisStatus"),e.message||"Errore salvataggio override",true);
     if(input)input.disabled=false;
@@ -2017,7 +2020,9 @@ function renderAnalysisMovements(){
         (rows.length?rows.map(function(x){
           const label=analysisSelectedLevel==="L1"?x.l2_name:(d.category_name||x.l2_name);
           const method=forecastMethodLabel(x.forecast_method)+(num(x.adjustment_pct)?(" · "+(num(x.adjustment_pct)>0?"+":"")+num(x.adjustment_pct).toLocaleString("it-IT",{maximumFractionDigits:1})+"%"):"");
-          const ov=x.override_amount!==null&&x.override_amount!==undefined?' · <strong>override '+money(x.override_amount)+'</strong>':"";
+          const ov=x.override_amount!==null&&x.override_amount!==undefined
+            ?(["FIXED","RANGE"].includes(x.forecast_method)?' · <strong>piano '+money(x.override_amount)+'</strong>':' · <strong>override '+money(x.override_amount)+'</strong>')
+            :"";
           return '<span class="projection-chip"><strong>'+esc(label)+'</strong> · '+money(x.effective_amount)+' · '+esc(method)+ov+'</span>';
         }).join(""):'<span class="muted small">Nessuna previsione per questo mese.</span>')+
         '</div></div>';
