@@ -986,7 +986,146 @@ function renderAnalysisModeButtons(){
   document.querySelectorAll("[data-analysis-view]").forEach(function(b){
     const active=b.dataset.analysisView===analysisViewMode;b.className="btn "+(active?"":"ghost ")+"compact";
   });
+  document.querySelectorAll("[data-analysis-time]").forEach(function(b){
+    const active=b.dataset.analysisTime===analysisTimeMode;b.className="btn "+(active?"":"ghost ")+"compact";
+    b.disabled=analysisViewMode==="BALANCE"&&b.dataset.analysisTime==="PROJECTION";
+    if(b.disabled)b.title="La proiezione Bilancio verrà integrata nella fase di monitoring; V72.7 proietta Spese ed Entrate.";
+  });
+  if($("analysisPeriodWrap"))$("analysisPeriodWrap").classList.toggle("hidden",analysisTimeMode!=="HISTORY");
+  if($("analysisProjectionWrap"))$("analysisProjectionWrap").classList.toggle("hidden",analysisTimeMode!=="PROJECTION");
 }
+
+function projectionDataFor(direction){return analysisProjectionData.get(direction)||null}
+function addMonthsISO(month,n){
+  const d=monthDate(month);if(!d)return null;
+  d.setDate(1);d.setMonth(d.getMonth()+n);
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-01";
+}
+function monthSeries(start,count){return Array.from({length:count},function(_,i){return addMonthsISO(start,i)})}
+function projectionMaps(data){
+  return {
+    actual:new Map(((data&&data.actual_monthly)||[]).map(function(x){return [x.category_id+"|"+x.month,num(x.amount)]})),
+    forecast:new Map(((data&&data.forecast_monthly)||[]).map(function(x){return [x.category_id+"|"+x.month,x]}))
+  };
+}
+function projectionDefinition(data){
+  if(!data)return null;
+  const current=data.current_month;
+  if(analysisProjectionView==="ROLLING_12"){
+    return {
+      comparisonMonths:monthSeries(addMonthsISO(current,-12),12),
+      targetMonths:monthSeries(current,12),
+      actualTargetMonths:[],
+      forecastTargetMonths:monthSeries(current,12),
+      comparisonLabel:"Ultimi 12m",
+      targetLabel:"Prossimi 12m"
+    };
+  }
+  const currentYearStart=data.current_year_start,previousYearStart=data.previous_year_start;
+  const targetMonths=monthSeries(currentYearStart,12);
+  return {
+    comparisonMonths:monthSeries(previousYearStart,12),
+    targetMonths:targetMonths,
+    actualTargetMonths:targetMonths.filter(function(m){return m<current}),
+    forecastTargetMonths:targetMonths.filter(function(m){return m>=current}),
+    comparisonLabel:String(previousYearStart||"").slice(0,4),
+    targetLabel:String(currentYearStart||"").slice(0,4)
+  };
+}
+function projectionCategoryMetrics(data){
+  if(!data)return [];
+  const maps=projectionMaps(data),def=projectionDefinition(data),cats=data.categories||[];
+  const sumActual=function(cat,months){return months.reduce(function(s,m){return s+num(maps.actual.get(cat+"|"+m))},0)};
+  const sumForecast=function(cat,months){return months.reduce(function(s,m){const x=maps.forecast.get(cat+"|"+m);return s+num(x&&x.effective_amount)},0)};
+  const out=cats.map(function(cat){
+    const comparison=sumActual(cat.category_id,def.comparisonMonths);
+    let actual=0,forecast=0,projected=0;
+    if(analysisProjectionView==="ROLLING_12"){
+      actual=comparison;forecast=sumForecast(cat.category_id,def.targetMonths);projected=forecast;
+    }else{
+      actual=sumActual(cat.category_id,def.actualTargetMonths);
+      forecast=sumForecast(cat.category_id,def.forecastTargetMonths);
+      projected=actual+forecast;
+    }
+    const overrides=def.targetMonths.reduce(function(n,m){const x=maps.forecast.get(cat.category_id+"|"+m);return n+(x&&x.override_amount!==null&&x.override_amount!==undefined?1:0)},0);
+    return Object.assign({},cat,{
+      level:"L2",
+      comparison_total:comparison,
+      actual_total:actual,
+      forecast_total:forecast,
+      projected_total:projected,
+      delta_pct:comparison>0?(projected-comparison)*100/comparison:null,
+      avg_future:def.forecastTargetMonths.length?forecast/def.forecastTargetMonths.length:0,
+      override_count:overrides
+    });
+  });
+  const grand=out.reduce(function(s,x){return s+x.projected_total},0);
+  out.forEach(function(x){x.share_pct=grand>0?x.projected_total*100/grand:0});
+  return out;
+}
+function projectionHierarchyRows(data){
+  const l2=projectionCategoryMetrics(data),groups=new Map();
+  l2.forEach(function(r){
+    if(!groups.has(r.l1_id))groups.set(r.l1_id,{level:"L1",category_id:r.l1_id,l1_id:r.l1_id,l1_name:r.l1_name,l2_id:null,l2_name:null,comparison_total:0,actual_total:0,forecast_total:0,projected_total:0,override_count:0});
+    const g=groups.get(r.l1_id);
+    g.comparison_total+=r.comparison_total;g.actual_total+=r.actual_total;g.forecast_total+=r.forecast_total;g.projected_total+=r.projected_total;g.override_count+=r.override_count;
+  });
+  const grand=l2.reduce(function(s,x){return s+x.projected_total},0);
+  groups.forEach(function(g){g.share_pct=grand>0?g.projected_total*100/grand:0;g.delta_pct=g.comparison_total>0?(g.projected_total-g.comparison_total)*100/g.comparison_total:null;g.avg_future=projectionDefinition(data).forecastTargetMonths.length?g.forecast_total/projectionDefinition(data).forecastTargetMonths.length:0});
+  return Array.from(groups.values()).concat(l2);
+}
+function projectionDeltaHtml(value){
+  if(value===null||value===undefined||!Number.isFinite(Number(value)))return '<span class="trend-chip trend-neutral">—</span>';
+  const v=num(value),favorable=analysisCurrentDirection()==="EXPENSE"?v<0:v>0,cls=Math.abs(v)<1?"trend-neutral":favorable?"trend-good":"trend-bad",arrow=v>0?"↑":v<0?"↓":"→";
+  return '<span class="trend-chip '+cls+'">'+(v>0?"+":"")+v.toLocaleString("it-IT",{maximumFractionDigits:1})+'% '+arrow+'</span>';
+}
+function projectionRowForSelection(){
+  const data=projectionDataFor(analysisCurrentDirection());if(!data||!analysisSelectedCategory)return null;
+  return projectionHierarchyRows(data).find(function(x){return x.level===analysisSelectedLevel&&String(x.category_id)===String(analysisSelectedCategory)})||null;
+}
+function projectionDirectionTotals(data){
+  const rows=projectionCategoryMetrics(data);
+  return rows.reduce(function(a,r){a.comparison+=r.comparison_total;a.actual+=r.actual_total;a.forecast+=r.forecast_total;a.projected+=r.projected_total;return a},{comparison:0,actual:0,forecast:0,projected:0});
+}
+function invalidateAnalysisProjection(direction){
+  if(direction)analysisProjectionData.delete(direction);
+  else analysisProjectionData.clear();
+}
+async function loadAnalysisProjection(force){
+  if(analysisViewMode==="BALANCE"){analysisTimeMode="HISTORY";renderAnalysis();return}
+  const direction=analysisCurrentDirection();
+  if(!force&&projectionDataFor(direction)){renderAnalysis();return}
+  if(analysisProjectionLoading.has(direction))return;
+  analysisProjectionLoading.add(direction);msg($("analysisStatus"),"");
+  try{
+    const data=await rpc("dashboard_reporting_analysis_projection_v1",{p_direction:direction});
+    analysisProjectionData.set(direction,data||{});
+    renderAnalysis();
+  }catch(e){msg($("analysisStatus"),e.message||"Errore caricamento proiezione",true)}
+  finally{analysisProjectionLoading.delete(direction)}
+}
+function renderProjectionSummary(){
+  const box=$("analysisSummary"),data=projectionDataFor(analysisCurrentDirection());if(!box||!data)return;
+  const t=projectionDirectionTotals(data),def=projectionDefinition(data);
+  if(analysisProjectionView==="ROLLING_12"){
+    const delta=t.projected-t.comparison,pct=t.comparison>0?delta*100/t.comparison:null;
+    box.innerHTML='<div class="analysis-period-summary">'+
+      '<div class="analysis-period-kpi"><div class="k">'+esc(def.comparisonLabel)+' reali</div><div class="v">'+money(t.comparison)+'</div></div>'+
+      '<div class="analysis-period-kpi"><div class="k">'+esc(def.targetLabel)+' previsti</div><div class="v forecast-value">'+money(t.projected)+'</div></div>'+
+      '<div class="analysis-period-kpi"><div class="k">Variazione</div><div class="v '+(delta>0?(analysisCurrentDirection()==="EXPENSE"?"negative":"positive"):(analysisCurrentDirection()==="EXPENSE"?"positive":"negative"))+'">'+compactSignedMoney(delta)+' €</div></div>'+
+      '<div class="analysis-period-kpi"><div class="k">Variazione %</div><div class="v">'+(pct===null?"—":(pct>0?"+":"")+pct.toLocaleString("it-IT",{maximumFractionDigits:1})+"%")+'</div></div>'+
+      '</div>';
+    return;
+  }
+  const pct=t.comparison>0?(t.projected-t.comparison)*100/t.comparison:null;
+  box.innerHTML='<div class="analysis-period-summary">'+
+    '<div class="analysis-period-kpi"><div class="k">'+esc(def.comparisonLabel)+' reale</div><div class="v">'+money(t.comparison)+'</div></div>'+
+    '<div class="analysis-period-kpi"><div class="k">Consuntivo '+esc(def.targetLabel)+'</div><div class="v actual-value">'+money(t.actual)+'</div></div>'+
+    '<div class="analysis-period-kpi"><div class="k">Da pianificare</div><div class="v forecast-value">'+money(t.forecast)+'</div></div>'+
+    '<div class="analysis-period-kpi"><div class="k">Chiusura prevista · '+(pct===null?"—":(pct>0?"+":"")+pct.toLocaleString("it-IT",{maximumFractionDigits:1})+"%")+'</div><div class="v forecast-value">'+money(t.projected)+'</div></div>'+
+    '</div>';
+}
+
 function analysisTrendMap(){return new Map(((analysisWorkspace&&analysisWorkspace.trend_rows)||[]).map(function(x){return [x.level+"|"+x.category_id,x]}))}
 function trendBasisLabel(){return analysisWorkspace&&analysisWorkspace.trend_basis==="LAST_12_VS_PREVIOUS_12"?"12m vs 12m prec.":"vs stesso periodo A-1"}
 function analysisTrendChip(t){
@@ -1029,6 +1168,7 @@ function analysisForecastMeta(categoryId){
 }
 function renderAnalysisSummary(){
   const box=$("analysisSummary");if(!box)return;
+  if(analysisTimeMode==="PROJECTION"&&analysisViewMode!=="BALANCE"){renderProjectionSummary();return}
   const rows=analysisWorkspace&&Array.isArray(analysisWorkspace.balance_monthly)?analysisWorkspace.balance_monthly:(analysisWorkspace&&Array.isArray(analysisWorkspace.cashflow_monthly)?analysisWorkspace.cashflow_monthly:[]);
   const incoming=rows.reduce(function(s,x){return s+num(x.incoming)},0),outgoing=rows.reduce(function(s,x){return s+num(x.outgoing)},0);
   const net=rows.reduce(function(s,x){return s+num(x.net!==undefined?x.net:num(x.incoming)-num(x.outgoing))},0),avg=rows.length?net/rows.length:0;
