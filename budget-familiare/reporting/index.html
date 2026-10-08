@@ -1658,7 +1658,7 @@ function forecastDraftRows(){
 }
 function forecastBaseForRow(row,method,draft){
   if(method==="AVG12")return num(row.avg12);if(method==="MEDIAN12")return num(row.median12);
-  if(method==="SAME_MONTH_LAST_YEAR")return row.same_month_last_year===null||row.same_month_last_year===undefined?num(row.avg12):num(row.same_month_last_year);
+  if(method==="SAME_MONTH_LAST_YEAR")return row.same_month_last_year===null||row.same_month_last_year===undefined?0:num(row.same_month_last_year);
   if(method==="LAST_VALUE")return num(row.last_value)||num(row.avg12);if(method==="FIXED")return num(draft.fixed_amount);
   if(method==="RANGE")return (num(draft.range_min)+num(draft.range_max))/2;if(method==="ZERO")return 0;return num(row.avg6);
 }
@@ -1971,9 +1971,28 @@ $("detailMovements").addEventListener("click",function(e){const th=e.target.clos
 $("analysisForecastPanel").addEventListener("click",async function(e){const scope=e.target.closest("[data-forecast-scope]");if(scope){await saveForecastScope(scope.dataset.forecastScope,scope);return}const save=e.target.closest("[data-save-forecast]");if(save){await saveForecastRule(save);return}});
 $("analysisForecastPanel").addEventListener("change",function(e){
   const d=ensureForecastDraft();if(!d)return;
-  if(e.target.id==="forecastType"){d.source=e.target.value;d.adjustment=0;d.fixed_amount=null;d.range_min=null;d.range_max=null;if(d.source==="HISTORY")d.method="AVG6";else if(d.source==="RECURRENCE")d.method="LAST_VALUE";else if(d.source==="MANUAL")d.method="FIXED";else d.method="ZERO";renderForecastEditor();return}
-  if(e.target.id==="forecastMethod"){d.method=e.target.value;d.fixed_amount=null;d.range_min=null;d.range_max=null;if(["FIXED","RANGE"].includes(d.method))d.adjustment=0;renderForecastEditor();return}
-  if(e.target.id==="forecastManualMode"){d.method=e.target.value;d.fixed_amount=null;d.range_min=null;d.range_max=null;renderForecastEditor();return}
+  if(e.target.id==="forecastMethod"){
+    d.method=e.target.value;d.source=forecastSourceForMethod(d.method);
+    if(["FIXED","RANGE","ZERO"].includes(d.method))d.adjustment=0;
+    if(d.method==="FIXED"&&d.fixed_amount===null)d.fixed_amount=0;
+    if(d.method==="RANGE"&&d.range_min===null&&d.range_max===null){d.range_min=0;d.range_max=0}
+    if(!d.frequency)d.frequency="MONTHLY";
+    renderForecastEditor();return;
+  }
+  if(e.target.id==="forecastFrequency"){
+    d.frequency=e.target.value;
+    if(d.frequency==="MONTHS"&&!(d.specific_months||[]).length){
+      const last=forecastLastActiveMonth(),md=monthDate(last);
+      d.specific_months=md?[md.getMonth()+1]:[];
+    }
+    renderForecastEditor();return;
+  }
+  const monthCheck=e.target.closest("[data-forecast-month]");
+  if(monthCheck){
+    const m=Number(monthCheck.dataset.forecastMonth),set=new Set(d.specific_months||[]);
+    if(monthCheck.checked)set.add(m);else set.delete(m);
+    d.specific_months=Array.from(set).sort(function(a,b){return a-b});updateForecastLiveResult();return;
+  }
   if(e.target.id==="forecastAdjustment"){d.adjustment=Number(e.target.value||0);updateForecastLiveResult()}
 });
 $("analysisForecastPanel").addEventListener("input",function(e){
