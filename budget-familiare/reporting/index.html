@@ -179,6 +179,11 @@ button,input,select{font:inherit}
 .analysis-detail-stats{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 .analysis-stat{padding:4px 7px;border:1px solid var(--line);border-radius:7px;background:#fafafa;font-size:10px;color:#475569}
 .analysis-stat strong{color:var(--text)}
+.analysis-filter-chip{display:inline-flex;align-items:center;gap:5px;padding:4px 7px;border-radius:7px;background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;font-size:10px;font-weight:750}
+.analysis-filter-chip button{border:0;background:transparent;color:#1d4ed8;font-weight:800;padding:0;cursor:pointer;text-decoration:underline}
+.forecast-explanation{margin-top:8px;padding:8px 9px;border:1px solid #dbeafe;background:#fff;border-radius:8px;font-size:10px;line-height:1.5;color:#475569}
+.forecast-explanation strong{color:#0f172a}
+.forecast-explanation .formula{display:inline-block;margin-top:3px;padding:2px 6px;border-radius:6px;background:#f8fafc;border:1px solid #e2e8f0;color:#334155;font-weight:700}
 .analysis-chart-box{height:285px;position:relative;margin-top:4px}
 .analysis-component-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:9px 0 5px}
 .analysis-component-head h4,.analysis-movements h4{font-size:12px;margin:0}
@@ -1426,6 +1431,41 @@ function analysisVisibleMonthTotals(chart){
     return componentIndexes.reduce(function(sum,i){return sum+num(chart.data.datasets[i].data[idx])},0);
   });
 }
+function analysisVisibleComponentIds(chart){
+  const ids=[];
+  chart.data.datasets.forEach(function(ds,i){
+    if(ds.analysisRole==="component"&&chart.isDatasetVisible(i)&&ds.analysisComponentId!==undefined&&ds.analysisComponentId!==null)ids.push(String(ds.analysisComponentId));
+  });
+  return ids;
+}
+function analysisVisibleTrend(chart){
+  const d=analysisDetailData;if(!d)return null;
+  const ids=analysisVisibleComponentIds(chart);
+  const componentDatasets=chart.data.datasets.filter(function(ds){return ds.analysisRole==="component"});
+  if(!componentDatasets.length||componentDatasets.some(function(ds){return ds.analysisComponentId===undefined||ds.analysisComponentId===null})){
+    return d.trend||null;
+  }
+  const map=new Map((d.component_trend||[]).map(function(x){return [String(x.component_id),x]}));
+  let current=0,previous=0;
+  ids.forEach(function(id){const x=map.get(id);if(x){current+=num(x.current_total);previous+=num(x.previous_total)}});
+  return {current_total:current,previous_total:previous,trend_pct:previous===0?null:(current-previous)*100/previous};
+}
+function renderAnalysisVisibleStats(chart){
+  if(!chart||analysisTimeMode==="PROJECTION"||!analysisDetailData)return;
+  const totals=analysisVisibleMonthTotals(chart),months=totals.length,total=totals.reduce(function(a,v){return a+v},0),avg=months?total/months:0,median=medianValue(totals),active=totals.filter(function(v){return v>0.004}).length;
+  const componentIndexes=chart.data.datasets.map(function(ds,i){return ds.analysisRole==="component"?i:null}).filter(function(i){return i!==null});
+  const hidden=componentIndexes.filter(function(i){return !chart.isDatasetVisible(i)}).length;
+  const trend=analysisVisibleTrend(chart);
+  let html='<span class="analysis-stat">Totale <strong>'+money(total)+'</strong></span>'+
+    '<span class="analysis-stat" title="Media mensile sui dati attualmente visibili, includendo i mesi a zero">Media <strong>'+money(avg)+'</strong></span>'+
+    '<span class="analysis-stat" title="Mediana mensile sui dati attualmente visibili, includendo i mesi a zero">Mediana <strong>'+money(median)+'</strong></span>'+
+    '<span class="analysis-stat">'+frequencyHtml(active,months)+'</span>'+
+    analysisTrendChip(trend&&trend.trend_pct!==undefined?{trend_pct:trend.trend_pct}:null);
+  if(hidden){
+    html+='<span class="analysis-filter-chip">Vista filtrata · '+hidden+' '+(hidden===1?'serie esclusa':'serie escluse')+' <button type="button" data-reset-analysis-series>Ripristina</button></span>';
+  }
+  $("detailStats").innerHTML=html;
+}
 function recalcAnalysisReferenceLines(chart){
   if(!chart)return;
   const visibleComponents=chart.data.datasets.map(function(ds,i){return ds.analysisRole==="component"&&chart.isDatasetVisible(i)?i:null}).filter(function(i){return i!==null});
@@ -1469,6 +1509,7 @@ function analysisLegendOnClick(e,legendItem,legend){
     chart.$referenceVisibility[ds.analysisRole]=chart.isDatasetVisible(idx);
   }else if(ds.analysisRole==="component"){
     recalcAnalysisReferenceLines(chart);
+    renderAnalysisVisibleStats(chart);
   }
   resetAnalysisHoverDetail();
   chart.update();
@@ -1544,8 +1585,8 @@ function renderAnalysisDetailChart(){
   const d=analysisDetailData;if(!d)return;
   const months=(d.months||[]).map(function(x){return x.month}),components=d.components||[],selected=selectedAnalysisComponent(),valueMap=new Map((d.component_monthly||[]).map(function(x){return [x.month+"|"+x.component_id,num(x.amount)]}));
   if(categoryTrendChart)categoryTrendChart.destroy();let datasets=[];
-  if(selected)datasets=[{type:"bar",analysisRole:"component",label:selected.component_name,data:months.map(function(m){return valueMap.get(m+"|"+selected.component_id)||0}),backgroundColor:palette(0,1),borderWidth:0,stack:"analysis"}];
-  else datasets=components.map(function(c,i){return {type:"bar",analysisRole:"component",label:c.component_name,data:months.map(function(m){return valueMap.get(m+"|"+c.component_id)||0}),backgroundColor:palette(i,components.length),borderWidth:0,stack:"analysis"}});
+  if(selected)datasets=[{type:"bar",analysisRole:"component",analysisComponentId:selected.component_id,label:selected.component_name,data:months.map(function(m){return valueMap.get(m+"|"+selected.component_id)||0}),backgroundColor:palette(0,1),borderWidth:0,stack:"analysis"}];
+  else datasets=components.map(function(c,i){return {type:"bar",analysisRole:"component",analysisComponentId:c.component_id,label:c.component_name,data:months.map(function(m){return valueMap.get(m+"|"+c.component_id)||0}),backgroundColor:palette(i,components.length),borderWidth:0,stack:"analysis"}});
   if(!datasets.length)datasets=[{type:"bar",analysisRole:"component",label:d.category_name||"Totale",data:(d.months||[]).map(function(x){return num(x.amount)}),backgroundColor:palette(0,1),borderWidth:0,stack:"analysis"}];
   const monthTotals=months.map(function(_,idx){return datasets.reduce(function(sum,ds){return sum+num(ds.data[idx])},0)});
   const avg=monthTotals.reduce(function(a,v){return a+v},0)/Math.max(monthTotals.length,1),median=medianValue(monthTotals);
@@ -1571,6 +1612,7 @@ function renderAnalysisDetailChart(){
       scales:{x:{stacked:!selected,grid:{display:false}},y:{stacked:!selected,beginAtZero:true,ticks:{callback:function(v){return money(v)}}}}
     }
   });
+  renderAnalysisVisibleStats(categoryTrendChart);
 }
 function counterpartyPreviewRows(){
   const e=analysisForecastEditor,cp=selectedAnalysisComponent();if(!e||!cp)return [];
