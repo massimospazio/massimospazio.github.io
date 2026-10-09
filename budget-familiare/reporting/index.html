@@ -2650,16 +2650,29 @@ function renderScenarioExpenseHover(row){
     (!row.isForecast&&num(row.extraordinaryExpense)>0?'<span class="scenario-hover-chip expense">Straordinarie '+money(row.extraordinaryExpense)+'</span>':"")+
     (!row.isForecast?scenarioExtraBadgeHtml(row.month,"EXPENSE"):"");
 }
+function scenarioBalanceBarColor(row){
+  const v=scenarioDisplayNet(row);
+  if(!row.isForecast&&scenarioExtraMode==="ALL"&&num(row.extraordinaryIncome)>.005&&v>=0)return "rgba(59,130,246,.78)";
+  if(row.isForecast)return v>=0?"rgba(34,197,94,.24)":"rgba(239,68,68,.20)";
+  return v>=0?"rgba(34,197,94,.78)":"rgba(239,68,68,.76)";
+}
+function scenarioBalanceBarBorder(row){
+  const v=scenarioDisplayNet(row);
+  if(!row.isForecast&&scenarioExtraMode==="ALL"&&num(row.extraordinaryIncome)>.005&&v>=0)return "#2563eb";
+  return v>=0?"#16a34a":"#dc2626";
+}
 function renderScenarioFlowChart(plan){
   if(scenarioFlowChart)scenarioFlowChart.destroy();
   const rows=plan.display,labels=scenarioChartMonthLabels(rows.map(function(x){return x.month}));
-  const incomeColors=rows.map(function(x){return x.isForecast?"rgba(14,168,122,.26)":"rgba(14,168,122,.80)"});
-  const expenseColors=rows.map(function(x){return x.isForecast?"rgba(239,91,115,.23)":"rgba(239,91,115,.78)"});
+  const incomeColors=rows.map(function(x){return x.isForecast?"rgba(14,168,122,.24)":"rgba(14,168,122,.80)"});
+  const expenseColors=rows.map(function(x){return x.isForecast?"rgba(239,91,115,.22)":"rgba(239,91,115,.78)"});
+  const balanceColors=rows.map(scenarioBalanceBarColor),balanceBorders=rows.map(scenarioBalanceBarBorder);
   scenarioFlowChart=new Chart($("scenarioFlowChart"),{
     type:"bar",
     data:{labels:labels,datasets:[
-      {type:"bar",label:"Entrate",data:rows.map(scenarioDisplayIncome),backgroundColor:incomeColors,borderColor:"#0ea87a",borderWidth:rows.map(function(x){return x.isForecast?1:0}),borderRadius:3,categoryPercentage:.72,barPercentage:.92,yAxisID:"yFlow"},
-      {type:"bar",label:"Uscite",data:rows.map(scenarioDisplayOutflow),backgroundColor:expenseColors,borderColor:"#ef5b73",borderWidth:rows.map(function(x){return x.isForecast?1:0}),borderRadius:3,categoryPercentage:.72,barPercentage:.92,yAxisID:"yFlow"},
+      {type:"bar",label:"Entrate",data:rows.map(scenarioDisplayIncome),backgroundColor:incomeColors,borderColor:"#0ea87a",borderWidth:rows.map(function(x){return x.isForecast?1:0}),borderRadius:3,categoryPercentage:.82,barPercentage:.92,yAxisID:"yFlow"},
+      {type:"bar",label:"Uscite",data:rows.map(scenarioDisplayOutflow),backgroundColor:expenseColors,borderColor:"#ef5b73",borderWidth:rows.map(function(x){return x.isForecast?1:0}),borderRadius:3,categoryPercentage:.82,barPercentage:.92,yAxisID:"yFlow"},
+      {type:"bar",label:"Saldo mese",data:rows.map(scenarioDisplayNet),backgroundColor:balanceColors,borderColor:balanceBorders,borderWidth:rows.map(function(x){return x.isForecast?1.3:0}),borderRadius:3,categoryPercentage:.82,barPercentage:.78,yAxisID:"yFlow"},
       {type:"line",label:"Saldo cumulato",data:rows.map(function(x){return x.balance}),borderColor:"#193a72",backgroundColor:"#193a72",borderWidth:2.4,pointRadius:2.8,tension:.2,spanGaps:true,yAxisID:"yBalance",
        segment:{borderDash:function(ctx){const r=rows[ctx.p1DataIndex];return r&&r.isForecast?[7,5]:undefined}}}
     ]},
@@ -2667,21 +2680,23 @@ function renderScenarioFlowChart(plan){
       responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},
       onHover:function(evt,elements){if(elements&&elements.length)renderScenarioFlowHover(rows[elements[0].index])},
       onClick:function(evt,elements){
-        const hit=(elements||[]).find(function(x){return x.datasetIndex===0||x.datasetIndex===1});
+        const hit=(elements||[]).find(function(x){return x.datasetIndex===0||x.datasetIndex===1||x.datasetIndex===2});
         if(!hit)return;
-        scenarioSelectedMonth=rows[hit.index].month;scenarioSelectedFlow=hit.datasetIndex===0?"INCOME":"EXPENSE";renderScenarioMonthDetail(plan);
+        scenarioSelectedMonth=rows[hit.index].month;
+        scenarioSelectedFlow=hit.datasetIndex===0?"INCOME":hit.datasetIndex===1?"EXPENSE":null;
+        renderScenarioMonthDetail(plan);
       },
       plugins:{legend:{display:false},tooltip:{enabled:false}},
       scales:{
         x:{grid:{display:false},ticks:{maxRotation:0}},
-        yFlow:{beginAtZero:true,position:"left",ticks:{callback:function(v){return money(v)}}},
+        yFlow:{position:"left",ticks:{callback:function(v){return money(v)}},grid:{color:function(ctx){return ctx.tick&&ctx.tick.value===0?"#94a3b8":"rgba(148,163,184,.24)"}}},
         yBalance:{position:"right",grid:{drawOnChartArea:false},ticks:{callback:function(v){return money(v)}}}
       }
     }
   });
   renderScenarioMonthStatusRow(plan);
   renderScenarioFlowHover(null);
-  const note=$("scenarioFlowNote");if(note)note.textContent="Vista grafico: "+scenarioExtraLabel()+". La linea del saldo cumulato resta sempre la liquidità reale/pianificata complessiva. I mesi con entrate marcate straordinarie sono evidenziati in blu e non contano come vittoria ordinaria.";
+  const note=$("scenarioFlowNote");if(note)note.textContent="Vista grafico: "+scenarioExtraLabel()+". La terza barra mostra il saldo del mese: verde avanzo, rosso deficit, blu quando il risultato positivo dipende da entrate straordinarie. La linea mostra la liquidità cumulata complessiva.";
 }
 function renderScenarioExpenseChart(plan){
   if(scenarioExpenseChart)scenarioExpenseChart.destroy();
