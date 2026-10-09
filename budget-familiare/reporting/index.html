@@ -802,6 +802,9 @@ async function loadReport(){
   analysisWorkspaceKey="";
   analysisProjectionData.clear();
   scenarioActualRows=null;
+  scenarioActualCategories=[];
+  scenarioSelectedMonth=null;
+  scenarioSelectedFlow=null;
   analysisDetailData=null;
   analysisDetailKey="";
   analysisSelectedCategory=null;
@@ -2608,11 +2611,14 @@ async function loadScenarioData(force){
     const jobs=[];
     if(needExpense)jobs.push({kind:"EXPENSE",promise:rpc("dashboard_reporting_analysis_projection_v1",{p_direction:"EXPENSE"})});
     if(needIncome)jobs.push({kind:"INCOME",promise:rpc("dashboard_reporting_analysis_projection_v1",{p_direction:"INCOME"})});
-    if(needActual)jobs.push({kind:"ACTUAL",promise:rpc("dashboard_reporting_scenario_actual_v1",{p_months:30})});
+    if(needActual)jobs.push({kind:"ACTUAL",promise:rpc("dashboard_reporting_scenario_actual_v2",{p_months:30})});
     const values=await Promise.all(jobs.map(function(x){return x.promise}));
     jobs.forEach(function(job,i){
-      if(job.kind==="ACTUAL")scenarioActualRows=Array.isArray(values[i])?values[i]:[];
-      else analysisProjectionData.set(job.kind,values[i]||{});
+      if(job.kind==="ACTUAL"){
+        const actual=values[i]||{};
+        scenarioActualRows=Array.isArray(actual.monthly)?actual.monthly:[];
+        scenarioActualCategories=Array.isArray(actual.category_monthly)?actual.category_monthly:[];
+      }else analysisProjectionData.set(job.kind,values[i]||{});
     });
     renderScenario();
   }catch(e){
