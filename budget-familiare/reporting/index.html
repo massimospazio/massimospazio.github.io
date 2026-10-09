@@ -2862,12 +2862,32 @@ $("scenarioView").addEventListener("click",function(e){
   const h=e.target.closest("[data-scenario-horizon]");
   if(h){
     scenarioHorizon=h.dataset.scenarioHorizon||"CALENDAR";
+    scenarioSelectedMonth=null;scenarioSelectedFlow=null;
     renderScenario();return;
   }
   const m=e.target.closest("[data-scenario-mode]");
   if(m){
     scenarioMode=m.dataset.scenarioMode||"SUMMARY";
     renderScenario();return;
+  }
+  const extra=e.target.closest("[data-scenario-extra]");
+  if(extra){
+    scenarioExtraMode=extra.dataset.scenarioExtra||"ORDINARY";
+    renderScenario();return;
+  }
+  const status=e.target.closest("[data-scenario-status-month]");
+  if(status){
+    scenarioSelectedMonth=status.dataset.scenarioStatusMonth;scenarioSelectedFlow="EXPENSE";
+    renderScenarioMonthDetail(scenarioPlanData());return;
+  }
+  if(e.target.closest("[data-scenario-close-detail]")){
+    scenarioSelectedMonth=null;scenarioSelectedFlow=null;renderScenarioMonthDetail(scenarioPlanData());return;
+  }
+  const detail=e.target.closest("[data-scenario-detail-l1]");
+  if(detail){
+    const id=detail.dataset.scenarioDetailL1,direction=detail.dataset.scenarioDetailDirection||"EXPENSE",month=scenarioSelectedMonth;
+    showStandardReportingView();planMode="ANALYSIS";analysisViewMode=direction;analysisTimeMode=month&&projectionDataFor(direction)&&month>=projectionDataFor(direction).current_month?"PROJECTION":"HISTORY";$("analysisDirection").value=direction;renderMode();
+    loadAnalysisWorkspace(true).then(function(){openAnalysisDetail(id,"L1",null)});return;
   }
   if(e.target.closest("[data-scenario-goto-expenses]")){
     scenarioMode="EXPENSES";renderScenario();return;
