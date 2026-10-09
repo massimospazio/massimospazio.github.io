@@ -397,9 +397,12 @@ button,input,select{font:inherit}
 .scenario-insight{display:flex;align-items:flex-start;gap:10px;padding:11px 13px;border:1px solid #dbeafe;background:linear-gradient(90deg,#f0f7ff,#f8fbff);border-radius:12px;margin:4px 0 12px;color:#334155;font-size:10.5px;line-height:1.45}
 .scenario-insight .bulb{width:28px;height:28px;flex:0 0 28px;border-radius:50%;background:#fff3cd;display:flex;align-items:center;justify-content:center;font-size:15px}
 .scenario-insight strong{display:block;color:#1458c4;font-size:11.5px;margin-bottom:2px}
+.scenario-insight .scenario-insight-body{min-width:0;flex:1}
+.scenario-insight-action{margin-left:auto;align-self:center;border:1px solid #cfe0fb;background:#fff;color:#1458c4;border-radius:9px;padding:7px 10px;font-size:9.5px;font-weight:750;cursor:pointer;white-space:nowrap}
 .scenario-detail-grid{display:grid;grid-template-columns:1.12fr .88fr;gap:12px}
 .scenario-watch-list{display:grid;gap:0}
-.scenario-watch-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:9px 2px;border-bottom:1px solid #edf1f6}
+.scenario-watch-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:9px 5px;border-bottom:1px solid #edf1f6;border-radius:8px;cursor:pointer}
+.scenario-watch-row:hover{background:#f8fbff}
 .scenario-watch-row:last-child{border-bottom:0}.scenario-watch-name{font-size:11px;font-weight:750;color:#172033}.scenario-watch-meta{font-size:8.5px;color:#94a3b8;margin-top:2px}
 .scenario-watch-amount{font-size:10.5px;font-weight:750;color:#172033;text-align:right}.scenario-watch-delta{font-size:9.5px;font-weight:800;min-width:54px;text-align:right}
 .scenario-loading{padding:28px;text-align:center;color:#64748b}
@@ -2507,19 +2510,19 @@ function renderScenarioWatchList(plan){
   const rows=scenarioExpenseL1Metrics(plan.exp).slice(0,5);
   $("scenarioWatchList").innerHTML=rows.length?rows.map(function(x){
     const d=x.delta,cls=d===null?"":d>0?"negative":"positive",txt=d===null?"—":(d>0?"+":"")+d.toLocaleString("it-IT",{maximumFractionDigits:1})+"%";
-    return '<div class="scenario-watch-row"><div><div class="scenario-watch-name">'+esc(x.name)+'</div><div class="scenario-watch-meta">Impatto sul piano complessivo</div></div><div class="scenario-watch-amount">'+money(x.projected)+'</div><div class="scenario-watch-delta '+cls+'">'+txt+'</div></div>';
+    return '<div class="scenario-watch-row" data-scenario-open-l1="'+esc(x.id)+'"><div><div class="scenario-watch-name">'+esc(x.name)+'</div><div class="scenario-watch-meta">Impatto sul piano complessivo</div></div><div class="scenario-watch-amount">'+money(x.projected)+'</div><div class="scenario-watch-delta '+cls+'">'+txt+'</div></div>';
   }).join(""):'<div class="muted small">Nessuna categoria disponibile.</div>';
 }
 function renderScenarioInsights(plan){
   const finalBalance=plan.balancePath.length?num(plan.balancePath[plan.balancePath.length-1].balance):plan.anchorBalance,minRow=plan.balancePath.reduce(function(a,x){return !a||num(x.balance)<num(a.balance)?x:a},null);
   const critical=minRow&&num(minRow.balance)<0;
-  $("scenarioInsight").innerHTML='<span class="bulb">'+(critical?"⚠":"💡")+'</span><div><strong>'+(critical?'Attenzione: il piano porta il saldo sotto zero':'Scenario attuale: '+(finalBalance>=plan.anchorBalance?'saldo in crescita':'saldo in riduzione'))+'</strong>'+
+  $("scenarioInsight").innerHTML='<span class="bulb">'+(critical?"⚠":"💡")+'</span><div class="scenario-insight-body"><strong>'+(critical?'Attenzione: il piano porta il saldo sotto zero':'Scenario attuale: '+(finalBalance>=plan.anchorBalance?'saldo in crescita':'saldo in riduzione'))+'</strong>'+
     (minRow?'Il minimo previsto è '+money(minRow.balance)+' a '+esc(monthLabel(minRow.month))+'. ':'')+
-    'Il saldo finale atteso è '+money(finalBalance)+'. La proiezione include margine imprevisti e investimenti previsti.</div>';
+    'Il saldo finale atteso è '+money(finalBalance)+'. La proiezione include margine imprevisti e investimenti previsti.</div><button class="scenario-insight-action" type="button" data-scenario-goto-expenses>Vedi dettaglio spese →</button>';
   const maxRow=plan.target.reduce(function(a,x){return !a||x.expense>a.expense?x:a},null),avg=plan.target.length?scenarioSum(plan.target,"expense")/plan.target.length:0;
-  $("scenarioExpenseInsight").innerHTML='<span class="bulb">💡</span><div><strong>'+(maxRow?esc(monthLabel(maxRow.month))+' è il mese con più spese previste':'Dettaglio spese')+'</strong>'+
+  $("scenarioExpenseInsight").innerHTML='<span class="bulb">💡</span><div class="scenario-insight-body"><strong>'+(maxRow?esc(monthLabel(maxRow.month))+' è il mese con più spese previste':'Dettaglio spese')+'</strong>'+
     (maxRow?'Spese '+money(maxRow.expense)+' rispetto a una media di '+money(avg)+'. ':'')+
-    'Apri Analisi per modificare la regola strutturale o i singoli mesi del piano.</div>';
+    'Apri Analisi per modificare la regola strutturale o i singoli mesi del piano.</div><button class="scenario-insight-action" type="button" data-scenario-open-analysis>Apri Analisi →</button>';
 }
 function renderScenario(){
   const exp=projectionDataFor("EXPENSE"),inc=projectionDataFor("INCOME");
@@ -2560,12 +2563,14 @@ function showScenarioView(){
   scenarioVisible=true;
   $("standardReportingView").classList.add("hidden");$("scenarioView").classList.remove("hidden");
   $("reportingViewTab").classList.remove("active");$("scenarioViewTab").classList.add("active");
+  const u=new URL(window.location.href);u.searchParams.set("view","scenario");history.replaceState(null,"",u);
   loadScenarioData(false);
 }
 function showStandardReportingView(){
   scenarioVisible=false;
   $("scenarioView").classList.add("hidden");$("standardReportingView").classList.remove("hidden");
   $("scenarioViewTab").classList.remove("active");$("reportingViewTab").classList.add("active");
+  const u=new URL(window.location.href);u.searchParams.delete("view");history.replaceState(null,"",u);
 }
 
 function renderProjection(){
@@ -2661,6 +2666,18 @@ $("scenarioView").addEventListener("click",function(e){
   if(m){
     scenarioMode=m.dataset.scenarioMode||"SUMMARY";
     renderScenario();return;
+  }
+  if(e.target.closest("[data-scenario-goto-expenses]")){
+    scenarioMode="EXPENSES";renderScenario();return;
+  }
+  if(e.target.closest("[data-scenario-open-analysis]")){
+    showStandardReportingView();planMode="ANALYSIS";analysisViewMode="EXPENSE";analysisTimeMode="PROJECTION";$("analysisDirection").value="EXPENSE";renderMode();loadAnalysisWorkspace(true);return;
+  }
+  const row=e.target.closest("[data-scenario-open-l1]");
+  if(row){
+    const id=row.dataset.scenarioOpenL1;
+    showStandardReportingView();planMode="ANALYSIS";analysisViewMode="EXPENSE";analysisTimeMode="PROJECTION";$("analysisDirection").value="EXPENSE";renderMode();
+    loadAnalysisWorkspace(true).then(function(){openAnalysisDetail(id,"L1",null)});
   }
 });
 $("expenseScope").onchange=renderExpenseChart;
