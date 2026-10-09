@@ -8,8 +8,8 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=73.6-20261009-2230"></script>
-<script src="../shared/app-config.js?v=73.6-20261009-2230"></script>
+<script src="../shared/supabase-client.js?v=73.6.1-20261009-2115"></script>
+<script src="../shared/app-config.js?v=73.6.1-20261009-2115"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 :root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#6b7280;--line:#e5e7eb;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 8px 24px rgba(15,23,42,.06)}
@@ -1873,6 +1873,26 @@ function analysisProjectionBoundaryPlugin(boundaryIndex){
     ctx.save();ctx.strokeStyle="rgba(37,99,235,.58)";ctx.lineWidth=1.5;ctx.setLineDash([5,4]);ctx.beginPath();ctx.moveTo(px,area.top);ctx.lineTo(px,area.bottom);ctx.stroke();ctx.restore();
   }};
 }
+function analysisProjectionDeltaBadgePlugin(points){
+  points=Array.isArray(points)?points:[];
+  return {id:"analysisProjectionDeltaBadges",afterDatasetsDraw:function(chart){
+    if(!points.length)return;
+    const ctx=chart.ctx,area=chart.chartArea,direction=analysisCurrentDirection(),compact=chart.width<760;
+    ctx.save();ctx.textAlign="center";ctx.textBaseline="middle";ctx.font=(compact?"800 8px ":"800 9px ")+'Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif';
+    points.forEach(function(p){
+      if(p.delta===null||p.delta===undefined||!Number.isFinite(Number(p.delta)))return;
+      const meta=chart.getDatasetMeta(p.datasetIndex),el=meta&&meta.data&&meta.data[p.index];if(!el||meta.hidden)return;
+      const pos=el.getProps(["x","y"],true),v=num(p.delta),neutral=Math.abs(v)<1,favorable=direction==="EXPENSE"?v<0:v>0;
+      const text=(v>0?"+":"")+v.toLocaleString("it-IT",{maximumFractionDigits:1})+"%";
+      const padX=compact?4:5,h=compact?15:17,w=Math.ceil(ctx.measureText(text).width)+padX*2;
+      const x=pos.x,y=Math.max(area.top+h/2+2,pos.y-h/2-5),left=x-w/2,top=y-h/2,r=6;
+      const fill=neutral?"#f1f5f9":favorable?"#dcfce7":"#fee2e2",stroke=neutral?"#cbd5e1":favorable?"#86efac":"#fca5a5",ink=neutral?"#64748b":favorable?"#166534":"#b91c1c";
+      ctx.beginPath();ctx.moveTo(left+r,top);ctx.lineTo(left+w-r,top);ctx.quadraticCurveTo(left+w,top,left+w,top+r);ctx.lineTo(left+w,top+h-r);ctx.quadraticCurveTo(left+w,top+h,left+w-r,top+h);ctx.lineTo(left+r,top+h);ctx.quadraticCurveTo(left,top+h,left,top+h-r);ctx.lineTo(left,top+r);ctx.quadraticCurveTo(left,top,left+r,top);ctx.closePath();
+      ctx.fillStyle=fill;ctx.fill();ctx.strokeStyle=stroke;ctx.lineWidth=1;ctx.stroke();ctx.fillStyle=ink;ctx.fillText(text,x,y+.2);
+    });
+    ctx.restore();
+  }};
+}
 function renderProjectionHoverDetail(chart,index,months){
   const box=$("analysisChartHoverDetail");if(!box||index<0||index>=months.length)return;
   const items=[];chart.data.datasets.forEach(function(ds,i){if(!chart.isDatasetVisible(i))return;const v=num(ds.data[index]);if(Math.abs(v)>.004)items.push({label:ds.label,value:v})});
@@ -1882,27 +1902,39 @@ function renderProjectionDetailChart(){
   const data=projectionDataFor(analysisCurrentDirection());if(!data||!analysisSelectedCategory)return;
   const def=projectionDefinition(data),ids=projectionSelectionCategoryIds(data);
   if(categoryTrendChart)categoryTrendChart.destroy();
-  let labels=[],months=[],datasets=[],boundary=0;
+  let labels=[],months=[],datasets=[],boundary=0,deltaBadges=[];
   if(analysisProjectionView==="ROLLING_12"){
     months=def.comparisonMonths.concat(def.targetMonths);labels=months.map(monthLabel);boundary=12;
+    const previousValues=def.comparisonMonths.map(function(m){return projectionSeriesValue(data,ids,m,"actual")});
+    const forecastValues=def.targetMonths.map(function(m){return projectionSeriesValue(data,ids,m,"forecast")});
     datasets=[
-      {type:"bar",analysisRole:"projection",label:"Reale · ultimi 12m",data:def.comparisonMonths.map(function(m){return projectionSeriesValue(data,ids,m,"actual")}).concat(def.targetMonths.map(function(){return 0})),backgroundColor:"rgba(37,99,235,.72)",borderWidth:0,stack:"timeline"},
-      {type:"bar",analysisRole:"projection",label:"Previsto · prossimi 12m",data:def.comparisonMonths.map(function(){return 0}).concat(def.targetMonths.map(function(m){return projectionSeriesValue(data,ids,m,"forecast")})),backgroundColor:"rgba(147,197,253,.58)",borderColor:"#2563eb",borderWidth:1.2,stack:"timeline"}
+      {type:"bar",analysisRole:"projection",label:"Reale · ultimi 12m",data:previousValues.concat(def.targetMonths.map(function(){return 0})),backgroundColor:"rgba(37,99,235,.72)",borderWidth:0,stack:"timeline"},
+      {type:"bar",analysisRole:"projection",label:"Previsto · prossimi 12m",data:def.comparisonMonths.map(function(){return 0}).concat(forecastValues),backgroundColor:"rgba(147,197,253,.58)",borderColor:"#2563eb",borderWidth:1.2,stack:"timeline"}
     ];
+    deltaBadges=forecastValues.map(function(value,i){
+      const previous=previousValues[i];return previous>.004?{index:12+i,datasetIndex:1,delta:(value-previous)*100/previous}:null;
+    }).filter(Boolean);
   }else{
     months=def.targetMonths;labels=months.map(function(m){return monthDate(m).toLocaleDateString("it-IT",{month:"short"})});boundary=def.targetMonths.findIndex(function(m){return m>=data.current_month});
+    const previousValues=def.comparisonMonths.map(function(m){return projectionSeriesValue(data,ids,m,"actual")});
+    const currentActualValues=def.targetMonths.map(function(m){return m<data.current_month?projectionSeriesValue(data,ids,m,"actual"):0});
+    const currentForecastValues=def.targetMonths.map(function(m){return m>=data.current_month?projectionSeriesValue(data,ids,m,"forecast"):0});
     datasets=[
-      {type:"bar",analysisRole:"projection",label:def.comparisonLabel+" reale",data:def.comparisonMonths.map(function(m){return projectionSeriesValue(data,ids,m,"actual")}),backgroundColor:"rgba(100,116,139,.48)",borderWidth:0,stack:"previous"},
-      {type:"bar",analysisRole:"projection",label:def.targetLabel+" reale",data:def.targetMonths.map(function(m){return m<data.current_month?projectionSeriesValue(data,ids,m,"actual"):0}),backgroundColor:"rgba(37,99,235,.72)",borderWidth:0,stack:"current"},
-      {type:"bar",analysisRole:"projection",label:def.targetLabel+" previsto",data:def.targetMonths.map(function(m){return m>=data.current_month?projectionSeriesValue(data,ids,m,"forecast"):0}),backgroundColor:"rgba(147,197,253,.58)",borderColor:"#2563eb",borderWidth:1.2,stack:"current"}
+      {type:"bar",analysisRole:"projection",label:def.comparisonLabel+" reale",data:previousValues,backgroundColor:"rgba(100,116,139,.48)",borderWidth:0,stack:"previous"},
+      {type:"bar",analysisRole:"projection",label:def.targetLabel+" reale",data:currentActualValues,backgroundColor:"rgba(37,99,235,.72)",borderWidth:0,stack:"current"},
+      {type:"bar",analysisRole:"projection",label:def.targetLabel+" previsto",data:currentForecastValues,backgroundColor:"rgba(147,197,253,.58)",borderColor:"#2563eb",borderWidth:1.2,stack:"current"}
     ];
+    deltaBadges=def.targetMonths.map(function(m,i){
+      const previous=previousValues[i],forecast=m>=data.current_month,value=forecast?currentForecastValues[i]:currentActualValues[i];
+      return previous>.004?{index:i,datasetIndex:forecast?2:1,delta:(value-previous)*100/previous}:null;
+    }).filter(Boolean);
   }
   resetAnalysisHoverDetail();
   categoryTrendChart=new Chart($("categoryTrendChart"),{
-    type:"bar",plugins:[analysisProjectionBoundaryPlugin(boundary)],
+    type:"bar",plugins:[analysisProjectionBoundaryPlugin(boundary),analysisProjectionDeltaBadgePlugin(deltaBadges)],
     data:{labels:labels,datasets:datasets},
     options:{
-      responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},
+      responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},layout:{padding:{top:16}},
       onHover:function(evt,elements,chart){if(elements&&elements.length)renderProjectionHoverDetail(chart,elements[0].index,months)},
       onClick:function(evt,elements){
         if(!elements||!elements.length)return;
