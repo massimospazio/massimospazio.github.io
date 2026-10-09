@@ -2951,7 +2951,12 @@ async function copyFirstMonth(kind,category,btn){
 
 $("reportingViewTab").onclick=function(){showStandardReportingView()};
 $("scenarioViewTab").onclick=function(){showScenarioView()};
-$("scenarioView").addEventListener("click",function(e){
+$("scenarioView").addEventListener("click",async function(e){
+  const noteSave=e.target.closest("[data-scenario-extra-note-save]");
+  if(noteSave){
+    const id=noteSave.dataset.scenarioExtraNoteSave,input=$("scenarioView").querySelector('[data-scenario-extra-note="'+CSS.escape(id)+'"]');
+    await saveScenarioExtraordinaryNote(id,input?input.value:"",noteSave);return;
+  }
   const h=e.target.closest("[data-scenario-horizon]");
   if(h){
     scenarioHorizon=h.dataset.scenarioHorizon||"CALENDAR";
