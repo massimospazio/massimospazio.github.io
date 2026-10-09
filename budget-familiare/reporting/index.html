@@ -2468,6 +2468,17 @@ function scenarioExpenseL1Metrics(data){
   });
   return Array.from(groups.values()).map(function(g){g.delta=scenarioPctDelta(g.projected,g.comparison);return g}).sort(function(a,b){return b.projected-a.projected});
 }
+function scenarioOrdinaryOutcome(plan){
+  let total=0,actualOrdinaryMonths=0,actualWins=0,futurePositive=0;
+  plan.target.forEach(function(row){
+    if(row.isForecast){
+      total+=num(row.net);if(num(row.net)>50)futurePositive++;return;
+    }
+    if(num(row.extraordinaryIncome)>.005)return;
+    actualOrdinaryMonths++;total+=num(row.ordinaryNet);if(num(row.ordinaryNet)>50)actualWins++;
+  });
+  return {total:total,actualOrdinaryMonths:actualOrdinaryMonths,actualWins:actualWins,futurePositive:futurePositive};
+}
 function renderScenarioKpis(plan){
   const box=$("scenarioKpis");if(!box||!plan)return;
   const projectedIncome=scenarioSum(plan.target,"income"),projectedExpense=scenarioSum(plan.target,"expense"),projectedNet=scenarioSum(plan.target,"net");
@@ -2475,7 +2486,7 @@ function renderScenarioKpis(plan){
   const finalBalance=plan.balancePath.length?num(plan.balancePath[plan.balancePath.length-1].balance):plan.anchorBalance;
   const minRow=plan.balancePath.reduce(function(a,x){return !a||num(x.balance)<num(a.balance)?x:a},null);
   if(scenarioMode==="EXPENSES"){
-    box.classList.add("expense-mode");
+    box.classList.remove("summary-mode");box.classList.add("expense-mode");
     const vals=plan.target.map(function(x){return x.expense}),avg=vals.length?vals.reduce(function(a,v){return a+v},0)/vals.length:0,maxRow=plan.target.reduce(function(a,x){return !a||x.expense>a.expense?x:a},null);
     box.innerHTML=
       scenarioKpiCard("↓","red",scenarioHorizon==="ROLLING_12"?"Spese prossimi 12 mesi":"Spese previste fine anno",money(projectedExpense),{text:scenarioDeltaText(projectedExpense,compExpense),cls:projectedExpense>compExpense?"bad":"good"},"")+
@@ -2484,11 +2495,17 @@ function renderScenarioKpis(plan){
       scenarioKpiCard("↗","red",scenarioHorizon==="ROLLING_12"?"Scostamento vs ultimi 12m":"Scostamento vs anno scorso",money(projectedExpense-compExpense),{text:scenarioDeltaText(projectedExpense,compExpense),cls:projectedExpense>compExpense?"bad":"good"},"");
     return;
   }
-  box.classList.remove("expense-mode");
+  box.classList.remove("expense-mode");box.classList.add("summary-mode");
+  const ordinary=scenarioOrdinaryOutcome(plan);
+  const ordinaryLabel=scenarioHorizon==="ROLLING_12"?"Capacità di accantonamento 12m":"Avanzo ordinario previsto";
+  const ordinarySub=scenarioHorizon==="ROLLING_12"
+    ?ordinary.futurePositive+" mesi previsti in avanzo · non è liquidità vincolata"
+    :(ordinary.actualWins+"/"+ordinary.actualOrdinaryMonths+" mesi ordinari reali in avanzo · "+ordinary.futurePositive+" futuri positivi");
   box.innerHTML=
     scenarioKpiCard("↑","green",scenarioHorizon==="ROLLING_12"?"Entrate prossimi 12 mesi":"Entrate previste fine anno",money(projectedIncome),{text:scenarioDeltaText(projectedIncome,compIncome),cls:projectedIncome>=compIncome?"good":""},"")+
     scenarioKpiCard("↓","red",scenarioHorizon==="ROLLING_12"?"Spese prossimi 12 mesi":"Spese previste fine anno",money(projectedExpense),{text:scenarioDeltaText(projectedExpense,compExpense),cls:projectedExpense>compExpense?"bad":"good"},"")+
     scenarioKpiCard("⚖","green",scenarioHorizon==="ROLLING_12"?"Bilancio prossimi 12 mesi":"Bilancio previsto",money(projectedNet),{text:"Entrate − uscite − margine − investimenti",cls:projectedNet>=0?"good":"bad"},"highlight")+
+    scenarioKpiCard("◎","purple",ordinaryLabel,money(ordinary.total),{text:ordinarySub,cls:ordinary.total>=0?"good":"bad"},ordinary.total>=0?"highlight":"warn")+
     scenarioKpiCard("◉","blue",scenarioHorizon==="ROLLING_12"?"Saldo finale tra 12 mesi":"Saldo previsto a fine anno",money(finalBalance),{text:"Partenza "+money(plan.anchorBalance),cls:finalBalance>=0?"good":"bad"},"")+
     scenarioKpiCard("!","red","Minimo saldo atteso",minRow?money(minRow.balance):money(plan.anchorBalance),{text:minRow?"Previsto a "+monthLabel(minRow.month):"Nessun mese futuro",cls:minRow&&num(minRow.balance)<0?"bad":""},minRow&&num(minRow.balance)<0?"warn":"");
 }
