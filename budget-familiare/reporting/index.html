@@ -2318,6 +2318,7 @@ async function setAnalysisMovementForecastExclusion(transactionId,exclude,btn){
     report.cashflow_monthly=oldCash||report.cashflow_monthly||[];
     report.liquidity_history=oldLiquidity||{available:false,rows:[]};
     invalidateAnalysisProjection("EXPENSE");
+    scenarioActualRows=null;scenarioActualCategories=[];scenarioExtraordinaryMovements=[];
     analysisWorkspace=null;analysisWorkspaceKey="";
     await loadAnalysisWorkspace(true,keep);
     if(month){analysisSelectedMonth=month;renderAnalysisMovements()}
