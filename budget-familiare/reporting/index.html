@@ -2589,6 +2589,7 @@ function renderMode(){
 }
 function renderAll(){
   renderKpis();renderExpenseChart();renderCashflowChart();renderBalances();renderMode();renderProjection();renderExtraordinary();
+  if(scenarioVisible)loadScenarioData(false);
 }
 function renderReportReturnBar(params){
   const bar=$("reportReturnBar");if(!bar)return;
@@ -2600,7 +2601,9 @@ function renderReportReturnBar(params){
   bar.innerHTML='<span>Sei arrivato qui dal controllo dipendenze delle categorie.</span><a class="btn compact" href="../?'+back.toString()+'">← Torna alle dipendenze</a>';
 }
 function openReportingFromUrl(){
-  if(reportDeepLinkHandled)return;const params=new URLSearchParams(window.location.search),category=params.get("category");renderReportReturnBar(params);if(!category)return;reportDeepLinkHandled=true;
+  if(reportDeepLinkHandled)return;const params=new URLSearchParams(window.location.search),category=params.get("category");renderReportReturnBar(params);
+  if(params.get("view")==="scenario"){reportDeepLinkHandled=true;showScenarioView();return}
+  if(!category)return;reportDeepLinkHandled=true;showStandardReportingView();
   const requested=(params.get("direction")||"").toUpperCase();let direction=requested==="INCOME"||requested==="EXPENSE"?requested:"EXPENSE";const incomeRows=report.income_forecast_categories||[],expenseRows=report.forecast_categories||[];
   if(incomeRows.some(function(x){return String(x.category_id)===String(category)}))direction="INCOME";else if(expenseRows.some(function(x){return String(x.category_id)===String(category)}))direction="EXPENSE";
   planMode="ANALYSIS";analysisViewMode=direction;$("analysisDirection").value=direction;renderMode();loadAnalysisWorkspace(true).then(function(){openAnalysisDetail(category,"L2",null)});
@@ -2636,6 +2639,20 @@ async function copyFirstMonth(kind,category,btn){
   finally{setBusy(btn,false)}
 }
 
+$("reportingViewTab").onclick=function(){showStandardReportingView()};
+$("scenarioViewTab").onclick=function(){showScenarioView()};
+$("scenarioView").addEventListener("click",function(e){
+  const h=e.target.closest("[data-scenario-horizon]");
+  if(h){
+    scenarioHorizon=h.dataset.scenarioHorizon||"CALENDAR";
+    renderScenario();return;
+  }
+  const m=e.target.closest("[data-scenario-mode]");
+  if(m){
+    scenarioMode=m.dataset.scenarioMode||"SUMMARY";
+    renderScenario();return;
+  }
+});
 $("expenseScope").onchange=renderExpenseChart;
 $("toggleYoY").onchange=renderExpenseChart;
 $("modePlan").onclick=function(){planMode="PLAN";renderMode()};
