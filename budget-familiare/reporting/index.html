@@ -392,6 +392,23 @@ button,input,select{font:inherit}
 .scenario-kpi .value{font-size:24px;line-height:1.05;font-weight:800;color:var(--sc-ink);margin:5px 0}
 .scenario-kpi .sub{font-size:9.5px;color:#64748b;line-height:1.35}
 .scenario-kpi .sub.good{color:#07825f}.scenario-kpi .sub.bad{color:#dc3545}
+/* V73.4 — KPI con gerarchia visiva */
+.scenario-kpi{padding:15px 16px 14px 17px;border-left:4px solid #dbe4f0;min-height:112px}
+.scenario-kpi.tone-green{border-left-color:#20b486}.scenario-kpi.tone-red{border-left-color:#ef6a7f}.scenario-kpi.tone-blue{border-left-color:#3b82f6}.scenario-kpi.tone-purple{border-left-color:#7c63e8}
+.scenario-kpi .icon{position:absolute;right:13px;top:13px;width:46px;height:46px;border-radius:14px;margin:0;font-size:0;opacity:.96}
+.scenario-kpi .icon svg{width:25px;height:25px;stroke-width:1.9}
+.scenario-kpi .label{padding-right:52px;font-size:10px;font-weight:750;letter-spacing:.015em;text-transform:uppercase;color:#64748b}
+.scenario-kpi .value{font-size:27px;margin:12px 52px 5px 0;letter-spacing:-.025em}
+.scenario-kpi .sub{max-width:calc(100% - 12px);font-size:9.5px}
+.scenario-kpi.major{grid-column:span 2;min-height:132px;padding:17px 18px;border-left-width:5px;box-shadow:0 8px 24px rgba(15,23,42,.055)}
+.scenario-kpi.major .icon{width:54px;height:54px;border-radius:17px;right:16px;top:16px}
+.scenario-kpi.major .icon svg{width:30px;height:30px}
+.scenario-kpi.major .label{font-size:10.5px}
+.scenario-kpi.major .value{font-size:33px;margin-top:16px}
+.scenario-kpi.major.tone-green{background:linear-gradient(135deg,#f1fcf7,#ffffff 66%)}.scenario-kpi.major.tone-blue{background:linear-gradient(135deg,#f1f7ff,#ffffff 66%)}.scenario-kpi.major.tone-purple{background:linear-gradient(135deg,#f7f4ff,#ffffff 66%)}
+.scenario-kpi.warn{border-left-color:#ef4444}
+@media(max-width:1100px){.scenario-kpi.major{grid-column:span 1}.scenario-kpi.major .value{font-size:27px}}
+
 .scenario-card{background:#fff;border:1px solid #e3e9f1;border-radius:14px;padding:14px 16px;box-shadow:0 5px 18px rgba(15,23,42,.035);margin-bottom:12px}
 .scenario-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px}
 .scenario-card-head h3{margin:0;color:var(--sc-ink);font-size:16px}.scenario-card-head p{margin:3px 0 0;color:#64748b;font-size:10.5px}
@@ -414,11 +431,11 @@ button,input,select{font:inherit}
 @media(max-width:700px){.scenario-kpis,.scenario-kpis.expense-mode{grid-template-columns:1fr 1fr!important}.scenario-chart-main,.scenario-chart{height:285px}.scenario-controls{gap:10px}.scenario-segment button{padding:7px 9px}.scenario-hero h2{font-size:25px}}
 
 /* V73.1/V73.2 — Scenario monthly reading */
-.scenario-bar{display:inline-block;width:12px;height:10px;border-radius:3px;vertical-align:-1px;margin-right:4px}.scenario-bar.income{background:#0ea87a}.scenario-bar.expense{background:#ef5b73}
+.scenario-bar{display:inline-block;width:12px;height:10px;border-radius:3px;vertical-align:-1px;margin-right:4px}.scenario-bar.income{background:#0ea87a}.scenario-bar.expense{background:#ef5b73}.scenario-bar.balance{background:linear-gradient(90deg,#16a34a 0 48%,#ef4444 52% 100%)}
 .scenario-chart-hover{min-height:38px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:7px 9px;margin:3px 0 8px;border:1px solid #e2e8f0;background:#f8fafc;border-radius:9px;font-size:10px}
 .scenario-hover-month{font-weight:800;color:#172033}.scenario-hover-chip{display:inline-flex;align-items:center;padding:3px 6px;border-radius:999px;background:#fff;border:1px solid #e2e8f0;font-weight:700}.scenario-hover-chip.income{color:#087f5b}.scenario-hover-chip.expense{color:#be123c}.scenario-hover-chip.balance{color:#1e3a8a}.scenario-hover-chip.ordinary{color:#475569}
 .scenario-month-status-row{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:4px;margin-top:8px;overflow-x:auto;padding-bottom:2px}
-.scenario-month-status{min-width:0;padding:4px 3px;border-radius:7px;text-align:center;font-size:8.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border:1px solid transparent}
+.scenario-month-status{min-width:0;padding:3px 2px;border-radius:6px;text-align:center;font-size:8px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border:1px solid transparent}
 .scenario-month-status.win{background:#dcfce7;color:#166534;border-color:#bbf7d0}.scenario-month-status.win-strong{background:#bbf7d0;color:#14532d;border-color:#86efac}
 .scenario-month-status.loss{background:#fee2e2;color:#991b1b;border-color:#fecaca}.scenario-month-status.loss-strong{background:#fecaca;color:#7f1d1d;border-color:#fca5a5}
 .scenario-month-status.neutral{background:#f1f5f9;color:#64748b;border-color:#e2e8f0}.scenario-month-status.special{background:#dbeafe;color:#1d4ed8;border-color:#bfdbfe}
@@ -642,7 +659,7 @@ button,input,select{font:inherit}
         <section class="scenario-card scenario-chart-card">
           <div class="scenario-card-head">
             <div><h3>Entrate, uscite e saldo cumulato</h3><p>Le barre mostrano i flussi mensili; la linea mostra la liquidità reale e prevista.</p></div>
-            <div class="scenario-legend-inline"><span><i class="scenario-bar income"></i> Entrate</span><span><i class="scenario-bar expense"></i> Uscite</span><span><i class="scenario-line solid"></i> Saldo cumulato</span></div>
+            <div class="scenario-legend-inline"><span><i class="scenario-bar income"></i> Entrate</span><span><i class="scenario-bar expense"></i> Uscite</span><span><i class="scenario-bar balance"></i> Saldo mese</span><span><i class="scenario-line solid"></i> Saldo cumulato</span></div>
           </div>
           <div id="scenarioFlowHover" class="scenario-chart-hover"><span class="muted">Passa sul grafico per leggere il mese senza coprire le barre. Clicca una barra per il dettaglio categorie.</span></div>
           <div class="scenario-chart scenario-chart-main"><canvas id="scenarioFlowChart"></canvas></div>
