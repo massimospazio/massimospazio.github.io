@@ -2360,25 +2360,65 @@ function scenarioActualInvestment(month,cashMap){
   const x=cashMap.get(month);return x?num(x.investments):0;
 }
 function scenarioForecastInvestment(month){return effectiveSpecial(report.investment_forecast||{},month)}
+function scenarioActualBreakdown(month,incActual,expActual,cash){
+  const x=cash.get(month);
+  if(!x){
+    const income=num(incActual.get(month)),expense=num(expActual.get(month));
+    return {income:income,expense:expense,investment:0,outflow:expense,net:income-expense,
+      ordinaryIncome:income,ordinaryExpense:expense,ordinaryInvestment:0,ordinaryOutflow:expense,ordinaryNet:income-expense,
+      extraordinaryIncome:0,extraordinaryExpense:0,extraordinaryInvestment:0,extraordinaryOutflow:0,extraordinaryNet:0};
+  }
+  const income=num(x.incoming),outgoing=num(x.outgoing),investment=num(x.investments),expense=Math.max(0,outgoing-investment);
+  const ordinaryIncome=num(x.incoming_ordinary),ordinaryOutgoing=num(x.outgoing_ordinary),ordinaryInvestment=num(x.investments_ordinary),ordinaryExpense=Math.max(0,ordinaryOutgoing-ordinaryInvestment);
+  const extraordinaryIncome=num(x.incoming_extraordinary),extraordinaryOutgoing=num(x.outgoing_extraordinary),extraordinaryInvestment=num(x.investments_extraordinary),extraordinaryExpense=Math.max(0,extraordinaryOutgoing-extraordinaryInvestment);
+  return {
+    income:income,expense:expense,investment:investment,outflow:outgoing,net:num(x.net),
+    ordinaryIncome:ordinaryIncome,ordinaryExpense:ordinaryExpense,ordinaryInvestment:ordinaryInvestment,ordinaryOutflow:ordinaryOutgoing,ordinaryNet:num(x.net_ordinary),
+    extraordinaryIncome:extraordinaryIncome,extraordinaryExpense:extraordinaryExpense,extraordinaryInvestment:extraordinaryInvestment,extraordinaryOutflow:extraordinaryOutgoing,extraordinaryNet:num(x.net_extraordinary)
+  };
+}
+function scenarioDisplayIncome(row){
+  if(row.isForecast)return scenarioExtraMode==="EXTRA"?0:num(row.income);
+  if(scenarioExtraMode==="ALL")return num(row.income);
+  if(scenarioExtraMode==="EXTRA")return num(row.extraordinaryIncome);
+  return num(row.ordinaryIncome);
+}
+function scenarioDisplayOutflow(row){
+  if(row.isForecast)return scenarioExtraMode==="EXTRA"?0:num(row.outflow);
+  if(scenarioExtraMode==="ALL")return num(row.outflow);
+  if(scenarioExtraMode==="EXTRA")return num(row.extraordinaryOutflow);
+  return num(row.ordinaryOutflow);
+}
+function scenarioDisplayExpense(row){
+  if(row.isForecast)return scenarioExtraMode==="EXTRA"?0:num(row.expense);
+  if(scenarioExtraMode==="ALL")return num(row.expense);
+  if(scenarioExtraMode==="EXTRA")return num(row.extraordinaryExpense);
+  return num(row.ordinaryExpense);
+}
+function scenarioDisplayNet(row){
+  if(row.isForecast)return scenarioExtraMode==="EXTRA"?0:num(row.net);
+  if(scenarioExtraMode==="ALL")return num(row.net);
+  if(scenarioExtraMode==="EXTRA")return num(row.extraordinaryNet);
+  return num(row.ordinaryNet);
+}
 function scenarioPlanData(){
   const exp=projectionDataFor("EXPENSE"),inc=projectionDataFor("INCOME");if(!exp||!inc)return null;
   const def=scenarioDefinition(exp),expActual=scenarioProjectionActualMap(exp),incActual=scenarioProjectionActualMap(inc),expForecast=scenarioProjectionForecastMap(exp),incForecast=scenarioProjectionForecastMap(inc),cash=scenarioCashflowMap(),liq=scenarioLiquidityMap();
   const marginPct=num(report&&report.meta&&report.meta.unexpected_margin_pct);
   const target=def.targetMonths.map(function(month){
     const future=month>=def.current;
-    const income=future?num(incForecast.get(month)):scenarioActualIncome(month,incActual,cash);
-    const expense=future?num(expForecast.get(month)):scenarioActualExpense(month,expActual,cash);
-    const investment=future?scenarioForecastInvestment(month):scenarioActualInvestment(month,cash);
-    const margin=future?expense*marginPct/100:0;
-    const net=future?income-expense-margin-investment:(cash.get(month)?num(cash.get(month).net):income-expense-investment);
-    return {month:month,isForecast:future,income:income,expense:expense,margin:margin,investment:investment,outflow:expense+margin+investment,net:net};
+    if(!future){
+      const a=scenarioActualBreakdown(month,incActual,expActual,cash);
+      return Object.assign({month:month,isForecast:false,margin:0},a);
+    }
+    const income=num(incForecast.get(month)),expense=num(expForecast.get(month)),investment=scenarioForecastInvestment(month),margin=expense*marginPct/100,outflow=expense+margin+investment,net=income-outflow;
+    return {month:month,isForecast:true,income:income,expense:expense,margin:margin,investment:investment,outflow:outflow,net:net,
+      ordinaryIncome:income,ordinaryExpense:expense,ordinaryInvestment:investment,ordinaryOutflow:outflow,ordinaryNet:net,
+      extraordinaryIncome:0,extraordinaryExpense:0,extraordinaryInvestment:0,extraordinaryOutflow:0,extraordinaryNet:0};
   });
   const comparison=def.comparisonMonths.map(function(month){
-    return {
-      month:month,
-      income:scenarioActualIncome(month,incActual,cash),
-      expense:scenarioActualExpense(month,expActual,cash)
-    };
+    const a=scenarioActualBreakdown(month,incActual,expActual,cash);
+    return Object.assign({month:month,isForecast:false,margin:0},a);
   });
   const prevMonth=addMonthsISO(def.current,-1);
   let anchorBalance=liq.has(prevMonth)?liq.get(prevMonth):currentBalanceTotal();
@@ -2387,20 +2427,11 @@ function scenarioPlanData(){
   target.filter(function(x){return x.isForecast}).forEach(function(x){running+=x.net;forecastBalances.set(x.month,running)});
   const display=def.displayMonths.map(function(month){
     if(month<def.current){
-      const cashRow=cash.get(month);
-      return {
-        month:month,isForecast:false,
-        income:scenarioActualIncome(month,incActual,cash),
-        expense:scenarioActualExpense(month,expActual,cash),
-        investment:scenarioActualInvestment(month,cash),
-        margin:0,
-        outflow:cashRow?num(cashRow.outgoing):scenarioActualExpense(month,expActual,cash),
-        net:cashRow?num(cashRow.net):scenarioActualIncome(month,incActual,cash)-scenarioActualExpense(month,expActual,cash),
-        balance:liq.has(month)?liq.get(month):null
-      };
+      const a=scenarioActualBreakdown(month,incActual,expActual,cash);
+      return Object.assign({month:month,isForecast:false,margin:0,balance:liq.has(month)?liq.get(month):null},a);
     }
     const t=target.find(function(x){return x.month===month});
-    return Object.assign({},t||{month:month,isForecast:true,income:0,expense:0,investment:0,margin:0,outflow:0,net:0},{balance:forecastBalances.has(month)?forecastBalances.get(month):null});
+    return Object.assign({},t||{month:month,isForecast:true,income:0,expense:0,investment:0,margin:0,outflow:0,net:0,ordinaryIncome:0,ordinaryExpense:0,ordinaryInvestment:0,ordinaryOutflow:0,ordinaryNet:0,extraordinaryIncome:0,extraordinaryExpense:0,extraordinaryInvestment:0,extraordinaryOutflow:0,extraordinaryNet:0},{balance:forecastBalances.has(month)?forecastBalances.get(month):null});
   });
   const forecastOnly=target.filter(function(x){return x.isForecast});
   const balancePath=forecastOnly.map(function(x){return {month:x.month,balance:forecastBalances.get(x.month)}});
