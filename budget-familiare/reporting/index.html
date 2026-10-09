@@ -230,6 +230,10 @@ button,input,select{font:inherit}
 .analysis-moves-table tr.forecast-excluded td.amount{text-decoration:line-through;text-decoration-thickness:1px}
 .forecast-excluded-badge{display:inline-flex;align-items:center;padding:2px 6px;border-radius:999px;background:#ffedd5;color:#9a3412;border:1px solid #fed7aa;font-size:8.5px;font-weight:800;white-space:nowrap}
 .analysis-movement-forecast-action{white-space:nowrap;text-align:right}
+.analysis-forecast-note-edit{display:flex;gap:4px;align-items:center;margin-top:5px;justify-content:flex-end}
+.analysis-forecast-note-edit input{width:180px;min-height:27px;padding:3px 6px;font-size:9px}
+.analysis-forecast-note-edit button{min-height:27px}
+
 .analysis-movement-summary{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
 .analysis-movement-summary .forecast-base{color:#1d4ed8;font-weight:750}
 .analysis-placeholder{min-height:410px;display:flex;align-items:center;justify-content:center;text-align:center;color:var(--muted);font-size:12px;padding:30px}
@@ -424,6 +428,24 @@ button,input,select{font:inherit}
 .scenario-breakdown{display:grid;gap:6px}.scenario-breakdown-row{display:grid;grid-template-columns:minmax(120px,1.2fr) 2fr auto;gap:9px;align-items:center;padding:6px 0;border-bottom:1px solid #eef2f7;cursor:pointer}.scenario-breakdown-row:last-child{border-bottom:0}.scenario-breakdown-row:hover{background:#f8fbff}
 .scenario-breakdown-name{font-size:10.5px;font-weight:750;color:#172033}.scenario-breakdown-bar{height:8px;border-radius:999px;background:#edf2f7;overflow:hidden}.scenario-breakdown-fill{height:100%;border-radius:999px;background:#3b82f6}.scenario-breakdown-fill.income{background:#0ea87a}.scenario-breakdown-fill.expense{background:#ef5b73}.scenario-breakdown-amount{font-size:10px;font-weight:800;text-align:right}
 .scenario-extra-note{font-size:9px;color:#64748b;margin-top:4px}
+.scenario-extra-hover{display:inline-flex;align-items:center;gap:4px;padding:3px 7px;border-radius:999px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;font-size:9px;font-weight:750;max-width:320px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.scenario-month-columns{display:grid;grid-template-columns:1fr 1fr .9fr;gap:12px;margin-top:10px}
+.scenario-month-column{border:1px solid #e2e8f0;border-radius:11px;padding:10px;background:#fff;min-width:0}
+.scenario-month-column.selected{border-color:#93c5fd;box-shadow:0 0 0 2px rgba(59,130,246,.08)}
+.scenario-month-column h4{margin:0 0 7px;font-size:11px;color:#172033}
+.scenario-month-summary-card{display:grid;gap:7px}
+.scenario-month-summary-row{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px solid #eef2f7;font-size:9.5px}
+.scenario-month-summary-row:last-child{border-bottom:0}
+.scenario-extra-list{display:grid;gap:6px;margin-top:8px}
+.scenario-extra-item{padding:7px;border:1px solid #fed7aa;background:#fffaf5;border-radius:9px}
+.scenario-extra-item-head{display:flex;justify-content:space-between;gap:8px;font-size:9.5px;font-weight:750;color:#7c2d12}
+.scenario-extra-item-meta{margin-top:2px;font-size:8.5px;color:#9a3412}
+.scenario-extra-note-editor{display:flex;gap:4px;margin-top:5px}
+.scenario-extra-note-editor input{min-width:0;flex:1;padding:4px 6px;font-size:9px;min-height:28px}
+.scenario-extra-note-editor button{min-height:28px}
+@media(max-width:900px){.scenario-month-columns{grid-template-columns:1fr 1fr}.scenario-month-column.summary{grid-column:1/-1}}
+@media(max-width:650px){.scenario-month-columns{grid-template-columns:1fr}.scenario-month-column.summary{grid-column:auto}}
+
 .scenario-kpis.summary-mode{grid-template-columns:repeat(6,minmax(0,1fr))}
 @media(max-width:1100px){.scenario-kpis.summary-mode{grid-template-columns:repeat(3,minmax(0,1fr))}.scenario-month-status-row{grid-template-columns:repeat(6,minmax(0,1fr))}}
 @media(max-width:700px){.scenario-kpis.summary-mode{grid-template-columns:1fr 1fr}.scenario-month-status-row{grid-template-columns:repeat(3,minmax(0,1fr))}.scenario-breakdown-row{grid-template-columns:minmax(90px,1fr) 1.3fr auto}}
@@ -2253,7 +2275,8 @@ function renderAnalysisMovements(){
         const excluded=!!x.is_extraordinary;
         const action=canEdit
           ?'<td class="analysis-movement-forecast-action">'+(excluded
-            ?'<span class="forecast-excluded-badge">Escluso</span> <button class="btn ghost compact" type="button" data-analysis-forecast-exclusion="'+esc(x.id)+'" data-analysis-forecast-exclusion-mode="include" title="Reincludi questo movimento nella base di previsione">Ripristina</button>'
+            ?'<span class="forecast-excluded-badge">Escluso</span> <button class="btn ghost compact" type="button" data-analysis-forecast-exclusion="'+esc(x.id)+'" data-analysis-forecast-exclusion-mode="include" title="Reincludi questo movimento nella base di previsione">Ripristina</button>'+
+              '<div class="analysis-forecast-note-edit"><input class="input" type="text" maxlength="180" value="'+esc(x.extraordinary_note||"")+'" placeholder="Motivo / contesto dello straordinario" data-analysis-extra-note="'+esc(x.id)+'" /><button class="btn ghost compact" type="button" data-analysis-extra-note-save="'+esc(x.id)+'">Salva nota</button></div>'
             :'<button class="btn ghost compact" type="button" data-analysis-forecast-exclusion="'+esc(x.id)+'" data-analysis-forecast-exclusion-mode="exclude" title="La spesa resta nei consuntivi ma non influenzerà Analisi e forecast">Escludi</button>')+'</td>'
           :"";
         return '<tr'+(excluded?' class="forecast-excluded"':'')+'><td>'+dateLabel(x.transaction_date)+'</td><td><strong>'+esc(x.counterparty||"—")+'</strong></td><td>'+esc(x.category||"—")+'</td><td class="amount">'+money(x.amount)+'</td><td>'+esc(x.description||"")+'</td><td>'+movementNoteHtml(x.user_note)+'</td>'+action+'</tr>';
@@ -2270,7 +2293,7 @@ async function setAnalysisMovementForecastExclusion(transactionId,exclude,btn){
     await rpc("dashboard_reporting_set_extraordinary_v1",{
       p_transaction_id:transactionId,
       p_is_extraordinary:exclude,
-      p_note:exclude?"Escluso dalla previsione da Analisi spese":null
+      p_note:null
     });
     const oldCash=report&&report.cashflow_monthly,oldLiquidity=report&&report.liquidity_history;
     const fresh=await rpc("dashboard_reporting_read_v5");
@@ -2287,6 +2310,25 @@ async function setAnalysisMovementForecastExclusion(transactionId,exclude,btn){
       :"Movimento reincluso nella base di previsione.");
   }catch(err){
     msg($("analysisStatus"),err.message||"Errore aggiornamento movimento",true);
+    setBusy(btn,false);
+  }
+}
+async function saveAnalysisExtraordinaryNote(transactionId,note,btn){
+  const clean=String(note||"").trim();
+  if(!clean){msg($("analysisStatus"),"Inserisci una nota che spieghi lo straordinario.",true);return}
+  setBusy(btn,true,"Salvo");
+  try{
+    await rpc("dashboard_reporting_set_extraordinary_v1",{p_transaction_id:transactionId,p_is_extraordinary:true,p_note:clean});
+    const movement=analysisDetailData&&(analysisDetailData.movements||[]).find(function(x){return String(x.id)===String(transactionId)});
+    if(movement)movement.extraordinary_note=clean;
+    const rep=(report&&report.extraordinary_transactions||[]).find(function(x){return String(x.id)===String(transactionId)});
+    if(rep)rep.note=clean;
+    const sx=(scenarioExtraordinaryMovements||[]).find(function(x){return String(x.transaction_id)===String(transactionId)});
+    if(sx)sx.note=clean;
+    renderAnalysisMovements();renderExtraordinary();
+    msg($("analysisStatus"),"Nota dello straordinario salvata.");
+  }catch(err){
+    msg($("analysisStatus"),err.message||"Errore salvataggio nota",true);
     setBusy(btn,false);
   }
 }
