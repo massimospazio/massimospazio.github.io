@@ -1,7 +1,7 @@
 // Canonical source: massimospazio/budget-familiare; public files are deployed automatically.
 (function(){
-  const APP_VERSION='V73.8';
-  const APP_RELEASE='Analisi · forecast continuo con L2, trend storico e delta pianificato';
+  const APP_VERSION='V73.8.1';
+  const APP_RELEASE='Fix tabella L2 forecast integrato';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});

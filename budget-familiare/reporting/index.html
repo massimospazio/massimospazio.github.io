@@ -8,8 +8,8 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=73.8-20261010-0035"></script>
-<script src="../shared/app-config.js?v=73.8-20261010-0035"></script>
+<script src="../shared/supabase-client.js?v=73.8.1-20261010-0040"></script>
+<script src="../shared/app-config.js?v=73.8.1-20261010-0040"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 :root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#6b7280;--line:#e5e7eb;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 8px 24px rgba(15,23,42,.06)}
@@ -2335,7 +2335,7 @@ function renderAnalysisComponents(){
     const def=projectionDefinition(data),futureLabel=analysisProjectionView==="ROLLING_12"?"Prossimi 12m":"Anno "+def.targetLabel+" previsto",deltaLabel=analysisProjectionView==="ROLLING_12"?"Δ forecast":"Δ anno";
     $("detailComponentsTitle").textContent="Categorie L2 · storico e previsione";$("detailSelection").innerHTML="";
     $("detailComponentsHead").innerHTML='<tr><th>Categoria L2</th><th>Ultimi 12m</th><th>Trend 12m</th><th>'+esc(futureLabel)+'</th><th>'+esc(deltaLabel)+'</th></tr>';
-    $("detailComponents").parentElement.querySelector("table").classList.add("projection-l2-table");
+    const componentsTable=$("detailComponents").closest("table");if(componentsTable)componentsTable.classList.add("projection-l2-table");
     $("detailComponents").innerHTML=rows.map(function(r,i){
       const c=compMap.get(String(r.category_id)),trend=c?trendMap.get(String(c.component_id)):null,last12=projectionLast12Total(data,"L2",r.category_id),color=projectionPaletteColor(i,rows.length,1,58);
       return '<tr><td><span class="projection-table-label"><i class="projection-l2-dot" style="background:'+esc(color)+'"></i><button class="analysis-row-button" data-drill-l2="'+esc(r.category_id)+'">'+esc(r.l2_name||r.l1_name||"Categoria")+'</button></span></td>'+
@@ -2343,7 +2343,7 @@ function renderAnalysisComponents(){
     }).join("")||'<tr><td colspan="5" class="muted">Nessuna categoria L2 disponibile.</td></tr>';
     return;
   }
-  $("detailComponents").parentElement.querySelector("table").classList.remove("projection-l2-table");
+  const componentsTable=$("detailComponents").closest("table");if(componentsTable)componentsTable.classList.remove("projection-l2-table");
   $("detailComponentsTitle").textContent=isL1?"Categorie L2":"Controparti";$("detailSelection").innerHTML=analysisSelectedComponent?'<button class="btn ghost compact" type="button" data-clear-analysis-component>← Tutte le controparti</button>':"";
   $("detailComponentsHead").innerHTML=isL1?'<tr><th>Categoria L2</th><th>Totale</th><th>%</th><th title="Include i mesi a zero">Media</th><th title="Include i mesi a zero">Mediana</th><th>Frequenza</th><th>Previsione</th></tr>':'<tr><th>Controparte</th><th>Totale</th><th>%</th><th title="Include i mesi a zero">Media</th><th title="Include i mesi a zero">Mediana</th><th>Frequenza</th><th>Previsione</th></tr>';
   $("detailComponents").innerHTML=(d.components||[]).map(function(c){
