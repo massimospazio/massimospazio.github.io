@@ -8,8 +8,8 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=73.6.1-20261009-2115"></script>
-<script src="../shared/app-config.js?v=73.6.1-20261009-2115"></script>
+<script src="../shared/supabase-client.js?v=73.7-20261009-2310"></script>
+<script src="../shared/app-config.js?v=73.7-20261009-2310"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 :root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#6b7280;--line:#e5e7eb;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 8px 24px rgba(15,23,42,.06)}
@@ -469,6 +469,17 @@ button,input,select{font:inherit}
 @media(max-width:900px){.scenario-month-columns{grid-template-columns:1fr 1fr}.scenario-month-column.summary{grid-column:1/-1}}
 @media(max-width:650px){.scenario-month-columns{grid-template-columns:1fr}.scenario-month-column.summary{grid-column:auto}}
 
+/* V73.7 — Reporting semplificato: Analisi + Scenario */
+#standardReportingView>.section:first-child{margin-top:0}
+.scenario-balance-settings{padding:0;margin-bottom:12px}
+.scenario-balance-settings summary{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 14px;cursor:pointer;list-style:none;color:#334155}
+.scenario-balance-settings summary::-webkit-details-marker{display:none}
+.scenario-balance-settings summary strong{font-size:11.5px;color:#172033}.scenario-balance-settings summary small{font-size:9.5px;color:#64748b;font-weight:500}
+#scenarioBalanceSummary{font-size:11px;font-weight:850;color:#0f766e;white-space:nowrap}
+.scenario-balance-body{padding:0 14px 13px;border-top:1px solid #edf1f6}
+.scenario-balance-body .balance-row{grid-template-columns:minmax(190px,1fr) 130px auto;padding:8px 0}
+@media(max-width:700px){.scenario-balance-settings summary{align-items:flex-start}.scenario-balance-body .balance-row{grid-template-columns:1fr auto}.scenario-balance-body .balance-row>div:first-child{grid-column:1/-1}.scenario-balance-body .balance-input{width:100%}}
+
 /* V73.6 — gerarchia KPI e confronto storico/previsione */
 .analysis-plan-compare{flex-basis:100%;display:flex;justify-content:flex-end;align-items:center;gap:5px;flex-wrap:wrap;margin-top:1px}
 .analysis-plan-caption{font-size:9px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.035em;margin-right:2px}
@@ -501,12 +512,12 @@ button,input,select{font:inherit}
 
   <div id="appView" class="hidden">
     <div class="top">
-      <div class="brand"><h1>MiaFinanza</h1><small>Budget per la Vita · Reporting</small><div class="rpc-version-line"><button id="rpcDiagnosticsOpen" class="version-diagnostics" type="button" title="Apri diagnostica tecnica"><span data-app-version>—</span></button><button id="rpcPerformanceAlert" class="rpc-performance-alert hidden" type="button" aria-label="Prestazioni RPC da verificare" title="Prestazioni RPC da verificare"></button></div></div>
+      <div class="brand"><h1>MiaFinanza</h1><small>Budget per la Vita · Analisi</small><div class="rpc-version-line"><button id="rpcDiagnosticsOpen" class="version-diagnostics" type="button" title="Apri diagnostica tecnica"><span data-app-version>—</span></button><button id="rpcPerformanceAlert" class="rpc-performance-alert hidden" type="button" aria-label="Prestazioni RPC da verificare" title="Prestazioni RPC da verificare"></button></div></div>
       <div class="userbar"><span id="userEmail"></span><button id="refreshBtn" class="btn ghost">Aggiorna</button><button id="logoutBtn" class="btn ghost">Esci</button></div>
     </div>
     <div class="tabs">
       <a class="tab" href="../">Dashboard</a>
-      <button id="reportingViewTab" class="tab active" type="button">Reporting</button>
+      <button id="reportingViewTab" class="tab active" type="button">Analisi</button>
       <button id="scenarioViewTab" class="tab" type="button">Scenario</button>
     </div>
     <div id="reportReturnBar" class="report-return-bar hidden"></div>
@@ -514,60 +525,14 @@ button,input,select{font:inherit}
     <div id="reportMsg"></div>
 
     <div id="standardReportingView">
-    <section class="grid kpis">
-      <div class="card kpi"><div class="label">Spese ordinarie 12 mesi</div><div id="kExpense12" class="value">—</div><div class="sub">Base per medie e previsioni</div></div>
-      <div class="card kpi"><div class="label">Straordinarie 12 mesi</div><div id="kExtra12" class="value">—</div><div class="sub">Escluse dalle medie automatiche</div></div>
-      <div class="card kpi"><div class="label">Media mensile</div><div id="kExpenseAvg" class="value">—</div><div class="sub">Sui 12 mesi visualizzati</div></div>
-      <div class="card kpi"><div class="label">Saldo netto 12 mesi</div><div id="kNet12" class="value">—</div><div class="sub">Entrate − uscite, investimenti inclusi</div></div>
-      <div class="card kpi"><div class="label">Copertura categorie</div><div id="kCoverage" class="value">—</div><div class="sub">Spese con categoria</div></div>
-      <div class="card kpi"><div class="label">Dati aggiornati al</div><div id="kLatest" class="value" style="font-size:20px">—</div><div id="kRange" class="sub">—</div></div>
-    </section>
-
     <section class="card section">
       <div class="section-title">
-        <div><h2>Spese mensili per categoria</h2><p>Vista Massimo · ultimi 12 mesi, stratificati per categoria L1.</p></div>
+        <div><h2>Analisi per categoria</h2><p>Storico, trend e previsione nello stesso spazio. Le correzioni mensili si fanno direttamente nella previsione della categoria L2.</p></div>
         <div class="toolbar">
-          <label class="small">Vista <select id="expenseScope" class="select" style="min-height:30px;padding:5px 8px"><option value="ORDINARY">Solo ordinarie</option><option value="ALL">Tutte</option><option value="EXTRA">Solo straordinarie</option></select></label>
-          <label class="small" style="display:flex;gap:7px;align-items:center"><input id="toggleYoY" type="checkbox" checked /> Confronta anno precedente</label>
+          <button id="collapseAll" class="btn ghost compact">Comprimi categorie</button>
         </div>
       </div>
-      <div class="chart-box"><canvas id="expenseChart"></canvas></div>
-      <div id="yoyNote" class="legend-note"></div><div id="extraordinaryList" style="margin-top:12px"></div>
-    </section>
-
-    <section class="grid two section">
-      <div class="card">
-        <div class="section-title"><div><h2>Saldo netto mensile</h2><p>Vista Massimo · Entrate − Uscite reali. I trasferimenti interni Massimo ING↔Trade Republic sono esclusi; straordinarie e investimenti restano nel cash flow.</p></div></div>
-        <div class="chart-box compact"><canvas id="cashflowChart"></canvas></div>
-        <div id="cashflowNote" class="legend-note"></div>
-      </div>
-
-      <div class="card">
-        <div class="section-title"><div><h2>Liquidità di partenza</h2><p>Saldo manuale dei conti. È uno stock: ancora la liquidità storica e avvia la proiezione futura, senza creare movimenti.</p></div></div>
-        <div id="balanceList" class="balance-list"></div>
-        <div class="balance-total"><span>Liquidità di partenza</span><span id="balanceTotal">—</span></div>
-        <div id="balanceMsg"></div>
-      </div>
-    </section>
-
-    <section class="card section">
-      <div class="section-title">
-        <div><h2>Pianificazione e analisi per categoria</h2><p>Analizza lo storico, definisci le assunzioni di forecast nel loro contesto e usa la Pianificazione per gli override finali.</p></div>
-        <div class="toolbar">
-          <div class="mode-toggle"><button id="modePlan" class="btn compact">Pianifica 6 mesi</button><button id="modeAnalysis" class="btn ghost compact">Analizza</button></div>
-          <button id="expandAll" class="btn ghost compact">Espandi tutte</button><button id="collapseAll" class="btn ghost compact">Comprimi tutte</button>
-        </div>
-      </div>
-      <div id="planControls">
-        <div class="toolbar" style="margin-bottom:6px">
-          <label class="small">Margine imprevisti <input id="marginPct" class="input" type="number" min="0" max="100" step="0.5" style="width:82px" /> %</label>
-          <button id="saveMargin" class="btn ghost compact">Salva margine</button>
-        </div>
-        <div id="planSummary"></div><div id="incomeExceptions"></div><div id="planMsg"></div>
-        <div class="plan-wrap"><table class="plan-table"><thead id="planHead"></thead><tbody id="planBody"></tbody></table></div>
-        <div class="legend-note plan-help-note">ⓘ Il metodo di forecast si decide in Analisi. Qui puoi correggere i singoli mesi: il bordo blu indica un override manuale. Straordinari esclusi dai suggerimenti automatici.</div>
-      </div>
-      <div id="analysisControls" class="hidden">
+      <div id="analysisControls">
         <select id="analysisDirection" class="hidden" aria-hidden="true"><option value="EXPENSE">Spese</option><option value="INCOME">Entrate</option></select>
         <div class="analysis-v26-toolbar">
           <div class="analysis-v26-left">
@@ -622,11 +587,6 @@ button,input,select{font:inherit}
       </div>
     </section>
 
-    <section class="card section">
-      <div class="section-title"><div><h2>Proiezione liquidità</h2><p>Saldo Massimo + entrate previste − spese ordinarie previste − margine imprevisti − investimenti previsti.</p></div></div>
-      <div id="projectionContent"></div>
-    </section>
-
     <div class="secondary-tools">
       <details id="extraordinaryDetails" class="secondary-details">
         <summary><span>Movimenti esclusi dalla previsione</span><span id="extraordinarySummary" class="muted"></span></summary>
@@ -671,6 +631,15 @@ button,input,select{font:inherit}
           </div>
         </div>
       </div>
+
+      <details id="scenarioBalanceSettings" class="scenario-card scenario-balance-settings">
+        <summary><span><strong>Saldi dei conti</strong><small> Aggiorna solo quando cambia il saldo disponibile reale.</small></span><span id="scenarioBalanceSummary">—</span></summary>
+        <div class="scenario-balance-body">
+          <div id="balanceList" class="balance-list"></div>
+          <div class="balance-total"><span>Liquidità disponibile</span><span id="balanceTotal">—</span></div>
+          <div id="balanceMsg"></div>
+        </div>
+      </details>
 
       <div id="scenarioStatus"></div>
       <div id="scenarioKpis" class="scenario-kpis"></div>
@@ -772,7 +741,7 @@ let analysisForecastEditorKey="";
 let analysisForecastDraft=null;
 let analysisForecastDraftKey="";
 let analysisForecastSaving=false;
-let planMode="PLAN";
+let planMode="ANALYSIS";
 let reportDeepLinkHandled=false;
 const collapsedL1=new Set();
 
@@ -875,12 +844,10 @@ async function loadReport(){
   try{
     const data=await Promise.all([
       rpc("dashboard_reporting_read_v5"),
-      rpc("dashboard_reporting_cashflow_v68"),
       rpc("dashboard_reporting_liquidity_history_v1").catch(function(){return {available:false,reason:"UNAVAILABLE",rows:[]}})
     ]);
     report=data[0]||{};
-    report.cashflow_monthly=data[1]||[];
-    report.liquidity_history=data[2]||{available:false,rows:[]};
+    report.liquidity_history=data[1]||{available:false,rows:[]};
     renderAll();
     openReportingFromUrl();
   }catch(e){
@@ -1011,14 +978,20 @@ function balancesComplete(){
 }
 function currentBalanceTotal(){return (report.balances||[]).reduce(function(s,x){return s+(x.balance===null||x.balance===undefined?0:num(x.balance))},0)}
 function renderBalances(){
-  $("balanceList").innerHTML=(report.balances||[]).map(function(x){
+  const list=$("balanceList"),total=$("balanceTotal"),summary=$("scenarioBalanceSummary");if(!list||!total)return;
+  const balances=report.balances||[];
+  list.innerHTML=balances.map(function(x){
     const value=x.balance===null||x.balance===undefined?"":String(Math.round(num(x.balance)));
     return '<div class="balance-row" data-account="'+esc(x.account_id)+'">'+
       '<div><div class="balance-name">'+esc(x.owner)+" · "+esc(x.bank)+'</div><div class="balance-meta">'+esc(x.account)+" · ultimo saldo: "+dateLabel(x.snapshot_date)+'</div></div>'+
       '<input class="input balance-input" data-balance-input="'+esc(x.account_id)+'" type="number" step="1" value="'+esc(value)+'" placeholder="Saldo €" />'+
       '<button class="btn compact" data-save-balance="'+esc(x.account_id)+'">Salva</button></div>';
   }).join("");
-  $("balanceTotal").textContent=money(currentBalanceTotal());
+  const totalValue=currentBalanceTotal();total.textContent=money(totalValue);
+  if(summary){
+    const dates=balances.map(function(x){return x.snapshot_date}).filter(Boolean).sort();
+    summary.textContent=money(totalValue)+(dates.length?" · "+dateLabel(dates[dates.length-1]):"");
+  }
 }
 
 function futureMonths(){return report.future_months||[]}
@@ -1252,6 +1225,7 @@ function renderIncomeExceptions(){
   box.innerHTML='<div class="notice warn warning-list"><strong>Entrate fuori dalla gerarchia Entrate: '+rows.length+" movimenti · "+money(sum)+'</strong><br>Non vengono usate nella previsione L2 finché restano fuori da Entrate. Esempi: '+rows.slice(0,5).map(function(x){return esc(x.category)+" "+money(x.amount)+" ("+dateLabel(x.transaction_date)+")"}).join(" · ")+".</div>";
 }
 function renderPlan(){
+  if(!$("planHead")||!$("planBody"))return;
   const months=futureMonths();
   $("planHead").innerHTML="<tr><th>Categoria / Voce</th><th>Origine forecast</th><th></th>"+months.map(function(m){return "<th>"+esc(monthLabel(m))+"</th>"}).join("")+"<th>Totale 6m</th></tr>";
   let html="";
@@ -2532,13 +2506,13 @@ function scenarioActualBreakdown(month,incActual,expActual,cash){
       ordinaryIncome:income,ordinaryExpense:expense,ordinaryInvestment:0,ordinaryOutflow:expense,ordinaryNet:income-expense,
       extraordinaryIncome:0,extraordinaryExpense:0,extraordinaryInvestment:0,extraordinaryOutflow:0,extraordinaryNet:0};
   }
-  const income=num(x.incoming),outgoing=num(x.outgoing),investment=num(x.investments),expense=Math.max(0,outgoing-investment);
-  const ordinaryIncome=num(x.incoming_ordinary),ordinaryOutgoing=num(x.outgoing_ordinary),ordinaryInvestment=num(x.investments_ordinary),ordinaryExpense=Math.max(0,ordinaryOutgoing-ordinaryInvestment);
-  const extraordinaryIncome=num(x.incoming_extraordinary),extraordinaryOutgoing=num(x.outgoing_extraordinary),extraordinaryInvestment=num(x.investments_extraordinary),extraordinaryExpense=Math.max(0,extraordinaryOutgoing-extraordinaryInvestment);
+  const income=num(x.incoming),outgoing=num(x.outgoing),expense=outgoing;
+  const ordinaryIncome=num(x.incoming_ordinary),ordinaryOutgoing=num(x.outgoing_ordinary),ordinaryExpense=ordinaryOutgoing;
+  const extraordinaryIncome=num(x.incoming_extraordinary),extraordinaryOutgoing=num(x.outgoing_extraordinary),extraordinaryExpense=extraordinaryOutgoing;
   return {
-    income:income,expense:expense,investment:investment,outflow:outgoing,net:num(x.net),
-    ordinaryIncome:ordinaryIncome,ordinaryExpense:ordinaryExpense,ordinaryInvestment:ordinaryInvestment,ordinaryOutflow:ordinaryOutgoing,ordinaryNet:num(x.net_ordinary),
-    extraordinaryIncome:extraordinaryIncome,extraordinaryExpense:extraordinaryExpense,extraordinaryInvestment:extraordinaryInvestment,extraordinaryOutflow:extraordinaryOutgoing,extraordinaryNet:num(x.net_extraordinary)
+    income:income,expense:expense,investment:0,outflow:outgoing,net:num(x.net),
+    ordinaryIncome:ordinaryIncome,ordinaryExpense:ordinaryExpense,ordinaryInvestment:0,ordinaryOutflow:ordinaryOutgoing,ordinaryNet:num(x.net_ordinary),
+    extraordinaryIncome:extraordinaryIncome,extraordinaryExpense:extraordinaryExpense,extraordinaryInvestment:0,extraordinaryOutflow:extraordinaryOutgoing,extraordinaryNet:num(x.net_extraordinary)
   };
 }
 function scenarioDisplayIncome(row){
@@ -2568,16 +2542,15 @@ function scenarioDisplayNet(row){
 function scenarioPlanData(){
   const exp=projectionDataFor("EXPENSE"),inc=projectionDataFor("INCOME");if(!exp||!inc)return null;
   const def=scenarioDefinition(exp),expActual=scenarioProjectionActualMap(exp),incActual=scenarioProjectionActualMap(inc),expForecast=scenarioProjectionForecastMap(exp),incForecast=scenarioProjectionForecastMap(inc),cash=scenarioCashflowMap(),liq=scenarioLiquidityMap();
-  const marginPct=num(report&&report.meta&&report.meta.unexpected_margin_pct);
   const target=def.targetMonths.map(function(month){
     const future=month>=def.current;
     if(!future){
       const a=scenarioActualBreakdown(month,incActual,expActual,cash);
       return Object.assign({month:month,isForecast:false,margin:0},a);
     }
-    const income=num(incForecast.get(month)),expense=num(expForecast.get(month)),investment=scenarioForecastInvestment(month),margin=expense*marginPct/100,outflow=expense+margin+investment,net=income-outflow;
-    return {month:month,isForecast:true,income:income,expense:expense,margin:margin,investment:investment,outflow:outflow,net:net,
-      ordinaryIncome:income,ordinaryExpense:expense,ordinaryInvestment:investment,ordinaryOutflow:outflow,ordinaryNet:net,
+    const income=num(incForecast.get(month)),expense=num(expForecast.get(month)),outflow=expense,net=income-expense;
+    return {month:month,isForecast:true,income:income,expense:expense,margin:0,investment:0,outflow:outflow,net:net,
+      ordinaryIncome:income,ordinaryExpense:expense,ordinaryInvestment:0,ordinaryOutflow:outflow,ordinaryNet:net,
       extraordinaryIncome:0,extraordinaryExpense:0,extraordinaryInvestment:0,extraordinaryOutflow:0,extraordinaryNet:0};
   });
   const comparison=def.comparisonMonths.map(function(month){
@@ -2599,7 +2572,7 @@ function scenarioPlanData(){
   });
   const forecastOnly=target.filter(function(x){return x.isForecast});
   const balancePath=forecastOnly.map(function(x){return {month:x.month,balance:forecastBalances.get(x.month)}});
-  return {exp:exp,inc:inc,def:def,target:target,comparison:comparison,display:display,anchorMonth:prevMonth,anchorBalance:anchorBalance,balancePath:balancePath,marginPct:marginPct};
+  return {exp:exp,inc:inc,def:def,target:target,comparison:comparison,display:display,anchorMonth:prevMonth,anchorBalance:anchorBalance,balancePath:balancePath};
 }
 function scenarioSum(rows,key){return (rows||[]).reduce(function(s,x){return s+num(x&&x[key])},0)}
 function scenarioPctDelta(value,comparison){
@@ -2691,7 +2664,7 @@ function renderScenarioKpis(plan){
     scenarioKpiCard("◉",finalBalance>=0?"green":"red",scenarioHorizon==="ROLLING_12"?"Saldo previsto tra 12 mesi":"Saldo previsto a fine anno",money(finalBalance),{text:"Saldo di partenza "+money(plan.anchorBalance)+" · variazione "+signedMoneyExact(liquidityChange),cls:finalBalance>=0?"good":"bad"},"hero")+
     scenarioKpiCard("↗",liquidityChange>=0?"green":"red","Variazione liquidità prevista",signedMoneyExact(liquidityChange),{text:"Dal saldo di partenza alla fine del periodo",cls:liquidityChange>=0?"good":"bad"},"key")+
     scenarioKpiCard("!",minTone,"Minimo saldo previsto",money(minBalance),{text:minRow?"Previsto a "+monthLabel(minRow.month):"Nessun mese futuro",cls:minBalance<0?"bad":""},"key"+(minBalance<0?" warn":""))+
-    scenarioKpiCard("⚖",projectedNet>=0?"green":"red",scenarioHorizon==="ROLLING_12"?"Risultato complessivo 12 mesi":"Risultato complessivo dell'anno",signedMoneyExact(projectedNet),{text:"Entrate − uscite − margine − investimenti",cls:projectedNet>=0?"good":"bad"},"key")+
+    scenarioKpiCard("⚖",projectedNet>=0?"green":"red",scenarioHorizon==="ROLLING_12"?"Risultato complessivo 12 mesi":"Risultato complessivo dell'anno",signedMoneyExact(projectedNet),{text:"Entrate − uscite",cls:projectedNet>=0?"good":"bad"},"key")+
     scenarioKpiCard("↓",expenseTone,scenarioHorizon==="ROLLING_12"?"Variazione spese previste · 12m":"Variazione spese previste · anno",scenarioPctText(expensePct),{text:money(plannedExpense)+" vs "+money(previousExpense)+" · base forecast, straordinarie escluse",cls:expensePct!==null&&num(expensePct)>0?"bad":expensePct!==null&&num(expensePct)<0?"good":""},"key")+
     scenarioDriverStripHtml(projectedIncome,projectedExpense);
 }
@@ -2861,11 +2834,7 @@ function scenarioMonthBreakdown(plan,month,flow){
       }else add(flow+"|"+(x.l1_id||x.l1_name),x.l1_id,x.l1_name,num(x.effective_amount),flow,"L1");
     });
     if(flow==="EXPENSE"){
-      const row=plan.display.find(function(x){return x.month===month});
-      if(row){
-        add("MARGIN",null,"Margine imprevisti",row.margin,"MARGIN","L1");
-        add("INVESTMENT",null,"Investimenti",row.investment,"INVESTMENT","L1");
-      }
+      /* Tutte le uscite future arrivano già dalle categorie L2 pianificate in Analisi. */
     }
   }
   return Array.from(groups.values()).sort(function(a,b){return b.value-a.value});
@@ -2925,7 +2894,7 @@ function renderScenarioMonthDetail(plan){
         '<div class="scenario-month-summary-row"><span>Entrate</span><strong>'+money(incomeTotal)+'</strong></div>'+
         '<div class="scenario-month-summary-row"><span>Uscite</span><strong>'+money(outflowTotal)+'</strong></div>'+
         '<div class="scenario-month-summary-row"><span>Saldo mese</span><strong class="'+(displayNet>=0?"positive":"negative")+'">'+(displayNet>=0?"+":"")+money(displayNet)+'</strong></div>'+
-        (!row.isForecast?'<div><h4 style="margin-top:8px">Straordinari del mese</h4>'+scenarioExtraordinaryDetailHtml(row.month)+'</div>':'<div class="muted small" style="margin-top:7px">Per i mesi futuri lo Scenario mostra il piano: eventuali straordinari vanno inseriti esplicitamente nella pianificazione.</div>')+
+        (!row.isForecast?'<div><h4 style="margin-top:8px">Straordinari del mese</h4>'+scenarioExtraordinaryDetailHtml(row.month)+'</div>':'<div class="muted small" style="margin-top:7px">Per i mesi futuri lo Scenario usa il forecast delle categorie: gli scostamenti si correggono direttamente in Analisi.</div>')+
       '</div></div>'+
     '</div>';
 }
@@ -2968,7 +2937,7 @@ function renderScenarioInsights(plan){
   const critical=minRow&&num(minRow.balance)<0;
   $("scenarioInsight").innerHTML='<span class="bulb">'+(critical?"⚠":"💡")+'</span><div class="scenario-insight-body"><strong>'+(critical?'Attenzione: il piano porta il saldo sotto zero':'Scenario attuale: '+(finalBalance>=plan.anchorBalance?'saldo in crescita':'saldo in riduzione'))+'</strong>'+
     (minRow?'Il minimo previsto è '+money(minRow.balance)+' a '+esc(monthLabel(minRow.month))+'. ':'')+
-    'Il saldo finale atteso è '+money(finalBalance)+'. La proiezione include margine imprevisti e investimenti previsti.</div><button class="scenario-insight-action" type="button" data-scenario-goto-expenses>Vedi dettaglio spese →</button>';
+    'Il saldo finale atteso è '+money(finalBalance)+'. La proiezione usa direttamente entrate e uscite pianificate in Analisi.</div><button class="scenario-insight-action" type="button" data-scenario-goto-expenses>Vedi dettaglio spese →</button>';
   const maxRow=plan.target.reduce(function(a,x){return !a||x.expense>a.expense?x:a},null),avg=plan.target.length?scenarioSum(plan.target,"expense")/plan.target.length:0;
   $("scenarioExpenseInsight").innerHTML='<span class="bulb">💡</span><div class="scenario-insight-body"><strong>'+(maxRow?esc(monthLabel(maxRow.month))+' è il mese con più spese previste':'Dettaglio spese')+'</strong>'+
     (maxRow?'Spese '+money(maxRow.expense)+' rispetto a una media di '+money(avg)+'. ':'')+
@@ -3029,7 +2998,7 @@ function showStandardReportingView(){
 }
 
 function renderProjection(){
-  const box=$("projectionContent");
+  const box=$("projectionContent");if(!box)return;
   if(!balancesComplete()){
     box.innerHTML='<div class="notice warn"><strong>Completa i saldi dei conti</strong><br>La proiezione parte dalla liquidità reale disponibile.</div>';
     return;
@@ -3048,17 +3017,9 @@ function renderProjection(){
     '</tbody></table></div><div class="legend-note">Previsione operativa: cambia con entrate, spese, margine, investimenti e saldi iniziali.</div>';
 }
 
-function renderMode(){
-  const planning=planMode==="PLAN";
-  $("planControls").classList.toggle("hidden",!planning);
-  $("analysisControls").classList.toggle("hidden",planning);
-  $("modePlan").className="btn "+(planning?"":"ghost ")+"compact";
-  $("modeAnalysis").className="btn "+(!planning?"":"ghost ")+"compact";
-  $("expandAll").classList.toggle("hidden",!planning);
-  if(planning)renderPlan();else renderAnalysis();
-}
+function renderMode(){renderAnalysis()}
 function renderAll(){
-  renderKpis();renderExpenseChart();renderCashflowChart();renderBalances();renderMode();renderProjection();renderExtraordinary();
+  renderBalances();renderAnalysis();renderExtraordinary();
   if(scenarioVisible)loadScenarioData(false);
 }
 function renderReportReturnBar(params){
@@ -3160,10 +3121,6 @@ $("scenarioView").addEventListener("click",async function(e){
     loadAnalysisWorkspace(true).then(function(){openAnalysisDetail(id,"L1",null)});
   }
 });
-$("expenseScope").onchange=renderExpenseChart;
-$("toggleYoY").onchange=renderExpenseChart;
-$("modePlan").onclick=function(){planMode="PLAN";renderMode()};
-$("modeAnalysis").onclick=function(){planMode="ANALYSIS";renderMode()};
 $("analysisPeriod").onchange=function(){if(analysisTimeMode!=="HISTORY")return;const keep=captureAnalysisSelection();analysisSelectedMonth=null;analysisWorkspace=null;analysisWorkspaceKey="";loadAnalysisWorkspace(true,keep)};
 $("analysisProjectionView").onchange=function(){analysisProjectionView=this.value||"CALENDAR";analysisSelectedMonth=null;renderAnalysis()};
 $("analysisControls").addEventListener("click",function(e){
@@ -3183,23 +3140,9 @@ $("analysisControls").addEventListener("click",function(e){
   if(e.target.closest("#analysisExtraordinaryBtn")){$("analysisExtraordinaryInline").classList.toggle("hidden");return}
   if(e.target.closest("[data-close-analysis-extra]")){$("analysisExtraordinaryInline").classList.add("hidden");return}
 });
-$("expandAll").onclick=function(){if(planMode==="PLAN"){collapsedL1.clear();renderPlan()}};
 $("collapseAll").onclick=function(){
-  if(planMode==="PLAN"){groupedIncomeForecast().concat(groupedExpenseForecast()).forEach(function(g){collapsedL1.add(g.id)});renderPlan();return}
   if(analysisWorkspace){const prefix=analysisCurrentDirection()==="INCOME"?"AI:":"AE:",rows=analysisTimeMode==="PROJECTION"&&projectionDataFor(analysisCurrentDirection())?projectionHierarchyRows(projectionDataFor(analysisCurrentDirection())):(analysisWorkspace.rows||[]);rows.filter(function(r){return r.level==="L1"}).forEach(function(r){collapsedL1.add(prefix+r.category_id)});renderAnalysisMaster()}
 };
-$("planBody").addEventListener("click",async function(e){
-  const toggle=e.target.closest("[data-toggle-l1]");if(toggle){const id=toggle.dataset.toggleL1;if(collapsedL1.has(id))collapsedL1.delete(id);else collapsedL1.add(id);renderPlan();return}
-  const copy=e.target.closest("[data-copy-kind]");if(copy){await copyFirstMonth(copy.dataset.copyKind,copy.dataset.copyCategory||null,copy);return}
-  const detail=e.target.closest("[data-plan-detail]");if(detail){openCategoryDetail(detail.dataset.planDetail,detail.dataset.planDirection,null);return}
-});
-$("planBody").addEventListener("change",async function(e){
-  const el=e.target;try{msg($("planMsg"),"");
-    if(el.matches("[data-expense-category]")){const amount=el.value.trim()===""?null:Math.round(Number(el.value));if(amount!==null&&(!Number.isFinite(amount)||amount<0))throw new Error("Importo spesa non valido");await rpc("dashboard_reporting_set_expense_override_v1",{p_month:el.dataset.month,p_category_id:el.dataset.expenseCategory,p_amount:amount});updateCellLocal("expense",el.dataset.expenseCategory,el.dataset.month,amount);renderPlan();renderProjection();return}
-    if(el.matches("[data-income-category]")){const amount=el.value.trim()===""?null:Math.round(Number(el.value));if(amount!==null&&(!Number.isFinite(amount)||amount<0))throw new Error("Importo entrata non valido");await rpc("dashboard_reporting_set_income_category_override_v1",{p_month:el.dataset.month,p_category_id:el.dataset.incomeCategory,p_amount:amount});updateCellLocal("income",el.dataset.incomeCategory,el.dataset.month,amount);renderPlan();renderProjection();return}
-    if(el.matches("[data-investment]")){const amount=el.value.trim()===""?null:Math.round(Number(el.value));if(amount!==null&&(!Number.isFinite(amount)||amount<0))throw new Error("Importo investimento non valido");await rpc("dashboard_reporting_set_investment_override_v1",{p_month:el.dataset.investment,p_amount:amount});const sec=report.investment_forecast||{};if(!sec.overrides)sec.overrides=[];const x=sec.overrides.find(function(o){return o.month===el.dataset.investment});if(x)x.amount=amount;else sec.overrides.push({month:el.dataset.investment,amount:amount});renderPlan();renderProjection()}
-  }catch(err){console.error(err);msg($("planMsg"),err.message||"Errore salvataggio",true)}
-});
 $("analysisBody").addEventListener("click",function(e){
   const toggle=e.target.closest("[data-toggle-l1]");if(toggle){const id=toggle.dataset.toggleL1;if(collapsedL1.has(id))analysisCollapseOthers(id);else collapsedL1.add(id);renderAnalysisMaster();return}
   const row=e.target.closest("[data-analysis-select]");if(row){if(row.dataset.analysisLevel==="L1"){const id=(analysisCurrentDirection()==="INCOME"?"AI:":"AE:")+row.dataset.analysisSelect;analysisCollapseOthers(id)}openAnalysisDetail(row.dataset.analysisSelect,row.dataset.analysisLevel,null)}
@@ -3285,21 +3228,12 @@ $("balanceList").addEventListener("click",async function(e){
     await rpc("dashboard_reporting_set_balance_v2",{p_account_id:id,p_balance:amount});
     const row=(report.balances||[]).find(function(x){return x.account_id===id});if(row){row.balance=amount;row.snapshot_date=localDateISO()}
     report.liquidity_history=await rpc("dashboard_reporting_liquidity_history_v1").catch(function(){return {available:false,reason:"UNAVAILABLE",rows:[]}});
-    renderBalances();renderCashflowChart();renderProjection();msg($("balanceMsg"),"Saldo aggiornato. Curva storica e proiezione ricalcolate.");
+    analysisWorkspace=null;analysisWorkspaceKey="";
+    renderBalances();if(scenarioVisible)renderScenario();
+    msg($("balanceMsg"),"Saldo aggiornato. Lo Scenario usa subito il nuovo valore.");
   }catch(err){msg($("balanceMsg"),err.message||"Errore salvataggio",true)}
   finally{setBusy(b,false)}
 });
-
-$("saveMargin").onclick=async function(){
-  const b=$("saveMargin"),pct=Number($("marginPct").value);
-  if(!Number.isFinite(pct)||pct<0||pct>100){msg($("planMsg"),"Margine imprevisti non valido.",true);return}
-  setBusy(b,true,"Salvo");
-  try{
-    await rpc("dashboard_reporting_set_margin_v1",{p_unexpected_margin_pct:pct});
-    report.meta.unexpected_margin_pct=pct;renderPlan();renderProjection();msg($("planMsg"),"Margine imprevisti aggiornato.");
-  }catch(e){msg($("planMsg"),e.message||"Errore salvataggio",true)}
-  finally{setBusy(b,false)}
-};
 
 $("extraordinaryContent").addEventListener("click",async function(e){
   const b=e.target.closest("[data-extra-id]");if(!b)return;
