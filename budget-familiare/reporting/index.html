@@ -2269,6 +2269,295 @@ function renderExtraordinary(){
       return "<tr><td>"+dateLabel(x.transaction_date)+"</td><td>"+esc(label)+'<div class="plan-sub">'+esc(x.note||"Escluso dalla previsione")+"</div></td><td>"+esc(x.transaction_type)+'</td><td class="amount '+(num(x.amount)>=0?"positive":"negative")+'">'+money(x.amount)+'</td><td><button class="btn ghost compact" data-extra-id="'+esc(x.id)+'" data-extra-mode="remove">Reincludi</button></td></tr>';
     }).join("")+"</tbody></table></div>";
 }
+
+function scenarioDefinition(data){
+  if(!data)return null;
+  const current=data.current_month;
+  if(scenarioHorizon==="ROLLING_12"){
+    return {
+      current:current,
+      comparisonMonths:monthSeries(addMonthsISO(current,-12),12),
+      targetMonths:monthSeries(current,12),
+      actualTargetMonths:[],
+      forecastTargetMonths:monthSeries(current,12),
+      displayMonths:monthSeries(addMonthsISO(current,-3),15),
+      comparisonLabel:"Ultimi 12 mesi",
+      targetLabel:"Prossimi 12 mesi"
+    };
+  }
+  const targetMonths=monthSeries(data.current_year_start,12);
+  return {
+    current:current,
+    comparisonMonths:monthSeries(data.previous_year_start,12),
+    targetMonths:targetMonths,
+    actualTargetMonths:targetMonths.filter(function(m){return m<current}),
+    forecastTargetMonths:targetMonths.filter(function(m){return m>=current}),
+    displayMonths:targetMonths,
+    comparisonLabel:String(data.previous_year_start||"").slice(0,4),
+    targetLabel:String(data.current_year_start||"").slice(0,4)
+  };
+}
+function scenarioProjectionActualMap(data){
+  const map=new Map();
+  (data&&data.actual_monthly||[]).forEach(function(x){map.set(x.month,(map.get(x.month)||0)+num(x.amount))});
+  return map;
+}
+function scenarioProjectionForecastMap(data){
+  const map=new Map();
+  (data&&data.forecast_monthly||[]).forEach(function(x){map.set(x.month,(map.get(x.month)||0)+num(x.effective_amount))});
+  return map;
+}
+function scenarioCashflowMap(){
+  return new Map((report&&report.cashflow_monthly||[]).map(function(x){return [x.month_start,x]}));
+}
+function scenarioLiquidityMap(){
+  const rows=report&&report.liquidity_history&&Array.isArray(report.liquidity_history.rows)?report.liquidity_history.rows:[];
+  return new Map(rows.map(function(x){return [x.month_start,num(x.balance)]}));
+}
+function scenarioActualIncome(month,projectionMap,cashMap){
+  const x=cashMap.get(month);return x?num(x.incoming):num(projectionMap.get(month));
+}
+function scenarioActualExpense(month,projectionMap,cashMap){
+  const x=cashMap.get(month);return x?Math.max(0,num(x.outgoing)-num(x.investments)):num(projectionMap.get(month));
+}
+function scenarioActualInvestment(month,cashMap){
+  const x=cashMap.get(month);return x?num(x.investments):0;
+}
+function scenarioForecastInvestment(month){return effectiveSpecial(report.investment_forecast||{},month)}
+function scenarioPlanData(){
+  const exp=projectionDataFor("EXPENSE"),inc=projectionDataFor("INCOME");if(!exp||!inc)return null;
+  const def=scenarioDefinition(exp),expActual=scenarioProjectionActualMap(exp),incActual=scenarioProjectionActualMap(inc),expForecast=scenarioProjectionForecastMap(exp),incForecast=scenarioProjectionForecastMap(inc),cash=scenarioCashflowMap(),liq=scenarioLiquidityMap();
+  const marginPct=num(report&&report.meta&&report.meta.unexpected_margin_pct);
+  const target=def.targetMonths.map(function(month){
+    const future=month>=def.current;
+    const income=future?num(incForecast.get(month)):scenarioActualIncome(month,incActual,cash);
+    const expense=future?num(expForecast.get(month)):scenarioActualExpense(month,expActual,cash);
+    const investment=future?scenarioForecastInvestment(month):scenarioActualInvestment(month,cash);
+    const margin=future?expense*marginPct/100:0;
+    const net=future?income-expense-margin-investment:(cash.get(month)?num(cash.get(month).net):income-expense-investment);
+    return {month:month,isForecast:future,income:income,expense:expense,margin:margin,investment:investment,outflow:expense+margin+investment,net:net};
+  });
+  const comparison=def.comparisonMonths.map(function(month){
+    return {
+      month:month,
+      income:num(incActual.get(month)),
+      expense:num(expActual.get(month))
+    };
+  });
+  const prevMonth=addMonthsISO(def.current,-1);
+  let anchorBalance=liq.has(prevMonth)?liq.get(prevMonth):currentBalanceTotal();
+  let running=anchorBalance;
+  const forecastBalances=new Map();
+  target.filter(function(x){return x.isForecast}).forEach(function(x){running+=x.net;forecastBalances.set(x.month,running)});
+  const display=def.displayMonths.map(function(month){
+    if(month<def.current){
+      const cashRow=cash.get(month);
+      return {
+        month:month,isForecast:false,
+        income:scenarioActualIncome(month,incActual,cash),
+        expense:scenarioActualExpense(month,expActual,cash),
+        investment:scenarioActualInvestment(month,cash),
+        margin:0,
+        outflow:cashRow?num(cashRow.outgoing):scenarioActualExpense(month,expActual,cash),
+        net:cashRow?num(cashRow.net):scenarioActualIncome(month,incActual,cash)-scenarioActualExpense(month,expActual,cash),
+        balance:liq.has(month)?liq.get(month):null
+      };
+    }
+    const t=target.find(function(x){return x.month===month});
+    return Object.assign({},t||{month:month,isForecast:true,income:0,expense:0,investment:0,margin:0,outflow:0,net:0},{balance:forecastBalances.has(month)?forecastBalances.get(month):null});
+  });
+  const forecastOnly=target.filter(function(x){return x.isForecast});
+  const balancePath=forecastOnly.map(function(x){return {month:x.month,balance:forecastBalances.get(x.month)}});
+  return {exp:exp,inc:inc,def:def,target:target,comparison:comparison,display:display,anchorMonth:prevMonth,anchorBalance:anchorBalance,balancePath:balancePath,marginPct:marginPct};
+}
+function scenarioSum(rows,key){return (rows||[]).reduce(function(s,x){return s+num(x&&x[key])},0)}
+function scenarioPctDelta(value,comparison){
+  return comparison>0?(value-comparison)*100/comparison:null;
+}
+function scenarioDeltaText(value,comparison){
+  const pct=scenarioPctDelta(value,comparison);
+  if(pct===null)return "Confronto non disponibile";
+  return (pct>0?"+":"")+pct.toLocaleString("it-IT",{maximumFractionDigits:1})+"% vs "+(scenarioHorizon==="ROLLING_12"?"ultimi 12m":"anno precedente");
+}
+function scenarioKpiCard(icon,iconClass,label,value,sub,cls){
+  return '<div class="scenario-kpi '+(cls||"")+'"><div class="icon '+iconClass+'">'+icon+'</div><div class="label">'+esc(label)+'</div><div class="value">'+esc(value)+'</div><div class="sub '+(sub&&sub.cls||"")+'">'+esc(sub&&sub.text||"")+'</div></div>';
+}
+function scenarioExpenseL1Metrics(data){
+  if(!data)return [];
+  const def=scenarioDefinition(data),actual=projectionMaps(data).actual,forecast=projectionMaps(data).forecast,groups=new Map();
+  (data.categories||[]).forEach(function(cat){
+    if(!groups.has(cat.l1_id))groups.set(cat.l1_id,{id:cat.l1_id,name:cat.l1_name,projected:0,comparison:0});
+    const g=groups.get(cat.l1_id);
+    g.comparison+=def.comparisonMonths.reduce(function(s,m){return s+num(actual.get(cat.category_id+"|"+m))},0);
+    if(scenarioHorizon==="ROLLING_12"){
+      g.projected+=def.targetMonths.reduce(function(s,m){const x=forecast.get(cat.category_id+"|"+m);return s+num(x&&x.effective_amount)},0);
+    }else{
+      g.projected+=def.actualTargetMonths.reduce(function(s,m){return s+num(actual.get(cat.category_id+"|"+m))},0);
+      g.projected+=def.forecastTargetMonths.reduce(function(s,m){const x=forecast.get(cat.category_id+"|"+m);return s+num(x&&x.effective_amount)},0);
+    }
+  });
+  return Array.from(groups.values()).map(function(g){g.delta=scenarioPctDelta(g.projected,g.comparison);return g}).sort(function(a,b){return b.projected-a.projected});
+}
+function renderScenarioKpis(plan){
+  const box=$("scenarioKpis");if(!box||!plan)return;
+  const projectedIncome=scenarioSum(plan.target,"income"),projectedExpense=scenarioSum(plan.target,"expense"),projectedNet=scenarioSum(plan.target,"net");
+  const compIncome=scenarioSum(plan.comparison,"income"),compExpense=scenarioSum(plan.comparison,"expense");
+  const finalBalance=plan.balancePath.length?num(plan.balancePath[plan.balancePath.length-1].balance):plan.anchorBalance;
+  const minRow=plan.balancePath.reduce(function(a,x){return !a||num(x.balance)<num(a.balance)?x:a},null);
+  if(scenarioMode==="EXPENSES"){
+    box.style.gridTemplateColumns="repeat(4,minmax(0,1fr))";
+    const vals=plan.target.map(function(x){return x.expense}),avg=vals.length?vals.reduce(function(a,v){return a+v},0)/vals.length:0,maxRow=plan.target.reduce(function(a,x){return !a||x.expense>a.expense?x:a},null);
+    box.innerHTML=
+      scenarioKpiCard("↓","red",scenarioHorizon==="ROLLING_12"?"Spese prossimi 12 mesi":"Spese previste fine anno",money(projectedExpense),{text:scenarioDeltaText(projectedExpense,compExpense),cls:projectedExpense>compExpense?"bad":"good"},"")+
+      scenarioKpiCard("▥","purple","Media mensile prevista",money(avg),{text:"Sul periodo visualizzato"},"")+
+      scenarioKpiCard("▣","blue","Mese più costoso",maxRow?monthLabel(maxRow.month):"—",{text:maxRow?money(maxRow.expense):"—",cls:"bad"},"")+
+      scenarioKpiCard("↗","red",scenarioHorizon==="ROLLING_12"?"Scostamento vs ultimi 12m":"Scostamento vs anno scorso",money(projectedExpense-compExpense),{text:scenarioDeltaText(projectedExpense,compExpense),cls:projectedExpense>compExpense?"bad":"good"},"");
+    return;
+  }
+  box.style.gridTemplateColumns="repeat(5,minmax(0,1fr))";
+  box.innerHTML=
+    scenarioKpiCard("↑","green",scenarioHorizon==="ROLLING_12"?"Entrate prossimi 12 mesi":"Entrate previste fine anno",money(projectedIncome),{text:scenarioDeltaText(projectedIncome,compIncome),cls:projectedIncome>=compIncome?"good":""},"")+
+    scenarioKpiCard("↓","red",scenarioHorizon==="ROLLING_12"?"Spese prossimi 12 mesi":"Spese previste fine anno",money(projectedExpense),{text:scenarioDeltaText(projectedExpense,compExpense),cls:projectedExpense>compExpense?"bad":"good"},"")+
+    scenarioKpiCard("⚖","green",scenarioHorizon==="ROLLING_12"?"Bilancio prossimi 12 mesi":"Bilancio previsto",money(projectedNet),{text:"Entrate − uscite − margine − investimenti",cls:projectedNet>=0?"good":"bad"},"highlight")+
+    scenarioKpiCard("◉","blue",scenarioHorizon==="ROLLING_12"?"Saldo finale tra 12 mesi":"Saldo previsto a fine anno",money(finalBalance),{text:"Partenza "+money(plan.anchorBalance),cls:finalBalance>=0?"good":"bad"},"")+
+    scenarioKpiCard("!","red","Minimo saldo atteso",minRow?money(minRow.balance):money(plan.anchorBalance),{text:minRow?"Previsto a "+monthLabel(minRow.month):"Nessun mese futuro",cls:minRow&&num(minRow.balance)<0?"bad":""},minRow&&num(minRow.balance)<0?"warn":"");
+}
+function scenarioChartMonthLabels(months){
+  return months.map(function(m){
+    const d=monthDate(m);if(!d)return m;
+    return scenarioHorizon==="ROLLING_12"?d.toLocaleDateString("it-IT",{month:"short",year:"2-digit"}):d.toLocaleDateString("it-IT",{month:"short"});
+  });
+}
+function renderScenarioBalanceChart(plan){
+  if(scenarioBalanceChart)scenarioBalanceChart.destroy();
+  const months=plan.display.map(function(x){return x.month}),real=plan.display.map(function(x){return x.isForecast?null:x.balance}),forecast=plan.display.map(function(x){return x.isForecast?x.balance:null});
+  const anchorIndex=months.indexOf(plan.anchorMonth);
+  if(anchorIndex>=0){forecast[anchorIndex]=plan.anchorBalance}
+  scenarioBalanceChart=new Chart($("scenarioBalanceChart"),{
+    type:"line",
+    data:{labels:scenarioChartMonthLabels(months),datasets:[
+      {label:"Reale",data:real,borderColor:"#1677f0",backgroundColor:"rgba(22,119,240,.08)",borderWidth:2.5,pointRadius:3,tension:.22,fill:true,spanGaps:false},
+      {label:"Previsione",data:forecast,borderColor:"#1677f0",backgroundColor:"rgba(22,119,240,.06)",borderWidth:2.5,borderDash:[7,5],pointRadius:3,tension:.22,fill:true,spanGaps:false}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+": "+money(ctx.raw)}}}},scales:{x:{grid:{display:false}},y:{ticks:{callback:function(v){return money(v)}}}}}
+  });
+  $("scenarioBalanceTitle").textContent=scenarioHorizon==="ROLLING_12"?"Saldo cumulato · prossimi 12 mesi":"Saldo mese per mese";
+  $("scenarioBalanceSubtitle").textContent=scenarioHorizon==="ROLLING_12"?"Ultimi mesi reali come contesto, poi evoluzione pianificata dei prossimi 12 mesi.":"Liquidità reale fino all'ultimo mese completo e previsione per la parte restante dell'anno.";
+}
+function renderScenarioFlowChart(plan){
+  if(scenarioFlowChart)scenarioFlowChart.destroy();
+  const rows=plan.display,labels=scenarioChartMonthLabels(rows.map(function(x){return x.month}));
+  scenarioFlowChart=new Chart($("scenarioFlowChart"),{
+    type:"bar",
+    data:{labels:labels,datasets:[
+      {type:"bar",label:"Entrate reali",data:rows.map(function(x){return x.isForecast?null:x.income}),backgroundColor:"rgba(14,168,122,.78)",borderWidth:0},
+      {type:"bar",label:"Entrate previste",data:rows.map(function(x){return x.isForecast?x.income:null}),backgroundColor:"rgba(14,168,122,.28)",borderColor:"#0ea87a",borderWidth:1},
+      {type:"bar",label:"Uscite reali",data:rows.map(function(x){return x.isForecast?null:x.outflow}),backgroundColor:"rgba(239,91,115,.78)",borderWidth:0},
+      {type:"bar",label:"Uscite previste",data:rows.map(function(x){return x.isForecast?x.outflow:null}),backgroundColor:"rgba(239,91,115,.24)",borderColor:"#ef5b73",borderWidth:1},
+      {type:"line",label:"Saldo netto",data:rows.map(function(x){return x.net}),borderColor:"#193a72",backgroundColor:"#193a72",borderWidth:2,pointRadius:2.5,tension:.2}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},plugins:{legend:{position:"top",labels:{boxWidth:10,usePointStyle:true,font:{size:10}}},tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+": "+money(ctx.raw)}}}},scales:{x:{grid:{display:false}},y:{ticks:{callback:function(v){return money(v)}}}}}
+  });
+}
+function renderScenarioExpenseChart(plan){
+  if(scenarioExpenseChart)scenarioExpenseChart.destroy();
+  const rows=plan.display,vals=plan.target.map(function(x){return x.expense}),avg=vals.length?vals.reduce(function(a,v){return a+v},0)/vals.length:0,med=medianValue(vals);
+  scenarioExpenseChart=new Chart($("scenarioExpenseChart"),{
+    type:"bar",
+    data:{labels:scenarioChartMonthLabels(rows.map(function(x){return x.month})),datasets:[
+      {type:"bar",label:"Spese reali",data:rows.map(function(x){return x.isForecast?null:x.expense}),backgroundColor:"rgba(22,119,240,.82)",borderWidth:0},
+      {type:"bar",label:"Spese previste",data:rows.map(function(x){return x.isForecast?x.expense:null}),backgroundColor:"rgba(22,119,240,.24)",borderColor:"#1677f0",borderWidth:1},
+      {type:"line",label:"Media",data:rows.map(function(){return avg}),borderColor:"#2457c5",backgroundColor:"#2457c5",borderDash:[7,5],borderWidth:2,pointRadius:0},
+      {type:"line",label:"Mediana",data:rows.map(function(){return med}),borderColor:"#7658e6",backgroundColor:"#7658e6",borderDash:[2,4],borderWidth:2,pointRadius:0}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},plugins:{legend:{position:"top",labels:{boxWidth:10,usePointStyle:true,font:{size:10}}},tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+": "+money(ctx.raw)}}}},scales:{x:{grid:{display:false}},y:{beginAtZero:true,ticks:{callback:function(v){return money(v)}}}}}
+  });
+  $("scenarioExpenseSubtitle").textContent=scenarioHorizon==="ROLLING_12"?"Ultimi mesi reali come contesto e prossimi 12 mesi previsti.":"Dati reali fino all'ultimo mese completo e previsione per il resto dell'anno.";
+}
+function renderScenarioCompareChart(plan){
+  if(scenarioCompareChart)scenarioCompareChart.destroy();
+  let labels,current,previous;
+  if(scenarioHorizon==="ROLLING_12"){
+    const halfA=plan.target.slice(0,6),halfB=plan.target.slice(6,12),prevA=plan.comparison.slice(0,6),prevB=plan.comparison.slice(6,12);
+    labels=["Primi 6 mesi","Secondi 6 mesi","Totale 12 mesi"];
+    current=[scenarioSum(halfA,"expense"),scenarioSum(halfB,"expense"),scenarioSum(plan.target,"expense")];
+    previous=[scenarioSum(prevA,"expense"),scenarioSum(prevB,"expense"),scenarioSum(plan.comparison,"expense")];
+    $("scenarioCompareTitle").textContent="Prossimi 12 mesi vs ultimi 12 mesi";
+  }else{
+    const actual=plan.target.filter(function(x){return !x.isForecast}),future=plan.target.filter(function(x){return x.isForecast}),n=actual.length;
+    labels=["Trascorsi","Rimanenti","Totale anno"];
+    current=[scenarioSum(actual,"expense"),scenarioSum(future,"expense"),scenarioSum(plan.target,"expense")];
+    previous=[scenarioSum(plan.comparison.slice(0,n),"expense"),scenarioSum(plan.comparison.slice(n),"expense"),scenarioSum(plan.comparison,"expense")];
+    $("scenarioCompareTitle").textContent="Anno in corso vs anno precedente";
+  }
+  scenarioCompareChart=new Chart($("scenarioCompareChart"),{
+    type:"bar",
+    data:{labels:labels,datasets:[
+      {label:plan.def.comparisonLabel,data:previous,backgroundColor:"rgba(148,163,184,.38)",borderWidth:0},
+      {label:plan.def.targetLabel,data:current,backgroundColor:"rgba(22,119,240,.72)",borderWidth:0}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"top",labels:{boxWidth:10,usePointStyle:true,font:{size:10}}},tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+": "+money(ctx.raw)}}}},scales:{x:{grid:{display:false}},y:{beginAtZero:true,ticks:{callback:function(v){return money(v)}}}}}
+  });
+}
+function renderScenarioWatchList(plan){
+  const rows=scenarioExpenseL1Metrics(plan.exp).slice(0,5);
+  $("scenarioWatchList").innerHTML=rows.length?rows.map(function(x){
+    const d=x.delta,cls=d===null?"":d>0?"negative":"positive",txt=d===null?"—":(d>0?"+":"")+d.toLocaleString("it-IT",{maximumFractionDigits:1})+"%";
+    return '<div class="scenario-watch-row"><div><div class="scenario-watch-name">'+esc(x.name)+'</div><div class="scenario-watch-meta">Impatto sul piano complessivo</div></div><div class="scenario-watch-amount">'+money(x.projected)+'</div><div class="scenario-watch-delta '+cls+'">'+txt+'</div></div>';
+  }).join(""):'<div class="muted small">Nessuna categoria disponibile.</div>';
+}
+function renderScenarioInsights(plan){
+  const finalBalance=plan.balancePath.length?num(plan.balancePath[plan.balancePath.length-1].balance):plan.anchorBalance,minRow=plan.balancePath.reduce(function(a,x){return !a||num(x.balance)<num(a.balance)?x:a},null);
+  const critical=minRow&&num(minRow.balance)<0;
+  $("scenarioInsight").innerHTML='<span class="bulb">'+(critical?"⚠":"💡")+'</span><div><strong>'+(critical?'Attenzione: il piano porta il saldo sotto zero':'Scenario attuale: '+(finalBalance>=plan.anchorBalance?'saldo in crescita':'saldo in riduzione'))+'</strong>'+
+    (minRow?'Il minimo previsto è '+money(minRow.balance)+' a '+esc(monthLabel(minRow.month))+'. ':'')+
+    'Il saldo finale atteso è '+money(finalBalance)+'. La proiezione include margine imprevisti e investimenti previsti.</div>';
+  const maxRow=plan.target.reduce(function(a,x){return !a||x.expense>a.expense?x:a},null),avg=plan.target.length?scenarioSum(plan.target,"expense")/plan.target.length:0;
+  $("scenarioExpenseInsight").innerHTML='<span class="bulb">💡</span><div><strong>'+(maxRow?esc(monthLabel(maxRow.month))+' è il mese con più spese previste':'Dettaglio spese')+'</strong>'+
+    (maxRow?'Spese '+money(maxRow.expense)+' rispetto a una media di '+money(avg)+'. ':'')+
+    'Apri Analisi per modificare la regola strutturale o i singoli mesi del piano.</div>';
+}
+function renderScenario(){
+  const exp=projectionDataFor("EXPENSE"),inc=projectionDataFor("INCOME");
+  if(!exp||!inc){$("scenarioStatus").innerHTML='<div class="scenario-loading"><span class="spinner"></span>Carico la previsione complessiva…</div>';return}
+  $("scenarioStatus").innerHTML="";
+  const plan=scenarioPlanData();if(!plan)return;
+  document.querySelectorAll("[data-scenario-horizon]").forEach(function(b){b.classList.toggle("active",b.dataset.scenarioHorizon===scenarioHorizon)});
+  document.querySelectorAll("[data-scenario-mode]").forEach(function(b){b.classList.toggle("active",b.dataset.scenarioMode===scenarioMode)});
+  $("scenarioSummaryView").classList.toggle("hidden",scenarioMode!=="SUMMARY");
+  $("scenarioExpenseView").classList.toggle("hidden",scenarioMode!=="EXPENSES");
+  renderScenarioKpis(plan);
+  if(scenarioMode==="SUMMARY"){renderScenarioBalanceChart(plan);renderScenarioFlowChart(plan)}
+  else{renderScenarioExpenseChart(plan);renderScenarioCompareChart(plan);renderScenarioWatchList(plan)}
+  renderScenarioInsights(plan);
+}
+async function loadScenarioData(force){
+  if(scenarioLoading)return;
+  const missing=[];
+  if(force||!projectionDataFor("EXPENSE"))missing.push("EXPENSE");
+  if(force||!projectionDataFor("INCOME"))missing.push("INCOME");
+  if(!missing.length){renderScenario();return}
+  scenarioLoading=true;$("scenarioStatus").innerHTML='<div class="scenario-loading"><span class="spinner"></span>Costruisco lo scenario…</div>';
+  try{
+    const results=await Promise.all(missing.map(function(direction){return rpc("dashboard_reporting_analysis_projection_v1",{p_direction:direction})}));
+    missing.forEach(function(direction,i){analysisProjectionData.set(direction,results[i]||{})});
+    renderScenario();
+  }catch(e){
+    msg($("scenarioStatus"),e.message||"Errore nel caricamento dello scenario",true);
+  }finally{scenarioLoading=false}
+}
+function showScenarioView(){
+  scenarioVisible=true;
+  $("standardReportingView").classList.add("hidden");$("scenarioView").classList.remove("hidden");
+  $("reportingViewTab").classList.remove("active");$("scenarioViewTab").classList.add("active");
+  loadScenarioData(false);
+}
+function showStandardReportingView(){
+  scenarioVisible=false;
+  $("scenarioView").classList.add("hidden");$("standardReportingView").classList.remove("hidden");
+  $("scenarioViewTab").classList.remove("active");$("reportingViewTab").classList.add("active");
+}
+
 function renderProjection(){
   const box=$("projectionContent");
   if(!balancesComplete()){
