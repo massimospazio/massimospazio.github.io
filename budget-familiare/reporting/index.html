@@ -690,6 +690,7 @@ let scenarioVisible=false;
 let scenarioLoading=false;
 let scenarioActualRows=null;
 let scenarioActualCategories=[];
+let scenarioExtraordinaryMovements=[];
 let scenarioSelectedMonth=null;
 let scenarioSelectedFlow=null;
 let analysisWorkspace=null;
@@ -803,6 +804,7 @@ async function loadReport(){
   analysisProjectionData.clear();
   scenarioActualRows=null;
   scenarioActualCategories=[];
+  scenarioExtraordinaryMovements=[];
   scenarioSelectedMonth=null;
   scenarioSelectedFlow=null;
   analysisDetailData=null;
@@ -2731,13 +2733,14 @@ async function loadScenarioData(force){
     const jobs=[];
     if(needExpense)jobs.push({kind:"EXPENSE",promise:rpc("dashboard_reporting_analysis_projection_v1",{p_direction:"EXPENSE"})});
     if(needIncome)jobs.push({kind:"INCOME",promise:rpc("dashboard_reporting_analysis_projection_v1",{p_direction:"INCOME"})});
-    if(needActual)jobs.push({kind:"ACTUAL",promise:rpc("dashboard_reporting_scenario_actual_v2",{p_months:30})});
+    if(needActual)jobs.push({kind:"ACTUAL",promise:rpc("dashboard_reporting_scenario_actual_v3",{p_months:30})});
     const values=await Promise.all(jobs.map(function(x){return x.promise}));
     jobs.forEach(function(job,i){
       if(job.kind==="ACTUAL"){
         const actual=values[i]||{};
         scenarioActualRows=Array.isArray(actual.monthly)?actual.monthly:[];
         scenarioActualCategories=Array.isArray(actual.category_monthly)?actual.category_monthly:[];
+        scenarioExtraordinaryMovements=Array.isArray(actual.extraordinary_movements)?actual.extraordinary_movements:[];
       }else analysisProjectionData.set(job.kind,values[i]||{});
     });
     renderScenario();
