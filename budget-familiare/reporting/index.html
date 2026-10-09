@@ -2580,6 +2580,23 @@ function renderScenarioMonthStatusRow(plan){
     return '<button type="button" class="scenario-month-status '+s.cls+'" data-scenario-status-month="'+esc(row.month)+'" title="'+esc(s.title)+'">'+s.icon+' '+esc(compactSignedMoney(s.value))+'</button>';
   }).join("");
 }
+function scenarioExtraordinaryForMonth(month,direction){
+  return (scenarioExtraordinaryMovements||[]).filter(function(x){
+    if(x.month_start!==month)return false;
+    if(!direction)return true;
+    if(direction==="EXPENSE")return x.direction==="EXPENSE"||x.direction==="INVESTMENT";
+    return x.direction===direction;
+  });
+}
+function scenarioExtraBadgeHtml(month,direction){
+  if(scenarioExtraMode!=="ALL")return "";
+  const items=scenarioExtraordinaryForMonth(month,direction);if(!items.length)return "";
+  return items.slice(0,3).map(function(x){
+    const reason=String(x.note||x.counterparty||x.description||"Straordinario").trim();
+    const title=(x.direction==="INCOME"?"Entrata":"Uscita")+" straordinaria · "+money(x.amount)+" · "+reason;
+    return '<span class="scenario-extra-hover" title="'+esc(title)+'">★ '+esc(reason)+' · '+money(x.amount)+'</span>';
+  }).join("")+(items.length>3?'<span class="scenario-extra-hover">+'+(items.length-3)+' altri</span>':"");
+}
 function renderScenarioFlowHover(row){
   const box=$("scenarioFlowHover");if(!box)return;
   if(!row){box.innerHTML='<span class="muted">Passa sul grafico per leggere il mese senza coprire le barre. Clicca una barra per il dettaglio categorie.</span>';return}
@@ -2590,7 +2607,8 @@ function renderScenarioFlowHover(row){
     '<span class="scenario-hover-chip '+(displayNet>=0?"income":"expense")+'">Saldo mese '+(displayNet>=0?"+":"")+money(displayNet)+'</span>'+
     '<span class="scenario-hover-chip balance">Saldo cumulato '+(row.balance===null||row.balance===undefined?"—":money(row.balance))+'</span>'+
     (!row.isForecast&&scenarioExtraMode!=="ORDINARY"?'<span class="scenario-hover-chip ordinary">Saldo ordinario '+(num(row.ordinaryNet)>=0?"+":"")+money(row.ordinaryNet)+'</span>':"")+
-    '<span class="scenario-month-status '+status.cls+'" title="'+esc(status.title)+'">'+status.icon+' '+esc(status.label)+'</span>';
+    '<span class="scenario-month-status '+status.cls+'" title="'+esc(status.title)+'">'+status.icon+' '+esc(status.label)+'</span>'+
+    (!row.isForecast?scenarioExtraBadgeHtml(row.month,null):"");
 }
 function renderScenarioExpenseHover(row){
   const box=$("scenarioExpenseHover");if(!box)return;
@@ -2598,7 +2616,8 @@ function renderScenarioExpenseHover(row){
   box.innerHTML='<span class="scenario-hover-month">'+esc(monthLabel(row.month))+'</span>'+
     '<span class="scenario-hover-chip expense">Spese '+money(scenarioDisplayExpense(row))+'</span>'+
     (!row.isForecast&&scenarioExtraMode!=="ORDINARY"?'<span class="scenario-hover-chip ordinary">Ordinarie '+money(row.ordinaryExpense)+'</span>':"")+
-    (!row.isForecast&&num(row.extraordinaryExpense)>0?'<span class="scenario-hover-chip expense">Straordinarie '+money(row.extraordinaryExpense)+'</span>':"");
+    (!row.isForecast&&num(row.extraordinaryExpense)>0?'<span class="scenario-hover-chip expense">Straordinarie '+money(row.extraordinaryExpense)+'</span>':"")+
+    (!row.isForecast?scenarioExtraBadgeHtml(row.month,"EXPENSE"):"");
 }
 function renderScenarioFlowChart(plan){
   if(scenarioFlowChart)scenarioFlowChart.destroy();
@@ -2690,22 +2709,67 @@ function scenarioMonthBreakdown(plan,month,flow){
   }
   return Array.from(groups.values()).sort(function(a,b){return b.value-a.value});
 }
-function renderScenarioMonthDetail(plan){
-  const box=$("scenarioMonthDetail");if(!box)return;
-  if(!scenarioSelectedMonth||!scenarioSelectedFlow){box.classList.add("hidden");box.innerHTML="";return}
-  const row=plan.display.find(function(x){return x.month===scenarioSelectedMonth});
-  if(!row){box.classList.add("hidden");box.innerHTML="";return}
-  const flow=scenarioSelectedFlow,label=flow==="INCOME"?"Entrate":"Uscite",value=flow==="INCOME"?scenarioDisplayIncome(row):scenarioDisplayOutflow(row),breakdown=scenarioMonthBreakdown(plan,row.month,flow),max=Math.max.apply(null,[1].concat(breakdown.map(function(x){return x.value}))),status=scenarioMonthStatus(row);
-  const extraText=!row.isForecast&&(num(row.extraordinaryIncome)>0||num(row.extraordinaryOutflow)>0)
-    ?'<span class="scenario-detail-chip">Extra E '+money(row.extraordinaryIncome)+' · U '+money(row.extraordinaryOutflow)+'</span>':"";
-  box.classList.remove("hidden");
-  box.innerHTML='<div class="scenario-month-detail-head"><div><h3>'+esc(monthLabel(row.month))+' · '+label+'</h3><p>'+(row.isForecast?'Piano futuro':'Consuntivo reale')+' · vista '+esc(scenarioExtraLabel())+'</p></div><button class="btn ghost compact" type="button" data-scenario-close-detail>Chiudi</button></div>'+
-    '<div class="scenario-detail-summary"><span class="scenario-detail-chip">'+label+' <strong>'+money(value)+'</strong></span><span class="scenario-detail-chip">Saldo mese <strong class="'+(scenarioDisplayNet(row)>=0?"positive":"negative")+'">'+(scenarioDisplayNet(row)>=0?"+":"")+money(scenarioDisplayNet(row))+'</strong></span><span class="scenario-detail-chip">Saldo ordinario <strong class="'+(num(row.ordinaryNet)>=0?"positive":"negative")+'">'+(num(row.ordinaryNet)>=0?"+":"")+money(row.ordinaryNet)+'</strong></span>'+extraText+'<span class="scenario-month-status '+status.cls+'">'+status.icon+' '+esc(status.label)+'</span></div>'+
-    '<div class="scenario-breakdown">'+(breakdown.length?breakdown.map(function(x){
+function scenarioBreakdownColumnHtml(rows,flow,selected){
+  const max=Math.max.apply(null,[1].concat(rows.map(function(x){return x.value})));
+  const label=flow==="INCOME"?"Entrate":"Uscite";
+  return '<div class="scenario-month-column'+(selected?" selected":"")+'"><h4>'+label+' per categoria</h4><div class="scenario-breakdown">'+
+    (rows.length?rows.map(function(x){
       const attrs=x.id?' data-scenario-detail-l1="'+esc(x.id)+'" data-scenario-detail-direction="'+flow+'"':"";
       return '<div class="scenario-breakdown-row"'+attrs+'><div class="scenario-breakdown-name">'+esc(x.name)+'</div><div class="scenario-breakdown-bar"><div class="scenario-breakdown-fill '+(flow==="INCOME"?"income":"expense")+'" style="width:'+Math.max(2,x.value/max*100).toFixed(1)+'%"></div></div><div class="scenario-breakdown-amount">'+money(x.value)+'</div></div>';
-    }).join(""):'<div class="muted small" style="padding:10px 0">Nessun valore per questa vista. Le previsioni future non contengono movimenti straordinari finché non vengono pianificati esplicitamente.</div>')+'</div>';
+    }).join(""):'<div class="muted small" style="padding:9px 0">Nessun valore per questa vista.</div>')+
+    '</div></div>';
 }
+function scenarioExtraordinaryDetailHtml(month){
+  const items=scenarioExtraordinaryForMonth(month,null);
+  if(!items.length)return '<div class="muted small">Nessun movimento straordinario nel mese.</div>';
+  return '<div class="scenario-extra-list">'+items.map(function(x){
+    const type=x.direction==="INCOME"?"Entrata":"Uscita";
+    return '<div class="scenario-extra-item"><div class="scenario-extra-item-head"><span>'+esc(type)+' · '+esc(x.counterparty||x.l1_name||"Movimento")+'</span><strong>'+money(x.amount)+'</strong></div>'+
+      '<div class="scenario-extra-item-meta">'+esc(x.note||"Nota non ancora inserita")+'</div>'+
+      '<div class="scenario-extra-note-editor"><input class="input" maxlength="180" type="text" value="'+esc(x.note||"")+'" placeholder="Aggiungi il motivo dello straordinario" data-scenario-extra-note="'+esc(x.transaction_id)+'" /><button class="btn ghost compact" type="button" data-scenario-extra-note-save="'+esc(x.transaction_id)+'">Salva</button></div></div>';
+  }).join("")+'</div>';
+}
+async function saveScenarioExtraordinaryNote(transactionId,note,btn){
+  const clean=String(note||"").trim();
+  if(!clean){msg($("scenarioStatus"),"Inserisci una nota che spieghi lo straordinario.",true);return}
+  setBusy(btn,true,"Salvo");
+  try{
+    await rpc("dashboard_reporting_set_extraordinary_v1",{p_transaction_id:transactionId,p_is_extraordinary:true,p_note:clean});
+    const sx=(scenarioExtraordinaryMovements||[]).find(function(x){return String(x.transaction_id)===String(transactionId)});if(sx)sx.note=clean;
+    const rep=(report&&report.extraordinary_transactions||[]).find(function(x){return String(x.id)===String(transactionId)});if(rep)rep.note=clean;
+    if(analysisDetailData){
+      const movement=(analysisDetailData.movements||[]).find(function(x){return String(x.id)===String(transactionId)});if(movement)movement.extraordinary_note=clean;
+    }
+    renderScenario();renderExtraordinary();
+    msg($("scenarioStatus"),"Nota dello straordinario salvata.");
+  }catch(err){
+    msg($("scenarioStatus"),err.message||"Errore salvataggio nota",true);
+    setBusy(btn,false);
+  }
+}
+function renderScenarioMonthDetail(plan){
+  const box=$("scenarioMonthDetail");if(!box)return;
+  if(!scenarioSelectedMonth){box.classList.add("hidden");box.innerHTML="";return}
+  const row=plan.display.find(function(x){return x.month===scenarioSelectedMonth});
+  if(!row){box.classList.add("hidden");box.innerHTML="";return}
+  const income=scenarioMonthBreakdown(plan,row.month,"INCOME"),expense=scenarioMonthBreakdown(plan,row.month,"EXPENSE"),status=scenarioMonthStatus(row);
+  const incomeTotal=scenarioDisplayIncome(row),outflowTotal=scenarioDisplayOutflow(row),displayNet=scenarioDisplayNet(row);
+  box.classList.remove("hidden");
+  box.innerHTML='<div class="scenario-month-detail-head"><div><h3>'+esc(monthLabel(row.month))+' · dettaglio del mese</h3><p>'+(row.isForecast?'Piano futuro':'Consuntivo reale')+' · vista '+esc(scenarioExtraLabel())+'</p></div><button class="btn ghost compact" type="button" data-scenario-close-detail>Chiudi</button></div>'+
+    '<div class="scenario-detail-summary"><span class="scenario-detail-chip">Entrate <strong>'+money(incomeTotal)+'</strong></span><span class="scenario-detail-chip">Uscite <strong>'+money(outflowTotal)+'</strong></span><span class="scenario-detail-chip">Saldo mese <strong class="'+(displayNet>=0?"positive":"negative")+'">'+(displayNet>=0?"+":"")+money(displayNet)+'</strong></span><span class="scenario-detail-chip">Saldo ordinario <strong class="'+(num(row.ordinaryNet)>=0?"positive":"negative")+'">'+(num(row.ordinaryNet)>=0?"+":"")+money(row.ordinaryNet)+'</strong></span><span class="scenario-month-status '+status.cls+'">'+status.icon+' '+esc(status.label)+'</span></div>'+
+    '<div class="scenario-month-columns">'+
+      scenarioBreakdownColumnHtml(income,"INCOME",scenarioSelectedFlow==="INCOME")+
+      scenarioBreakdownColumnHtml(expense,"EXPENSE",scenarioSelectedFlow==="EXPENSE")+
+      '<div class="scenario-month-column summary"><h4>Lettura del mese</h4><div class="scenario-month-summary-card">'+
+        '<div class="scenario-month-summary-row"><span>Entrate</span><strong>'+money(incomeTotal)+'</strong></div>'+
+        '<div class="scenario-month-summary-row"><span>Uscite</span><strong>'+money(outflowTotal)+'</strong></div>'+
+        '<div class="scenario-month-summary-row"><span>Saldo totale</span><strong class="'+(displayNet>=0?"positive":"negative")+'">'+(displayNet>=0?"+":"")+money(displayNet)+'</strong></div>'+
+        '<div class="scenario-month-summary-row"><span>Saldo ordinario</span><strong class="'+(num(row.ordinaryNet)>=0?"positive":"negative")+'">'+(num(row.ordinaryNet)>=0?"+":"")+money(row.ordinaryNet)+'</strong></div>'+
+        (!row.isForecast?'<div><h4 style="margin-top:8px">Straordinari del mese</h4>'+scenarioExtraordinaryDetailHtml(row.month)+'</div>':'<div class="muted small" style="margin-top:7px">Per i mesi futuri lo Scenario mostra il piano: eventuali straordinari vanno inseriti esplicitamente nella pianificazione.</div>')+
+      '</div></div>'+
+    '</div>';
+}
+
 function scenarioExpenseSum(rows){return (rows||[]).reduce(function(s,x){return s+scenarioDisplayExpense(x)},0)}
 function renderScenarioCompareChart(plan){
   if(scenarioCompareChart)scenarioCompareChart.destroy();
