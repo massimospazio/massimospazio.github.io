@@ -658,6 +658,7 @@ let scenarioHorizon="CALENDAR";
 let scenarioMode="SUMMARY";
 let scenarioVisible=false;
 let scenarioLoading=false;
+let scenarioActualRows=null;
 let analysisWorkspace=null;
 let analysisWorkspaceKey="";
 let analysisDetailData=null;
@@ -767,6 +768,7 @@ async function loadReport(){
   analysisWorkspace=null;
   analysisWorkspaceKey="";
   analysisProjectionData.clear();
+  scenarioActualRows=null;
   analysisDetailData=null;
   analysisDetailKey="";
   analysisSelectedCategory=null;
@@ -2308,7 +2310,8 @@ function scenarioProjectionForecastMap(data){
   return map;
 }
 function scenarioCashflowMap(){
-  return new Map((report&&report.cashflow_monthly||[]).map(function(x){return [x.month_start,x]}));
+  const rows=Array.isArray(scenarioActualRows)?scenarioActualRows:(report&&report.cashflow_monthly||[]);
+  return new Map(rows.map(function(x){return [x.month_start,x]}));
 }
 function scenarioLiquidityMap(){
   const rows=report&&report.liquidity_history&&Array.isArray(report.liquidity_history.rows)?report.liquidity_history.rows:[];
@@ -2533,14 +2536,20 @@ function renderScenario(){
 }
 async function loadScenarioData(force){
   if(scenarioLoading)return;
-  const missing=[];
-  if(force||!projectionDataFor("EXPENSE"))missing.push("EXPENSE");
-  if(force||!projectionDataFor("INCOME"))missing.push("INCOME");
-  if(!missing.length){renderScenario();return}
+  if(!report){$("scenarioStatus").innerHTML='<div class="scenario-loading"><span class="spinner"></span>Attendo il caricamento del Reporting…</div>';return}
+  const needExpense=force||!projectionDataFor("EXPENSE"),needIncome=force||!projectionDataFor("INCOME"),needActual=force||!Array.isArray(scenarioActualRows);
+  if(!needExpense&&!needIncome&&!needActual){renderScenario();return}
   scenarioLoading=true;$("scenarioStatus").innerHTML='<div class="scenario-loading"><span class="spinner"></span>Costruisco lo scenario…</div>';
   try{
-    const results=await Promise.all(missing.map(function(direction){return rpc("dashboard_reporting_analysis_projection_v1",{p_direction:direction})}));
-    missing.forEach(function(direction,i){analysisProjectionData.set(direction,results[i]||{})});
+    const jobs=[];
+    if(needExpense)jobs.push({kind:"EXPENSE",promise:rpc("dashboard_reporting_analysis_projection_v1",{p_direction:"EXPENSE"})});
+    if(needIncome)jobs.push({kind:"INCOME",promise:rpc("dashboard_reporting_analysis_projection_v1",{p_direction:"INCOME"})});
+    if(needActual)jobs.push({kind:"ACTUAL",promise:rpc("dashboard_reporting_scenario_actual_v1",{p_months:30})});
+    const values=await Promise.all(jobs.map(function(x){return x.promise}));
+    jobs.forEach(function(job,i){
+      if(job.kind==="ACTUAL")scenarioActualRows=Array.isArray(values[i])?values[i]:[];
+      else analysisProjectionData.set(job.kind,values[i]||{});
+    });
     renderScenario();
   }catch(e){
     msg($("scenarioStatus"),e.message||"Errore nel caricamento dello scenario",true);
