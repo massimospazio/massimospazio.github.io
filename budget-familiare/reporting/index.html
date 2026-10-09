@@ -413,7 +413,7 @@ button,input,select{font:inherit}
 .scenario-bar{display:inline-block;width:12px;height:10px;border-radius:3px;vertical-align:-1px;margin-right:4px}.scenario-bar.income{background:#0ea87a}.scenario-bar.expense{background:#ef5b73}
 .scenario-chart-hover{min-height:38px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:7px 9px;margin:3px 0 8px;border:1px solid #e2e8f0;background:#f8fafc;border-radius:9px;font-size:10px}
 .scenario-hover-month{font-weight:800;color:#172033}.scenario-hover-chip{display:inline-flex;align-items:center;padding:3px 6px;border-radius:999px;background:#fff;border:1px solid #e2e8f0;font-weight:700}.scenario-hover-chip.income{color:#087f5b}.scenario-hover-chip.expense{color:#be123c}.scenario-hover-chip.balance{color:#1e3a8a}.scenario-hover-chip.ordinary{color:#475569}
-.scenario-month-status-row{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:4px;margin-top:8px}
+.scenario-month-status-row{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:4px;margin-top:8px;overflow-x:auto;padding-bottom:2px}
 .scenario-month-status{min-width:0;padding:4px 3px;border-radius:7px;text-align:center;font-size:8.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border:1px solid transparent}
 .scenario-month-status.win{background:#dcfce7;color:#166534;border-color:#bbf7d0}.scenario-month-status.win-strong{background:#bbf7d0;color:#14532d;border-color:#86efac}
 .scenario-month-status.loss{background:#fee2e2;color:#991b1b;border-color:#fecaca}.scenario-month-status.loss-strong{background:#fecaca;color:#7f1d1d;border-color:#fca5a5}
@@ -2515,22 +2515,6 @@ function scenarioChartMonthLabels(months){
     return scenarioHorizon==="ROLLING_12"?d.toLocaleDateString("it-IT",{month:"short",year:"2-digit"}):d.toLocaleDateString("it-IT",{month:"short"});
   });
 }
-function renderScenarioBalanceChart(plan){
-  if(scenarioBalanceChart)scenarioBalanceChart.destroy();
-  const months=plan.display.map(function(x){return x.month}),real=plan.display.map(function(x){return x.isForecast?null:x.balance}),forecast=plan.display.map(function(x){return x.isForecast?x.balance:null});
-  const anchorIndex=months.indexOf(plan.anchorMonth);
-  if(anchorIndex>=0){forecast[anchorIndex]=plan.anchorBalance}
-  scenarioBalanceChart=new Chart($("scenarioBalanceChart"),{
-    type:"line",
-    data:{labels:scenarioChartMonthLabels(months),datasets:[
-      {label:"Reale",data:real,borderColor:"#1677f0",backgroundColor:"rgba(22,119,240,.08)",borderWidth:2.5,pointRadius:3,tension:.22,fill:true,spanGaps:false},
-      {label:"Previsione",data:forecast,borderColor:"#1677f0",backgroundColor:"rgba(22,119,240,.06)",borderWidth:2.5,borderDash:[7,5],pointRadius:3,tension:.22,fill:true,spanGaps:false}
-    ]},
-    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+": "+money(ctx.raw)}}}},scales:{x:{grid:{display:false}},y:{ticks:{callback:function(v){return money(v)}}}}}
-  });
-  $("scenarioBalanceTitle").textContent=scenarioHorizon==="ROLLING_12"?"Saldo cumulato · prossimi 12 mesi":"Saldo mese per mese";
-  $("scenarioBalanceSubtitle").textContent=scenarioHorizon==="ROLLING_12"?"Ultimi mesi reali come contesto, poi evoluzione pianificata dei prossimi 12 mesi.":"Liquidità reale fino all'ultimo mese completo e previsione per la parte restante dell'anno.";
-}
 function scenarioExtraLabel(){
   return scenarioExtraMode==="ALL"?"Tutti i movimenti":scenarioExtraMode==="EXTRA"?"Solo straordinari":"Gestione ordinaria";
 }
@@ -2560,7 +2544,7 @@ function renderScenarioFlowHover(row){
     '<span class="scenario-hover-chip income">Entrate '+money(scenarioDisplayIncome(row))+'</span>'+
     '<span class="scenario-hover-chip expense">Uscite '+money(scenarioDisplayOutflow(row))+'</span>'+
     '<span class="scenario-hover-chip '+(displayNet>=0?"income":"expense")+'">Saldo mese '+(displayNet>=0?"+":"")+money(displayNet)+'</span>'+
-    '<span class="scenario-hover-chip balance">Saldo cumulato '+money(row.balance)+'</span>'+
+    '<span class="scenario-hover-chip balance">Saldo cumulato '+(row.balance===null||row.balance===undefined?"—":money(row.balance))+'</span>'+
     (!row.isForecast&&scenarioExtraMode!=="ORDINARY"?'<span class="scenario-hover-chip ordinary">Saldo ordinario '+(num(row.ordinaryNet)>=0?"+":"")+money(row.ordinaryNet)+'</span>':"")+
     '<span class="scenario-month-status '+status.cls+'" title="'+esc(status.title)+'">'+status.icon+' '+esc(status.label)+'</span>';
 }
