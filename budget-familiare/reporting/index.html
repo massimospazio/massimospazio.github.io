@@ -8,8 +8,8 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=73.7-20261009-2310"></script>
-<script src="../shared/app-config.js?v=73.7-20261009-2310"></script>
+<script src="../shared/supabase-client.js?v=73.8-20261010-0035"></script>
+<script src="../shared/app-config.js?v=73.8-20261010-0035"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 :root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#6b7280;--line:#e5e7eb;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 8px 24px rgba(15,23,42,.06)}
@@ -468,6 +468,19 @@ button,input,select{font:inherit}
 .scenario-extra-note-editor button{min-height:28px}
 @media(max-width:900px){.scenario-month-columns{grid-template-columns:1fr 1fr}.scenario-month-column.summary{grid-column:1/-1}}
 @media(max-width:650px){.scenario-month-columns{grid-template-columns:1fr}.scenario-month-column.summary{grid-column:auto}}
+
+/* V73.8 — Forecast integrato con storico */
+.projection-l2-dot{display:inline-block;width:9px;height:9px;border-radius:999px;margin-right:7px;vertical-align:0}
+.projection-table-label{display:inline-flex;align-items:center;min-width:0}
+.analysis-projection-key{display:inline-flex;align-items:center;gap:5px;padding:3px 6px;border-radius:7px;background:#f8fafc;border:1px solid #e2e8f0;color:#475569;font-size:9px;font-weight:750}
+.analysis-projection-key .swatch{width:12px;height:9px;border-radius:2px;background:#3b82f6}
+.analysis-projection-key.forecast .swatch{background:rgba(147,197,253,.34);border:1px solid #3b82f6}
+.analysis-projection-key-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-left:auto}
+.analysis-components-table.projection-l2-table{min-width:700px}
+.analysis-components-table.projection-l2-table th,.analysis-components-table.projection-l2-table td{padding-top:6px;padding-bottom:6px}
+.analysis-components-table.projection-l2-table td:first-child{font-weight:700}
+.analysis-stat .trend-chip{vertical-align:middle}
+@media(max-width:800px){.analysis-detail-head{flex-direction:column}.analysis-detail-stats{justify-content:flex-start}.analysis-components-table.projection-l2-table{min-width:650px}}
 
 /* V73.7 — Reporting semplificato: Analisi + Scenario */
 #standardReportingView>.section:first-child{margin-top:0}
@@ -1391,6 +1404,32 @@ function projectionSelectionMetricForView(data,level,categoryId,view){
   const projected=view==="ROLLING_12"?forecast:actual+forecast;
   return {comparison:comparison,projected:projected,delta_pct:comparison>0?(projected-comparison)*100/comparison:null};
 }
+function projectionIdsFor(data,level,categoryId){
+  return (data&&data.categories||[]).filter(function(c){
+    return level==="L1"?String(c.l1_id)===String(categoryId):String(c.category_id)===String(categoryId);
+  }).map(function(c){return String(c.category_id)});
+}
+function projectionLast12Total(data,level,categoryId){
+  if(!data||!categoryId)return 0;
+  const ids=new Set(projectionIdsFor(data,level,categoryId)),months=new Set(monthSeries(addMonthsISO(data.current_month,-12),12));
+  return (data.actual_monthly||[]).reduce(function(s,x){return ids.has(String(x.category_id))&&months.has(x.month)?s+num(x.amount):s},0);
+}
+function projectionSelectedCategories(data){
+  if(!data||!analysisSelectedCategory)return [];
+  return (data.categories||[]).filter(function(c){
+    return analysisSelectedLevel==="L1"?String(c.l1_id)===String(analysisSelectedCategory):String(c.category_id)===String(analysisSelectedCategory);
+  }).slice().sort(function(a,b){return String(a.l2_name||a.l1_name||"").localeCompare(String(b.l2_name||b.l1_name||""),"it")});
+}
+function projectionPaletteColor(i,total,alpha,lightness){
+  const hue=Math.round((i*360/Math.max(total,1)+210)%360);
+  return "hsl("+hue+" 58% "+(lightness||58)+"% / "+alpha+")";
+}
+function projectionHistoricalTrendForComponent(categoryId){
+  const d=analysisDetailData;if(!d)return null;
+  const comp=(d.components||[]).find(function(c){return String(c.component_category_id||"")===String(categoryId)})||null;
+  if(!comp)return null;
+  return (d.component_trend||[]).find(function(t){return String(t.component_id)===String(comp.component_id)})||null;
+}
 function analysisPlannedDeltaChip(label,metric,title){
   if(!metric||metric.delta_pct===null||metric.delta_pct===undefined)return '<span class="analysis-plan-chip neutral" title="'+esc(title)+'"><span>'+esc(label)+'</span><strong>—</strong></span>';
   const v=num(metric.delta_pct),cls=Math.abs(v)<1?"neutral":v<0?"good":"bad";
@@ -1719,10 +1758,15 @@ function renderAnalysisDetail(){
     const r=projectionRowForSelection(),data=projectionDataFor(analysisCurrentDirection()),def=projectionDefinition(data);
     $("detailSubtitle").textContent=(analysisProjectionView==="ROLLING_12"?"Ultimi 12m reali → prossimi 12m previsti":"Anno solare "+def.targetLabel+" · reale + pianificato")+(selected?" · controparte: "+selected.component_name:"");
     if(r){
-      $("detailStats").innerHTML=(analysisProjectionView==="ROLLING_12"
-        ?'<span class="analysis-stat">Ultimi 12m <strong>'+money(r.comparison_total)+'</strong></span><span class="analysis-stat">Prossimi 12m <strong>'+money(r.projected_total)+'</strong></span>'+projectionDeltaHtml(r.delta_pct)
-        :'<span class="analysis-stat">'+esc(def.comparisonLabel)+' <strong>'+money(r.comparison_total)+'</strong></span><span class="analysis-stat">Consuntivo <strong>'+money(r.actual_total)+'</strong></span><span class="analysis-stat">Da pianificare <strong>'+money(r.forecast_total)+'</strong></span><span class="analysis-stat">Totale previsto <strong>'+money(r.projected_total)+'</strong></span>'+projectionDeltaHtml(r.delta_pct))
-        +analysisDetailForecastChipHtml();
+      const last12=projectionLast12Total(data,analysisSelectedLevel,analysisSelectedCategory),histTrend=d.trend||null;
+      const plannedLabel=analysisProjectionView==="ROLLING_12"?"Prossimi 12m":"Anno "+def.targetLabel+" previsto";
+      const deltaLabel=analysisProjectionView==="ROLLING_12"?"Δ forecast":"Δ anno";
+      $("detailStats").innerHTML=
+        '<span class="analysis-stat">Ultimi 12m <strong>'+money(last12)+'</strong></span>'+
+        '<span class="analysis-stat">Trend 12m '+analysisTrendChip(histTrend)+'</span>'+
+        '<span class="analysis-stat">'+esc(plannedLabel)+' <strong>'+money(r.projected_total)+'</strong></span>'+
+        '<span class="analysis-stat">'+esc(deltaLabel)+' '+projectionDeltaHtml(r.delta_pct)+'</span>'+
+        analysisDetailForecastChipHtml();
     }else $("detailStats").innerHTML="";
   }else{
     const chartMode=selected?"singola controparte":(d.level==="L1"?"L2 impilate":"controparti impilate");$("detailSubtitle").textContent=analysisPeriodLabel()+" · "+chartMode;const st=selected||stats,trend=analysisDetailTrendHtml(d);
@@ -1847,81 +1891,60 @@ function analysisProjectionBoundaryPlugin(boundaryIndex){
     ctx.save();ctx.strokeStyle="rgba(37,99,235,.58)";ctx.lineWidth=1.5;ctx.setLineDash([5,4]);ctx.beginPath();ctx.moveTo(px,area.top);ctx.lineTo(px,area.bottom);ctx.stroke();ctx.restore();
   }};
 }
-function analysisProjectionDeltaBadgePlugin(points){
-  points=Array.isArray(points)?points:[];
-  return {id:"analysisProjectionDeltaBadges",afterDatasetsDraw:function(chart){
-    if(!points.length)return;
-    const ctx=chart.ctx,area=chart.chartArea,direction=analysisCurrentDirection(),compact=chart.width<760;
-    ctx.save();ctx.textAlign="center";ctx.textBaseline="middle";ctx.font=(compact?"800 8px ":"800 9px ")+'Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif';
-    points.forEach(function(p){
-      if(p.delta===null||p.delta===undefined||!Number.isFinite(Number(p.delta)))return;
-      const meta=chart.getDatasetMeta(p.datasetIndex),el=meta&&meta.data&&meta.data[p.index];if(!el||meta.hidden)return;
-      const pos=el.getProps(["x","y"],true),v=num(p.delta),neutral=Math.abs(v)<1,favorable=direction==="EXPENSE"?v<0:v>0;
-      const text=(v>0?"+":"")+v.toLocaleString("it-IT",{maximumFractionDigits:1})+"%";
-      const padX=compact?4:5,h=compact?15:17,w=Math.ceil(ctx.measureText(text).width)+padX*2;
-      const x=pos.x,y=Math.max(area.top+h/2+2,pos.y-h/2-5),left=x-w/2,top=y-h/2,r=6;
-      const fill=neutral?"#f1f5f9":favorable?"#dcfce7":"#fee2e2",stroke=neutral?"#cbd5e1":favorable?"#86efac":"#fca5a5",ink=neutral?"#64748b":favorable?"#166534":"#b91c1c";
-      ctx.beginPath();ctx.moveTo(left+r,top);ctx.lineTo(left+w-r,top);ctx.quadraticCurveTo(left+w,top,left+w,top+r);ctx.lineTo(left+w,top+h-r);ctx.quadraticCurveTo(left+w,top+h,left+w-r,top+h);ctx.lineTo(left+r,top+h);ctx.quadraticCurveTo(left,top+h,left,top+h-r);ctx.lineTo(left,top+r);ctx.quadraticCurveTo(left,top,left+r,top);ctx.closePath();
-      ctx.fillStyle=fill;ctx.fill();ctx.strokeStyle=stroke;ctx.lineWidth=1;ctx.stroke();ctx.fillStyle=ink;ctx.fillText(text,x,y+.2);
-    });
-    ctx.restore();
-  }};
-}
 function renderProjectionHoverDetail(chart,index,months){
   const box=$("analysisChartHoverDetail");if(!box||index<0||index>=months.length)return;
-  const items=[];chart.data.datasets.forEach(function(ds,i){if(!chart.isDatasetVisible(i))return;const v=num(ds.data[index]);if(Math.abs(v)>.004)items.push({label:ds.label,value:v})});
-  box.innerHTML='<span class="analysis-hover-month">'+esc(monthLabel(months[index]))+'</span>'+items.map(function(x){return '<span class="analysis-hover-item">'+esc(x.label)+' <strong>'+money(x.value)+'</strong></span>'}).join("");
+  const data=projectionDataFor(analysisCurrentDirection()),isForecast=data?months[index]>=data.current_month:false,items=[];let total=0;
+  chart.data.datasets.forEach(function(ds,i){
+    if(!chart.isDatasetVisible(i))return;const v=num(ds.data[index]);total+=v;
+    if(Math.abs(v)>.004)items.push({label:ds.label,value:v});
+  });
+  items.sort(function(a,b){return b.value-a.value});
+  box.innerHTML='<span class="analysis-hover-month">'+esc(monthLabel(months[index]))+'</span>'+
+    '<span class="analysis-hover-total">'+(isForecast?"Previsto":"Reale")+' · '+money(total)+'</span>'+
+    items.slice(0,7).map(function(x){return '<span class="analysis-hover-item">'+esc(x.label)+' <strong>'+money(x.value)+'</strong></span>'}).join("")+
+    (items.length>7?'<span class="analysis-hover-item">+'+(items.length-7)+' altre</span>':"");
 }
 function renderProjectionDetailChart(){
   const data=projectionDataFor(analysisCurrentDirection());if(!data||!analysisSelectedCategory)return;
-  const def=projectionDefinition(data),ids=projectionSelectionCategoryIds(data);
+  const def=projectionDefinition(data),cats=projectionSelectedCategories(data),actualMap=new Map((data.actual_monthly||[]).map(function(x){return [String(x.category_id)+"|"+x.month,num(x.amount)]})),forecastMap=new Map((data.forecast_monthly||[]).map(function(x){return [String(x.category_id)+"|"+x.month,num(x.effective_amount)]}));
   if(categoryTrendChart)categoryTrendChart.destroy();
-  let labels=[],months=[],datasets=[],boundary=0,deltaBadges=[];
+  let months,boundary;
   if(analysisProjectionView==="ROLLING_12"){
-    months=def.comparisonMonths.concat(def.targetMonths);labels=months.map(monthLabel);boundary=12;
-    const previousValues=def.comparisonMonths.map(function(m){return projectionSeriesValue(data,ids,m,"actual")});
-    const forecastValues=def.targetMonths.map(function(m){return projectionSeriesValue(data,ids,m,"forecast")});
-    datasets=[
-      {type:"bar",analysisRole:"projection",label:"Reale · ultimi 12m",data:previousValues.concat(def.targetMonths.map(function(){return 0})),backgroundColor:"rgba(37,99,235,.72)",borderWidth:0,stack:"timeline"},
-      {type:"bar",analysisRole:"projection",label:"Previsto · prossimi 12m",data:def.comparisonMonths.map(function(){return 0}).concat(forecastValues),backgroundColor:"rgba(147,197,253,.58)",borderColor:"#2563eb",borderWidth:1.2,stack:"timeline"}
-    ];
-    deltaBadges=forecastValues.map(function(value,i){
-      const previous=previousValues[i];return previous>.004?{index:12+i,datasetIndex:1,delta:(value-previous)*100/previous}:null;
-    }).filter(Boolean);
+    months=def.comparisonMonths.concat(def.targetMonths);boundary=12;
   }else{
-    months=def.targetMonths;labels=months.map(function(m){return monthDate(m).toLocaleDateString("it-IT",{month:"short"})});boundary=def.targetMonths.findIndex(function(m){return m>=data.current_month});
-    const previousValues=def.comparisonMonths.map(function(m){return projectionSeriesValue(data,ids,m,"actual")});
-    const currentActualValues=def.targetMonths.map(function(m){return m<data.current_month?projectionSeriesValue(data,ids,m,"actual"):0});
-    const currentForecastValues=def.targetMonths.map(function(m){return m>=data.current_month?projectionSeriesValue(data,ids,m,"forecast"):0});
-    datasets=[
-      {type:"bar",analysisRole:"projection",label:def.comparisonLabel+" reale",data:previousValues,backgroundColor:"rgba(100,116,139,.48)",borderWidth:0,stack:"previous"},
-      {type:"bar",analysisRole:"projection",label:def.targetLabel+" reale",data:currentActualValues,backgroundColor:"rgba(37,99,235,.72)",borderWidth:0,stack:"current"},
-      {type:"bar",analysisRole:"projection",label:def.targetLabel+" previsto",data:currentForecastValues,backgroundColor:"rgba(147,197,253,.58)",borderColor:"#2563eb",borderWidth:1.2,stack:"current"}
-    ];
-    deltaBadges=def.targetMonths.map(function(m,i){
-      const previous=previousValues[i],forecast=m>=data.current_month,value=forecast?currentForecastValues[i]:currentActualValues[i];
-      return previous>.004?{index:i,datasetIndex:forecast?2:1,delta:(value-previous)*100/previous}:null;
-    }).filter(Boolean);
+    months=def.targetMonths;boundary=months.findIndex(function(m){return m>=data.current_month});
   }
-  resetAnalysisHoverDetail();
+  const labels=months.map(function(m){return analysisProjectionView==="ROLLING_12"?monthLabel(m):monthDate(m).toLocaleDateString("it-IT",{month:"short"})});
+  const datasets=cats.map(function(cat,i){
+    const catId=String(cat.category_id),base=projectionPaletteColor(i,cats.length,.86,58),forecastFill=projectionPaletteColor(i,cats.length,.24,72),border=projectionPaletteColor(i,cats.length,.95,48);
+    const values=months.map(function(m){return m<data.current_month?num(actualMap.get(catId+"|"+m)):num(forecastMap.get(catId+"|"+m))});
+    const bg=months.map(function(m){return m<data.current_month?base:forecastFill});
+    const borders=months.map(function(m){return m<data.current_month?"rgba(0,0,0,0)":border});
+    const widths=months.map(function(m){return m<data.current_month?0:1.15});
+    return {type:"bar",analysisRole:"projection-component",analysisComponentId:cat.category_id,label:cat.l2_name||cat.l1_name||"Categoria",data:values,backgroundColor:bg,borderColor:borders,borderWidth:widths,borderRadius:2,stack:"projection"};
+  });
+  if(!datasets.length){
+    const ids=projectionSelectionCategoryIds(data),values=months.map(function(m){return m<data.current_month?projectionSeriesValue(data,ids,m,"actual"):projectionSeriesValue(data,ids,m,"forecast")});
+    datasets.push({type:"bar",analysisRole:"projection",label:analysisDetailData&&analysisDetailData.category_name||"Totale",data:values,backgroundColor:months.map(function(m){return m<data.current_month?"rgba(37,99,235,.76)":"rgba(147,197,253,.34)"}),borderColor:months.map(function(m){return m<data.current_month?"rgba(0,0,0,0)":"#2563eb"}),borderWidth:months.map(function(m){return m<data.current_month?0:1.15}),borderRadius:2,stack:"projection"});
+  }
+  const hover=$("analysisChartHoverDetail");
+  if(hover)hover.innerHTML='<span class="muted">Passa sul grafico per vedere il dettaglio del mese. Colore pieno = reale · colore tenue = previsto.</span>';
   categoryTrendChart=new Chart($("categoryTrendChart"),{
-    type:"bar",plugins:[analysisProjectionBoundaryPlugin(boundary),analysisProjectionDeltaBadgePlugin(deltaBadges)],
+    type:"bar",plugins:[analysisProjectionBoundaryPlugin(boundary)],
     data:{labels:labels,datasets:datasets},
     options:{
-      responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},layout:{padding:{top:16}},
+      responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},layout:{padding:{top:4}},
       onHover:function(evt,elements,chart){if(elements&&elements.length)renderProjectionHoverDetail(chart,elements[0].index,months)},
       onClick:function(evt,elements){
         if(!elements||!elements.length)return;
-        const idx=elements[0].index;
-        analysisSelectedMonth=analysisProjectionView==="ROLLING_12"?months[idx]:def.targetMonths[idx];
+        analysisSelectedMonth=months[elements[0].index]||null;
         analysisMovementSort={key:"amount",dir:"desc"};renderAnalysisMovements();
       },
-      plugins:{legend:{position:"top",maxHeight:74,labels:{boxWidth:11,usePointStyle:true}},tooltip:{enabled:false}},
+      plugins:{legend:{display:analysisSelectedLevel==="L1",position:"top",maxHeight:80,labels:{boxWidth:10,usePointStyle:true,font:{size:10}}},tooltip:{enabled:false}},
       scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,beginAtZero:true,ticks:{callback:function(v){return money(v)}}}}
     }
   });
 }
-
 function renderAnalysisDetailChart(){
   if(analysisTimeMode==="PROJECTION"){renderProjectionDetailChart();return}
   const d=analysisDetailData;if(!d)return;
@@ -2304,7 +2327,24 @@ async function saveForecastRule(btn){
   }catch(e){msg($("analysisStatus"),e.message||"Errore salvataggio forecast",true)}finally{analysisForecastSaving=false;setBusy(btn,false)}
 }
 function renderAnalysisComponents(){
-  const d=analysisDetailData;if(!d)return;const isL1=d.level==="L1";$("detailComponentsTitle").textContent=isL1?"Categorie L2":"Controparti";$("detailSelection").innerHTML=analysisSelectedComponent?'<button class="btn ghost compact" type="button" data-clear-analysis-component>← Tutte le controparti</button>':"";
+  const d=analysisDetailData;if(!d)return;const isL1=d.level==="L1";
+  if(analysisTimeMode==="PROJECTION"&&isL1){
+    const data=projectionDataFor(analysisCurrentDirection()),rows=projectionCategoryMetrics(data).filter(function(r){return String(r.l1_id)===String(analysisSelectedCategory)}).sort(function(a,b){return String(a.l2_name||"").localeCompare(String(b.l2_name||""),"it")});
+    const compMap=new Map((d.components||[]).map(function(c){return [String(c.component_category_id),c]}));
+    const trendMap=new Map((d.component_trend||[]).map(function(t){return [String(t.component_id),t]}));
+    const def=projectionDefinition(data),futureLabel=analysisProjectionView==="ROLLING_12"?"Prossimi 12m":"Anno "+def.targetLabel+" previsto",deltaLabel=analysisProjectionView==="ROLLING_12"?"Δ forecast":"Δ anno";
+    $("detailComponentsTitle").textContent="Categorie L2 · storico e previsione";$("detailSelection").innerHTML="";
+    $("detailComponentsHead").innerHTML='<tr><th>Categoria L2</th><th>Ultimi 12m</th><th>Trend 12m</th><th>'+esc(futureLabel)+'</th><th>'+esc(deltaLabel)+'</th></tr>';
+    $("detailComponents").parentElement.querySelector("table").classList.add("projection-l2-table");
+    $("detailComponents").innerHTML=rows.map(function(r,i){
+      const c=compMap.get(String(r.category_id)),trend=c?trendMap.get(String(c.component_id)):null,last12=projectionLast12Total(data,"L2",r.category_id),color=projectionPaletteColor(i,rows.length,1,58);
+      return '<tr><td><span class="projection-table-label"><i class="projection-l2-dot" style="background:'+esc(color)+'"></i><button class="analysis-row-button" data-drill-l2="'+esc(r.category_id)+'">'+esc(r.l2_name||r.l1_name||"Categoria")+'</button></span></td>'+
+        '<td>'+money(last12)+'</td><td>'+analysisTrendChip(trend)+'</td><td>'+money(r.projected_total)+'</td><td>'+projectionDeltaHtml(r.delta_pct)+'</td></tr>';
+    }).join("")||'<tr><td colspan="5" class="muted">Nessuna categoria L2 disponibile.</td></tr>';
+    return;
+  }
+  $("detailComponents").parentElement.querySelector("table").classList.remove("projection-l2-table");
+  $("detailComponentsTitle").textContent=isL1?"Categorie L2":"Controparti";$("detailSelection").innerHTML=analysisSelectedComponent?'<button class="btn ghost compact" type="button" data-clear-analysis-component>← Tutte le controparti</button>':"";
   $("detailComponentsHead").innerHTML=isL1?'<tr><th>Categoria L2</th><th>Totale</th><th>%</th><th title="Include i mesi a zero">Media</th><th title="Include i mesi a zero">Mediana</th><th>Frequenza</th><th>Previsione</th></tr>':'<tr><th>Controparte</th><th>Totale</th><th>%</th><th title="Include i mesi a zero">Media</th><th title="Include i mesi a zero">Mediana</th><th>Frequenza</th><th>Previsione</th></tr>';
   $("detailComponents").innerHTML=(d.components||[]).map(function(c){
     const sel=String(c.component_id)===String(analysisSelectedComponent),first=isL1?'<button class="analysis-row-button" data-drill-l2="'+esc(c.component_category_id)+'">'+esc(c.component_name)+'</button>':'<button class="analysis-row-button" data-select-component="'+esc(c.component_id)+'">'+esc(c.component_name)+'</button>';let forecast;
