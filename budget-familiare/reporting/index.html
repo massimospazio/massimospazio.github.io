@@ -2968,6 +2968,11 @@ $("scenarioView").addEventListener("click",function(e){
     scenarioExtraMode=extra.dataset.scenarioExtra||"ORDINARY";
     renderScenario();return;
   }
+  const noteSave=e.target.closest("[data-scenario-extra-note-save]");
+  if(noteSave){
+    const id=noteSave.dataset.scenarioExtraNoteSave,input=$("scenarioView").querySelector('[data-scenario-extra-note="'+CSS.escape(id)+'"]');
+    await saveScenarioExtraordinaryNote(id,input?input.value:"",noteSave);return;
+  }
   const status=e.target.closest("[data-scenario-status-month]");
   if(status){
     scenarioSelectedMonth=status.dataset.scenarioStatusMonth;scenarioSelectedFlow="EXPENSE";
@@ -3047,6 +3052,11 @@ $("detailStats").addEventListener("click",function(e){
   recalcAnalysisReferenceLines(categoryTrendChart);renderAnalysisVisibleStats(categoryTrendChart);resetAnalysisHoverDetail();categoryTrendChart.update();
 });
 $("detailMovements").addEventListener("click",async function(e){
+  const saveNote=e.target.closest("[data-analysis-extra-note-save]");
+  if(saveNote){
+    const id=saveNote.dataset.analysisExtraNoteSave,input=$("detailMovements").querySelector('[data-analysis-extra-note="'+CSS.escape(id)+'"]');
+    await saveAnalysisExtraordinaryNote(id,input?input.value:"",saveNote);return;
+  }
   const action=e.target.closest("[data-analysis-forecast-exclusion]");
   if(action){
     await setAnalysisMovementForecastExclusion(action.dataset.analysisForecastExclusion,action.dataset.analysisForecastExclusionMode==="exclude",action);
