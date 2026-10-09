@@ -1,7 +1,7 @@
 // Canonical source: massimospazio/budget-familiare; public files are deployed automatically.
 (function(){
-  const APP_VERSION='V73.5';
-  const APP_RELEASE='Scenario · saldo mensile distinto e straordinari più leggibili';
+  const APP_VERSION='V73.6';
+  const APP_RELEASE='Scenario · KPI gerarchici, variazioni previste e drill-down entrate L2';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});
