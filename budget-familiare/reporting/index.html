@@ -378,6 +378,7 @@ button,input,select{font:inherit}
 .scenario-segment button{border:0;background:transparent;color:#334155;border-radius:7px;padding:8px 13px;cursor:pointer;font-size:11px;font-weight:700}
 .scenario-segment button.active{background:var(--sc-blue);color:#fff;box-shadow:0 4px 10px rgba(37,99,235,.18)}
 .scenario-kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:11px;margin-bottom:12px}
+.scenario-kpis.expense-mode{grid-template-columns:repeat(4,minmax(0,1fr))}
 .scenario-kpi{background:#fff;border:1px solid #e4eaf2;border-radius:13px;padding:13px 14px;min-height:104px;box-shadow:0 4px 14px rgba(15,23,42,.035);position:relative;overflow:hidden}
 .scenario-kpi.highlight{background:linear-gradient(135deg,#effcf6,#f8fffb);border-color:#cdeee0}
 .scenario-kpi.warn{background:linear-gradient(135deg,#fff7f7,#fffafa);border-color:#fecdd3}
@@ -402,8 +403,8 @@ button,input,select{font:inherit}
 .scenario-watch-row:last-child{border-bottom:0}.scenario-watch-name{font-size:11px;font-weight:750;color:#172033}.scenario-watch-meta{font-size:8.5px;color:#94a3b8;margin-top:2px}
 .scenario-watch-amount{font-size:10.5px;font-weight:750;color:#172033;text-align:right}.scenario-watch-delta{font-size:9.5px;font-weight:800;min-width:54px;text-align:right}
 .scenario-loading{padding:28px;text-align:center;color:#64748b}
-@media(max-width:1100px){.scenario-kpis{grid-template-columns:repeat(3,1fr)}.scenario-detail-grid{grid-template-columns:1fr}.scenario-hero{flex-direction:column}.scenario-controls{justify-content:flex-start}}
-@media(max-width:700px){.scenario-kpis{grid-template-columns:1fr 1fr}.scenario-chart-main,.scenario-chart{height:285px}.scenario-controls{gap:10px}.scenario-segment button{padding:7px 9px}.scenario-hero h2{font-size:25px}}
+@media(max-width:1100px){.scenario-kpis,.scenario-kpis.expense-mode{grid-template-columns:repeat(3,1fr)!important}.scenario-detail-grid{grid-template-columns:1fr}.scenario-hero{flex-direction:column}.scenario-controls{justify-content:flex-start}}
+@media(max-width:700px){.scenario-kpis,.scenario-kpis.expense-mode{grid-template-columns:1fr 1fr!important}.scenario-chart-main,.scenario-chart{height:285px}.scenario-controls{gap:10px}.scenario-segment button{padding:7px 9px}.scenario-hero h2{font-size:25px}}
 </style>
 </head>
 <body>
@@ -596,7 +597,7 @@ button,input,select{font:inherit}
 
         <section class="scenario-card scenario-chart-card">
           <div class="scenario-card-head">
-            <div><h3>Entrate, spese e saldo netto</h3><p>Confronto mensile tra flussi reali e pianificati.</p></div>
+            <div><h3>Entrate, uscite e saldo netto</h3><p>Le uscite future includono spese pianificate, margine imprevisti e investimenti.</p></div>
           </div>
           <div class="scenario-chart"><canvas id="scenarioFlowChart"></canvas></div>
         </section>
@@ -2408,7 +2409,7 @@ function renderScenarioKpis(plan){
   const finalBalance=plan.balancePath.length?num(plan.balancePath[plan.balancePath.length-1].balance):plan.anchorBalance;
   const minRow=plan.balancePath.reduce(function(a,x){return !a||num(x.balance)<num(a.balance)?x:a},null);
   if(scenarioMode==="EXPENSES"){
-    box.style.gridTemplateColumns="repeat(4,minmax(0,1fr))";
+    box.classList.add("expense-mode");
     const vals=plan.target.map(function(x){return x.expense}),avg=vals.length?vals.reduce(function(a,v){return a+v},0)/vals.length:0,maxRow=plan.target.reduce(function(a,x){return !a||x.expense>a.expense?x:a},null);
     box.innerHTML=
       scenarioKpiCard("↓","red",scenarioHorizon==="ROLLING_12"?"Spese prossimi 12 mesi":"Spese previste fine anno",money(projectedExpense),{text:scenarioDeltaText(projectedExpense,compExpense),cls:projectedExpense>compExpense?"bad":"good"},"")+
@@ -2417,7 +2418,7 @@ function renderScenarioKpis(plan){
       scenarioKpiCard("↗","red",scenarioHorizon==="ROLLING_12"?"Scostamento vs ultimi 12m":"Scostamento vs anno scorso",money(projectedExpense-compExpense),{text:scenarioDeltaText(projectedExpense,compExpense),cls:projectedExpense>compExpense?"bad":"good"},"");
     return;
   }
-  box.style.gridTemplateColumns="repeat(5,minmax(0,1fr))";
+  box.classList.remove("expense-mode");
   box.innerHTML=
     scenarioKpiCard("↑","green",scenarioHorizon==="ROLLING_12"?"Entrate prossimi 12 mesi":"Entrate previste fine anno",money(projectedIncome),{text:scenarioDeltaText(projectedIncome,compIncome),cls:projectedIncome>=compIncome?"good":""},"")+
     scenarioKpiCard("↓","red",scenarioHorizon==="ROLLING_12"?"Spese prossimi 12 mesi":"Spese previste fine anno",money(projectedExpense),{text:scenarioDeltaText(projectedExpense,compExpense),cls:projectedExpense>compExpense?"bad":"good"},"")+
