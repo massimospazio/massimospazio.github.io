@@ -2626,20 +2626,73 @@ function renderScenarioExpenseChart(plan){
   renderScenarioExpenseHover(null);
   $("scenarioExpenseSubtitle").textContent=(scenarioHorizon==="ROLLING_12"?"Ultimi mesi reali come contesto e prossimi 12 mesi previsti. ":"Dati reali fino all'ultimo mese completo e previsione per il resto dell'anno. ")+"Vista: "+scenarioExtraLabel()+".";
 }
+function scenarioActualCategoryValue(x){
+  if(scenarioExtraMode==="ALL")return num(x.total_amount);
+  if(scenarioExtraMode==="EXTRA")return num(x.extraordinary_amount);
+  return num(x.ordinary_amount);
+}
+function scenarioMonthBreakdown(plan,month,flow){
+  const future=month>=plan.def.current,groups=new Map();
+  function add(key,id,name,value,kind){
+    value=num(value);if(value<=.004)return;
+    if(!groups.has(key))groups.set(key,{id:id||null,name:name||"Senza categoria",value:0,kind:kind||flow});
+    groups.get(key).value+=value;
+  }
+  if(!future){
+    (scenarioActualCategories||[]).forEach(function(x){
+      if(x.month_start!==month)return;
+      if(flow==="INCOME"){
+        if(x.direction!=="INCOME")return;
+      }else if(x.direction!=="EXPENSE"&&x.direction!=="INVESTMENT")return;
+      const value=scenarioActualCategoryValue(x),name=x.direction==="INVESTMENT"?"Investimenti":(x.l1_name||"Senza categoria");
+      add((x.direction||flow)+"|"+(x.l1_id||name),x.direction==="INVESTMENT"?null:x.l1_id,name,value,x.direction);
+    });
+  }else if(scenarioExtraMode!=="EXTRA"){
+    const data=projectionDataFor(flow),rows=data&&data.forecast_monthly||[];
+    rows.filter(function(x){return x.month===month}).forEach(function(x){
+      add(flow+"|"+(x.l1_id||x.l1_name),x.l1_id,x.l1_name,num(x.effective_amount),flow);
+    });
+    if(flow==="EXPENSE"){
+      const row=plan.display.find(function(x){return x.month===month});
+      if(row){
+        add("MARGIN",null,"Margine imprevisti",row.margin,"MARGIN");
+        add("INVESTMENT",null,"Investimenti",row.investment,"INVESTMENT");
+      }
+    }
+  }
+  return Array.from(groups.values()).sort(function(a,b){return b.value-a.value});
+}
+function renderScenarioMonthDetail(plan){
+  const box=$("scenarioMonthDetail");if(!box)return;
+  if(!scenarioSelectedMonth||!scenarioSelectedFlow){box.classList.add("hidden");box.innerHTML="";return}
+  const row=plan.display.find(function(x){return x.month===scenarioSelectedMonth});
+  if(!row){box.classList.add("hidden");box.innerHTML="";return}
+  const flow=scenarioSelectedFlow,label=flow==="INCOME"?"Entrate":"Uscite",value=flow==="INCOME"?scenarioDisplayIncome(row):scenarioDisplayOutflow(row),breakdown=scenarioMonthBreakdown(plan,row.month,flow),max=Math.max.apply(null,[1].concat(breakdown.map(function(x){return x.value}))),status=scenarioMonthStatus(row);
+  const extraText=!row.isForecast&&(num(row.extraordinaryIncome)>0||num(row.extraordinaryOutflow)>0)
+    ?'<span class="scenario-detail-chip">Extra E '+money(row.extraordinaryIncome)+' · U '+money(row.extraordinaryOutflow)+'</span>':"";
+  box.classList.remove("hidden");
+  box.innerHTML='<div class="scenario-month-detail-head"><div><h3>'+esc(monthLabel(row.month))+' · '+label+'</h3><p>'+(row.isForecast?'Piano futuro':'Consuntivo reale')+' · vista '+esc(scenarioExtraLabel())+'</p></div><button class="btn ghost compact" type="button" data-scenario-close-detail>Chiudi</button></div>'+
+    '<div class="scenario-detail-summary"><span class="scenario-detail-chip">'+label+' <strong>'+money(value)+'</strong></span><span class="scenario-detail-chip">Saldo mese <strong class="'+(scenarioDisplayNet(row)>=0?"positive":"negative")+'">'+(scenarioDisplayNet(row)>=0?"+":"")+money(scenarioDisplayNet(row))+'</strong></span><span class="scenario-detail-chip">Saldo ordinario <strong class="'+(num(row.ordinaryNet)>=0?"positive":"negative")+'">'+(num(row.ordinaryNet)>=0?"+":"")+money(row.ordinaryNet)+'</strong></span>'+extraText+'<span class="scenario-month-status '+status.cls+'">'+status.icon+' '+esc(status.label)+'</span></div>'+
+    '<div class="scenario-breakdown">'+(breakdown.length?breakdown.map(function(x){
+      const attrs=x.id?' data-scenario-detail-l1="'+esc(x.id)+'" data-scenario-detail-direction="'+flow+'"':"";
+      return '<div class="scenario-breakdown-row"'+attrs+'><div class="scenario-breakdown-name">'+esc(x.name)+'</div><div class="scenario-breakdown-bar"><div class="scenario-breakdown-fill '+(flow==="INCOME"?"income":"expense")+'" style="width:'+Math.max(2,x.value/max*100).toFixed(1)+'%"></div></div><div class="scenario-breakdown-amount">'+money(x.value)+'</div></div>';
+    }).join(""):'<div class="muted small" style="padding:10px 0">Nessun valore per questa vista. Le previsioni future non contengono movimenti straordinari finché non vengono pianificati esplicitamente.</div>')+'</div>';
+}
+function scenarioExpenseSum(rows){return (rows||[]).reduce(function(s,x){return s+scenarioDisplayExpense(x)},0)}
 function renderScenarioCompareChart(plan){
   if(scenarioCompareChart)scenarioCompareChart.destroy();
   let labels,current,previous;
   if(scenarioHorizon==="ROLLING_12"){
     const halfA=plan.target.slice(0,6),halfB=plan.target.slice(6,12),prevA=plan.comparison.slice(0,6),prevB=plan.comparison.slice(6,12);
     labels=["Primi 6 mesi","Secondi 6 mesi","Totale 12 mesi"];
-    current=[scenarioSum(halfA,"expense"),scenarioSum(halfB,"expense"),scenarioSum(plan.target,"expense")];
-    previous=[scenarioSum(prevA,"expense"),scenarioSum(prevB,"expense"),scenarioSum(plan.comparison,"expense")];
+    current=[scenarioExpenseSum(halfA),scenarioExpenseSum(halfB),scenarioExpenseSum(plan.target)];
+    previous=[scenarioExpenseSum(prevA),scenarioExpenseSum(prevB),scenarioExpenseSum(plan.comparison)];
     $("scenarioCompareTitle").textContent="Prossimi 12 mesi vs ultimi 12 mesi";
   }else{
     const actual=plan.target.filter(function(x){return !x.isForecast}),future=plan.target.filter(function(x){return x.isForecast}),n=actual.length;
     labels=["Trascorsi","Rimanenti","Totale anno"];
-    current=[scenarioSum(actual,"expense"),scenarioSum(future,"expense"),scenarioSum(plan.target,"expense")];
-    previous=[scenarioSum(plan.comparison.slice(0,n),"expense"),scenarioSum(plan.comparison.slice(n),"expense"),scenarioSum(plan.comparison,"expense")];
+    current=[scenarioExpenseSum(actual),scenarioExpenseSum(future),scenarioExpenseSum(plan.target)];
+    previous=[scenarioExpenseSum(plan.comparison.slice(0,n)),scenarioExpenseSum(plan.comparison.slice(n)),scenarioExpenseSum(plan.comparison)];
     $("scenarioCompareTitle").textContent="Anno in corso vs anno precedente";
   }
   scenarioCompareChart=new Chart($("scenarioCompareChart"),{
@@ -2676,10 +2729,11 @@ function renderScenario(){
   const plan=scenarioPlanData();if(!plan)return;
   document.querySelectorAll("[data-scenario-horizon]").forEach(function(b){b.classList.toggle("active",b.dataset.scenarioHorizon===scenarioHorizon)});
   document.querySelectorAll("[data-scenario-mode]").forEach(function(b){b.classList.toggle("active",b.dataset.scenarioMode===scenarioMode)});
+  document.querySelectorAll("[data-scenario-extra]").forEach(function(b){b.classList.toggle("active",b.dataset.scenarioExtra===scenarioExtraMode)});
   $("scenarioSummaryView").classList.toggle("hidden",scenarioMode!=="SUMMARY");
   $("scenarioExpenseView").classList.toggle("hidden",scenarioMode!=="EXPENSES");
   renderScenarioKpis(plan);
-  if(scenarioMode==="SUMMARY"){renderScenarioBalanceChart(plan);renderScenarioFlowChart(plan)}
+  if(scenarioMode==="SUMMARY"){renderScenarioFlowChart(plan);renderScenarioMonthDetail(plan)}
   else{renderScenarioExpenseChart(plan);renderScenarioCompareChart(plan);renderScenarioWatchList(plan)}
   renderScenarioInsights(plan);
 }
