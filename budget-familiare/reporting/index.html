@@ -583,6 +583,14 @@ button,input,select{font:inherit}
               <button type="button" data-scenario-mode="EXPENSES">Dettaglio spese</button>
             </div>
           </div>
+          <div>
+            <span class="scenario-control-label">Straordinari nel grafico</span>
+            <div class="scenario-segment">
+              <button class="active" type="button" data-scenario-extra="ORDINARY">Esclusi</button>
+              <button type="button" data-scenario-extra="ALL">Tutti</button>
+              <button type="button" data-scenario-extra="EXTRA">Solo extra</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -592,18 +600,15 @@ button,input,select{font:inherit}
       <div id="scenarioSummaryView">
         <section class="scenario-card scenario-chart-card">
           <div class="scenario-card-head">
-            <div><h3 id="scenarioBalanceTitle">Saldo mese per mese</h3><p id="scenarioBalanceSubtitle">Consuntivo reale e previsione sullo stesso asse temporale.</p></div>
-            <div class="scenario-legend-inline"><span><i class="scenario-line solid"></i> Reale</span><span><i class="scenario-line dashed"></i> Previsione</span></div>
+            <div><h3>Entrate, uscite e saldo cumulato</h3><p>Le barre mostrano i flussi mensili; la linea mostra la liquidità reale e prevista.</p></div>
+            <div class="scenario-legend-inline"><span><i class="scenario-bar income"></i> Entrate</span><span><i class="scenario-bar expense"></i> Uscite</span><span><i class="scenario-line solid"></i> Saldo cumulato</span></div>
           </div>
-          <div class="scenario-chart scenario-chart-main"><canvas id="scenarioBalanceChart"></canvas></div>
+          <div id="scenarioFlowHover" class="scenario-chart-hover"><span class="muted">Passa sul grafico per leggere il mese senza coprire le barre. Clicca una barra per il dettaglio categorie.</span></div>
+          <div class="scenario-chart scenario-chart-main"><canvas id="scenarioFlowChart"></canvas></div>
+          <div id="scenarioMonthStatusRow" class="scenario-month-status-row"></div>
+          <div id="scenarioFlowNote" class="legend-note"></div>
         </section>
-
-        <section class="scenario-card scenario-chart-card">
-          <div class="scenario-card-head">
-            <div><h3>Entrate, uscite e saldo netto</h3><p>Le uscite future includono spese pianificate, margine imprevisti e investimenti.</p></div>
-          </div>
-          <div class="scenario-chart"><canvas id="scenarioFlowChart"></canvas></div>
-        </section>
+        <section id="scenarioMonthDetail" class="scenario-card scenario-month-detail hidden"></section>
         <div id="scenarioInsight" class="scenario-insight"></div>
       </div>
 
@@ -612,6 +617,7 @@ button,input,select{font:inherit}
           <div class="scenario-card-head">
             <div><h3>Spese mese per mese</h3><p id="scenarioExpenseSubtitle">Mesi reali e mesi previsti, con riferimenti di media e mediana.</p></div>
           </div>
+          <div id="scenarioExpenseHover" class="scenario-chart-hover"><span class="muted">Passa sul grafico per leggere il mese senza coprire le barre.</span></div>
           <div class="scenario-chart scenario-chart-main"><canvas id="scenarioExpenseChart"></canvas></div>
         </section>
 
