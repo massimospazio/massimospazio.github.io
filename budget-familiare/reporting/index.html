@@ -226,6 +226,12 @@ button,input,select{font:inherit}
 .analysis-moves-table th{background:#fafafa;color:var(--muted);position:sticky;top:0}
 .analysis-moves-table th.sortable{cursor:pointer;user-select:none}.analysis-moves-table th.sortable:hover{color:var(--accent)}
 .analysis-moves-table td.amount{text-align:right;font-weight:750}
+.analysis-moves-table tr.forecast-excluded td{background:#fff7ed;color:#64748b}
+.analysis-moves-table tr.forecast-excluded td.amount{text-decoration:line-through;text-decoration-thickness:1px}
+.forecast-excluded-badge{display:inline-flex;align-items:center;padding:2px 6px;border-radius:999px;background:#ffedd5;color:#9a3412;border:1px solid #fed7aa;font-size:8.5px;font-weight:800;white-space:nowrap}
+.analysis-movement-forecast-action{white-space:nowrap;text-align:right}
+.analysis-movement-summary{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.analysis-movement-summary .forecast-base{color:#1d4ed8;font-weight:750}
 .analysis-placeholder{min-height:410px;display:flex;align-items:center;justify-content:center;text-align:center;color:var(--muted);font-size:12px;padding:30px}
 .analysis-loading{padding:16px;text-align:center;color:var(--muted);font-size:12px}
 @media(max-width:1180px){.analysis-workspace-grid{grid-template-columns:1fr}.analysis-master-wrap{max-height:500px}}
@@ -498,9 +504,9 @@ button,input,select{font:inherit}
 
     <div class="secondary-tools">
       <details id="extraordinaryDetails" class="secondary-details">
-        <summary><span>Movimenti straordinari esclusi dalla previsione</span><span id="extraordinarySummary" class="muted"></span></summary>
+        <summary><span>Movimenti esclusi dalla previsione</span><span id="extraordinarySummary" class="muted"></span></summary>
         <div class="secondary-detail-body">
-          <div class="small muted">Qui sono mostrati solo i movimenti già marcati come straordinari. I suggerimenti automatici generici sui “movimenti grandi” sono stati rimossi.</div>
+          <div class="small muted">Qui trovi i movimenti esclusi dalla base di previsione. Restano spese reali nei consuntivi, ma non influenzano Analisi e forecast.</div>
           <div id="extraordinaryContent"></div>
           <div id="extraordinaryMsg"></div>
         </div>
@@ -2043,7 +2049,7 @@ function movementNoteHtml(note){
 function renderAnalysisMovements(){
   const d=analysisDetailData;if(!d)return;
   if(!analysisSelectedMonth){
-    $("detailMovements").innerHTML='<div class="analysis-movements-head"><h4>'+(analysisTimeMode==="PROJECTION"?"Dettaglio del mese":"Movimenti del mese")+'</h4></div><div class="muted small">'+(analysisTimeMode==="PROJECTION"?"Clicca un mese del grafico: sui mesi reali vedi i movimenti, sui mesi futuri la composizione della previsione.":"Clicca su un mese del grafico per vedere i movimenti che lo compongono e valutarne la ripetibilità.")+'</div>';
+    $("detailMovements").innerHTML='<div class="analysis-movements-head"><h4>'+(analysisTimeMode==="PROJECTION"?"Dettaglio del mese":"Movimenti del mese")+'</h4></div><div class="muted small">'+(analysisTimeMode==="PROJECTION"?"Clicca un mese del grafico: sui mesi reali vedi i movimenti, sui mesi futuri la composizione della previsione.":"Clicca su un mese del grafico per vedere i movimenti e decidere quali devono contribuire alla previsione.")+'</div>';
     return;
   }
   if(analysisTimeMode==="PROJECTION"){
@@ -2069,16 +2075,59 @@ function renderAnalysisMovements(){
   }
   let rows=(d.movements||[]).filter(function(x){return x.month_start===analysisSelectedMonth});
   if(analysisSelectedComponent)rows=rows.filter(function(x){return String(x.component_id)===String(analysisSelectedComponent)});
-  rows=sortedAnalysisMovements(rows);const total=rows.reduce(function(sum,x){return sum+num(x.amount)},0);
-  $("detailMovements").innerHTML='<div class="analysis-movements-head"><h4>Movimenti · '+esc(monthLabel(analysisSelectedMonth))+'</h4><span class="small muted">'+rows.length+' movimenti · '+money(total)+'</span></div>'+
+  rows=sortedAnalysisMovements(rows);
+  const realTotal=rows.reduce(function(sum,x){return sum+num(x.amount)},0);
+  const included=rows.filter(function(x){return !x.is_extraordinary});
+  const forecastBase=included.reduce(function(sum,x){return sum+num(x.amount)},0);
+  const excludedCount=rows.length-included.length;
+  const canEdit=analysisCurrentDirection()==="EXPENSE";
+  $("detailMovements").innerHTML='<div class="analysis-movements-head"><h4>Movimenti · '+esc(monthLabel(analysisSelectedMonth))+'</h4><div class="analysis-movement-summary"><span class="small muted">'+rows.length+' movimenti · reale '+money(realTotal)+'</span><span class="small forecast-base">base forecast '+money(forecastBase)+'</span>'+(excludedCount?'<span class="forecast-excluded-badge">'+excludedCount+' esclus'+(excludedCount===1?"o":"i")+'</span>':"")+'</div></div>'+
     (rows.length?'<div class="analysis-moves-wrap"><table class="analysis-moves-table"><thead><tr>'+
       '<th class="sortable" data-sort-analysis-moves="transaction_date">Data'+sortMark("transaction_date")+'</th>'+
       '<th class="sortable" data-sort-analysis-moves="counterparty">Controparte'+sortMark("counterparty")+'</th>'+
       '<th class="sortable" data-sort-analysis-moves="category">Categoria'+sortMark("category")+'</th>'+
       '<th class="sortable" data-sort-analysis-moves="amount" style="text-align:right">Importo'+sortMark("amount")+'</th>'+
-      '<th>Descrizione</th><th>Nota</th></tr></thead><tbody>'+
-      rows.map(function(x){return '<tr><td>'+dateLabel(x.transaction_date)+'</td><td><strong>'+esc(x.counterparty||"—")+'</strong></td><td>'+esc(x.category||"—")+'</td><td class="amount">'+money(x.amount)+'</td><td>'+esc(x.description||"")+'</td><td>'+movementNoteHtml(x.user_note)+'</td></tr>'}).join("")+
-      '</tbody></table></div>':'<div class="muted small">Nessun movimento nel mese selezionato.</div>');
+      '<th>Descrizione</th><th>Nota</th>'+(canEdit?'<th>Previsione</th>':"")+'</tr></thead><tbody>'+
+      rows.map(function(x){
+        const excluded=!!x.is_extraordinary;
+        const action=canEdit
+          ?'<td class="analysis-movement-forecast-action">'+(excluded
+            ?'<span class="forecast-excluded-badge">Escluso</span> <button class="btn ghost compact" type="button" data-analysis-forecast-exclusion="'+esc(x.id)+'" data-analysis-forecast-exclusion-mode="include" title="Reincludi questo movimento nella base di previsione">Ripristina</button>'
+            :'<button class="btn ghost compact" type="button" data-analysis-forecast-exclusion="'+esc(x.id)+'" data-analysis-forecast-exclusion-mode="exclude" title="La spesa resta nei consuntivi ma non influenzerà Analisi e forecast">Escludi</button>')+'</td>'
+          :"";
+        return '<tr'+(excluded?' class="forecast-excluded"':'')+'><td>'+dateLabel(x.transaction_date)+'</td><td><strong>'+esc(x.counterparty||"—")+'</strong></td><td>'+esc(x.category||"—")+'</td><td class="amount">'+money(x.amount)+'</td><td>'+esc(x.description||"")+'</td><td>'+movementNoteHtml(x.user_note)+'</td>'+action+'</tr>';
+      }).join("")+
+      '</tbody></table></div>':'<div class="muted small">Nessun movimento nel mese selezionato.</div>')+
+      (canEdit?'<div class="legend-note">“Escludi” agisce solo sulla base di Analisi/forecast: il movimento resta una spesa reale nei consuntivi.</div>':"");
+}
+
+async function setAnalysisMovementForecastExclusion(transactionId,exclude,btn){
+  if(analysisCurrentDirection()!=="EXPENSE"||!transactionId)return;
+  const keep=captureAnalysisSelection(),month=analysisSelectedMonth;
+  setBusy(btn,true,exclude?"Escludo":"Ripristino");
+  try{
+    await rpc("dashboard_reporting_set_extraordinary_v1",{
+      p_transaction_id:transactionId,
+      p_is_extraordinary:exclude,
+      p_note:exclude?"Escluso dalla previsione da Analisi spese":null
+    });
+    const oldCash=report&&report.cashflow_monthly,oldLiquidity=report&&report.liquidity_history;
+    const fresh=await rpc("dashboard_reporting_read_v5");
+    report=fresh||{};
+    report.cashflow_monthly=oldCash||report.cashflow_monthly||[];
+    report.liquidity_history=oldLiquidity||{available:false,rows:[]};
+    invalidateAnalysisProjection("EXPENSE");
+    analysisWorkspace=null;analysisWorkspaceKey="";
+    await loadAnalysisWorkspace(true,keep);
+    if(month){analysisSelectedMonth=month;renderAnalysisMovements()}
+    renderProjection();renderExtraordinary();
+    msg($("analysisStatus"),exclude
+      ?"Movimento escluso dalla base di previsione. Resta incluso nei consuntivi reali."
+      :"Movimento reincluso nella base di previsione.");
+  }catch(err){
+    msg($("analysisStatus"),err.message||"Errore aggiornamento movimento",true);
+    setBusy(btn,false);
+  }
 }
 function openCategoryDetail(categoryId,direction,selectedMonth){planMode="ANALYSIS";analysisViewMode=direction==="INCOME"?"INCOME":"EXPENSE";$("analysisDirection").value=analysisCurrentDirection();renderMode();if(!analysisWorkspace||analysisWorkspaceKey!==analysisWorkspaceCacheKey())loadAnalysisWorkspace(true).then(function(){openAnalysisDetail(categoryId,"L2",selectedMonth||null)});else openAnalysisDetail(categoryId,"L2",selectedMonth||null)}
 
@@ -2090,13 +2139,13 @@ function renderExtraordinary(){
     :"· nessun movimento";
   if(!$("extraordinaryContent"))return;
   if(!flagged.length){
-    $("extraordinaryContent").innerHTML='<div class="muted small" style="margin-top:8px">Nessun movimento marcato come straordinario.</div>';
+    $("extraordinaryContent").innerHTML='<div class="muted small" style="margin-top:8px">Nessun movimento escluso dalla previsione.</div>';
     return;
   }
   $("extraordinaryContent").innerHTML='<div style="overflow:auto"><table class="extra-table"><thead><tr><th>Data</th><th>Movimento</th><th>Tipo</th><th>Importo</th><th></th></tr></thead><tbody>'+
     flagged.map(function(x){
       const label=x.counterparty||x.category||x.transaction_type||"Movimento";
-      return "<tr><td>"+dateLabel(x.transaction_date)+"</td><td>"+esc(label)+'<div class="plan-sub">'+esc(x.note||"Straordinario")+"</div></td><td>"+esc(x.transaction_type)+'</td><td class="amount '+(num(x.amount)>=0?"positive":"negative")+'">'+money(x.amount)+'</td><td><button class="btn ghost compact" data-extra-id="'+esc(x.id)+'" data-extra-mode="remove">Rendi ordinario</button></td></tr>';
+      return "<tr><td>"+dateLabel(x.transaction_date)+"</td><td>"+esc(label)+'<div class="plan-sub">'+esc(x.note||"Escluso dalla previsione")+"</div></td><td>"+esc(x.transaction_type)+'</td><td class="amount '+(num(x.amount)>=0?"positive":"negative")+'">'+money(x.amount)+'</td><td><button class="btn ghost compact" data-extra-id="'+esc(x.id)+'" data-extra-mode="remove">Reincludi</button></td></tr>';
     }).join("")+"</tbody></table></div>";
 }
 function renderProjection(){
@@ -2228,7 +2277,15 @@ $("detailStats").addEventListener("click",function(e){
   categoryTrendChart.data.datasets.forEach(function(ds,i){if(ds.analysisRole==="component")categoryTrendChart.setDatasetVisibility(i,true)});
   recalcAnalysisReferenceLines(categoryTrendChart);renderAnalysisVisibleStats(categoryTrendChart);resetAnalysisHoverDetail();categoryTrendChart.update();
 });
-$("detailMovements").addEventListener("click",function(e){const th=e.target.closest("[data-sort-analysis-moves]");if(!th)return;const key=th.dataset.sortAnalysisMoves;if(analysisMovementSort.key===key)analysisMovementSort.dir=analysisMovementSort.dir==="asc"?"desc":"asc";else{analysisMovementSort.key=key;analysisMovementSort.dir=key==="transaction_date"?"desc":"asc"}renderAnalysisMovements()});
+$("detailMovements").addEventListener("click",async function(e){
+  const action=e.target.closest("[data-analysis-forecast-exclusion]");
+  if(action){
+    await setAnalysisMovementForecastExclusion(action.dataset.analysisForecastExclusion,action.dataset.analysisForecastExclusionMode==="exclude",action);
+    return;
+  }
+  const th=e.target.closest("[data-sort-analysis-moves]");if(!th)return;
+  const key=th.dataset.sortAnalysisMoves;if(analysisMovementSort.key===key)analysisMovementSort.dir=analysisMovementSort.dir==="asc"?"desc":"asc";else{analysisMovementSort.key=key;analysisMovementSort.dir=key==="transaction_date"?"desc":"asc"}renderAnalysisMovements();
+});
 $("analysisForecastPanel").addEventListener("click",async function(e){
   const reset=e.target.closest("[data-reset-analysis-plan]");
   if(reset){await saveIntegratedMonthlyOverride(reset.dataset.resetAnalysisPlan,null,reset);return}
