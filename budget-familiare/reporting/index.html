@@ -2587,7 +2587,7 @@ function renderScenarioFlowChart(plan){
   });
   renderScenarioMonthStatusRow(plan);
   renderScenarioFlowHover(null);
-  const note=$("scenarioFlowNote");if(note)note.textContent="Vista grafico: "+scenarioExtraLabel()+". La linea del saldo cumulato resta sempre la liquidità reale/pianificata complessiva, quindi include anche gli effetti degli straordinari.";
+  const note=$("scenarioFlowNote");if(note)note.textContent="Vista grafico: "+scenarioExtraLabel()+". La linea del saldo cumulato resta sempre la liquidità reale/pianificata complessiva. I mesi con entrate marcate straordinarie sono evidenziati in blu e non contano come vittoria ordinaria.";
 }
 function renderScenarioExpenseChart(plan){
   if(scenarioExpenseChart)scenarioExpenseChart.destroy();
