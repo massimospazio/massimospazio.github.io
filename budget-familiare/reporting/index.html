@@ -2343,8 +2343,8 @@ function scenarioPlanData(){
   const comparison=def.comparisonMonths.map(function(month){
     return {
       month:month,
-      income:num(incActual.get(month)),
-      expense:num(expActual.get(month))
+      income:scenarioActualIncome(month,incActual,cash),
+      expense:scenarioActualExpense(month,expActual,cash)
     };
   });
   const prevMonth=addMonthsISO(def.current,-1);
