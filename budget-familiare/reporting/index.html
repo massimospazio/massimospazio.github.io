@@ -231,6 +231,28 @@ button,input,select{font:inherit}
 @media(max-width:1180px){.analysis-workspace-grid{grid-template-columns:1fr}.analysis-master-wrap{max-height:500px}}
 @media(max-width:700px){.analysis-period-summary{grid-template-columns:1fr 1fr}.analysis-detail-head{flex-direction:column}.analysis-detail-stats{justify-content:flex-start}}
 
+/* V72.9.2 — Analisi compatta: sinistra navigazione, destra lettura */
+.analysis-workspace-grid{grid-template-columns:minmax(310px,.52fr) minmax(640px,1.48fr);gap:14px}
+.analysis-master-table{table-layout:fixed;min-width:0}
+.analysis-master-table th,.analysis-master-table td{padding:7px 7px;font-size:10.5px}
+.analysis-master-table th:first-child,.analysis-master-table td:first-child{width:auto;min-width:0}
+.analysis-master-table th:nth-child(2),.analysis-master-table td:nth-child(2){width:96px;text-align:right}
+.analysis-master-table th:nth-child(3),.analysis-master-table td:nth-child(3){width:76px;text-align:right}
+.analysis-master-amount{display:flex;flex-direction:column;align-items:flex-end;gap:1px}
+.analysis-master-amount strong{font-size:10.5px;color:var(--text)}
+.analysis-master-share{font-size:8.5px;color:var(--muted);font-weight:600}
+.analysis-detail-forecast-chip{display:inline-flex;align-items:center;padding:4px 7px;border:1px solid #dbeafe;border-radius:7px;background:#eff6ff;color:#1d4ed8;font-size:10px;font-weight:750;max-width:310px;line-height:1.2;text-align:left}
+.analysis-chart-box{height:365px}
+@media(max-width:1180px){
+  .analysis-workspace-grid{grid-template-columns:1fr}
+  .analysis-master-wrap{max-height:440px}
+  .analysis-chart-box{height:340px}
+}
+@media(max-width:700px){
+  .analysis-chart-box{height:300px}
+  .analysis-detail-forecast-chip{max-width:100%}
+}
+
 /* V72.6.0 — Analisi decisionale + motore Forecast */
 .analysis-v26-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:8px}
 .analysis-v26-left,.analysis-v26-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -433,7 +455,7 @@ button,input,select{font:inherit}
           <div>
             <div class="analysis-master-wrap">
               <table class="analysis-master-table">
-                <thead id="analysisMasterHead"><tr><th>Categoria / Voce</th><th>Totale</th><th>%</th><th>Δ A-1</th><th title="Media mensile calcolata su tutti i mesi del periodo, inclusi i mesi a zero">Media</th><th title="Mediana mensile calcolata su tutti i mesi del periodo, inclusi i mesi a zero">Mediana</th><th>Frequenza</th><th>Previsione</th></tr></thead>
+                <thead id="analysisMasterHead"><tr><th>Categoria / Voce</th><th>Importo</th><th>Δ A-1</th></tr></thead>
                 <tbody id="analysisBody"></tbody>
               </table>
             </div>
@@ -1332,7 +1354,7 @@ async function restoreAnalysisSelection(keep){
 }
 async function loadAnalysisWorkspace(force,preserveSelection){
   const key=analysisWorkspaceCacheKey();if(!force&&analysisWorkspace&&analysisWorkspaceKey===key){renderAnalysis();return}
-  const seq=++analysisLoadSeq;$("analysisBody").innerHTML='<tr><td colspan="8"><div class="analysis-loading"><span class="spinner"></span>Carico analisi…</div></td></tr>';msg($("analysisStatus"),"");
+  const seq=++analysisLoadSeq;$("analysisBody").innerHTML='<tr><td colspan="3"><div class="analysis-loading"><span class="spinner"></span>Carico analisi…</div></td></tr>';msg($("analysisStatus"),"");
   try{
     const data=await Promise.all([
       rpc("dashboard_reporting_analysis_workspace_v2",{p_direction:analysisCurrentDirection(),p_period_months:analysisPeriodMonths()}),
@@ -1345,7 +1367,7 @@ async function loadAnalysisWorkspace(force,preserveSelection){
     }
     resetAnalysisSelection();const first=initializeAnalysisAccordion();renderAnalysis();
     if(analysisViewMode!=="BALANCE"&&first)await openAnalysisDetail(first.category_id,"L1",null);
-  }catch(e){if(seq!==analysisLoadSeq)return;analysisWorkspace=null;$("analysisBody").innerHTML='<tr><td colspan="8" class="negative">Analisi non disponibile.</td></tr>';msg($("analysisStatus"),e.message||"Errore caricamento Analisi",true)}
+  }catch(e){if(seq!==analysisLoadSeq)return;analysisWorkspace=null;$("analysisBody").innerHTML='<tr><td colspan="3" class="negative">Analisi non disponibile.</td></tr>';msg($("analysisStatus"),e.message||"Errore caricamento Analisi",true)}
 }
 function renderAnalysis(){
   renderAnalysisModeButtons();if(!analysisWorkspace||analysisWorkspaceKey!==analysisWorkspaceCacheKey()){loadAnalysisWorkspace(false);return}
@@ -1371,49 +1393,42 @@ function renderProjectionMaster(){
   const rows=projectionHierarchyRows(data),l1=rows.filter(function(x){return x.level==="L1"}).sort(function(a,b){return String(a.l1_name||"").localeCompare(String(b.l1_name||""),"it")});
   const l2ByL1=new Map();rows.filter(function(x){return x.level==="L2"}).forEach(function(x){if(!l2ByL1.has(x.l1_id))l2ByL1.set(x.l1_id,[]);l2ByL1.get(x.l1_id).push(x)});
   const prefix=analysisCurrentDirection()==="INCOME"?"AI:":"AE:",def=projectionDefinition(data);let html="";
-  if(analysisProjectionView==="ROLLING_12"){
-    $("analysisMasterHead").innerHTML='<tr><th>Categoria / Voce</th><th>Ultimi 12m</th><th>%</th><th>Prossimi 12m</th><th>Δ</th><th>Media futura</th><th>Override</th><th>Previsione</th></tr>';
-    $("analysisLegendNote").innerHTML='Confronto <strong>ultimi 12 mesi reali</strong> con <strong>prossimi 12 mesi previsti</strong>. Gli override già impostati in Pianificazione sono inclusi.';
-  }else{
-    $("analysisMasterHead").innerHTML='<tr><th>Categoria / Voce</th><th>'+esc(def.comparisonLabel)+'</th><th>%</th><th>Consuntivo</th><th>Da pianificare</th><th>Totale previsto</th><th>Δ</th><th>Previsione</th></tr>';
-    $("analysisLegendNote").innerHTML='Anno '+esc(def.targetLabel)+': mesi completi a consuntivo + mese corrente e mesi rimanenti pianificati. Confronto con l’anno solare '+esc(def.comparisonLabel)+'.';
-  }
+  $("analysisMasterHead").innerHTML='<tr><th>Categoria / Voce</th><th>'+(analysisProjectionView==="ROLLING_12"?"Prossimi 12m":"Previsto "+esc(def.targetLabel))+'</th><th>Δ</th></tr>';
+  $("analysisLegendNote").innerHTML=analysisProjectionView==="ROLLING_12"
+    ?'Menu categorie: il dettaglio a destra confronta <strong>ultimi 12 mesi reali</strong> e <strong>prossimi 12 previsti</strong>.'
+    :'Menu categorie: il dettaglio a destra mostra consuntivo + pianificato e confronto con il '+esc(def.comparisonLabel)+'.';
   function rowHtml(r,isL1){
-    const id=prefix+r.category_id,collapsed=isL1&&collapsedL1.has(id),selected=String(analysisSelectedCategory||"")===String(r.category_id),name=isL1?r.l1_name:(r.l2_name||r.l1_name),indent=isL1?"":" style=\"padding-left:32px\"";
+    const id=prefix+r.category_id,collapsed=isL1&&collapsedL1.has(id),selected=String(analysisSelectedCategory||"")===String(r.category_id),name=isL1?r.l1_name:(r.l2_name||r.l1_name),indent=isL1?"":" style=\"padding-left:30px\"";
     const first=isL1?'<div class="plan-label"><button class="caret" data-toggle-l1="'+esc(id)+'">'+(collapsed?"▸":"▾")+'</button>'+categoryIconHtml(name,analysisCurrentDirection()==="INCOME"?"income":"expense",true)+'<button class="analysis-row-button" data-analysis-select="'+esc(r.category_id)+'" data-analysis-level="L1">'+esc(name)+'</button></div>':'<span class="plan-label">'+categoryIconHtml(name,analysisCurrentDirection()==="INCOME"?"income":"expense",false)+'<button class="analysis-row-button" data-analysis-select="'+esc(r.category_id)+'" data-analysis-level="L2">'+esc(name)+'</button></span>';
-    const forecast=isL1?'<span class="analysis-forecast">Somma L2</span>':'<span class="analysis-forecast">'+esc(forecastSummaryLabel(r))+'</span>';
-    let cells;
-    if(analysisProjectionView==="ROLLING_12"){
-      cells='<td class="comparison-value">'+money(r.comparison_total)+'</td><td>'+num(r.share_pct).toLocaleString("it-IT",{maximumFractionDigits:1})+'%</td><td class="forecast-value">'+money(r.projected_total)+'</td><td>'+projectionDeltaHtml(r.delta_pct)+'</td><td>'+money(r.avg_future)+'</td><td>'+(r.override_count?'<span class="analysis-projection-badge">'+r.override_count+'</span>':'—')+'</td><td>'+forecast+'</td>';
-    }else{
-      cells='<td class="comparison-value">'+money(r.comparison_total)+'</td><td>'+num(r.share_pct).toLocaleString("it-IT",{maximumFractionDigits:1})+'%</td><td class="actual-value">'+money(r.actual_total)+'</td><td class="forecast-value">'+money(r.forecast_total)+'</td><td class="forecast-value">'+money(r.projected_total)+'</td><td>'+projectionDeltaHtml(r.delta_pct)+'</td><td>'+forecast+'</td>';
-    }
-    return '<tr class="'+(isL1?"l1-row ":"")+(selected?"analysis-selected":"")+'"><td'+indent+'>'+first+'</td>'+cells+'</tr>';
+    const amount='<div class="analysis-master-amount"><strong>'+money(r.projected_total)+'</strong><span class="analysis-master-share">'+num(r.share_pct).toLocaleString("it-IT",{maximumFractionDigits:1})+'%</span></div>';
+    return '<tr class="'+(isL1?"l1-row ":"")+(selected?"analysis-selected":"")+'"><td'+indent+'>'+first+'</td><td>'+amount+'</td><td>'+projectionDeltaHtml(r.delta_pct)+'</td></tr>';
   }
   l1.forEach(function(g){
     html+=rowHtml(g,true);
     const id=prefix+g.category_id;if(collapsedL1.has(id))return;
     (l2ByL1.get(g.category_id)||[]).sort(function(a,b){return String(a.l2_name||"").localeCompare(String(b.l2_name||""),"it")}).forEach(function(r){html+=rowHtml(r,false)});
   });
-  $("analysisBody").innerHTML=html||'<tr><td colspan="8" class="muted">Nessun dato disponibile per la proiezione.</td></tr>';
+  $("analysisBody").innerHTML=html||'<tr><td colspan="3" class="muted">Nessun dato disponibile per la proiezione.</td></tr>';
 }
 
 function renderAnalysisMaster(){
   if(analysisTimeMode==="PROJECTION"){renderProjectionMaster();return}
-  if($("analysisMasterHead"))$("analysisMasterHead").innerHTML='<tr><th>Categoria / Voce</th><th>Totale</th><th>%</th><th>Δ A-1</th><th title="Media mensile calcolata su tutti i mesi del periodo, inclusi i mesi a zero">Media</th><th title="Mediana mensile calcolata su tutti i mesi del periodo, inclusi i mesi a zero">Mediana</th><th>Frequenza</th><th>Previsione</th></tr>';
-  if($("analysisLegendNote"))$("analysisLegendNote").textContent="Una sola L1 resta aperta alla volta. Seleziona una L2 per decidere il forecast con storico, grafico, controparti e movimenti nello stesso contesto.";
+  if($("analysisMasterHead"))$("analysisMasterHead").innerHTML='<tr><th>Categoria / Voce</th><th>Importo</th><th>Δ A-1</th></tr>';
+  if($("analysisLegendNote"))$("analysisLegendNote").textContent="Menu categorie: importo, peso sul totale e trend servono solo a scegliere cosa approfondire nel pannello a destra.";
   if(!analysisWorkspace)return;const rows=analysisWorkspace.rows||[],l1=rows.filter(function(x){return x.level==="L1"}).sort(function(a,b){return String(a.l1_name||"").localeCompare(String(b.l1_name||""),"it")});
   const l2ByL1=new Map();rows.filter(function(x){return x.level==="L2"}).forEach(function(x){if(!l2ByL1.has(x.l1_id))l2ByL1.set(x.l1_id,[]);l2ByL1.get(x.l1_id).push(x)});
   const prefix=analysisCurrentDirection()==="INCOME"?"AI:":"AE:";let html="";
+  function amountHtml(total,share){return '<div class="analysis-master-amount"><strong>'+money(total)+'</strong><span class="analysis-master-share">'+num(share).toLocaleString("it-IT",{maximumFractionDigits:1})+'%</span></div>'}
   l1.forEach(function(g){
     const id=prefix+g.category_id,collapsed=collapsedL1.has(id),selected=String(analysisSelectedCategory||"")===String(g.category_id);
-    html+='<tr class="l1-row'+(selected?" analysis-selected":"")+'"><td><div class="plan-label"><button class="caret" data-toggle-l1="'+esc(id)+'">'+(collapsed?"▸":"▾")+'</button>'+categoryIconHtml(g.l1_name,analysisCurrentDirection()==="INCOME"?"income":"expense",true)+'<button class="analysis-row-button" data-analysis-select="'+esc(g.category_id)+'" data-analysis-level="L1">'+esc(g.l1_name)+'</button></div></td><td>'+money(g.total)+'</td><td>'+num(g.share_pct).toLocaleString("it-IT",{maximumFractionDigits:1})+'%</td><td>'+analysisTrendHtml("L1",g.category_id)+'</td><td>'+money(g.avg_month)+'</td><td>'+money(g.median_month)+'</td><td>'+frequencyHtml(g.active_months,g.period_months)+'</td><td><span class="analysis-forecast">Somma L2</span></td></tr>';
+    html+='<tr class="l1-row'+(selected?" analysis-selected":"")+'"><td><div class="plan-label"><button class="caret" data-toggle-l1="'+esc(id)+'">'+(collapsed?"▸":"▾")+'</button>'+categoryIconHtml(g.l1_name,analysisCurrentDirection()==="INCOME"?"income":"expense",true)+'<button class="analysis-row-button" data-analysis-select="'+esc(g.category_id)+'" data-analysis-level="L1">'+esc(g.l1_name)+'</button></div></td><td>'+amountHtml(g.total,g.share_pct)+'</td><td>'+analysisTrendHtml("L1",g.category_id)+'</td></tr>';
     if(!collapsed)(l2ByL1.get(g.category_id)||[]).sort(function(a,b){return String(a.l2_name||a.l1_name||"").localeCompare(String(b.l2_name||b.l1_name||""),"it")}).forEach(function(r){
-      const name=r.is_direct?"Diretto su "+r.l1_name:(r.l2_name||r.l1_name),sel=String(analysisSelectedCategory||"")===String(r.category_id),fm=analysisForecastMeta(r.category_id);
-      html+='<tr'+(sel?' class="analysis-selected"':'')+'><td style="padding-left:32px"><span class="plan-label">'+categoryIconHtml(name,analysisCurrentDirection()==="INCOME"?"income":"expense",false)+'<button class="analysis-row-button" data-analysis-select="'+esc(r.category_id)+'" data-analysis-level="L2">'+esc(name)+'</button></span></td><td>'+money(r.total)+'</td><td>'+num(r.share_pct).toLocaleString("it-IT",{maximumFractionDigits:1})+'%</td><td>'+analysisTrendHtml("L2",r.category_id)+'</td><td>'+money(r.avg_month)+'</td><td>'+money(r.median_month)+'</td><td>'+frequencyHtml(r.active_months,r.period_months)+'</td><td><span class="analysis-forecast">'+esc(forecastSummaryLabel(fm||{forecast_method:r.forecast_method,forecast_source:"HISTORY"}))+'</span></td></tr>';
+      const name=r.is_direct?"Diretto su "+r.l1_name:(r.l2_name||r.l1_name),sel=String(analysisSelectedCategory||"")===String(r.category_id);
+      html+='<tr'+(sel?' class="analysis-selected"':'')+'><td style="padding-left:30px"><span class="plan-label">'+categoryIconHtml(name,analysisCurrentDirection()==="INCOME"?"income":"expense",false)+'<button class="analysis-row-button" data-analysis-select="'+esc(r.category_id)+'" data-analysis-level="L2">'+esc(name)+'</button></span></td><td>'+amountHtml(r.total,r.share_pct)+'</td><td>'+analysisTrendHtml("L2",r.category_id)+'</td></tr>';
     });
-  });$("analysisBody").innerHTML=html||'<tr><td colspan="8" class="muted">Nessun dato nel periodo selezionato.</td></tr>';
+  });$("analysisBody").innerHTML=html||'<tr><td colspan="3" class="muted">Nessun dato nel periodo selezionato.</td></tr>';
 }
+
 function analysisCollapseOthers(id){
   const prefix=analysisCurrentDirection()==="INCOME"?"AI:":"AE:";
   const rows=analysisTimeMode==="PROJECTION"&&projectionDataFor(analysisCurrentDirection())?projectionHierarchyRows(projectionDataFor(analysisCurrentDirection())):(analysisWorkspace&&analysisWorkspace.rows||[]);
