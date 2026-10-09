@@ -1,7 +1,7 @@
 // Canonical source: massimospazio/budget-familiare; public files are deployed automatically.
 (function(){
-  const APP_VERSION='V72.9.3';
-  const APP_RELEASE='Esclusioni forecast da Analisi';
+  const APP_VERSION='V73';
+  const APP_RELEASE='Scenario · Previsione complessiva';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});
