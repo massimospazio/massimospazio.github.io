@@ -1,7 +1,7 @@
 // Canonical source: massimospazio/budget-familiare; public files are deployed automatically.
 (function(){
-  const APP_VERSION='V73.8.1';
-  const APP_RELEASE='Fix tabella L2 forecast integrato';
+  const APP_VERSION='V73.9';
+  const APP_RELEASE='Piano semantico · obiettivi, impegni e motivazioni nello Scenario';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});
