@@ -3019,11 +3019,6 @@ $("scenarioView").addEventListener("click",async function(e){
     scenarioExtraMode=extra.dataset.scenarioExtra||"ORDINARY";
     renderScenario();return;
   }
-  const noteSave=e.target.closest("[data-scenario-extra-note-save]");
-  if(noteSave){
-    const id=noteSave.dataset.scenarioExtraNoteSave,input=$("scenarioView").querySelector('[data-scenario-extra-note="'+CSS.escape(id)+'"]');
-    await saveScenarioExtraordinaryNote(id,input?input.value:"",noteSave);return;
-  }
   const status=e.target.closest("[data-scenario-status-month]");
   if(status){
     scenarioSelectedMonth=status.dataset.scenarioStatusMonth;scenarioSelectedFlow="EXPENSE";
