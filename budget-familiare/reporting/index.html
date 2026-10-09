@@ -8,8 +8,8 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=73.4-20261009-1945"></script>
-<script src="../shared/app-config.js?v=73.4-20261009-1945"></script>
+<script src="../shared/supabase-client.js?v=73.5-20261009-2202"></script>
+<script src="../shared/app-config.js?v=73.5-20261009-2202"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 :root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#6b7280;--line:#e5e7eb;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 8px 24px rgba(15,23,42,.06)}
@@ -417,7 +417,7 @@ button,input,select{font:inherit}
 .scenario-card-head h3{margin:0;color:var(--sc-ink);font-size:16px}.scenario-card-head p{margin:3px 0 0;color:#64748b;font-size:10.5px}
 .scenario-chart{height:285px;position:relative}.scenario-chart-main{height:325px}.scenario-chart-small{height:245px}
 .scenario-legend-inline{display:flex;gap:12px;align-items:center;font-size:9.5px;color:#475569;white-space:nowrap}
-.scenario-line{display:inline-block;width:18px;height:0;border-top:3px solid var(--sc-blue);vertical-align:3px;margin-right:4px}.scenario-line.dashed{border-top-style:dashed}
+.scenario-line{display:inline-block;width:18px;height:0;border-top:3px solid #334155;vertical-align:3px;margin-right:4px}.scenario-line.dashed{border-top-style:dashed}
 .scenario-insight{display:flex;align-items:flex-start;gap:10px;padding:11px 13px;border:1px solid #dbeafe;background:linear-gradient(90deg,#f0f7ff,#f8fbff);border-radius:12px;margin:4px 0 12px;color:#334155;font-size:10.5px;line-height:1.45}
 .scenario-insight .bulb{width:28px;height:28px;flex:0 0 28px;border-radius:50%;background:#fff3cd;display:flex;align-items:center;justify-content:center;font-size:15px}
 .scenario-insight strong{display:block;color:#1458c4;font-size:11.5px;margin-bottom:2px}
@@ -434,22 +434,24 @@ button,input,select{font:inherit}
 @media(max-width:700px){.scenario-kpis,.scenario-kpis.expense-mode{grid-template-columns:1fr 1fr!important}.scenario-chart-main,.scenario-chart{height:285px}.scenario-controls{gap:10px}.scenario-segment button{padding:7px 9px}.scenario-hero h2{font-size:25px}}
 
 /* V73.1/V73.2 — Scenario monthly reading */
-.scenario-bar{display:inline-block;width:12px;height:10px;border-radius:3px;vertical-align:-1px;margin-right:4px}.scenario-bar.income{background:#0ea87a}.scenario-bar.expense{background:#ef5b73}.scenario-bar.balance{background:linear-gradient(90deg,#16a34a 0 48%,#ef4444 52% 100%)}
+.scenario-bar{display:inline-block;width:12px;height:10px;border-radius:3px;vertical-align:-1px;margin-right:4px}.scenario-bar.income{background:#0ea87a}.scenario-bar.expense{background:#ef5b73}.scenario-bar.balance{background:linear-gradient(90deg,rgba(34,197,94,.14) 0 48%,rgba(239,68,68,.14) 52% 100%);border:1.5px solid #64748b}
 .scenario-chart-hover{min-height:38px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:7px 9px;margin:3px 0 8px;border:1px solid #e2e8f0;background:#f8fafc;border-radius:9px;font-size:10px}
-.scenario-hover-month{font-weight:800;color:#172033}.scenario-hover-chip{display:inline-flex;align-items:center;padding:3px 6px;border-radius:999px;background:#fff;border:1px solid #e2e8f0;font-weight:700}.scenario-hover-chip.income{color:#087f5b}.scenario-hover-chip.expense{color:#be123c}.scenario-hover-chip.balance{color:#1e3a8a}.scenario-hover-chip.ordinary{color:#475569}
-.scenario-month-status-row{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:4px;margin-top:8px;overflow-x:auto;padding-bottom:2px}
-.scenario-month-status{min-width:0;padding:3px 2px;border-radius:6px;text-align:center;font-size:8px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border:1px solid transparent}
-.scenario-month-status.has-extra{box-shadow:inset 0 -2px 0 #f59e0b}
-.scenario-month-status.win{background:#dcfce7;color:#166534;border-color:#bbf7d0}.scenario-month-status.win-strong{background:#bbf7d0;color:#14532d;border-color:#86efac}
-.scenario-month-status.loss{background:#fee2e2;color:#991b1b;border-color:#fecaca}.scenario-month-status.loss-strong{background:#fecaca;color:#7f1d1d;border-color:#fca5a5}
-.scenario-month-status.neutral{background:#f1f5f9;color:#64748b;border-color:#e2e8f0}.scenario-month-status.special{background:#dbeafe;color:#1d4ed8;border-color:#bfdbfe}
-.scenario-month-status.forecast-win{background:#ecfdf5;color:#047857;border:1px dashed #6ee7b7}.scenario-month-status.forecast-loss{background:#fff1f2;color:#be123c;border:1px dashed #fda4af}
+.scenario-hover-month{font-weight:800;color:#172033}.scenario-hover-chip{display:inline-flex;align-items:center;padding:3px 6px;border-radius:999px;background:#fff;border:1px solid #e2e8f0;font-weight:700}.scenario-hover-chip.income{color:#087f5b}.scenario-hover-chip.expense{color:#be123c}.scenario-hover-chip.balance{color:#334155}.scenario-hover-chip.ordinary{color:#475569}
+.scenario-month-status-row{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:5px;margin-top:9px;overflow-x:auto;padding-bottom:2px}
+.scenario-month-status{min-width:0;min-height:30px;padding:5px 4px;border-radius:7px;text-align:center;font-size:10.5px;font-weight:850;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border:1px solid transparent}
+.scenario-month-status.has-extra{box-shadow:inset 0 -2px 0 rgba(15,23,42,.22)}
+.scenario-month-status.win{background:#dcfce7;color:#166534;border-color:#bbf7d0}.scenario-month-status.win-strong{background:#bbf7d0;color:#14532d;border-color:#4ade80}
+.scenario-month-status.loss{background:#fee2e2;color:#991b1b;border-color:#fecaca}.scenario-month-status.loss-strong{background:#fecaca;color:#7f1d1d;border-color:#f87171}
+.scenario-month-status.neutral{background:#f0fdf4;color:#166534;border-color:#bbf7d0}.scenario-month-status.special{background:#dcfce7;color:#166534;border-color:#86efac}
+.scenario-month-status.forecast-win{background:#ecfdf5;color:#047857;border:1.5px dashed #34d399}.scenario-month-status.forecast-loss{background:#fff1f2;color:#be123c;border:1.5px dashed #fb7185}
 .scenario-month-detail{margin-top:0}.scenario-month-detail-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:9px}.scenario-month-detail-head h3{margin:0;font-size:15px}.scenario-month-detail-head p{margin:3px 0 0;color:#64748b;font-size:10px}
 .scenario-detail-summary{display:flex;gap:6px;flex-wrap:wrap}.scenario-detail-chip{padding:4px 7px;border-radius:8px;background:#f8fafc;border:1px solid #e2e8f0;font-size:9.5px;font-weight:700}
 .scenario-breakdown{display:grid;gap:6px}.scenario-breakdown-row{display:grid;grid-template-columns:minmax(120px,1.2fr) 2fr auto;gap:9px;align-items:center;padding:6px 0;border-bottom:1px solid #eef2f7;cursor:pointer}.scenario-breakdown-row:last-child{border-bottom:0}.scenario-breakdown-row:hover{background:#f8fbff}
 .scenario-breakdown-name{font-size:10.5px;font-weight:750;color:#172033}.scenario-breakdown-bar{height:8px;border-radius:999px;background:#edf2f7;overflow:hidden}.scenario-breakdown-fill{height:100%;border-radius:999px;background:#3b82f6}.scenario-breakdown-fill.income{background:#0ea87a}.scenario-breakdown-fill.expense{background:#ef5b73}.scenario-breakdown-amount{font-size:10px;font-weight:800;text-align:right}
-.scenario-extra-note{font-size:9px;color:#64748b;margin-top:4px}
-.scenario-extra-hover{display:inline-flex;align-items:center;gap:4px;padding:3px 7px;border-radius:999px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;font-size:9px;font-weight:750;max-width:320px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.scenario-extra-note{font-size:9.5px;color:#64748b;margin-top:4px}
+.scenario-extra-hover{display:inline-flex;align-items:center;gap:4px;padding:4px 8px;border-radius:999px;background:#fff;border:1px solid #e2e8f0;color:#475569;font-size:9.5px;font-weight:750;max-width:340px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.scenario-extra-hover.income{background:#ecfdf5;border-color:#a7f3d0;color:#166534}.scenario-extra-hover.expense{background:#fff1f2;border-color:#fecdd3;color:#9f1239}
+.scenario-extra-hover .amount{font-weight:900}
 .scenario-month-columns{display:grid;grid-template-columns:1fr 1fr .9fr;gap:12px;margin-top:10px}
 .scenario-month-column{border:1px solid #e2e8f0;border-radius:11px;padding:10px;background:#fff;min-width:0}
 .scenario-month-column.selected{border-color:#93c5fd;box-shadow:0 0 0 2px rgba(59,130,246,.08)}
@@ -458,9 +460,9 @@ button,input,select{font:inherit}
 .scenario-month-summary-row{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px solid #eef2f7;font-size:9.5px}
 .scenario-month-summary-row:last-child{border-bottom:0}
 .scenario-extra-list{display:grid;gap:6px;margin-top:8px}
-.scenario-extra-item{padding:7px;border:1px solid #fed7aa;background:#fffaf5;border-radius:9px}
-.scenario-extra-item-head{display:flex;justify-content:space-between;gap:8px;font-size:9.5px;font-weight:750;color:#7c2d12}
-.scenario-extra-item-meta{margin-top:2px;font-size:8.5px;color:#9a3412}
+.scenario-extra-item{padding:7px;border:1px solid #e2e8f0;background:#fff;border-radius:9px}.scenario-extra-item.income{border-color:#a7f3d0;background:#f0fdf4}.scenario-extra-item.expense{border-color:#fecdd3;background:#fff1f2}
+.scenario-extra-item-head{display:flex;justify-content:space-between;gap:8px;font-size:9.5px;font-weight:750;color:#475569}.scenario-extra-item.income .scenario-extra-item-head{color:#166534}.scenario-extra-item.expense .scenario-extra-item-head{color:#9f1239}.scenario-extra-item-head .amount{font-weight:900}
+.scenario-extra-item-meta{margin-top:2px;font-size:8.5px;color:#64748b}
 .scenario-extra-note-editor{display:flex;gap:4px;margin-top:5px}
 .scenario-extra-note-editor input{min-width:0;flex:1;padding:4px 6px;font-size:9px;min-height:28px}
 .scenario-extra-note-editor button{min-height:28px}
@@ -2601,10 +2603,10 @@ function scenarioMonthStatus(row){
   const actual=!row.isForecast,value=actual?scenarioDisplayNet(row):num(row.net);
   if(actual&&num(row.extraordinaryIncome)>.005){
     const shown=scenarioExtraMode==="ALL"?num(row.net):scenarioExtraMode==="EXTRA"?num(row.extraordinaryNet):num(row.ordinaryNet);
-    return {cls:"special",icon:"◆",value:shown,label:"Entrate extra",title:"Mese con entrate straordinarie: non viene conteggiato come vittoria ordinaria. Saldo ordinario "+money(row.ordinaryNet)};
+    return {cls:shown>=0?"win":"loss",icon:"◆",value:shown,label:"Con straordinari",title:"Mese con entrate straordinarie: non viene conteggiato come vittoria ordinaria. Saldo ordinario "+money(row.ordinaryNet)};
   }
   const income=Math.max(actual?num(row.ordinaryIncome):num(row.income),1),rate=value/income;
-  if(Math.abs(value)<50||Math.abs(rate)<.02)return {cls:"neutral",icon:"≈",value:value,label:"Equilibrio",title:(actual?"Saldo ordinario ":"Saldo previsto ")+money(value)};
+  if(Math.abs(value)<50||Math.abs(rate)<.02)return {cls:actual?(value>=0?"win":"loss"):(value>=0?"forecast-win":"forecast-loss"),icon:"≈",value:value,label:"Equilibrio",title:(actual?"Saldo ordinario ":"Saldo previsto ")+money(value)};
   if(value>0)return {cls:actual?(rate>=.15?"win-strong":"win"):"forecast-win",icon:actual?"✓":"◎",value:value,label:actual?(rate>=.15?"Ottimo avanzo":"Avanzo"):"Obiettivo",title:(actual?"Vittoria ordinaria: ":"Obiettivo previsto: ")+money(value)};
   return {cls:actual?(rate<=-.15?"loss-strong":"loss"):"forecast-loss",icon:"▼",value:value,label:actual?(rate<=-.15?"Forte deficit":"Deficit"):"Da correggere",title:(actual?"Saldo ordinario negativo: ":"Saldo previsto negativo: ")+money(value)};
 }
@@ -2630,9 +2632,10 @@ function scenarioExtraBadgeHtml(month,direction){
   if(scenarioExtraMode!=="ALL")return "";
   const items=scenarioExtraordinaryForMonth(month,direction);if(!items.length)return "";
   return items.slice(0,3).map(function(x){
-    const reason=String(x.note||x.counterparty||x.description||"Straordinario").trim();
-    const title=(x.direction==="INCOME"?"Entrata":"Uscita")+" straordinaria · "+money(x.amount)+" · "+reason;
-    return '<span class="scenario-extra-hover" title="'+esc(title)+'">★ '+esc(reason)+' · '+money(x.amount)+'</span>';
+    const isIncome=x.direction==="INCOME",cls=isIncome?"income":"expense",sign=isIncome?"+":"−",arrow=isIncome?"↑":"↓";
+    const reason=String(x.note||x.counterparty||x.description||"Straordinario").trim(),amount=sign+" "+money(Math.abs(num(x.amount)));
+    const title=(isIncome?"Entrata":"Uscita")+" straordinaria · "+amount+" · "+reason;
+    return '<span class="scenario-extra-hover '+cls+'" title="'+esc(title)+'">'+arrow+' '+esc(reason)+' · <span class="amount">'+esc(amount)+'</span></span>';
   }).join("")+(items.length>3?'<span class="scenario-extra-hover">+'+(items.length-3)+' altri</span>':"");
 }
 function renderScenarioFlowHover(row){
@@ -2659,14 +2662,14 @@ function renderScenarioExpenseHover(row){
 }
 function scenarioBalanceBarColor(row){
   const v=scenarioDisplayNet(row);
-  if(!row.isForecast&&scenarioExtraMode==="ALL"&&num(row.extraordinaryIncome)>.005&&v>=0)return "rgba(59,130,246,.78)";
-  if(row.isForecast)return v>=0?"rgba(34,197,94,.24)":"rgba(239,68,68,.20)";
-  return v>=0?"rgba(34,197,94,.78)":"rgba(239,68,68,.76)";
+  if(row.isForecast)return v>=0?"rgba(34,197,94,.07)":"rgba(239,68,68,.07)";
+  return v>=0?"rgba(34,197,94,.13)":"rgba(239,68,68,.13)";
 }
 function scenarioBalanceBarBorder(row){
-  const v=scenarioDisplayNet(row);
-  if(!row.isForecast&&scenarioExtraMode==="ALL"&&num(row.extraordinaryIncome)>.005&&v>=0)return "#2563eb";
-  return v>=0?"#16a34a":"#dc2626";
+  return scenarioDisplayNet(row)>=0?"#15803d":"#b91c1c";
+}
+function scenarioBalanceBarBorderWidth(row){
+  return row.isForecast?1.7:2.2;
 }
 function renderScenarioFlowChart(plan){
   if(scenarioFlowChart)scenarioFlowChart.destroy();
@@ -2679,8 +2682,8 @@ function renderScenarioFlowChart(plan){
     data:{labels:labels,datasets:[
       {type:"bar",label:"Entrate",data:rows.map(scenarioDisplayIncome),backgroundColor:incomeColors,borderColor:"#0ea87a",borderWidth:rows.map(function(x){return x.isForecast?1:0}),borderRadius:3,categoryPercentage:.82,barPercentage:.92,yAxisID:"yFlow"},
       {type:"bar",label:"Uscite",data:rows.map(scenarioDisplayOutflow),backgroundColor:expenseColors,borderColor:"#ef5b73",borderWidth:rows.map(function(x){return x.isForecast?1:0}),borderRadius:3,categoryPercentage:.82,barPercentage:.92,yAxisID:"yFlow"},
-      {type:"bar",label:"Saldo mese",data:rows.map(scenarioDisplayNet),backgroundColor:balanceColors,borderColor:balanceBorders,borderWidth:rows.map(function(x){return x.isForecast?1.3:0}),borderRadius:3,categoryPercentage:.82,barPercentage:.78,yAxisID:"yFlow"},
-      {type:"line",label:"Saldo cumulato",data:rows.map(function(x){return x.balance}),borderColor:"#193a72",backgroundColor:"#193a72",borderWidth:2.4,pointRadius:2.8,tension:.2,spanGaps:true,yAxisID:"yBalance",
+      {type:"bar",label:"Saldo mese",data:rows.map(scenarioDisplayNet),backgroundColor:balanceColors,borderColor:balanceBorders,borderWidth:rows.map(scenarioBalanceBarBorderWidth),borderRadius:3,categoryPercentage:.82,barPercentage:.68,yAxisID:"yFlow"},
+      {type:"line",label:"Saldo cumulato",data:rows.map(function(x){return x.balance}),borderColor:"#334155",backgroundColor:"#334155",borderWidth:2.4,pointRadius:2.8,tension:.2,spanGaps:true,yAxisID:"yBalance",
        segment:{borderDash:function(ctx){const r=rows[ctx.p1DataIndex];return r&&r.isForecast?[7,5]:undefined}}}
     ]},
     options:{
@@ -2703,7 +2706,7 @@ function renderScenarioFlowChart(plan){
   });
   renderScenarioMonthStatusRow(plan);
   renderScenarioFlowHover(null);
-  const note=$("scenarioFlowNote");if(note)note.textContent="Vista grafico: "+scenarioExtraLabel()+". La terza barra mostra il saldo del mese: verde avanzo, rosso deficit, blu quando il risultato positivo dipende da entrate straordinarie. La linea mostra la liquidità cumulata complessiva.";
+  const note=$("scenarioFlowNote");if(note)note.textContent="Vista grafico: "+scenarioExtraLabel()+". Entrate e uscite sono barre piene; il saldo del mese usa un riempimento leggero con bordo marcato, verde in avanzo e rosso in deficit. ★ segnala la presenza di movimenti straordinari. La linea scura mostra la liquidità cumulata complessiva.";
 }
 function renderScenarioExpenseChart(plan){
   if(scenarioExpenseChart)scenarioExpenseChart.destroy();
@@ -2776,8 +2779,8 @@ function scenarioExtraordinaryDetailHtml(month){
   const items=scenarioExtraordinaryForMonth(month,null);
   if(!items.length)return '<div class="muted small">Nessun movimento straordinario nel mese.</div>';
   return '<div class="scenario-extra-list">'+items.map(function(x){
-    const type=x.direction==="INCOME"?"Entrata":"Uscita";
-    return '<div class="scenario-extra-item"><div class="scenario-extra-item-head"><span>'+esc(type)+' · '+esc(x.counterparty||x.l1_name||"Movimento")+'</span><strong>'+money(x.amount)+'</strong></div>'+
+    const isIncome=x.direction==="INCOME",type=isIncome?"Entrata":"Uscita",cls=isIncome?"income":"expense",sign=isIncome?"+":"−",arrow=isIncome?"↑":"↓",amount=sign+" "+money(Math.abs(num(x.amount)));
+    return '<div class="scenario-extra-item '+cls+'"><div class="scenario-extra-item-head"><span>'+arrow+' '+esc(type)+' · '+esc(x.counterparty||x.l1_name||"Movimento")+'</span><strong class="amount">'+esc(amount)+'</strong></div>'+
       '<div class="scenario-extra-item-meta">'+esc(x.note||"Nota non ancora inserita")+'</div>'+
       '<div class="scenario-extra-note-editor"><input class="input" maxlength="180" type="text" value="'+esc(x.note||"")+'" placeholder="Aggiungi il motivo dello straordinario" data-scenario-extra-note="'+esc(x.transaction_id)+'" /><button class="btn ghost compact" type="button" data-scenario-extra-note-save="'+esc(x.transaction_id)+'">Salva</button></div></div>';
   }).join("")+'</div>';
