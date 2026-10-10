@@ -8,8 +8,8 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=73.12.0-20261010-2245"></script>
-<script src="../shared/app-config.js?v=73.12.0-20261010-2245"></script>
+<script src="../shared/supabase-client.js?v=73.12.1-20261011-0025"></script>
+<script src="../shared/app-config.js?v=73.12.1-20261011-0025"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 :root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#6b7280;--line:#e5e7eb;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 8px 24px rgba(15,23,42,.06)}
@@ -769,14 +769,14 @@ button,input,select{font:inherit}
 .analysis-hover-item.current-plan{background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8}
 .analysis-hover-item.current-actual{background:#f8fafc;border-color:#cbd5e1;color:#475569}
 
-/* V73.12.0 — Tassonomia L2 sempre visibile */
+/* V73.12.1 — Tassonomia L2 sempre visibile */
 .analysis-master-table tr.analysis-zero-row:not(.analysis-selected) .analysis-row-button{color:#64748b;font-weight:560}
 .analysis-master-table tr.analysis-zero-row:not(.analysis-selected) .analysis-master-amount strong{color:#64748b}
 .analysis-master-table tr.analysis-zero-row:not(.analysis-selected) .analysis-master-share{color:#94a3b8}
 .analysis-master-table tr.analysis-zero-row:not(.analysis-selected) .plan-icon.analysis-l2-icon{background:#f8fafc;color:#94a3b8;border-color:#e2e8f0}
 .analysis-zero-trend{display:inline-flex;align-items:center;justify-content:center;min-width:24px;color:#94a3b8;font-size:12px;font-weight:700}
 
-/* V73.12.0 — tabellone annuale: natura L2, sintesi L1 e drill-down mensile */
+/* V73.12.1 — tabellone annuale: natura L2, sintesi L1 e drill-down mensile */
 .planning-board-shell{display:grid;gap:14px}
 .planning-board-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;padding:2px 2px 0}
 .planning-board-hero h2{margin:0;font-size:22px}.planning-board-hero p{margin:4px 0 0;color:var(--muted);font-size:13px;max-width:820px}
@@ -3610,7 +3610,8 @@ function planningBuildRows(data,direction){
   (data.actual_monthly||[]).forEach(function(x){actualMap.set(String(x.category_id)+"|"+String(x.month),num(x.amount))});
   (data.forecast_monthly||[]).forEach(function(x){forecastMap.set(String(x.category_id)+"|"+String(x.month),x)});
   return (data.categories||[]).map(function(cat){
-    const meta=metaMap.get(String(cat.category_id))||{},monthRows=[],annual=0,saving=0,lowAnnual=0,highAnnual=0,overrideCount=0;
+    const meta=metaMap.get(String(cat.category_id))||{},monthRows=[];
+    let annual=0,saving=0,lowAnnual=0,highAnnual=0,overrideCount=0;
     months.forEach(function(month){
       const key=String(cat.category_id)+"|"+month,isPast=month<current;
       if(isPast){
