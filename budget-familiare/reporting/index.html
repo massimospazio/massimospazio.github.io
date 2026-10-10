@@ -3818,10 +3818,10 @@ function renderPlanningBoard(){
   const year=String(planningBoardData.expense.current_year_start||"").slice(0,4)||String(new Date().getFullYear());
   $("planningBoardYear").textContent=year;$("planningBoardYearHead").textContent="Piano "+year;
   $("planningBoardKpis").innerHTML=
-    '<div class="planning-board-kpi income"><div class="kpi-head"><span class="kpi-icon">●</span><span>Entrate previste</span></div><div class="v">'+money(incTotal)+'</div><div class="s">reale chiuso + piano dei mesi aperti</div></div>'+
-    '<div class="planning-board-kpi expense"><div class="kpi-head"><span class="kpi-icon">▣</span><span>Uscite previste</span></div><div class="v">'+money(expTotal)+'</div><div class="s">stesso piano utilizzato in Analisi</div></div>'+
-    '<div class="planning-board-kpi balance"><div class="kpi-head"><span class="kpi-icon">▥</span><span>Saldo annuale</span></div><div class="v '+(balance>=0?"positive":"negative")+'">'+(balance>=0?"+":"")+money(balance)+'</div><div class="s">entrate previste − uscite previste</div></div>'+
-    '<div class="planning-board-kpi saving"><div class="kpi-head"><span class="kpi-icon">◎</span><span>Saving vs riferimento</span></div><div class="v positive">+'+money(saving)+'</div><div class="s">solo dove la base previsiva è confrontabile</div></div>';
+    '<div class="planning-board-kpi income"><div class="kpi-head"><span class="kpi-icon">'+analysisSvgIcon("Entrate")+'</span><span>Entrate previste</span></div><div class="v">'+money(incTotal)+'</div><div class="s">reale chiuso + piano dei mesi aperti</div></div>'+
+    '<div class="planning-board-kpi expense"><div class="kpi-head"><span class="kpi-icon">'+analysisSvgIcon("Shopping personale")+'</span><span>Uscite previste</span></div><div class="v">'+money(expTotal)+'</div><div class="s">stesso piano utilizzato in Analisi</div></div>'+
+    '<div class="planning-board-kpi balance"><div class="kpi-head"><span class="kpi-icon">'+analysisSvgIcon("chart")+'</span><span>Saldo annuale</span></div><div class="v '+(balance>=0?"positive":"negative")+'">'+(balance>=0?"+":"")+money(balance)+'</div><div class="s">entrate previste − uscite previste</div></div>'+
+    '<div class="planning-board-kpi saving"><div class="kpi-head"><span class="kpi-icon">'+analysisSvgIcon("Risparmio")+'</span><span>Saving vs riferimento</span></div><div class="v positive">+'+money(saving)+'</div><div class="s">solo dove la base previsiva è confrontabile</div></div>';
   const maxDelta=planningDeltaScale(exp);let html="";
   if(planningBoardFilter!=="EXPENSE")html+=planningSectionHtml("INCOME",inc,maxDelta);
   if(planningBoardFilter!=="INCOME")html+=planningSectionHtml("EXPENSE",exp,maxDelta);
@@ -3838,6 +3838,10 @@ async function loadPlanningBoard(force){
     const data=await Promise.all([expPromise,incPromise,rpc("dashboard_reporting_planning_meta_v1")]);
     analysisProjectionData.set("EXPENSE",data[0]||{});analysisProjectionData.set("INCOME",data[1]||{});
     planningBoardData={expense:data[0]||{},income:data[1]||{},meta:data[2]||{rows:[]}};
+    if(planningBoardExpandedL1.size===0){
+      (planningBoardData.income.categories||[]).forEach(function(x){if(x.l1_id)planningBoardExpandedL1.add("INCOME|"+x.l1_id)});
+      (planningBoardData.expense.categories||[]).forEach(function(x){if(x.l1_id)planningBoardExpandedL1.add("EXPENSE|"+x.l1_id)});
+    }
     msg($("planningBoardStatus"),"");renderPlanningBoard();
   }catch(e){msg($("planningBoardStatus"),e.message||"Errore caricamento tabellone",true)}
   finally{planningBoardLoading=false}
