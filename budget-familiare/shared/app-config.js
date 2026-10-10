@@ -1,7 +1,7 @@
 // Canonical source: massimospazio/budget-familiare; public files are deployed automatically.
 (function(){
-  const APP_VERSION='V73.10';
-  const APP_RELEASE='Calibrazione forecast · media, mediana e confronti storico-piano 6m/12m/anno';
+  const APP_VERSION='V73.10.1';
+  const APP_RELEASE='Fix calibrazione forecast anche su L1 aggregate';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});
