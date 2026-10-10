@@ -8,8 +8,8 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=73.10.2-20261010-1425"></script>
-<script src="../shared/app-config.js?v=73.10.2-20261010-1425"></script>
+<script src="../shared/supabase-client.js?v=73.10.3-20261010-1435"></script>
+<script src="../shared/app-config.js?v=73.10.3-20261010-1435"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 :root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#6b7280;--line:#e5e7eb;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 8px 24px rgba(15,23,42,.06)}
@@ -672,6 +672,48 @@ button,input,select{font:inherit}
   .analysis-calibration-base-grid{grid-template-columns:1fr 1fr}
   .analysis-calibration-year-compare{grid-template-columns:1fr 18px 1fr}
   .analysis-calibration-year-compare .analysis-calibration-delta{grid-column:1/-1;justify-self:start}
+}
+
+/* V73.10.3 — Compattazione fascia pre-grafico */
+.analysis-detail-head{margin-bottom:5px}
+.analysis-calibration-panel{margin:5px 0 6px}
+.analysis-calibration-section{padding:6px 8px;border-radius:9px}
+.analysis-calibration-section+.analysis-calibration-section{margin-top:5px}
+.analysis-calibration-section-head{gap:6px;margin-bottom:5px}
+.analysis-calibration-section-head strong{font-size:10.5px}
+.analysis-calibration-section-head>span:last-child{font-size:8.7px}
+.analysis-calibration-section-icon{width:21px;height:21px;border-radius:6px}
+.analysis-calibration-section-icon svg{width:13px;height:13px}
+
+.analysis-calibration-base-grid{gap:5px}
+.analysis-calibration-metric{min-height:43px;padding:5px 8px;border-radius:8px}
+.analysis-calibration-metric span{font-size:9.2px;line-height:1.1}
+.analysis-calibration-metric strong{margin-top:2px;font-size:14px;line-height:1;font-weight:850}
+.analysis-calibration-metric.activity strong{font-size:15px}
+.analysis-calibration-metric.activity span{margin-top:1px}
+
+.analysis-calibration-pairs{gap:5px}
+.analysis-calibration-pair{padding:5px 6px;border-radius:8px}
+.analysis-calibration-period{font-size:9.5px;margin-bottom:4px}
+.analysis-calibration-compare{grid-template-columns:minmax(0,1fr) 16px minmax(0,1fr);gap:3px}
+.analysis-calibration-arrow{font-size:14px}
+.analysis-calibration-delta-card{padding:5px 6px;border-radius:7px}
+.analysis-calibration-delta-label{font-size:8.8px;line-height:1}
+.analysis-calibration-delta-card strong{margin-top:2px;font-size:15px;line-height:1}
+.analysis-calibration-delta-card small{margin-top:2px;font-size:7.7px;line-height:1.05;opacity:.82}
+
+.analysis-calibration-year-compare{grid-template-columns:minmax(0,1fr) 16px minmax(0,1fr) auto;gap:3px}
+.analysis-calibration-year-card{padding:5px 6px;border-radius:7px}
+.analysis-calibration-year-card span{font-size:8.5px;line-height:1}
+.analysis-calibration-year-card strong{margin-top:2px;font-size:13.5px;line-height:1}
+.analysis-calibration-year-compare .analysis-calibration-delta{font-size:9.5px;padding:4px 6px}
+.analysis-chart-hover-detail{padding-top:5px;padding-bottom:5px;min-height:0}
+.analysis-chart-box{margin-top:1px}
+
+@media(max-width:800px){
+  .analysis-calibration-section{padding:7px 8px}
+  .analysis-calibration-metric{min-height:46px}
+  .analysis-calibration-pair{padding:6px}
 }
 </style>
 </head>
