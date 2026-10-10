@@ -1,7 +1,7 @@
 // Canonical source: massimospazio/budget-familiare; public files are deployed automatically.
 (function(){
-  const APP_VERSION='V73.9';
-  const APP_RELEASE='Piano semantico · obiettivi, impegni e motivazioni nello Scenario';
+  const APP_VERSION='V73.10';
+  const APP_RELEASE='Calibrazione forecast · media, mediana e confronti storico-piano 6m/12m/anno';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});

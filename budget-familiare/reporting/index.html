@@ -8,8 +8,8 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=73.9-20261010-0055"></script>
-<script src="../shared/app-config.js?v=73.9-20261010-0055"></script>
+<script src="../shared/supabase-client.js?v=73.10-20261010-1320"></script>
+<script src="../shared/app-config.js?v=73.10-20261010-1320"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 :root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#6b7280;--line:#e5e7eb;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 8px 24px rgba(15,23,42,.06)}
@@ -469,6 +469,28 @@ button,input,select{font:inherit}
 @media(max-width:900px){.scenario-month-columns{grid-template-columns:1fr 1fr}.scenario-month-column.summary{grid-column:1/-1}}
 @media(max-width:650px){.scenario-month-columns{grid-template-columns:1fr}.scenario-month-column.summary{grid-column:auto}}
 
+/* V73.10 — Fascia di calibrazione del forecast */
+.analysis-calibration-panel{margin:7px 0 8px;padding:8px 9px;border:1px solid #dbe4ef;border-radius:9px;background:#fbfdff}
+.analysis-calibration-panel.hidden{display:none}
+.analysis-calibration-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.analysis-calibration-row+.analysis-calibration-row{margin-top:6px;padding-top:6px;border-top:1px solid #edf2f7}
+.analysis-calibration-label{font-size:8.5px;font-weight:900;color:#64748b;text-transform:uppercase;letter-spacing:.045em;min-width:74px}
+.analysis-calibration-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 6px;border:1px solid #e2e8f0;border-radius:7px;background:#fff;color:#475569;font-size:9.5px;white-space:nowrap}
+.analysis-calibration-chip strong{font-size:10px;color:#0f172a}
+.analysis-calibration-pairs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;flex:1;min-width:0}
+.analysis-calibration-pair{display:flex;align-items:center;gap:5px;min-width:0;padding:5px 6px;border:1px solid #e2e8f0;border-radius:8px;background:#fff}
+.analysis-calibration-period{font-size:8.5px;font-weight:900;color:#64748b;text-transform:uppercase;letter-spacing:.035em;min-width:40px}
+.analysis-calibration-arrow{color:#94a3b8;font-weight:900}
+.analysis-calibration-delta{display:inline-flex;align-items:center;gap:3px;padding:3px 5px;border-radius:999px;border:1px solid #cbd5e1;background:#f8fafc;color:#64748b;font-size:8.8px;font-weight:850;white-space:nowrap}
+.analysis-calibration-delta.good{background:#ecfdf5;border-color:#a7f3d0;color:#166534}
+.analysis-calibration-delta.bad{background:#fff1f2;border-color:#fecdd3;color:#9f1239}
+.analysis-calibration-delta.neutral{background:#f8fafc;border-color:#cbd5e1;color:#64748b}
+.analysis-calibration-year{display:inline-flex;align-items:center;gap:4px;min-width:0;white-space:nowrap;font-size:9px;color:#475569}
+.analysis-calibration-year strong{color:#172033}
+.analysis-calibration-note{font-size:8.5px;color:#94a3b8;margin-left:auto}
+@media(max-width:900px){.analysis-calibration-pairs{grid-template-columns:1fr}.analysis-calibration-label{min-width:auto;width:100%}.analysis-calibration-note{width:100%;margin-left:0}}
+@media(max-width:700px){.analysis-calibration-pair{flex-wrap:wrap}.analysis-calibration-year{white-space:normal}}
+
 /* V73.9 — Semantica del piano e razionali nello Scenario */
 .forecast-semantics{grid-column:1/-1;display:grid;grid-template-columns:minmax(170px,.55fr) minmax(0,1.45fr);gap:8px;padding:9px;border:1px solid #dbe4ef;border-radius:10px;background:#fff}
 .forecast-plan-type-note{font-size:9px;color:#64748b;margin-top:4px;line-height:1.35}
@@ -617,6 +639,7 @@ button,input,select{font:inherit}
             <div id="analysisDetailPlaceholder" class="analysis-placeholder">Seleziona una categoria per analizzare composizione, trend e previsione.</div>
             <div id="analysisDetailContent" class="hidden">
               <div class="analysis-detail-head"><div><h3 id="detailTitle">Dettaglio</h3><p id="detailSubtitle"></p></div><div id="detailStats" class="analysis-detail-stats"></div></div>
+              <div id="analysisCalibrationPanel" class="analysis-calibration-panel hidden"></div>
               <div id="analysisChartHoverDetail" class="analysis-chart-hover-detail"><span class="muted">Passa sul grafico per vedere il dettaglio del mese senza coprire le barre.</span></div>
               <div class="analysis-chart-box"><canvas id="categoryTrendChart"></canvas></div>
               <div id="analysisForecastPanel" class="analysis-forecast-panel hidden"></div>
@@ -769,6 +792,8 @@ let analysisWorkspace=null;
 let analysisWorkspaceKey="";
 let analysisDetailData=null;
 let analysisDetailKey="";
+let analysisCalibrationData=null;
+let analysisCalibrationKey="";
 let analysisSelectedCategory=null;
 let analysisSelectedLevel=null;
 let analysisSelectedComponent=null;
@@ -1305,7 +1330,7 @@ function analysisPeriodLabel(){const p=analysisPeriodMonths();return p===0?"Tutt
 function analysisForecastLabel(v){return forecastMethodLabel(v)}
 function resetAnalysisSelection(){
   analysisSelectedCategory=null;analysisSelectedLevel=null;analysisSelectedComponent=null;analysisSelectedMonth=null;
-  analysisDetailData=null;analysisDetailKey="";analysisForecastEditor=null;analysisForecastEditorKey="";analysisForecastDraft=null;analysisForecastDraftKey="";
+  analysisDetailData=null;analysisDetailKey="";analysisCalibrationData=null;analysisCalibrationKey="";analysisForecastEditor=null;analysisForecastEditorKey="";analysisForecastDraft=null;analysisForecastDraftKey="";
 }
 function renderAnalysisModeButtons(){
   document.querySelectorAll("[data-analysis-view]").forEach(function(b){
@@ -1444,6 +1469,81 @@ function projectionLast12Total(data,level,categoryId){
   if(!data||!categoryId)return 0;
   const ids=new Set(projectionIdsFor(data,level,categoryId)),months=new Set(monthSeries(addMonthsISO(data.current_month,-12),12));
   return (data.actual_monthly||[]).reduce(function(s,x){return ids.has(String(x.category_id))&&months.has(x.month)?s+num(x.amount):s},0);
+}
+function analysisCalibrationMonthMap(){
+  const d=analysisCalibrationData||analysisDetailData,map=new Map();
+  (d&&d.months||[]).forEach(function(x){map.set(x.month,num(x.amount))});
+  return map;
+}
+function analysisCalibrationTotal(months){
+  const map=analysisCalibrationMonthMap();
+  return (months||[]).reduce(function(s,m){return s+num(map.get(m))},0);
+}
+function analysisCalibrationValues(months){
+  const map=analysisCalibrationMonthMap();
+  return (months||[]).map(function(m){return num(map.get(m))});
+}
+function analysisCalibrationDelta(currentMonths,comparisonMonths){
+  const current=analysisCalibrationTotal(currentMonths),comparison=analysisCalibrationTotal(comparisonMonths);
+  return {current:current,comparison:comparison,delta_pct:comparison>0?(current-comparison)*100/comparison:null};
+}
+function analysisPlan6Metric(data,level,categoryId){
+  if(!data||!categoryId)return null;
+  const ids=new Set(projectionIdsFor(data,level,categoryId));
+  if(!ids.size)return null;
+  const target=monthSeries(data.current_month,6),comparison=target.map(function(m){return addMonthsISO(m,-12)}),targetSet=new Set(target),compSet=new Set(comparison);
+  const comp=(data.actual_monthly||[]).reduce(function(s,x){return ids.has(String(x.category_id))&&compSet.has(x.month)?s+num(x.amount):s},0);
+  const planned=(data.forecast_monthly||[]).reduce(function(s,x){return ids.has(String(x.category_id))&&targetSet.has(x.month)?s+num(x.effective_amount):s},0);
+  return {comparison:comp,projected:planned,delta_pct:comp>0?(planned-comp)*100/comp:null};
+}
+function analysisCalibrationDeltaHtml(prefix,metric,title){
+  if(!metric||metric.delta_pct===null||metric.delta_pct===undefined||!Number.isFinite(Number(metric.delta_pct))){
+    return '<span class="analysis-calibration-delta neutral" title="'+esc(title||"")+'">'+esc(prefix)+' —</span>';
+  }
+  const v=num(metric.delta_pct),favorable=analysisCurrentDirection()==="EXPENSE"?v<0:v>0,cls=Math.abs(v)<1?"neutral":favorable?"good":"bad";
+  return '<span class="analysis-calibration-delta '+cls+'" title="'+esc(title||"")+'">'+esc(prefix)+' '+(v>0?"+":"")+v.toLocaleString("it-IT",{maximumFractionDigits:1})+'%</span>';
+}
+function renderAnalysisCalibrationPanel(){
+  const box=$("analysisCalibrationPanel"),d=analysisDetailData,cal=analysisCalibrationData||analysisDetailData,selected=selectedAnalysisComponent();
+  if(!box)return;
+  if(!d||d.level!=="L2"||selected||!cal){box.classList.add("hidden");box.innerHTML="";return}
+  const data=projectionDataFor(analysisCurrentDirection());
+  if(!data){box.classList.add("hidden");box.innerHTML="";return}
+  const current=data.current_month,last6=monthSeries(addMonthsISO(current,-6),6),last12=monthSeries(addMonthsISO(current,-12),12);
+  const hist6Comp=last6.map(function(m){return addMonthsISO(m,-12)}),hist12Comp=monthSeries(addMonthsISO(current,-24),12);
+  const vals6=analysisCalibrationValues(last6),vals12=analysisCalibrationValues(last12);
+  const avg6=vals6.length?vals6.reduce(function(a,v){return a+v},0)/vals6.length:0,med6=medianValue(vals6);
+  const avg12=vals12.length?vals12.reduce(function(a,v){return a+v},0)/vals12.length:0,med12=medianValue(vals12);
+  const active12=vals12.filter(function(v){return v>.004}).length;
+  const hist6=analysisCalibrationDelta(last6,hist6Comp),hist12=analysisCalibrationDelta(last12,hist12Comp);
+  const plan6=analysisPlan6Metric(data,"L2",analysisSelectedCategory),plan12=projectionSelectionMetricForView(data,"L2",analysisSelectedCategory,"ROLLING_12"),year=projectionSelectionMetricForView(data,"L2",analysisSelectedCategory,"CALENDAR");
+  const curYear=String(data.current_year_start||"").slice(0,4),prevYear=String(data.previous_year_start||"").slice(0,4);
+  const hist6Title="Ultimi 6 mesi "+money(hist6.current)+" vs stessi 6 mesi A-1 "+money(hist6.comparison);
+  const hist12Title="Ultimi 12 mesi "+money(hist12.current)+" vs 12 mesi precedenti "+money(hist12.comparison);
+  const plan6Title="Prossimi 6 mesi previsti "+money(plan6&&plan6.projected)+" vs stessi 6 mesi A-1 "+money(plan6&&plan6.comparison);
+  const plan12Title="Prossimi 12 mesi previsti "+money(plan12&&plan12.projected)+" vs ultimi 12 mesi reali "+money(plan12&&plan12.comparison);
+  const yearTitle="Anno "+curYear+" previsto "+money(year&&year.projected)+" vs "+prevYear+" reale "+money(year&&year.comparison);
+  box.classList.remove("hidden");
+  box.innerHTML=
+    '<div class="analysis-calibration-row"><span class="analysis-calibration-label">Base storica</span>'+
+      '<span class="analysis-calibration-chip"><span>Media 6m</span><strong>'+money(avg6)+'</strong></span>'+
+      '<span class="analysis-calibration-chip"><span>Mediana 6m</span><strong>'+money(med6)+'</strong></span>'+
+      '<span class="analysis-calibration-chip"><span>Media 12m</span><strong>'+money(avg12)+'</strong></span>'+
+      '<span class="analysis-calibration-chip"><span>Mediana 12m</span><strong>'+money(med12)+'</strong></span>'+
+      '<span class="analysis-calibration-chip"><strong>'+active12+'/12</strong><span>mesi attivi</span></span>'+
+      '<span class="analysis-calibration-note">Valori mensili con mesi a zero inclusi</span>'+
+    '</div>'+
+    '<div class="analysis-calibration-row"><span class="analysis-calibration-label">Storico ↔ Piano</span><div class="analysis-calibration-pairs">'+
+      '<div class="analysis-calibration-pair"><span class="analysis-calibration-period">6 mesi</span>'+
+        analysisCalibrationDeltaHtml("Storico",hist6,hist6Title)+'<span class="analysis-calibration-arrow">→</span>'+
+        analysisCalibrationDeltaHtml("Piano",plan6,plan6Title)+'</div>'+
+      '<div class="analysis-calibration-pair"><span class="analysis-calibration-period">12 mesi</span>'+
+        analysisCalibrationDeltaHtml("Storico",hist12,hist12Title)+'<span class="analysis-calibration-arrow">→</span>'+
+        analysisCalibrationDeltaHtml("Piano",plan12,plan12Title)+'</div>'+
+      '<div class="analysis-calibration-pair"><span class="analysis-calibration-period">Anno</span>'+
+        '<span class="analysis-calibration-year" title="'+esc(yearTitle)+'"><span>'+esc(prevYear)+' reale</span><strong>'+money(year&&year.comparison)+'</strong><span class="analysis-calibration-arrow">→</span><span>'+esc(curYear)+' previsto</span><strong>'+money(year&&year.projected)+'</strong></span>'+
+        analysisCalibrationDeltaHtml("Δ",year,yearTitle)+'</div>'+
+    '</div></div>';
 }
 function projectionSelectedCategories(data){
   if(!data||!analysisSelectedCategory)return [];
@@ -1758,19 +1858,23 @@ function analysisCollapseOthers(id){
   rows.filter(function(r){return r.level==="L1"}).forEach(function(r){collapsedL1.add(prefix+r.category_id)});collapsedL1.delete(id)
 }
 async function openAnalysisDetail(categoryId,level,selectedMonth){
-  analysisSelectedCategory=categoryId;analysisSelectedLevel=level||null;analysisSelectedComponent=null;analysisSelectedMonth=selectedMonth||null;analysisMovementSort={key:"amount",dir:"desc"};analysisForecastEditor=null;analysisForecastEditorKey="";analysisForecastDraft=null;analysisForecastDraftKey="";renderAnalysisMaster();
-  const direction=analysisCurrentDirection(),detailPeriod=analysisTimeMode==="PROJECTION"?12:analysisPeriodMonths(),key=String(categoryId)+"|"+direction+"|"+analysisTimeMode+"|"+detailPeriod;$("analysisDetailPlaceholder").classList.add("hidden");$("analysisDetailContent").classList.remove("hidden");$("detailTitle").textContent="Caricamento…";$("detailSubtitle").textContent="";$("detailStats").innerHTML="";$("analysisForecastPanel").classList.add("hidden");$("detailComponents").innerHTML='<tr><td colspan="7"><div class="analysis-loading"><span class="spinner"></span>Carico dettaglio…</div></td></tr>';$("detailMovements").innerHTML="";
+  analysisSelectedCategory=categoryId;analysisSelectedLevel=level||null;analysisSelectedComponent=null;analysisSelectedMonth=selectedMonth||null;analysisMovementSort={key:"amount",dir:"desc"};analysisForecastEditor=null;analysisForecastEditorKey="";analysisForecastDraft=null;analysisForecastDraftKey="";analysisCalibrationData=null;analysisCalibrationKey="";renderAnalysisMaster();
+  const direction=analysisCurrentDirection(),detailPeriod=analysisTimeMode==="PROJECTION"?12:analysisPeriodMonths(),key=String(categoryId)+"|"+direction+"|"+analysisTimeMode+"|"+detailPeriod;$("analysisDetailPlaceholder").classList.add("hidden");$("analysisDetailContent").classList.remove("hidden");$("detailTitle").textContent="Caricamento…";$("detailSubtitle").textContent="";$("detailStats").innerHTML="";if($("analysisCalibrationPanel")){$("analysisCalibrationPanel").classList.add("hidden");$("analysisCalibrationPanel").innerHTML=""}$("analysisForecastPanel").classList.add("hidden");$("detailComponents").innerHTML='<tr><td colspan="7"><div class="analysis-loading"><span class="spinner"></span>Carico dettaglio…</div></td></tr>';$("detailMovements").innerHTML="";
   try{
     const detailPromise=rpc("dashboard_reporting_analysis_detail_v2",{p_category_id:categoryId,p_direction:direction,p_period_months:detailPeriod});
-    const editorPromise=level==="L2"?rpc("dashboard_reporting_forecast_editor_v1",{p_category_id:categoryId,p_direction:direction,p_horizon_months:12}):Promise.resolve(null);
-    const projectionPromise=direction==="EXPENSE"&&!projectionDataFor("EXPENSE")
-      ?rpc("dashboard_reporting_analysis_projection_v1",{p_direction:"EXPENSE"}).catch(function(){return null})
+    const calibrationPromise=level==="L2"
+      ?(detailPeriod===24?detailPromise:rpc("dashboard_reporting_analysis_detail_v2",{p_category_id:categoryId,p_direction:direction,p_period_months:24}).catch(function(){return null}))
       :Promise.resolve(null);
-    const data=await Promise.all([detailPromise,editorPromise,projectionPromise]);if(String(analysisSelectedCategory)!==String(categoryId))return;
+    const editorPromise=level==="L2"?rpc("dashboard_reporting_forecast_editor_v1",{p_category_id:categoryId,p_direction:direction,p_horizon_months:12}):Promise.resolve(null);
+    const projectionPromise=!projectionDataFor(direction)
+      ?rpc("dashboard_reporting_analysis_projection_v1",{p_direction:direction}).catch(function(){return null})
+      :Promise.resolve(null);
+    const data=await Promise.all([detailPromise,editorPromise,projectionPromise,calibrationPromise]);if(String(analysisSelectedCategory)!==String(categoryId))return;
     analysisDetailData=data[0]||{};analysisDetailKey=key;analysisForecastEditor=data[1]||null;analysisForecastEditorKey=level==="L2"?key:"";
-    if(data[2])analysisProjectionData.set("EXPENSE",data[2]);
+    if(data[2])analysisProjectionData.set(direction,data[2]);
+    analysisCalibrationData=data[3]||((level==="L2"&&detailPeriod===24)?analysisDetailData:null);analysisCalibrationKey=level==="L2"?String(categoryId)+"|"+direction:"";
     renderAnalysisDetail();
-  }catch(e){analysisDetailData=null;$("detailTitle").textContent="Dettaglio non disponibile";$("detailComponents").innerHTML='<tr><td colspan="7" class="negative">'+esc(e.message||"Errore")+'</td></tr>'}
+  }catch(e){analysisDetailData=null;analysisCalibrationData=null;$("detailTitle").textContent="Dettaglio non disponibile";$("detailComponents").innerHTML='<tr><td colspan="7" class="negative">'+esc(e.message||"Errore")+'</td></tr>'}
 }
 function selectedAnalysisComponent(){const d=analysisDetailData;if(!d)return null;return (d.components||[]).find(function(x){return String(x.component_id)===String(analysisSelectedComponent)})||null}
 function analysisDetailForecastChipHtml(){
@@ -1790,21 +1894,27 @@ function renderAnalysisDetail(){
     const r=projectionRowForSelection(),data=projectionDataFor(analysisCurrentDirection()),def=projectionDefinition(data);
     $("detailSubtitle").textContent=(analysisProjectionView==="ROLLING_12"?"Ultimi 12m reali → prossimi 12m previsti":"Anno solare "+def.targetLabel+" · reale + pianificato")+(selected?" · controparte: "+selected.component_name:"");
     if(r){
-      const last12=projectionLast12Total(data,analysisSelectedLevel,analysisSelectedCategory),histTrend=d.trend||null;
-      const plannedLabel=analysisProjectionView==="ROLLING_12"?"Prossimi 12m":"Anno "+def.targetLabel+" previsto";
-      const deltaLabel=analysisProjectionView==="ROLLING_12"?"Δ forecast":"Δ anno";
-      $("detailStats").innerHTML=
-        '<span class="analysis-stat">Ultimi 12m <strong>'+money(last12)+'</strong></span>'+
-        '<span class="analysis-stat">Trend 12m '+analysisTrendChip(histTrend)+'</span>'+
-        '<span class="analysis-stat">'+esc(plannedLabel)+' <strong>'+money(r.projected_total)+'</strong></span>'+
-        '<span class="analysis-stat">'+esc(deltaLabel)+' '+projectionDeltaHtml(r.delta_pct)+'</span>'+
-        analysisDetailForecastChipHtml();
+      if(d.level==="L2"&&!selected){
+        $("detailStats").innerHTML='<span class="analysis-stat">Ultimi 12m <strong>'+money(projectionLast12Total(data,"L2",analysisSelectedCategory))+'</strong></span>'+analysisDetailForecastChipHtml();
+      }else{
+        const last12=projectionLast12Total(data,analysisSelectedLevel,analysisSelectedCategory),plannedLabel=analysisProjectionView==="ROLLING_12"?"Prossimi 12m":"Anno "+def.targetLabel+" previsto",deltaLabel=analysisProjectionView==="ROLLING_12"?"Δ forecast":"Δ anno";
+        $("detailStats").innerHTML=
+          '<span class="analysis-stat">Ultimi 12m <strong>'+money(last12)+'</strong></span>'+
+          '<span class="analysis-stat">'+esc(plannedLabel)+' <strong>'+money(r.projected_total)+'</strong></span>'+
+          '<span class="analysis-stat">'+esc(deltaLabel)+' '+projectionDeltaHtml(r.delta_pct)+'</span>'+
+          analysisDetailForecastChipHtml();
+      }
     }else $("detailStats").innerHTML="";
   }else{
-    const chartMode=selected?"singola controparte":(d.level==="L1"?"L2 impilate":"controparti impilate");$("detailSubtitle").textContent=analysisPeriodLabel()+" · "+chartMode;const st=selected||stats,trend=analysisDetailTrendHtml(d);
-    $("detailStats").innerHTML='<span class="analysis-stat">Totale <strong>'+money(st.total)+'</strong></span><span class="analysis-stat">'+frequencyHtml(st.active_months,st.period_months)+'</span>'+(!selected?trend:"")+analysisDetailForecastChipHtml()+(!selected?analysisPlannedComparisonHtml():"");
+    const chartMode=selected?"singola controparte":(d.level==="L1"?"L2 impilate":"controparti impilate");$("detailSubtitle").textContent=analysisPeriodLabel()+" · "+chartMode;const st=selected||stats;
+    if(d.level==="L2"&&!selected){
+      $("detailStats").innerHTML='<span class="analysis-stat">Totale <strong>'+money(st.total)+'</strong></span>'+analysisDetailForecastChipHtml();
+    }else{
+      const trend=analysisDetailTrendHtml(d);
+      $("detailStats").innerHTML='<span class="analysis-stat">Totale <strong>'+money(st.total)+'</strong></span><span class="analysis-stat">'+frequencyHtml(st.active_months,st.period_months)+'</span>'+(!selected?trend:"")+analysisDetailForecastChipHtml()+(!selected?analysisPlannedComparisonHtml():"");
+    }
   }
-  renderAnalysisDetailChart();renderForecastEditor();renderAnalysisComponents();renderAnalysisMovements();
+  renderAnalysisCalibrationPanel();renderAnalysisDetailChart();renderForecastEditor();renderAnalysisComponents();renderAnalysisMovements();
 }
 function medianValue(values){
   const a=(values||[]).map(num).slice().sort(function(x,y){return x-y});if(!a.length)return 0;
@@ -1844,9 +1954,9 @@ function renderAnalysisVisibleStats(chart){
   const trend=analysisVisibleTrend(chart);
   let html='<span class="analysis-stat">Totale <strong>'+money(total)+'</strong></span>'+
     '<span class="analysis-stat">'+frequencyHtml(active,months)+'</span>'+
-    analysisTrendChip(trend&&trend.trend_pct!==undefined?{trend_pct:trend.trend_pct}:null)+
+    (analysisDetailData.level==="L1"?analysisTrendChip(trend&&trend.trend_pct!==undefined?{trend_pct:trend.trend_pct}:null):"")+
     analysisDetailForecastChipHtml()+
-    (!hidden?analysisPlannedComparisonHtml():"");
+    (analysisDetailData.level==="L1"&&!hidden?analysisPlannedComparisonHtml():"");
   if(hidden){
     html+='<span class="analysis-filter-chip">Vista filtrata · '+hidden+' '+(hidden===1?'serie esclusa':'serie escluse')+' <button type="button" data-reset-analysis-series>Ripristina</button></span>';
   }
