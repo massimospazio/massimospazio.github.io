@@ -8,13 +8,13 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=73.10.1-20261010-1410"></script>
-<script src="../shared/app-config.js?v=73.10.1-20261010-1410"></script>
+<script src="../shared/supabase-client.js?v=73.10.2-20261010-1425"></script>
+<script src="../shared/app-config.js?v=73.10.2-20261010-1425"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 :root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#6b7280;--line:#e5e7eb;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 8px 24px rgba(15,23,42,.06)}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"Segoe UI Variable Text","Segoe UI Variable",Inter,"Segoe UI",system-ui,-apple-system,BlinkMacSystemFont,sans-serif;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased}
 button,input,select{font:inherit}
 .wrap{max-width:1500px;margin:0 auto;padding:22px}
 .top{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:18px}
@@ -561,6 +561,118 @@ button,input,select{font:inherit}
 .scenario-driver .driver-label{font-size:10px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.025em}.scenario-driver .driver-value{font-size:20px;font-weight:850;color:#172033}.scenario-driver.income .driver-value{color:#087f5b}.scenario-driver.expense .driver-value{color:#be123c}
 @media(max-width:1100px){.scenario-kpis.summary-mode{grid-template-columns:repeat(12,minmax(0,1fr))!important}.scenario-kpis.summary-mode .scenario-kpi.hero{grid-column:1/-1;grid-row:auto;min-height:170px}.scenario-kpis.summary-mode .scenario-kpi.key{grid-column:span 6}.scenario-month-status-row{grid-template-columns:repeat(6,minmax(0,1fr))}}
 @media(max-width:700px){.scenario-kpis.summary-mode{grid-template-columns:1fr 1fr!important}.scenario-kpis.summary-mode .scenario-kpi.hero{grid-column:1/-1;min-height:158px}.scenario-kpi.hero .value{font-size:38px}.scenario-kpis.summary-mode .scenario-kpi.key{grid-column:span 1}.scenario-driver-strip{grid-template-columns:1fr}.scenario-driver+.scenario-driver{border-left:0;border-top:1px solid #e2e8f0;padding-left:6px;padding-top:10px}.scenario-month-status-row{grid-template-columns:repeat(3,minmax(0,1fr))}.scenario-breakdown-row{grid-template-columns:minmax(90px,1fr) 1.3fr auto}}
+
+/* V73.10.2 — Design system leggibilità Analisi */
+#analysisControls,.analysis-period-summary,.analysis-workspace-grid{
+  font-family:"Segoe UI Variable Text","Segoe UI Variable",Inter,"Segoe UI",system-ui,sans-serif;
+  font-variant-numeric:tabular-nums lining-nums;
+}
+.analysis-period-summary{gap:10px;margin:10px 0 12px}
+.analysis-period-kpi{padding:10px 12px;border-color:#d6e1ee;border-radius:11px;background:#fff;box-shadow:0 2px 8px rgba(15,23,42,.025)}
+.analysis-period-kpi .k{font-size:10.5px;font-weight:650;color:#526176;letter-spacing:.025em}
+.analysis-period-kpi .v{font-size:20px;font-weight:800;letter-spacing:-.015em;margin-top:4px}
+
+.analysis-workspace-grid{grid-template-columns:minmax(360px,.62fr) minmax(690px,1.38fr);gap:14px}
+.analysis-master-wrap{border-color:#d6e1ee;border-radius:12px;background:#fbfdff;box-shadow:0 2px 8px rgba(15,23,42,.025)}
+.analysis-master-table{min-width:0;table-layout:fixed}
+.analysis-master-table th,.analysis-master-table td{padding:9px 8px;border-bottom-color:#e3eaf2;font-size:12.25px;line-height:1.25}
+.analysis-master-table th{font-size:10.5px;font-weight:700;color:#526176;background:#f7faff;letter-spacing:.015em}
+.analysis-master-table th:first-child,.analysis-master-table td:first-child{min-width:0}
+.analysis-master-table th:nth-child(2),.analysis-master-table td:nth-child(2){width:94px}
+.analysis-master-table th:nth-child(3),.analysis-master-table td:nth-child(3){width:78px}
+.analysis-master-table .l1-row td{background:#f7faff;font-weight:750}
+.analysis-master-table .l1-row .analysis-row-button{font-size:13px;font-weight:750;color:#172033}
+.analysis-master-table tr:not(.l1-row) .analysis-row-button{font-size:12.25px;font-weight:600;color:#27364a}
+.analysis-master-table tr.analysis-selected td{background:#eaf3ff!important;box-shadow:inset 0 1px #c7ddfb,inset 0 -1px #c7ddfb}
+.analysis-master-table tr.analysis-selected td:first-child{box-shadow:inset 4px 0 #2563eb,inset 0 1px #c7ddfb,inset 0 -1px #c7ddfb}
+.analysis-master-table tr:hover td{background:#f3f8ff}
+.analysis-master-amount strong{font-size:13px;font-weight:800;color:#0f172a;letter-spacing:-.01em}
+.analysis-master-share{font-size:10px;font-weight:600;color:#6b7a90}
+.analysis-row-button{line-height:1.25}
+.caret{font-size:14px;width:16px;color:#53657d}
+.plan-label{gap:7px}
+
+.plan-icon.analysis-category-icon{width:27px;height:27px;min-width:27px;border-radius:9px}
+.plan-icon.analysis-category-icon svg{width:15px;height:15px}
+.plan-icon.analysis-l2-icon{width:20px;height:20px;min-width:20px;background:#fff1f2;color:#ef4444;border:1px solid #ffe1e4}
+.analysis-l2-dot{width:6px;height:6px;border-radius:50%;background:currentColor;display:block}
+.plan-icon.analysis-l2-icon.income{background:#ecfdf5;color:#16a34a;border-color:#d1fae5}
+.plan-icon.analysis-l2-icon.investment{background:#fff7ed;color:#ea580c;border-color:#ffedd5}
+.plan-icon.analysis-category-icon.expense{background:#fff0f0;color:#ef4444}
+.plan-icon.analysis-category-icon.income{background:#eafaf1;color:#159455}
+.plan-icon.analysis-category-icon.investment{background:#fff2e8;color:#ea580c}
+.plan-icon.analysis-category-icon.neutral{background:#eef4ff;color:#2563eb}
+
+.trend-chip{font-size:11px;font-weight:800;padding:4px 7px;min-height:24px}
+.freq-chip{font-size:10.5px;font-weight:750;padding:4px 7px;min-height:24px}
+.analysis-detail-card{border-color:#d6e1ee;border-radius:12px;padding:12px;background:#fff;box-shadow:0 2px 8px rgba(15,23,42,.025)}
+.analysis-detail-head{margin-bottom:8px;gap:12px}
+.analysis-detail-head h3{font-size:19px;font-weight:800;letter-spacing:-.015em;color:#111c2f}
+.analysis-detail-head p{font-size:11.5px;color:#66758a}
+.analysis-detail-stats{gap:7px}
+.analysis-stat{padding:6px 9px;border-color:#d8e2ee;border-radius:8px;background:#fff;font-size:11px;color:#526176}
+.analysis-stat strong{font-size:12px;font-weight:800;color:#111827}
+.analysis-detail-forecast-chip{padding:6px 9px;font-size:11px;border-radius:8px;max-width:360px}
+
+.analysis-calibration-panel{margin:8px 0 10px;padding:0;border:0;background:transparent}
+.analysis-calibration-section{border:1px solid #cfdef0;border-radius:11px;background:linear-gradient(180deg,#f8fbff 0%,#f4f9ff 100%);padding:9px 10px}
+.analysis-calibration-section+.analysis-calibration-section{margin-top:7px}
+.analysis-calibration-section-head{display:flex;align-items:center;gap:7px;margin-bottom:8px;color:#173764}
+.analysis-calibration-section-head strong{font-size:11.5px;font-weight:850;text-transform:uppercase;letter-spacing:.025em}
+.analysis-calibration-section-head>span:last-child{margin-left:auto;font-size:9.5px;font-weight:550;color:#7a899e}
+.analysis-calibration-section-icon{width:25px;height:25px;display:inline-flex;align-items:center;justify-content:center;border-radius:7px;background:#e8f1ff;color:#2563eb}
+.analysis-calibration-section-icon svg{width:15px;height:15px}
+.analysis-calibration-base-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}
+.analysis-calibration-metric{min-height:62px;padding:9px 10px;border:1px solid #d8e4f1;border-radius:9px;background:#fff;display:flex;flex-direction:column;justify-content:center;box-shadow:0 2px 5px rgba(15,23,42,.02)}
+.analysis-calibration-metric span{font-size:10.5px;font-weight:600;color:#526176}
+.analysis-calibration-metric strong{margin-top:3px;font-size:16px;font-weight:850;color:#0f2b55;letter-spacing:-.02em}
+.analysis-calibration-metric.activity{align-items:center;text-align:center}
+.analysis-calibration-metric.activity strong{font-size:17px}.analysis-calibration-metric.activity span{margin-top:2px}
+
+.analysis-calibration-pairs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.analysis-calibration-pair{display:block;padding:8px;border:1px solid #d8e4f1;border-radius:10px;background:#fff;min-width:0}
+.analysis-calibration-period{font-size:10.5px;font-weight:850;color:#334b6b;text-transform:uppercase;letter-spacing:.025em;margin-bottom:6px}
+.analysis-calibration-compare{display:grid;grid-template-columns:minmax(0,1fr) 20px minmax(0,1fr);gap:5px;align-items:center}
+.analysis-calibration-arrow{display:inline-flex;align-items:center;justify-content:center;color:#6b7d96;font-size:17px;font-weight:700}
+.analysis-calibration-delta-card{min-width:0;padding:8px;border:1px solid #dbe4ef;border-radius:9px;background:#f8fafc}
+.analysis-calibration-delta-card.good{background:#eefbf3;border-color:#c9efd7}.analysis-calibration-delta-card.bad{background:#fff1f2;border-color:#ffd5da}
+.analysis-calibration-delta-label{display:block;font-size:10px;font-weight:750;color:#526176}
+.analysis-calibration-delta-card.good .analysis-calibration-delta-label{color:#18723a}.analysis-calibration-delta-card.bad .analysis-calibration-delta-label{color:#b42334}
+.analysis-calibration-delta-card strong{display:block;margin-top:2px;font-size:17px;line-height:1.1;font-weight:850;letter-spacing:-.02em;color:#475569}
+.analysis-calibration-delta-card.good strong{color:#137333}.analysis-calibration-delta-card.bad strong{color:#c1122f}
+.analysis-calibration-delta-card small{display:block;margin-top:4px;font-size:9px;font-weight:600;color:#718096;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.analysis-calibration-delta-card small span{font-weight:500;color:#9aa6b5}
+
+.analysis-calibration-year-compare{display:grid;grid-template-columns:minmax(0,1fr) 20px minmax(0,1fr) auto;gap:5px;align-items:center}
+.analysis-calibration-year-card{padding:8px;border:1px solid #dbe4ef;border-radius:9px;background:#f8fafc;min-width:0}
+.analysis-calibration-year-card.forecast{background:#f5f9ff;border-color:#cfe0f7}
+.analysis-calibration-year-card span{display:block;font-size:9.5px;color:#617088;font-weight:650}
+.analysis-calibration-year-card strong{display:block;margin-top:3px;font-size:15px;font-weight:850;color:#142a49;white-space:nowrap}
+.analysis-calibration-year-compare .analysis-calibration-delta{font-size:10.5px;padding:5px 7px}
+.analysis-calibration-delta{font-size:10px}
+.analysis-chart-hover-detail{font-size:10.5px}
+.analysis-component-head h4,.analysis-movements h4{font-size:13px}
+.analysis-components-table th,.analysis-components-table td{font-size:11px;padding:7px 7px}
+.analysis-components-table th{font-weight:700;color:#526176}
+.analysis-chart-box{height:385px}
+
+@media(max-width:1180px){
+  .analysis-workspace-grid{grid-template-columns:1fr}
+  .analysis-master-wrap{max-height:470px}
+  .analysis-calibration-base-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:800px){
+  .analysis-calibration-pairs{grid-template-columns:1fr}
+  .analysis-calibration-base-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .analysis-calibration-section-head>span:last-child{width:100%;margin-left:0}
+  .analysis-calibration-section-head{flex-wrap:wrap}
+}
+@media(max-width:520px){
+  .analysis-master-table th,.analysis-master-table td{font-size:11.5px}
+  .analysis-calibration-base-grid{grid-template-columns:1fr 1fr}
+  .analysis-calibration-year-compare{grid-template-columns:1fr 18px 1fr}
+  .analysis-calibration-year-compare .analysis-calibration-delta{grid-column:1/-1;justify-self:start}
+}
 </style>
 </head>
 <body>
@@ -1151,34 +1263,32 @@ function methodControl(r,kind,cellMapObj){
   return '<span class="analysis-forecast" title="'+esc(title)+'">'+esc(label)+'</span>';
 }
 function detailLabel(r){return r.is_direct?"Diretto su "+r.l1_name:(r.l2_name||r.l1_name)}
+function analysisSvgIcon(name){
+  const n=String(name||"").toLowerCase(),common='viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"';
+  let p='<circle cx="12" cy="12" r="3"></circle>';
+  if(n.includes("casa"))p='<path d="M3 11.5 12 4l9 7.5"></path><path d="M5 10.5V20h14v-9.5"></path><path d="M9.5 20v-6h5v6"></path>';
+  else if(n.includes("debiti")||n.includes("risparm")||n.includes("pension")||n.includes("mutuo")||n.includes("prestiti"))p='<rect x="3" y="6" width="18" height="13" rx="3"></rect><path d="M16 10h5v5h-5a2.5 2.5 0 0 1 0-5Z"></path><path d="M7 6V4h10v2"></path>';
+  else if(n.includes("famiglia")||n.includes("figli"))p='<circle cx="9" cy="8" r="3"></circle><circle cx="17" cy="9" r="2.5"></circle><path d="M3.5 20c.4-4 2.4-6 5.5-6s5.1 2 5.5 6"></path><path d="M14 15c1-.8 2-1.2 3.2-1.2 2.2 0 3.7 1.4 4.1 4.2"></path>';
+  else if(n.includes("ristor")||n.includes("bar")||n.includes("gelateria")||n.includes("asporto"))p='<path d="M6 3v8"></path><path d="M3.5 3v5a2.5 2.5 0 0 0 5 0V3"></path><path d="M6 11v10"></path><path d="M16 3v18"></path><path d="M16 3c3 2 4.5 5 4 8h-4"></path>';
+  else if(n.includes("salute")||n.includes("farmac")||n.includes("medic"))p='<path d="M12 21s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.6-7 10-7 10Z"></path><path d="M12 9v6"></path><path d="M9 12h6"></path>';
+  else if(n.includes("shopping"))p='<path d="M5 8h14l-1 12H6L5 8Z"></path><path d="M9 9V6a3 3 0 0 1 6 0v3"></path>';
+  else if(n.includes("trasport")||n.includes("auto")||n.includes("carbur"))p='<path d="m5 17-1-5 2-5h12l2 5-1 5"></path><path d="M5 12h14"></path><circle cx="7.5" cy="17.5" r="1.5"></circle><circle cx="16.5" cy="17.5" r="1.5"></circle>';
+  else if(n.includes("vacanze")||n.includes("viaggi"))p='<path d="m3 11 18-7-7 18-2-8-9-3Z"></path><path d="m12 14 4-4"></path>';
+  else if(n.includes("animal"))p='<circle cx="8" cy="8" r="2"></circle><circle cx="16" cy="8" r="2"></circle><circle cx="5.5" cy="13" r="1.7"></circle><circle cx="18.5" cy="13" r="1.7"></circle><path d="M8 18c0-2 1.7-3.5 4-3.5s4 1.5 4 3.5c0 1.7-1.4 2.5-4 2.5S8 19.7 8 18Z"></path>';
+  else if(n.includes("aliment"))p='<path d="M4 9h16l-1.5 11h-13L4 9Z"></path><path d="m8 9 4-6 4 6"></path>';
+  else if(n.includes("utenze")||n.includes("energia")||n.includes("gas"))p='<path d="m13 2-7 12h6l-1 8 7-12h-6l1-8Z"></path>';
+  else if(n.includes("entrate")||n.includes("stipend")||n.includes("rimbor")||n.includes("interess"))p='<path d="M12 20V5"></path><path d="m6 11 6-6 6 6"></path>';
+  else if(n.includes("altro")||n.includes("altre uscite"))p='<circle cx="5" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="19" cy="12" r="1.5" fill="currentColor" stroke="none"></circle>';
+  else if(n.includes("chart")||n.includes("storica"))p='<path d="M4 20V10"></path><path d="M10 20V4"></path><path d="M16 20v-7"></path><path d="M22 20H2"></path>';
+  else if(n.includes("calendar")||n.includes("mesi")||n.includes("anno"))p='<rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M16 3v4M8 3v4M3 10h18"></path>';
+  return '<svg '+common+'>'+p+'</svg>';
+}
 function categoryIconHtml(name,kind,group){
+  let cls=kind==="income"?"income":kind==="expense"?"expense":"neutral";
   const n=String(name||"").toLowerCase();
-  let symbol="●",cls=kind==="income"?"income":kind==="expense"?"expense":"neutral";
-  if(group&&kind==="income"&&n.includes("entrate"))symbol="↑";
-  else if(n.includes("invest")){symbol="↗";cls="investment"}
-  else if(n==="altro"||n.includes("altre uscite"))symbol="•••";
-  else if(n.includes("animal"))symbol="✦";
-  else if(n.includes("casa"))symbol="⌂";
-  else if(n.includes("debiti")||n.includes("risparm"))symbol="≋";
-  else if(n.includes("famiglia")||n.includes("figli"))symbol="●●";
-  else if(n.includes("ristor"))symbol="♨";
-  else if(n.includes("salute")||n.includes("farmac")||n.includes("medic"))symbol="✚";
-  else if(n.includes("shopping"))symbol="◇";
-  else if(n.includes("aliment"))symbol="▦";
-  else if(n.includes("tasse")||n.includes("commission"))symbol="§";
-  else if(n.includes("tempo libero"))symbol="★";
-  else if(n.includes("trasport")||n.includes("auto")||n.includes("carbur"))symbol="→";
-  else if(n.includes("utenze")||n.includes("energia")||n.includes("gas"))symbol="ϟ";
-  else if(n.includes("vacanze")||n.includes("viaggi"))symbol="✈";
-  else if(n.includes("stipend"))symbol="▣";
-  else if(n.includes("interess"))symbol="▥";
-  else if(n.includes("rimbor"))symbol="↻";
-  else if(n.includes("gse"))symbol="☀";
-  else if(n.includes("assicur"))symbol="◆";
-  else if(n.includes("cashback")||n.includes("premi"))symbol="✚";
-  else if(n.includes("giroconto"))symbol="→";
-  else if(n.includes("classific"))symbol="?";
-  return '<span class="plan-icon '+cls+'" aria-hidden="true">'+symbol+'</span>';
+  if(n.includes("invest")||n.includes("debiti")||n.includes("risparm")||n.includes("pension"))cls="investment";
+  if(!group)return '<span class="plan-icon analysis-l2-icon '+cls+'" aria-hidden="true"><span class="analysis-l2-dot"></span></span>';
+  return '<span class="plan-icon analysis-category-icon '+cls+'" aria-hidden="true">'+analysisSvgIcon(name)+'</span>';
 }
 function categoryStatsTitle(r,kind){
   const parts=["Media 6m "+money(r.avg6),"Media 12m "+money(r.avg12)];
@@ -1503,6 +1613,21 @@ function analysisCalibrationDeltaHtml(prefix,metric,title){
   const v=num(metric.delta_pct),favorable=analysisCurrentDirection()==="EXPENSE"?v<0:v>0,cls=Math.abs(v)<1?"neutral":favorable?"good":"bad";
   return '<span class="analysis-calibration-delta '+cls+'" title="'+esc(title||"")+'">'+esc(prefix)+' '+(v>0?"+":"")+v.toLocaleString("it-IT",{maximumFractionDigits:1})+'%</span>';
 }
+function analysisCalibrationDeltaCard(label,metric,title){
+  const current=metric?(metric.projected!==undefined?num(metric.projected):num(metric.current)):0;
+  const comparison=metric?num(metric.comparison):0;
+  let value="—",cls="neutral";
+  if(metric&&metric.delta_pct!==null&&metric.delta_pct!==undefined&&Number.isFinite(Number(metric.delta_pct))){
+    const v=num(metric.delta_pct),favorable=analysisCurrentDirection()==="EXPENSE"?v<0:v>0;
+    value=(v>0?"+":"")+v.toLocaleString("it-IT",{maximumFractionDigits:1})+"%";
+    cls=Math.abs(v)<1?"neutral":favorable?"good":"bad";
+  }
+  return '<div class="analysis-calibration-delta-card '+cls+'" title="'+esc(title||"")+'">'+
+    '<span class="analysis-calibration-delta-label">'+esc(label)+'</span>'+
+    '<strong>'+esc(value)+'</strong>'+
+    '<small>'+money(current)+' <span>vs</span> '+money(comparison)+'</small>'+
+  '</div>';
+}
 function renderAnalysisCalibrationPanel(){
   const box=$("analysisCalibrationPanel"),d=analysisDetailData,cal=analysisCalibrationData||analysisDetailData,selected=selectedAnalysisComponent();
   if(!box)return;
@@ -1525,25 +1650,33 @@ function renderAnalysisCalibrationPanel(){
   const yearTitle="Anno "+curYear+" previsto "+money(year&&year.projected)+" vs "+prevYear+" reale "+money(year&&year.comparison);
   box.classList.remove("hidden");
   box.innerHTML=
-    '<div class="analysis-calibration-row"><span class="analysis-calibration-label">Base storica</span>'+
-      '<span class="analysis-calibration-chip"><span>Media 6m</span><strong>'+money(avg6)+'</strong></span>'+
-      '<span class="analysis-calibration-chip"><span>Mediana 6m</span><strong>'+money(med6)+'</strong></span>'+
-      '<span class="analysis-calibration-chip"><span>Media 12m</span><strong>'+money(avg12)+'</strong></span>'+
-      '<span class="analysis-calibration-chip"><span>Mediana 12m</span><strong>'+money(med12)+'</strong></span>'+
-      '<span class="analysis-calibration-chip"><strong>'+active12+'/12</strong><span>mesi attivi</span></span>'+
-      '<span class="analysis-calibration-note">Valori mensili con mesi a zero inclusi</span>'+
+    '<div class="analysis-calibration-section">'+
+      '<div class="analysis-calibration-section-head"><span class="analysis-calibration-section-icon">'+analysisSvgIcon("storica chart")+'</span><strong>Base storica</strong><span>Valori mensili · mesi a zero inclusi</span></div>'+
+      '<div class="analysis-calibration-base-grid">'+
+        '<div class="analysis-calibration-metric"><span>Media 6m</span><strong>'+money(avg6)+'</strong></div>'+
+        '<div class="analysis-calibration-metric"><span>Mediana 6m</span><strong>'+money(med6)+'</strong></div>'+
+        '<div class="analysis-calibration-metric"><span>Media 12m</span><strong>'+money(avg12)+'</strong></div>'+
+        '<div class="analysis-calibration-metric"><span>Mediana 12m</span><strong>'+money(med12)+'</strong></div>'+
+        '<div class="analysis-calibration-metric activity"><strong>'+active12+'/12</strong><span>mesi attivi</span></div>'+
+      '</div>'+
     '</div>'+
-    '<div class="analysis-calibration-row"><span class="analysis-calibration-label">Storico ↔ Piano</span><div class="analysis-calibration-pairs">'+
-      '<div class="analysis-calibration-pair"><span class="analysis-calibration-period">6 mesi</span>'+
-        analysisCalibrationDeltaHtml("Storico",hist6,hist6Title)+'<span class="analysis-calibration-arrow">→</span>'+
-        analysisCalibrationDeltaHtml("Piano",plan6,plan6Title)+'</div>'+
-      '<div class="analysis-calibration-pair"><span class="analysis-calibration-period">12 mesi</span>'+
-        analysisCalibrationDeltaHtml("Storico",hist12,hist12Title)+'<span class="analysis-calibration-arrow">→</span>'+
-        analysisCalibrationDeltaHtml("Piano",plan12,plan12Title)+'</div>'+
-      '<div class="analysis-calibration-pair"><span class="analysis-calibration-period">Anno</span>'+
-        '<span class="analysis-calibration-year" title="'+esc(yearTitle)+'"><span>'+esc(prevYear)+' reale</span><strong>'+money(year&&year.comparison)+'</strong><span class="analysis-calibration-arrow">→</span><span>'+esc(curYear)+' previsto</span><strong>'+money(year&&year.projected)+'</strong></span>'+
-        analysisCalibrationDeltaHtml("Δ",year,yearTitle)+'</div>'+
-    '</div></div>';
+    '<div class="analysis-calibration-section compare">'+
+      '<div class="analysis-calibration-section-head"><span class="analysis-calibration-section-icon">'+analysisSvgIcon("calendar mesi")+'</span><strong>Storico ↔ Piano</strong><span>Stesso periodo quando possibile</span></div>'+
+      '<div class="analysis-calibration-pairs">'+
+        '<div class="analysis-calibration-pair"><div class="analysis-calibration-period">6 mesi</div><div class="analysis-calibration-compare">'+
+          analysisCalibrationDeltaCard("Storico",hist6,hist6Title)+'<span class="analysis-calibration-arrow">→</span>'+analysisCalibrationDeltaCard("Piano",plan6,plan6Title)+
+        '</div></div>'+
+        '<div class="analysis-calibration-pair"><div class="analysis-calibration-period">12 mesi</div><div class="analysis-calibration-compare">'+
+          analysisCalibrationDeltaCard("Storico",hist12,hist12Title)+'<span class="analysis-calibration-arrow">→</span>'+analysisCalibrationDeltaCard("Piano",plan12,plan12Title)+
+        '</div></div>'+
+        '<div class="analysis-calibration-pair year"><div class="analysis-calibration-period">Anno</div><div class="analysis-calibration-year-compare" title="'+esc(yearTitle)+'">'+
+          '<div class="analysis-calibration-year-card"><span>'+esc(prevYear)+' reale</span><strong>'+money(year&&year.comparison)+'</strong></div>'+
+          '<span class="analysis-calibration-arrow">→</span>'+
+          '<div class="analysis-calibration-year-card forecast"><span>'+esc(curYear)+' previsto</span><strong>'+money(year&&year.projected)+'</strong></div>'+
+          analysisCalibrationDeltaHtml("Δ",year,yearTitle)+
+        '</div></div>'+
+      '</div>'+
+    '</div>';
 }
 function projectionSelectedCategories(data){
   if(!data||!analysisSelectedCategory)return [];

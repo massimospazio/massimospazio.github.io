@@ -1,7 +1,7 @@
 // Canonical source: massimospazio/budget-familiare; public files are deployed automatically.
 (function(){
-  const APP_VERSION='V73.10.1';
-  const APP_RELEASE='Fix calibrazione forecast anche su L1 aggregate';
+  const APP_VERSION='V73.10.2';
+  const APP_RELEASE='Restyling leggibilità Analisi · tipografia, icone e calibrazione ad alto contrasto';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});
