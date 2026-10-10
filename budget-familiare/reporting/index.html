@@ -3754,15 +3754,18 @@ function planningFilterRows(rows){
   return rows.filter(function(r){return String(r.l1_name||"").toLocaleLowerCase("it").includes(q)||String(r.l2_name||"").toLocaleLowerCase("it").includes(q)});
 }
 function planningSectionHtml(direction,allRows,maxDelta){
-  const rows=planningFilterRows(allRows),groups=planningGroupRows(rows);let html='<tr class="planning-section-label"><td colspan="7">'+(direction==="INCOME"?"Entrate":"Spese")+'</td></tr>';
+  const q=planningBoardSearch.trim().toLocaleLowerCase("it"),groups=planningGroupRows(allRows);let html='<tr class="planning-section-label"><td colspan="7">'+(direction==="INCOME"?"Entrate":"Spese")+'</td></tr>';
   groups.forEach(function(g){
-    const key=direction+"|"+g.id,searching=!!planningBoardSearch.trim(),expanded=planningBoardLevel==="L1_L2"&&(searching||planningBoardExpandedL1.has(key));
+    const groupMatches=!q||String(g.name||"").toLocaleLowerCase("it").includes(q);
+    const visibleRows=groupMatches?g.rows:g.rows.filter(function(r){return String(r.l2_name||"").toLocaleLowerCase("it").includes(q)});
+    if(q&&!groupMatches&&!visibleRows.length)return;
+    const key=direction+"|"+g.id,searching=!!q,expanded=planningBoardLevel==="L1_L2"&&(searching||planningBoardExpandedL1.has(key));
     const annual=g.rows.reduce(function(s,r){return s+r.annual},0),saving=g.rows.reduce(function(s,r){return s+r.saving},0);
     const low=g.rows.reduce(function(s,r){return s+r.rangeLow},0),high=g.rows.reduce(function(s,r){return s+r.rangeHigh},0);
     const delta=direction==="EXPENSE"?planningDeltaBarHtml(saving,maxDelta):(Math.abs(high-low)>.5?'<span class="planning-range">'+money(low)+' – '+money(high)+'</span>':"—");
     html+='<tr class="planning-l1-row '+(direction==="INCOME"?"income":"expense")+'"><td><div class="planning-category">'+(planningBoardLevel==="L1_L2"?'<button class="planning-caret" data-planning-toggle-l1="'+esc(key)+'">'+(expanded?"▾":"▸")+'</button>':'<span class="planning-caret"></span>')+categoryIconHtml(g.name,direction==="INCOME"?"income":"expense",true)+'<span class="name">'+esc(g.name)+'</span></div></td><td>'+money(annual)+'</td><td>'+delta+'</td><td>'+planningL1NatureHtml(g.rows,direction)+'</td><td>—</td><td>—</td><td></td></tr>';
     if(!expanded)return;
-    g.rows.sort(function(a,b){return String(a.l2_name).localeCompare(String(b.l2_name),"it")}).forEach(function(r){
+    visibleRows.slice().sort(function(a,b){return String(a.l2_name).localeCompare(String(b.l2_name),"it")}).forEach(function(r){
       const l2Key=direction+"|"+r.category_id,open=planningBoardExpandedL2.has(l2Key),note=r.meta&&r.meta.rationale_note||"";
       const l2Delta=direction==="EXPENSE"?planningDeltaBarHtml(r.saving,maxDelta):(Math.abs(r.rangeHigh-r.rangeLow)>.5?'<span class="planning-range">'+money(r.rangeLow)+' – '+money(r.rangeHigh)+'</span>':"—");
       html+='<tr class="planning-l2-row"><td class="planning-l2-name"><div class="planning-category"><button class="planning-caret" data-planning-toggle-l2="'+esc(l2Key)+'">'+(open?"▾":"▸")+'</button>'+categoryIconHtml(r.l2_name,direction==="INCOME"?"income":"expense",false)+'<span class="name">'+esc(r.l2_name)+'</span></div></td><td><strong>'+money(r.annual)+'</strong></td><td>'+l2Delta+'</td><td>'+planningNatureSelectHtml(r,direction)+'</td><td>'+planningMethodHtml(r)+'</td><td><div class="planning-note" title="'+esc(note)+'">'+esc(note||"—")+'</div></td><td><button class="planning-open-analysis" type="button" data-planning-open-analysis="'+esc(r.category_id)+'" data-planning-open-direction="'+direction+'" title="Apri la previsione originale in Analisi">›</button></td></tr>';
@@ -3806,9 +3809,12 @@ function renderPlanningMonthlyChart(exp,inc){
   if(canvas&&typeof Chart!=="undefined")planningMonthlyChart=new Chart(canvas,{data:{labels:labels,datasets:datasets},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},plugins:{legend:{position:"bottom",labels:{boxWidth:9,boxHeight:9,font:{size:9}}},tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+": "+money(ctx.raw)}}}},scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:9}}},y:{stacked:true,beginAtZero:true,ticks:{font:{size:9},callback:function(v){return Number(v).toLocaleString("it-IT")}},grid:{color:"rgba(148,163,184,.16)"}}}}});
 }
 function renderPlanningQuickScenarios(exp,inc){
-  const income=inc.reduce(function(s,r){return s+r.annual},0),mandatory=exp.filter(function(r){return planningNatureValue(r.meta,"EXPENSE")==="MANDATORY"}).reduce(function(s,r){return s+r.annual},0),necessary=exp.filter(function(r){return planningNatureValue(r.meta,"EXPENSE")==="NECESSARY"}).reduce(function(s,r){return s+r.annual},0),discretionary=exp.filter(function(r){return planningNatureValue(r.meta,"EXPENSE")==="DISCRETIONARY"}).reduce(function(s,r){return s+r.annual},0),unknown=exp.filter(function(r){return !planningNatureValue(r.meta,"EXPENSE")}).reduce(function(s,r){return s+r.annual},0);
-  const scenarios=[["Piano attuale",0],["Discrezionali −25%",.25],["Discrezionali −50%",.50],["Discrezionali a zero",1]];
-  $("planningQuickScenarios").innerHTML=scenarios.map(function(x,i){const expenses=mandatory+necessary+unknown+discretionary*(1-x[1]),balance=income-expenses;return '<div class="planning-quick-row'+(i===0?" active":"")+'"><span class="name">'+esc(x[0])+'</span><span class="amount '+(balance>=0?"positive":"negative")+'">'+(balance>=0?"+":"")+money(balance)+'</span></div>'}).join("");
+  const income=inc.reduce(function(s,r){return s+r.annual},0),expenses=exp.reduce(function(s,r){return s+r.annual},0),current=String(planningBoardData.expense.current_month||"");
+  const futureDiscretionary=exp.filter(function(r){return planningNatureValue(r.meta,"EXPENSE")==="DISCRETIONARY"}).reduce(function(total,r){
+    return total+r.months.filter(function(m){return m.month>=current&&m.kind==="plan"}).reduce(function(s,m){return s+num(m.amount)},0);
+  },0);
+  const scenarios=[["Piano attuale",0],["Discrezionali future −25%",.25],["Discrezionali future −50%",.50],["Discrezionali future a zero",1]];
+  $("planningQuickScenarios").innerHTML=scenarios.map(function(x,i){const balance=income-(expenses-futureDiscretionary*x[1]);return '<div class="planning-quick-row'+(i===0?" active":"")+'"><span class="name">'+esc(x[0])+'</span><span class="amount '+(balance>=0?"positive":"negative")+'">'+(balance>=0?"+":"")+money(balance)+'</span></div>'}).join("");
 }
 function renderPlanningBoard(){
   if(!planningBoardData||!planningBoardData.expense||!planningBoardData.income)return;
