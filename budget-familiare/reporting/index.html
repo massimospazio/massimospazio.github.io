@@ -8,8 +8,8 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=73.10.4-20261010-1825"></script>
-<script src="../shared/app-config.js?v=73.10.4-20261010-1825"></script>
+<script src="../shared/supabase-client.js?v=73.11-20261010-1945"></script>
+<script src="../shared/app-config.js?v=73.11-20261010-1945"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 :root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#6b7280;--line:#e5e7eb;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 8px 24px rgba(15,23,42,.06)}
@@ -755,6 +755,19 @@ button,input,select{font:inherit}
   .analysis-detail-head{display:flex;flex-direction:column;align-items:flex-start}
   .analysis-detail-period-metrics{width:100%;flex-wrap:wrap}
 }
+
+/* V73.11 — Piano del mese in corso */
+.analysis-plan-month.current{border:2px solid #60a5fa;background:#f7fbff;box-shadow:0 0 0 2px rgba(59,130,246,.05)}
+.analysis-plan-month.current .month{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.current-badge{display:inline-flex;padding:2px 5px;border-radius:999px;background:#dbeafe;color:#1d4ed8;font-size:7.8px;font-weight:850;text-transform:none;letter-spacing:.01em}
+.analysis-plan-current-live{display:flex;flex-direction:column;gap:2px;margin-top:5px;padding-top:4px;border-top:1px solid #dbeafe;font-size:8.5px;color:#526176}
+.analysis-plan-current-live span{display:flex;justify-content:space-between;gap:4px}
+.analysis-plan-current-live strong{font-weight:850;color:#172033}
+.analysis-plan-current-live .remaining{color:#166534}.analysis-plan-current-live .remaining strong{color:#166534}
+.analysis-plan-current-live .over{color:#b42334}.analysis-plan-current-live .over strong{color:#b42334}
+.analysis-plan-current-date{font-size:7.7px;color:#7c8ba1;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.analysis-hover-item.current-plan{background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8}
+.analysis-hover-item.current-actual{background:#f8fafc;border-color:#cbd5e1;color:#475569}
 </style>
 </head>
 <body>
@@ -2242,14 +2255,24 @@ function analysisProjectionBoundaryPlugin(boundaryIndex){
 }
 function renderProjectionHoverDetail(chart,index,months){
   const box=$("analysisChartHoverDetail");if(!box||index<0||index>=months.length)return;
-  const data=projectionDataFor(analysisCurrentDirection()),isForecast=data?months[index]>=data.current_month:false,items=[];let total=0;
+  const data=projectionDataFor(analysisCurrentDirection()),month=months[index],isForecast=data?month>=data.current_month:false,isCurrent=data?month===data.current_month:false,items=[];let total=0;
   chart.data.datasets.forEach(function(ds,i){
     if(!chart.isDatasetVisible(i))return;const v=num(ds.data[index]);total+=v;
     if(Math.abs(v)>.004)items.push({label:ds.label,value:v});
   });
   items.sort(function(a,b){return b.value-a.value});
-  box.innerHTML='<span class="analysis-hover-month">'+esc(monthLabel(months[index]))+'</span>'+
-    '<span class="analysis-hover-total">'+(isForecast?"Previsto":"Reale")+' · '+money(total)+'</span>'+
+  let currentHtml="";
+  if(isCurrent&&data){
+    const ids=new Set(projectionIdsFor(data,analysisSelectedLevel,analysisSelectedCategory));
+    const rows=(data.forecast_monthly||[]).filter(function(x){return x.month===month&&ids.has(String(x.category_id))});
+    const planned=rows.reduce(function(s,x){return s+num(x.planned_amount!==undefined?x.planned_amount:x.effective_amount)},0);
+    const actual=rows.reduce(function(s,x){return s+num(x.actual_to_date)},0);
+    currentHtml='<span class="analysis-hover-item current-plan">Piano mese <strong>'+money(planned)+'</strong></span>'+
+      '<span class="analysis-hover-item current-actual">Reale ordinario a oggi <strong>'+money(actual)+'</strong></span>';
+  }
+  box.innerHTML='<span class="analysis-hover-month">'+esc(monthLabel(month))+'</span>'+
+    '<span class="analysis-hover-total">'+(isCurrent?"Chiusura minima":isForecast?"Previsto":"Reale")+' · '+money(total)+'</span>'+
+    currentHtml+
     items.slice(0,7).map(function(x){return '<span class="analysis-hover-item">'+esc(x.label)+' <strong>'+money(x.value)+'</strong></span>'}).join("")+
     (items.length>7?'<span class="analysis-hover-item">+'+(items.length-7)+' altre</span>':"");
 }
@@ -2277,7 +2300,7 @@ function renderProjectionDetailChart(){
     datasets.push({type:"bar",analysisRole:"projection",label:analysisDetailData&&analysisDetailData.category_name||"Totale",data:values,backgroundColor:months.map(function(m){return m<data.current_month?"rgba(37,99,235,.76)":"rgba(147,197,253,.34)"}),borderColor:months.map(function(m){return m<data.current_month?"rgba(0,0,0,0)":"#2563eb"}),borderWidth:months.map(function(m){return m<data.current_month?0:1.15}),borderRadius:2,stack:"projection"});
   }
   const hover=$("analysisChartHoverDetail");
-  if(hover)hover.innerHTML='<span class="muted">Passa sul grafico per vedere il dettaglio del mese. Colore pieno = reale · colore tenue = previsto.</span>';
+  if(hover)hover.innerHTML='<span class="muted">Passa sul grafico per vedere il dettaglio. Nel mese in corso il piano è il totale mensile e la chiusura non può essere inferiore al reale ordinario già registrato.</span>';
   categoryTrendChart=new Chart($("categoryTrendChart"),{
     type:"bar",plugins:[analysisProjectionBoundaryPlugin(boundary)],
     data:{labels:labels,datasets:datasets},
@@ -2606,22 +2629,28 @@ function integratedMonthlyPlanHtml(){
   const changed=rows.filter(function(x){return x.override_amount!==null&&x.override_amount!==undefined}).length;
   const manualMode=savedPlanIsManual(),dirty=forecastDraftIsDirty();
   const months=rows.map(function(x){
-    const modified=x.override_amount!==null&&x.override_amount!==undefined,base=num(x.base_amount),planned=num(x.planned_amount);
-    const cardClass=dirty?" disabled":(!manualMode&&modified?" override":"");
+    const modified=x.override_amount!==null&&x.override_amount!==undefined,base=num(x.base_amount),planned=num(x.planned_amount),isCurrent=!!x.is_current_month;
+    const actual=isCurrent?num(x.actual_to_date):0,remaining=isCurrent?Math.max(0,planned-actual):0,over=isCurrent?Math.max(0,actual-planned):0;
+    const cardClass=(dirty?" disabled":(!manualMode&&modified?" override":""))+(isCurrent?" current":"");
     const label=modified?(manualMode?'Valore standard '+money(base):'Override · base '+money(base)):'';
     const resetTitle=manualMode?"Ripristina il valore standard della regola":"Rimuovi override e ripristina il valore della regola";
+    const currentStatus=isCurrent
+      ?'<div class="analysis-plan-current-live"><span>Reale ordinario <strong>'+money(actual)+'</strong></span>'+
+        (over>.004?'<span class="over">Superato di <strong>'+money(over)+'</strong></span>':'<span class="remaining">Residuo <strong>'+money(remaining)+'</strong></span>')+
+        '</div><div class="analysis-plan-current-date">'+(x.last_actual_date?'Dati reali al '+esc(dateLabel(x.last_actual_date)):'Nessun movimento ordinario caricato nel mese')+'</div>'
+      :"";
     return '<div class="analysis-plan-month'+cardClass+'" data-plan-card-month="'+esc(x.month)+'">'+
-      '<div class="month">'+esc(monthLabel(x.month))+'</div>'+
+      '<div class="month">'+esc(monthLabel(x.month))+(isCurrent?' <span class="current-badge">mese in corso</span>':'')+'</div>'+
       '<div class="base">'+(manualMode?'Standard ':'Regola ')+money(base)+'</div>'+
       '<div class="analysis-plan-month-input-row"><input class="input" type="number" min="0" step="1" value="'+esc(planInputValue(planned))+'" data-analysis-plan-month="'+esc(x.month)+'" data-analysis-plan-base="'+esc(base)+'" aria-label="Piano '+esc(monthLabel(x.month))+'"'+(dirty?' disabled':'')+' />'+
       (modified&&!dirty?'<button class="analysis-plan-reset" type="button" data-reset-analysis-plan="'+esc(x.month)+'" title="'+esc(resetTitle)+'">↺</button>':"")+
-      '</div>'+(label?'<div class="override-label">'+esc(label)+'</div>':'<div class="override-label" style="visibility:hidden">Base</div>')+
+      '</div>'+currentStatus+(label?'<div class="override-label">'+esc(label)+'</div>':'<div class="override-label" style="visibility:hidden">Base</div>')+
       '</div>';
   }).join("");
-  const title=manualMode?'Piano manuale L2 · prossimi 12 mesi':'Piano mensile L2 · prossimi 12 mesi';
+  const title=manualMode?'Piano manuale L2 · mese in corso + prossimi 11 mesi':'Piano mensile L2 · mese in corso + prossimi 11 mesi';
   const desc=manualMode
-    ?'La regola definisce il valore standard. I valori dei singoli mesi sono il piano: puoi personalizzarli e ripristinare lo standard quando serve.'
-    :'La regola genera la base. Modifica un mese solo quando vuoi un’eccezione; puoi sempre ripristinare il valore calcolato.';
+    ?'Il primo valore è il piano totale del mese in corso; il reale già registrato resta separato. Gli altri mesi seguono lo standard della regola salvo modifiche.'
+    :'Il primo valore è il piano totale del mese in corso. Il reale già registrato non viene sommato di nuovo; se supera il piano, la proiezione non può scendere sotto il reale.';
   const changedChip=changed?'<span class="analysis-plan-summary-chip">'+changed+' '+(manualMode?'mesi modificati':'override')+'</span>':"";
   const warning=dirty?'<div class="analysis-plan-unsaved"><strong>Regola modificata ma non ancora salvata.</strong> Il piano sotto usa ancora l’ultima regola salvata. Salva la previsione per ricalcolarlo e abilitarne la modifica.</div>':"";
   return '<div class="analysis-monthly-plan"><div class="analysis-monthly-plan-head"><div><h5>'+title+'</h5><p>'+desc+'</p></div><div class="analysis-monthly-plan-summary"><span class="analysis-plan-summary-chip">'+(manualMode?'Standard ':'Base ')+money(baseTotal)+'</span><span class="analysis-plan-summary-chip">Piano '+money(plannedTotal)+'</span>'+changedChip+'</div></div>'+warning+'<div class="analysis-plan-months">'+months+'</div></div>';
@@ -2924,25 +2953,21 @@ function scenarioActualBreakdown(month,incActual,expActual,cash){
   };
 }
 function scenarioDisplayIncome(row){
-  if(row.isForecast)return scenarioExtraMode==="EXTRA"?0:num(row.income);
   if(scenarioExtraMode==="ALL")return num(row.income);
   if(scenarioExtraMode==="EXTRA")return num(row.extraordinaryIncome);
   return num(row.ordinaryIncome);
 }
 function scenarioDisplayOutflow(row){
-  if(row.isForecast)return scenarioExtraMode==="EXTRA"?0:num(row.outflow);
   if(scenarioExtraMode==="ALL")return num(row.outflow);
   if(scenarioExtraMode==="EXTRA")return num(row.extraordinaryOutflow);
   return num(row.ordinaryOutflow);
 }
 function scenarioDisplayExpense(row){
-  if(row.isForecast)return scenarioExtraMode==="EXTRA"?0:num(row.expense);
   if(scenarioExtraMode==="ALL")return num(row.expense);
   if(scenarioExtraMode==="EXTRA")return num(row.extraordinaryExpense);
   return num(row.ordinaryExpense);
 }
 function scenarioDisplayNet(row){
-  if(row.isForecast)return scenarioExtraMode==="EXTRA"?0:num(row.net);
   if(scenarioExtraMode==="ALL")return num(row.net);
   if(scenarioExtraMode==="EXTRA")return num(row.extraordinaryNet);
   return num(row.ordinaryNet);
@@ -2956,10 +2981,17 @@ function scenarioPlanData(){
       const a=scenarioActualBreakdown(month,incActual,expActual,cash);
       return Object.assign({month:month,isForecast:false,margin:0},a);
     }
-    const income=num(incForecast.get(month)),expense=num(expForecast.get(month)),outflow=expense,net=income-expense;
-    return {month:month,isForecast:true,income:income,expense:expense,margin:0,investment:0,outflow:outflow,net:net,
-      ordinaryIncome:income,ordinaryExpense:expense,ordinaryInvestment:0,ordinaryOutflow:outflow,ordinaryNet:net,
-      extraordinaryIncome:0,extraordinaryExpense:0,extraordinaryInvestment:0,extraordinaryOutflow:0,extraordinaryNet:0};
+    const ordinaryIncome=num(incForecast.get(month)),ordinaryExpense=num(expForecast.get(month)),isCurrentMonth=month===def.current;
+    const currentActual=isCurrentMonth?scenarioActualBreakdown(month,incActual,expActual,cash):null;
+    const extraordinaryIncome=currentActual?num(currentActual.extraordinaryIncome):0;
+    const extraordinaryExpense=currentActual?num(currentActual.extraordinaryExpense):0;
+    const extraordinaryOutflow=currentActual?num(currentActual.extraordinaryOutflow):0;
+    const extraordinaryNet=currentActual?num(currentActual.extraordinaryNet):0;
+    const income=ordinaryIncome+extraordinaryIncome,expense=ordinaryExpense+extraordinaryExpense,outflow=ordinaryExpense+extraordinaryOutflow;
+    const ordinaryNet=ordinaryIncome-ordinaryExpense,net=ordinaryNet+extraordinaryNet;
+    return {month:month,isForecast:true,isCurrentMonth:isCurrentMonth,income:income,expense:expense,margin:0,investment:0,outflow:outflow,net:net,
+      ordinaryIncome:ordinaryIncome,ordinaryExpense:ordinaryExpense,ordinaryInvestment:0,ordinaryOutflow:ordinaryExpense,ordinaryNet:ordinaryNet,
+      extraordinaryIncome:extraordinaryIncome,extraordinaryExpense:extraordinaryExpense,extraordinaryInvestment:0,extraordinaryOutflow:extraordinaryOutflow,extraordinaryNet:extraordinaryNet};
   });
   const comparison=def.comparisonMonths.map(function(month){
     const a=scenarioActualBreakdown(month,incActual,expActual,cash);
