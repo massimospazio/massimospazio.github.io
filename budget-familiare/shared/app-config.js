@@ -1,7 +1,7 @@
 // Canonical source: massimospazio/budget-familiare; public files are deployed automatically.
 (function(){
-  const APP_VERSION='V73.10.3';
-  const APP_RELEASE='Compattazione fascia calibrazione · grafico più alto senza perdere contesto';
+  const APP_VERSION='V73.10.4';
+  const APP_RELEASE='Header sintetico · media e mediana del periodo, Base storica rimossa';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});
