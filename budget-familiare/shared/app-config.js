@@ -1,7 +1,7 @@
 // Canonical source: massimospazio/budget-familiare; public files are deployed automatically.
 (function(){
-  const APP_VERSION='V73.11.2';
-  const APP_RELEASE='Tassonomia stabile · tutte le L2 sempre visibili in Storico e Previsione';
+  const APP_VERSION='V73.12.0';
+  const APP_RELEASE='Tabellone annuale · natura L2 e piano unico da Analisi';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});
