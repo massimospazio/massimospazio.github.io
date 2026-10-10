@@ -3789,7 +3789,8 @@ function renderPlanningNatureChart(exp){
   const total=values.reduce(function(s,v){return s+v},0),canvas=$("planningNatureChart");
   if(planningNatureChart){planningNatureChart.destroy();planningNatureChart=null}
   if(canvas&&typeof Chart!=="undefined"){
-    planningNatureChart=new Chart(canvas,{type:"doughnut",data:{labels:labels,datasets:[{data:values,backgroundColor:colors,borderWidth:0,hoverOffset:3}]},options:{responsive:true,maintainAspectRatio:false,cutout:"66%",plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){const v=num(ctx.raw);return ctx.label+": "+money(v)+" · "+(total?Math.round(v*100/total):0)+"%"}}}}}});
+    const centerPlugin={id:"planningNatureCenter",afterDraw:function(chart){const area=chart.chartArea;if(!area)return;const ctx=chart.ctx,x=(area.left+area.right)/2,y=(area.top+area.bottom)/2;ctx.save();ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillStyle="#15234b";ctx.font="800 13px system-ui, sans-serif";ctx.fillText(money(total),x,y-5);ctx.fillStyle="#7a879c";ctx.font="500 9px system-ui, sans-serif";ctx.fillText("Totale",x,y+10);ctx.restore()}};
+    planningNatureChart=new Chart(canvas,{type:"doughnut",data:{labels:labels,datasets:[{data:values,backgroundColor:colors,borderWidth:0,hoverOffset:3}]},plugins:[centerPlugin],options:{responsive:true,maintainAspectRatio:false,cutout:"66%",plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){const v=num(ctx.raw);return ctx.label+": "+money(v)+" · "+(total?Math.round(v*100/total):0)+"%"}}}}}});
   }
   if($("planningNatureLegend"))$("planningNatureLegend").innerHTML=labels.map(function(label,i){const v=values[i],pct=total?v*100/total:0;return '<div class="planning-nature-legend-row"><i class="planning-nature-dot" style="background:'+colors[i]+'"></i><span>'+esc(label)+'</span><strong>'+money(v)+'</strong><span class="planning-nature-pct">'+pct.toLocaleString("it-IT",{maximumFractionDigits:0})+'%</span></div>'}).join("");
 }
