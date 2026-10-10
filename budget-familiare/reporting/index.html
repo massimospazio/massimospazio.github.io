@@ -8,8 +8,8 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=73.11.1-20261010-2015"></script>
-<script src="../shared/app-config.js?v=73.11.1-20261010-2015"></script>
+<script src="../shared/supabase-client.js?v=73.11.2-20261010-2035"></script>
+<script src="../shared/app-config.js?v=73.11.2-20261010-2035"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 :root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#6b7280;--line:#e5e7eb;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 8px 24px rgba(15,23,42,.06)}
@@ -768,6 +768,13 @@ button,input,select{font:inherit}
 .analysis-plan-current-date{font-size:7.7px;color:#7c8ba1;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .analysis-hover-item.current-plan{background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8}
 .analysis-hover-item.current-actual{background:#f8fafc;border-color:#cbd5e1;color:#475569}
+
+/* V73.11.2 — Tassonomia L2 sempre visibile */
+.analysis-master-table tr.analysis-zero-row:not(.analysis-selected) .analysis-row-button{color:#64748b;font-weight:560}
+.analysis-master-table tr.analysis-zero-row:not(.analysis-selected) .analysis-master-amount strong{color:#64748b}
+.analysis-master-table tr.analysis-zero-row:not(.analysis-selected) .analysis-master-share{color:#94a3b8}
+.analysis-master-table tr.analysis-zero-row:not(.analysis-selected) .plan-icon.analysis-l2-icon{background:#f8fafc;color:#94a3b8;border-color:#e2e8f0}
+.analysis-zero-trend{display:inline-flex;align-items:center;justify-content:center;min-width:24px;color:#94a3b8;font-size:12px;font-weight:700}
 </style>
 </head>
 <body>
@@ -2036,9 +2043,10 @@ function renderProjectionMaster(){
     :'Menu categorie: il dettaglio a destra mostra consuntivo + pianificato e confronto con il '+esc(def.comparisonLabel)+'.';
   function rowHtml(r,isL1){
     const id=prefix+r.category_id,collapsed=isL1&&collapsedL1.has(id),selected=String(analysisSelectedCategory||"")===String(r.category_id),name=isL1?r.l1_name:(r.l2_name||r.l1_name),indent=isL1?"":" style=\"padding-left:30px\"";
+    const zero=Math.abs(num(r.projected_total))<.005&&Math.abs(num(r.comparison_total))<.005&&Math.abs(num(r.actual_total))<.005;
     const first=isL1?'<div class="plan-label"><button class="caret" data-toggle-l1="'+esc(id)+'">'+(collapsed?"▸":"▾")+'</button>'+categoryIconHtml(name,analysisCurrentDirection()==="INCOME"?"income":"expense",true)+'<button class="analysis-row-button" data-analysis-select="'+esc(r.category_id)+'" data-analysis-level="L1">'+esc(name)+'</button></div>':'<span class="plan-label">'+categoryIconHtml(name,analysisCurrentDirection()==="INCOME"?"income":"expense",false)+'<button class="analysis-row-button" data-analysis-select="'+esc(r.category_id)+'" data-analysis-level="L2">'+esc(name)+'</button></span>';
     const amount='<div class="analysis-master-amount"><strong>'+money(r.projected_total)+'</strong><span class="analysis-master-share">'+num(r.share_pct).toLocaleString("it-IT",{maximumFractionDigits:1})+'%</span></div>';
-    return '<tr class="'+(isL1?"l1-row ":"")+(selected?"analysis-selected":"")+'"><td'+indent+'>'+first+'</td><td>'+amount+'</td><td>'+projectionDeltaHtml(r.delta_pct)+'</td></tr>';
+    return '<tr class="'+(isL1?"l1-row ":"")+(zero?"analysis-zero-row ":"")+(selected?"analysis-selected":"")+'"'+(zero?' title="Categoria disponibile in anagrafica, senza storico o piano nel periodo"':'')+'><td'+indent+'>'+first+'</td><td>'+amount+'</td><td>'+(zero?'<span class="analysis-zero-trend">—</span>':projectionDeltaHtml(r.delta_pct))+'</td></tr>';
   }
   l1.forEach(function(g){
     html+=rowHtml(g,true);
@@ -2058,10 +2066,11 @@ function renderAnalysisMaster(){
   function amountHtml(total,share){return '<div class="analysis-master-amount"><strong>'+money(total)+'</strong><span class="analysis-master-share">'+num(share).toLocaleString("it-IT",{maximumFractionDigits:1})+'%</span></div>'}
   l1.forEach(function(g){
     const id=prefix+g.category_id,collapsed=collapsedL1.has(id),selected=String(analysisSelectedCategory||"")===String(g.category_id);
-    html+='<tr class="l1-row'+(selected?" analysis-selected":"")+'"><td><div class="plan-label"><button class="caret" data-toggle-l1="'+esc(id)+'">'+(collapsed?"▸":"▾")+'</button>'+categoryIconHtml(g.l1_name,analysisCurrentDirection()==="INCOME"?"income":"expense",true)+'<button class="analysis-row-button" data-analysis-select="'+esc(g.category_id)+'" data-analysis-level="L1">'+esc(g.l1_name)+'</button></div></td><td>'+amountHtml(g.total,g.share_pct)+'</td><td>'+analysisTrendHtml("L1",g.category_id)+'</td></tr>';
+    const l1Zero=Math.abs(num(g.total))<.005;
+    html+='<tr class="l1-row'+(l1Zero?" analysis-zero-row":"")+(selected?" analysis-selected":"")+'"'+(l1Zero?' title="Categoria disponibile in anagrafica, senza dati nel periodo"':'')+'><td><div class="plan-label"><button class="caret" data-toggle-l1="'+esc(id)+'">'+(collapsed?"▸":"▾")+'</button>'+categoryIconHtml(g.l1_name,analysisCurrentDirection()==="INCOME"?"income":"expense",true)+'<button class="analysis-row-button" data-analysis-select="'+esc(g.category_id)+'" data-analysis-level="L1">'+esc(g.l1_name)+'</button></div></td><td>'+amountHtml(g.total,g.share_pct)+'</td><td>'+(l1Zero?'<span class="analysis-zero-trend">—</span>':analysisTrendHtml("L1",g.category_id))+'</td></tr>';
     if(!collapsed)(l2ByL1.get(g.category_id)||[]).sort(function(a,b){return String(a.l2_name||a.l1_name||"").localeCompare(String(b.l2_name||b.l1_name||""),"it")}).forEach(function(r){
-      const name=r.is_direct?"Diretto su "+r.l1_name:(r.l2_name||r.l1_name),sel=String(analysisSelectedCategory||"")===String(r.category_id);
-      html+='<tr'+(sel?' class="analysis-selected"':'')+'><td style="padding-left:30px"><span class="plan-label">'+categoryIconHtml(name,analysisCurrentDirection()==="INCOME"?"income":"expense",false)+'<button class="analysis-row-button" data-analysis-select="'+esc(r.category_id)+'" data-analysis-level="L2">'+esc(name)+'</button></span></td><td>'+amountHtml(r.total,r.share_pct)+'</td><td>'+analysisTrendHtml("L2",r.category_id)+'</td></tr>';
+      const name=r.is_direct?"Diretto su "+r.l1_name:(r.l2_name||r.l1_name),sel=String(analysisSelectedCategory||"")===String(r.category_id),zero=Math.abs(num(r.total))<.005;
+      html+='<tr class="'+(zero?"analysis-zero-row ":"")+(sel?"analysis-selected":"")+'"'+(zero?' title="Categoria disponibile in anagrafica, senza dati nel periodo"':'')+'><td style="padding-left:30px"><span class="plan-label">'+categoryIconHtml(name,analysisCurrentDirection()==="INCOME"?"income":"expense",false)+'<button class="analysis-row-button" data-analysis-select="'+esc(r.category_id)+'" data-analysis-level="L2">'+esc(name)+'</button></span></td><td>'+amountHtml(r.total,r.share_pct)+'</td><td>'+(zero?'<span class="analysis-zero-trend">—</span>':analysisTrendHtml("L2",r.category_id))+'</td></tr>';
     });
   });$("analysisBody").innerHTML=html||'<tr><td colspan="3" class="muted">Nessun dato nel periodo selezionato.</td></tr>';
 }
