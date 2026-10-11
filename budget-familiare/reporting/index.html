@@ -8,8 +8,8 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=73.13.0-20261011-0025"></script>
-<script src="../shared/app-config.js?v=73.13.0-20261011-0025"></script>
+<script src="../shared/supabase-client.js?v=73.13.1-20261011-0025"></script>
+<script src="../shared/app-config.js?v=73.13.1-20261011-0025"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 :root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#6b7280;--line:#e5e7eb;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 8px 24px rgba(15,23,42,.06)}
@@ -769,14 +769,14 @@ button,input,select{font:inherit}
 .analysis-hover-item.current-plan{background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8}
 .analysis-hover-item.current-actual{background:#f8fafc;border-color:#cbd5e1;color:#475569}
 
-/* V73.13.0 — Tassonomia L2 sempre visibile */
+/* V73.13.1 — Tassonomia L2 sempre visibile */
 .analysis-master-table tr.analysis-zero-row:not(.analysis-selected) .analysis-row-button{color:#64748b;font-weight:560}
 .analysis-master-table tr.analysis-zero-row:not(.analysis-selected) .analysis-master-amount strong{color:#64748b}
 .analysis-master-table tr.analysis-zero-row:not(.analysis-selected) .analysis-master-share{color:#94a3b8}
 .analysis-master-table tr.analysis-zero-row:not(.analysis-selected) .plan-icon.analysis-l2-icon{background:#f8fafc;color:#94a3b8;border-color:#e2e8f0}
 .analysis-zero-trend{display:inline-flex;align-items:center;justify-content:center;min-width:24px;color:#94a3b8;font-size:12px;font-weight:700}
 
-/* V73.13.0 — tabellone annuale visual redesign */
+/* V73.13.1 — tabellone annuale visual redesign */
 .planning-board-shell{display:grid;gap:12px}
 .planning-board-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;padding:4px 2px 2px}
 .planning-board-hero h1{margin:0;color:#0f1f55;font-size:30px;line-height:1.05;letter-spacing:-.6px}
@@ -1234,17 +1234,39 @@ function renderRpcDiagnostics(){
 function openRpcDiagnostics(){renderRpcDiagnostics();$("rpcDiagnosticsModal")?.classList.remove("hidden");$("rpcDiagnosticsModal")?.setAttribute("aria-hidden","false")}
 function closeRpcDiagnostics(){$("rpcDiagnosticsModal")?.classList.add("hidden");$("rpcDiagnosticsModal")?.setAttribute("aria-hidden","true")}
 function resetRpcDiagnostics(){rpcDiagnostics.clear();updateRpcDiagnosticsIndicator();renderRpcDiagnostics()}
+function isJwtFutureError(error){
+  const t=String(error&&error.message||error||"").toLowerCase();
+  return /jwt issued at future|issued at future/.test(t);
+}
+function waitMs(ms){return new Promise(function(resolve){setTimeout(resolve,ms)})}
 async function rpc(name,args){
-  const started=performance.now();let recorded=false;
-  try{
-    const r=await sb.rpc(name,args||{});
-    const duration=performance.now()-started;
-    if(r.error){const kind=rpcErrorKind(r.error);recordRpcMetric(name,duration,kind,r.error);recorded=true;throw r.error}
-    recordRpcMetric(name,duration,"OK");recorded=true;return r.data;
-  }catch(error){
-    if(!recorded)recordRpcMetric(name,performance.now()-started,rpcErrorKind(error),error);
-    throw error;
+  const started=performance.now();
+  const retryDelays=[0,1800,3200];
+  let lastError=null;
+  for(let attempt=0;attempt<retryDelays.length;attempt++){
+    if(retryDelays[attempt])await waitMs(retryDelays[attempt]);
+    try{
+      const r=await sb.rpc(name,args||{});
+      if(r.error){
+        lastError=r.error;
+        if(isJwtFutureError(r.error)&&attempt<retryDelays.length-1)continue;
+        const duration=performance.now()-started,kind=rpcErrorKind(r.error);
+        recordRpcMetric(name,duration,kind,r.error);
+        throw r.error;
+      }
+      recordRpcMetric(name,performance.now()-started,"OK");
+      return r.data;
+    }catch(error){
+      lastError=error;
+      if(isJwtFutureError(error)&&attempt<retryDelays.length-1)continue;
+      if(!(error===lastError&&attempt===retryDelays.length-1&&isJwtFutureError(error))){
+        if(!isJwtFutureError(error)||attempt===retryDelays.length-1)recordRpcMetric(name,performance.now()-started,rpcErrorKind(error),error);
+      }
+      throw error;
+    }
   }
+  recordRpcMetric(name,performance.now()-started,rpcErrorKind(lastError),lastError);
+  throw lastError;
 }
 
 function showLogin(){$("loginView").classList.remove("hidden");$("appView").classList.add("hidden")}
