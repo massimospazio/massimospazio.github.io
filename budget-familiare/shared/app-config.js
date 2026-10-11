@@ -1,7 +1,7 @@
 // Canonical source: massimospazio/budget-familiare; public files are deployed automatically.
 (function(){
-  const APP_VERSION='V73.13.1';
-  const APP_RELEASE='Tabellone annuale · hotfix clock skew JWT';
+  const APP_VERSION='V73.14.0';
+  const APP_RELEASE='Tabellone decisionale · Anno/12M e trend vs storico';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});
