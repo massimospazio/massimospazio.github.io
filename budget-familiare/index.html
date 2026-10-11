@@ -2793,7 +2793,6 @@ function categoryTemporalitySelectHtml(cat){
     ["","—"],
     ["RECURRING","R · Ricorrente"],
     ["PLANNED_OCCASIONAL","P · Occasionale"],
-    ["EXCEPTIONAL","E · Eccezionale"],
     ["NOT_APPLICABLE","X · Non applicabile"]
   ];
   return '<select class="category-temporality-select '+(value==="EXCEPTIONAL"?"exceptional":"")+'" data-category-temporality="'+cat.id+'" '+(isTransfer?'title="I trasferimenti tecnici restano Non applicabili"':'')+'>'+
@@ -2802,10 +2801,6 @@ function categoryTemporalitySelectHtml(cat){
 }
 async function saveCategoryTemporality(select){
   const id=select.dataset.categoryTemporality,value=select.value||null,meta=(catData?.planningMeta?.rows||[]).find(x=>String(x.category_id)===String(id));
-  if(value==="EXCEPTIONAL"){
-    const ok=confirm("Usare E · Eccezionale come default di categoria?\n\nÈ pensato soprattutto per eventi imprevisti e dovrebbe essere raro. In una prossima evoluzione potrai impostarlo come override sul singolo movimento. Conferma solo se l'intera categoria è normalmente eccezionale.");
-    if(!ok){renderCategoriesCatalog();return}
-  }
   select.disabled=true;
   try{
     await rpc('dashboard_reporting_save_category_temporality_v1',{p_category_id:id,p_temporality:value});
@@ -2819,7 +2814,7 @@ async function saveCategoryTemporality(select){
   finally{select.disabled=false}
 }
 function categoryTemporalityInfoHtml(){
-  return '<span class="category-info-tip" tabindex="0" title="Temporalità predefinita della categoria. R = Ricorrente: fa parte del normale funzionamento, anche se annuale o stagionale. P = Occasionale/programmabile: non ricorrente ma normale e prevedibile nel bilancio. E = Eccezionale/imprevista: evento fuori dal normale piano; da usare raramente e, in futuro, soprattutto come override del singolo movimento. X = Non applicabile: R/P/E non descrivono correttamente questa voce. X NON significa escluso dal Bilancio: l’inclusione economica è una regola separata. R e P sono entrambe strutturali; E servirà a separare gli eventi eccezionali.">i</span>';
+  return '<span class="category-info-tip" tabindex="0" title="Temporalità predefinita della categoria. R = Ricorrente: fa parte del normale funzionamento, anche se annuale o stagionale. P = Occasionale/programmabile: non ricorrente ma normale e prevedibile nel bilancio. X = Non applicabile: R/P non descrivono correttamente questa voce. E = Eccezionale è volutamente disponibile solo come override del singolo movimento. X NON significa escluso dal Bilancio: l’inclusione economica è una regola separata.">i</span>';
 }
 function categoryAuditMap(){
   return new Map((catData?.categoryAudit?.rows||[]).map(x=>[String(x.category_id),x]));
