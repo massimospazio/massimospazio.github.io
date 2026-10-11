@@ -1,7 +1,7 @@
 // Canonical source: massimospazio/budget-familiare; public files are deployed automatically.
 (function(){
-  const APP_VERSION='V73.18.1';
-  const APP_RELEASE='Analisi · natura categoria visibile O/N/D e F/P/V';
+  const APP_VERSION='V73.18.2';
+  const APP_RELEASE='Bilancio · margine strutturale e straordinarie spiegate';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});
