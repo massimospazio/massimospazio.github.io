@@ -8,8 +8,8 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=73.13.1-20261011-0025"></script>
-<script src="../shared/app-config.js?v=73.13.1-20261011-0025"></script>
+<script src="../shared/supabase-client.js?v=73.14.0-20261011-0025"></script>
+<script src="../shared/app-config.js?v=73.14.0-20261011-0025"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 :root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#6b7280;--line:#e5e7eb;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 8px 24px rgba(15,23,42,.06)}
@@ -769,81 +769,93 @@ button,input,select{font:inherit}
 .analysis-hover-item.current-plan{background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8}
 .analysis-hover-item.current-actual{background:#f8fafc;border-color:#cbd5e1;color:#475569}
 
-/* V73.13.1 — Tassonomia L2 sempre visibile */
+/* V73.14.0 — Tassonomia L2 sempre visibile */
 .analysis-master-table tr.analysis-zero-row:not(.analysis-selected) .analysis-row-button{color:#64748b;font-weight:560}
 .analysis-master-table tr.analysis-zero-row:not(.analysis-selected) .analysis-master-amount strong{color:#64748b}
 .analysis-master-table tr.analysis-zero-row:not(.analysis-selected) .analysis-master-share{color:#94a3b8}
 .analysis-master-table tr.analysis-zero-row:not(.analysis-selected) .plan-icon.analysis-l2-icon{background:#f8fafc;color:#94a3b8;border-color:#e2e8f0}
 .analysis-zero-trend{display:inline-flex;align-items:center;justify-content:center;min-width:24px;color:#94a3b8;font-size:12px;font-weight:700}
 
-/* V73.13.1 — tabellone annuale visual redesign */
-.planning-board-shell{display:grid;gap:12px}
-.planning-board-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;padding:4px 2px 2px}
-.planning-board-hero h1{margin:0;color:#0f1f55;font-size:30px;line-height:1.05;letter-spacing:-.6px}
-.planning-board-hero p{margin:5px 0 0;color:#52617d;font-size:13px;max-width:800px}
-.planning-board-hero-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.planning-board-kpis{display:grid;grid-template-columns:repeat(4,minmax(170px,1fr));gap:11px}
-.planning-board-kpi{position:relative;overflow:hidden;border:1px solid #dce5f2;border-radius:12px;background:#fff;padding:14px 15px;min-height:88px;box-shadow:0 5px 18px rgba(15,31,85,.045)}
-.planning-board-kpi.income{background:linear-gradient(135deg,#effcf6,#f8fffb);border-color:#cbeee0}
-.planning-board-kpi.expense{background:linear-gradient(135deg,#fff3f3,#fffafa);border-color:#f2d5d5}
-.planning-board-kpi.balance{background:linear-gradient(135deg,#eef6ff,#f9fcff);border-color:#d3e4f9}
-.planning-board-kpi.saving{background:linear-gradient(135deg,#fff9e9,#fffdf7);border-color:#f1e1ae}
-.planning-board-kpi .kpi-head{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:760;color:#263552}
-.planning-board-kpi .kpi-icon{display:inline-flex;align-items:center;justify-content:center;width:29px;height:29px;border-radius:9px;background:rgba(255,255,255,.78);font-size:16px}
-.planning-board-kpi .v{font-size:25px;font-weight:860;line-height:1;margin:8px 0 0;color:#101d4b;font-variant-numeric:tabular-nums}
-.planning-board-kpi .s{font-size:9.5px;color:#6b7891;margin-top:5px}
+/* V73.14.0 — tabellone decisionale: periodo, trend vs storico, leggibilità */
+.planning-board-shell{display:grid;gap:14px}
+.planning-board-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;padding:5px 2px 2px}
+.planning-board-hero h1{margin:0;color:#0f1f55;font-size:32px;line-height:1.05;letter-spacing:-.65px}
+.planning-board-hero p{margin:6px 0 0;color:#53627e;font-size:14px;max-width:850px;line-height:1.35}
+.planning-board-hero-actions{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap}
+.planning-period-box{display:grid;gap:4px}.planning-period-box>span{font-size:10px;color:#71809a;font-weight:750;text-transform:uppercase;letter-spacing:.04em}
+.planning-board-kpis{display:grid;grid-template-columns:repeat(3,minmax(220px,1fr));gap:12px}
+.planning-board-kpi{position:relative;overflow:hidden;border:1px solid #dce5f2;border-radius:14px;background:#fff;padding:16px 17px;min-height:108px;box-shadow:0 6px 20px rgba(15,31,85,.05)}
+.planning-board-kpi.income{background:linear-gradient(135deg,#effcf6,#fbfffd);border-color:#c8ecdd}
+.planning-board-kpi.expense{background:linear-gradient(135deg,#fff1f1,#fffafa);border-color:#f0d1d1}
+.planning-board-kpi.balance{background:linear-gradient(135deg,#edf5ff,#fbfdff);border-color:#cfe1f8}
+.planning-board-kpi .kpi-head{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:800;color:#263552}
+.planning-board-kpi .kpi-icon{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.82)}
+.planning-board-kpi .kpi-icon svg{width:19px;height:19px}
+.planning-board-kpi .v{font-size:29px;font-weight:870;line-height:1;margin:10px 0 0;color:#101d4b;font-variant-numeric:tabular-nums}
+.planning-board-kpi .s{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11.5px;color:#66758f;margin-top:8px}
+.planning-kpi-delta{font-weight:850}.planning-kpi-delta.good{color:#078558}.planning-kpi-delta.bad{color:#c74343}.planning-kpi-delta.neutral{color:#71809a}
+.planning-nature-summary{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.planning-nature-summary-group{border:1px solid #dce5f2;border-radius:13px;background:#fff;padding:11px 12px;box-shadow:0 4px 14px rgba(15,31,85,.03)}
+.planning-nature-summary-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+.planning-nature-summary-head strong{font-size:12px;color:#17254d}.planning-nature-summary-head span{font-size:10.5px;color:#71809a}.planning-nature-summary-head .good{color:#078558}.planning-nature-summary-head .bad{color:#c74343}
+.planning-nature-summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.planning-nature-summary-item{border:1px solid #e4eaf2;border-radius:9px;padding:8px 9px;background:#fbfcfe;min-width:0}
+.planning-nature-summary-item .top{display:flex;align-items:center;gap:6px;font-size:10.5px;color:#4a5a76;white-space:nowrap}
+.planning-nature-summary-item .pct{font-size:17px;font-weight:850;color:#15234b;margin-top:3px}
+.planning-nature-summary-item .meta{font-size:9.5px;color:#71809a;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.planning-nature-summary-item .meta.good{color:#078558}.planning-nature-summary-item .meta.bad{color:#c74343}
 .planning-board-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .planning-board-toolbar-left,.planning-board-toolbar-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.planning-board-search{position:relative;min-width:220px}
-.planning-board-search input{width:100%;min-height:32px;border:1px solid #d8e1ed;border-radius:9px;background:#fff;padding:6px 9px 6px 30px;font-size:11px}
-.planning-board-search:before{content:"⌕";position:absolute;left:10px;top:6px;color:#71809a;font-size:15px}
-.planning-board-card{background:#fff;border:1px solid #dce5f2;border-radius:12px;overflow:hidden;box-shadow:0 5px 18px rgba(15,31,85,.035)}
+.planning-board-search{position:relative;min-width:225px}
+.planning-board-search input{width:100%;min-height:36px;border:1px solid #d5deeb;border-radius:9px;background:#fff;padding:7px 10px 7px 31px;font-size:13px}
+.planning-board-search:before{content:"⌕";position:absolute;left:10px;top:7px;color:#71809a;font-size:16px}
+.planning-board-card{background:#fff;border:1px solid #dce5f2;border-radius:13px;overflow:hidden;box-shadow:0 5px 18px rgba(15,31,85,.035)}
 .planning-board-table-wrap{overflow:auto}
-.planning-board-table{width:100%;border-collapse:collapse;min-width:1120px;table-layout:fixed}
-.planning-board-table th,.planning-board-table td{padding:7px 9px;border-bottom:1px solid #e7edf5;font-size:11px;vertical-align:middle}
-.planning-board-table th{background:#f4f7fb;color:#22304d;text-align:left;position:sticky;top:0;z-index:2;font-size:10.5px;font-weight:780}
-.planning-board-table th:nth-child(1){width:25%}.planning-board-table th:nth-child(2){width:11%;text-align:right}.planning-board-table th:nth-child(3){width:16%}.planning-board-table th:nth-child(4){width:9%;text-align:center}.planning-board-table th:nth-child(5){width:19%}.planning-board-table th:nth-child(6){width:17%}.planning-board-table th:nth-child(7){width:3%}
+.planning-board-table{width:100%;border-collapse:collapse;min-width:1160px;table-layout:fixed}
+.planning-board-table th,.planning-board-table td{padding:9px 11px;border-bottom:1px solid #e5ebf3;font-size:13px;vertical-align:middle}
+.planning-board-table th{background:#eef3f9;color:#22304d;text-align:left;position:sticky;top:0;z-index:2;font-size:12px;font-weight:820}
+.planning-board-table th:nth-child(1){width:25%}.planning-board-table th:nth-child(2){width:11%;text-align:right}.planning-board-table th:nth-child(3){width:19%}.planning-board-table th:nth-child(4){width:9%;text-align:center}.planning-board-table th:nth-child(5){width:18%}.planning-board-table th:nth-child(6){width:15%}.planning-board-table th:nth-child(7){width:3%}
 .planning-board-table td:nth-child(2){text-align:right}.planning-board-table td:nth-child(4){text-align:center}
-.planning-l1-row td{font-weight:820;color:#142143}.planning-l1-row.income td{background:#effaf5}.planning-l1-row.expense td{background:#fff2f2}
+.planning-l1-row td{font-weight:840;color:#132044;font-size:13.5px}.planning-l1-row.income td{background:#eaf8f2}.planning-l1-row.expense td{background:#fff0f0}
 .planning-l1-row:hover td{filter:brightness(.992)}
-.planning-l2-row:hover td{background:#f9fbfe}
-.planning-category{display:flex;align-items:center;gap:7px;min-width:0}.planning-category .name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.planning-caret{border:0;background:transparent;color:#52617d;cursor:pointer;width:18px;padding:0;font-size:14px}
-.planning-l2-name{padding-left:27px!important}
-.planning-nature-select{width:46px;min-height:25px;border:1px solid #dbe1e8;border-radius:7px;background:#fff;text-align:center;font-weight:850;padding:2px 3px}
-.planning-nature-badge{display:inline-flex;align-items:center;justify-content:center;min-width:44px;padding:3px 6px;border-radius:7px;font-size:10px;font-weight:850}
+.planning-l2-row:hover td{background:#f8fbff}
+.planning-category{display:flex;align-items:center;gap:8px;min-width:0}.planning-category .name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.planning-caret{border:0;background:transparent;color:#52617d;cursor:pointer;width:20px;padding:0;font-size:16px}
+.planning-l2-name{padding-left:30px!important}
+.planning-nature-select{width:50px;min-height:29px;border:1px solid #d7dfeb;border-radius:8px;background:#fff;text-align:center;font-size:12px;font-weight:850;padding:3px}
+.planning-nature-badge{display:inline-flex;align-items:center;justify-content:center;min-width:49px;padding:4px 7px;border-radius:8px;font-size:11.5px;font-weight:850}
 .planning-nature-badge.mandatory{background:#fee2e2;color:#b91c1c}.planning-nature-badge.necessary{background:#fef3c7;color:#a16207}.planning-nature-badge.discretionary{background:#d1fae5;color:#047857}
 .planning-nature-badge.fixed{background:#dbeafe;color:#1d4ed8}.planning-nature-badge.predictable{background:#e0e7ff;color:#4338ca}.planning-nature-badge.variable{background:#ffedd5;color:#c2410c}.planning-nature-badge.unknown{background:#f1f5f9;color:#64748b}
-.planning-method{line-height:1.2}.planning-method strong{font-size:10.5px;font-weight:700}.planning-method .sub{font-size:9px;color:#7a879c;margin-top:2px}
-.planning-plan-chip{display:inline-flex;margin-left:5px;padding:1px 5px;border-radius:999px;background:#eaf2ff;color:#315caa;font-size:8.5px;font-weight:750}
-.planning-note{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:250px;color:#40506d}
-.planning-open-analysis{border:0;background:transparent;color:#315caa;cursor:pointer;font-size:15px;padding:2px 5px}
-.planning-delta-cell{display:grid;grid-template-columns:1fr auto;align-items:center;gap:7px}
-.planning-delta-track{position:relative;height:12px;border-radius:999px;background:#edf1f6;overflow:hidden;min-width:94px}
-.planning-delta-zero{position:absolute;left:50%;top:0;bottom:0;width:1px;background:#75829a;opacity:.75}
-.planning-delta-fill{position:absolute;top:2px;bottom:2px;border-radius:999px;min-width:2px}
-.planning-delta-fill.save{right:50%;background:linear-gradient(90deg,#2bc48a,#55d4a6)}
-.planning-delta-fill.grow{left:50%;background:linear-gradient(90deg,#ff9b68,#ff684a)}
-.planning-delta-label{min-width:58px;text-align:right;font-size:9.5px;font-weight:800;font-variant-numeric:tabular-nums}
-.planning-delta-label.save{color:#0a8b5b}.planning-delta-label.grow{color:#d14b30}.planning-delta-label.neutral{color:#94a3b8}
-.planning-range{font-size:9.5px;color:#5f6f8b;white-space:nowrap}
+.planning-method{line-height:1.22}.planning-method strong{font-size:12.5px;font-weight:720}.planning-method .sub{font-size:10.5px;color:#7a879c;margin-top:3px}
+.planning-plan-chip{display:inline-flex;margin-left:6px;padding:2px 6px;border-radius:999px;background:#eaf2ff;color:#315caa;font-size:9.5px;font-weight:760}
+.planning-note{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:250px;color:#40506d;font-size:12.5px}
+.planning-open-analysis{border:0;background:transparent;color:#315caa;cursor:pointer;font-size:20px;padding:1px 5px}
+.planning-delta-cell{display:grid;grid-template-columns:minmax(100px,1fr) auto;align-items:center;gap:9px}
+.planning-delta-track{position:relative;height:16px;border-radius:999px;background:#edf1f6;overflow:hidden;min-width:105px}
+.planning-delta-zero{position:absolute;left:50%;top:0;bottom:0;width:1px;background:#6f7d94;opacity:.85}
+.planning-delta-fill{position:absolute;top:3px;bottom:3px;border-radius:999px;min-width:3px}
+.planning-delta-fill.neg{right:50%}.planning-delta-fill.pos{left:50%}
+.planning-delta-fill.good{background:linear-gradient(90deg,#20b77b,#51d19f)}.planning-delta-fill.bad{background:linear-gradient(90deg,#ff9b6c,#ef5a52)}
+.planning-delta-label{min-width:103px;text-align:right;font-size:11px;font-weight:850;font-variant-numeric:tabular-nums;white-space:nowrap}
+.planning-delta-label.good{color:#078558}.planning-delta-label.bad{color:#c74343}.planning-delta-label.neutral{color:#8b97aa}
+.planning-delta-new{font-size:9px;font-weight:750;margin-left:3px;padding:1px 4px;border-radius:5px;background:#eef2f7;color:#6f7d94}
 .planning-month-row td{padding:0!important;background:#fbfdff}
-.planning-month-panel{padding:10px 14px 11px 44px;border-bottom:1px solid #dbeafe}
-.planning-month-head{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:7px}.planning-month-head .small{line-height:1.35}
-.planning-month-grid{display:grid;grid-template-columns:repeat(12,minmax(58px,1fr));gap:5px}
-.planning-month-cell{border:1px solid #e2e8f0;border-radius:8px;background:#fff;padding:5px 6px;text-align:right}.planning-month-cell.actual{background:#f8fafc}.planning-month-cell.override{border-color:#93c5fd;background:#eff6ff}
-.planning-month-cell .m{font-size:9px;color:#64748b;text-transform:capitalize;text-align:left}.planning-month-cell .a{font-size:10px;font-weight:800;margin-top:2px}.planning-month-cell .t{font-size:8px;color:#94a3b8;margin-top:1px;text-align:left}
-.planning-section-label td{background:#fff;font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;color:#7b889e;font-weight:800;padding-top:10px}
-.planning-board-legend{padding:7px 10px;font-size:9.5px;color:#75829a;background:#fbfcfe;border-top:1px solid #eef2f7}
-.planning-insight-grid{display:grid;grid-template-columns:1fr 1.35fr .86fr;gap:11px}
-.planning-insight-card{background:#fff;border:1px solid #dce5f2;border-radius:12px;padding:12px 13px;min-height:230px;box-shadow:0 5px 18px rgba(15,31,85,.035)}
-.planning-insight-card h3{margin:0;color:#16234c;font-size:13px}.planning-insight-card p{margin:3px 0 8px;color:#7a879c;font-size:9.5px}
-.planning-chart-wrap{position:relative;height:180px}
-.planning-nature-layout{display:grid;grid-template-columns:52% 48%;align-items:center;height:180px}
-.planning-nature-legend{display:grid;gap:7px;font-size:10px}.planning-nature-legend-row{display:grid;grid-template-columns:10px 1fr auto auto;gap:6px;align-items:center}.planning-nature-dot{width:9px;height:9px;border-radius:50%}.planning-nature-legend-row strong{font-variant-numeric:tabular-nums}.planning-nature-pct{min-width:30px;text-align:right;color:#65728a}
-.planning-quick-list{display:grid;gap:7px;margin-top:10px}.planning-quick-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;border:1px solid #e1e8f2;border-radius:9px;padding:8px 9px;background:#fbfcff}.planning-quick-row.active{border-color:#8cbcff;background:#eff6ff}.planning-quick-row .name{font-size:10px;color:#31415f}.planning-quick-row .amount{font-size:11px;font-weight:850;font-variant-numeric:tabular-nums}.planning-quick-row .amount.positive{color:#0a8b5b}.planning-quick-row .amount.negative{color:#c23f3f}
-@media(max-width:1100px){.planning-board-kpis{grid-template-columns:repeat(2,1fr)}.planning-insight-grid{grid-template-columns:1fr 1fr}.planning-insight-grid .planning-insight-card:last-child{grid-column:1/-1}.planning-month-grid{grid-template-columns:repeat(6,1fr)}}
-@media(max-width:700px){.planning-board-hero{align-items:flex-start;flex-direction:column}.planning-board-kpis{grid-template-columns:1fr 1fr}.planning-insight-grid{grid-template-columns:1fr}.planning-insight-grid .planning-insight-card:last-child{grid-column:auto}.planning-nature-layout{grid-template-columns:1fr;height:auto}.planning-chart-wrap{height:170px}.planning-month-grid{grid-template-columns:repeat(3,1fr)}.planning-board-toolbar{align-items:stretch}.planning-board-toolbar-left,.planning-board-toolbar-right{width:100%}.planning-board-search{flex:1;min-width:170px}}
+.planning-month-panel{padding:12px 16px 13px 49px;border-bottom:1px solid #dbeafe}
+.planning-month-head{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:9px}.planning-month-head .small{line-height:1.4;font-size:11.5px}
+.planning-month-grid{display:grid;grid-template-columns:repeat(12,minmax(66px,1fr));gap:6px}
+.planning-month-cell{border:1px solid #e2e8f0;border-radius:8px;background:#fff;padding:7px;text-align:right}.planning-month-cell.actual{background:#f8fafc}.planning-month-cell.override{border-color:#93c5fd;background:#eff6ff}
+.planning-month-cell .m{font-size:10px;color:#64748b;text-transform:capitalize;text-align:left}.planning-month-cell .a{font-size:12px;font-weight:820;margin-top:3px}.planning-month-cell .t{font-size:9px;color:#94a3b8;margin-top:2px;text-align:left}
+.planning-section-label td{background:#fff;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:#738198;font-weight:820;padding-top:11px}
+.planning-board-legend{padding:9px 11px;font-size:10.5px;line-height:1.35;color:#6d7b92;background:#fbfcfe;border-top:1px solid #eef2f7}
+.planning-insight-grid{display:grid;grid-template-columns:1fr 1.35fr .86fr;gap:12px}
+.planning-insight-card{background:#fff;border:1px solid #dce5f2;border-radius:13px;padding:14px 15px;min-height:245px;box-shadow:0 5px 18px rgba(15,31,85,.035)}
+.planning-insight-card h3{margin:0;color:#16234c;font-size:15px}.planning-insight-card p{margin:4px 0 9px;color:#7a879c;font-size:11px}
+.planning-chart-wrap{position:relative;height:190px}
+.planning-nature-layout{display:grid;grid-template-columns:52% 48%;align-items:center;height:190px}
+.planning-nature-legend{display:grid;gap:8px;font-size:11.5px}.planning-nature-legend-row{display:grid;grid-template-columns:11px 1fr auto auto;gap:7px;align-items:center}.planning-nature-dot{width:10px;height:10px;border-radius:50%}.planning-nature-legend-row strong{font-variant-numeric:tabular-nums}.planning-nature-pct{min-width:33px;text-align:right;color:#65728a}
+.planning-quick-list{display:grid;gap:8px;margin-top:11px}.planning-quick-row{display:grid;grid-template-columns:1fr auto;gap:9px;align-items:center;border:1px solid #e1e8f2;border-radius:9px;padding:9px 10px;background:#fbfcff}.planning-quick-row.active{border-color:#8cbcff;background:#eff6ff}.planning-quick-row .name{font-size:11.5px;color:#31415f}.planning-quick-row .amount{font-size:12.5px;font-weight:850;font-variant-numeric:tabular-nums}.planning-quick-row .amount.positive{color:#078558}.planning-quick-row .amount.negative{color:#c23f3f}
+@media(max-width:1100px){.planning-board-kpis{grid-template-columns:repeat(3,1fr)}.planning-nature-summary{grid-template-columns:1fr}.planning-insight-grid{grid-template-columns:1fr 1fr}.planning-insight-grid .planning-insight-card:last-child{grid-column:1/-1}.planning-month-grid{grid-template-columns:repeat(6,1fr)}}
+@media(max-width:760px){.planning-board-hero{align-items:flex-start;flex-direction:column}.planning-board-kpis{grid-template-columns:1fr}.planning-nature-summary-grid{grid-template-columns:1fr}.planning-insight-grid{grid-template-columns:1fr}.planning-insight-grid .planning-insight-card:last-child{grid-column:auto}.planning-nature-layout{grid-template-columns:1fr;height:auto}.planning-chart-wrap{height:180px}.planning-month-grid{grid-template-columns:repeat(3,1fr)}.planning-board-toolbar{align-items:stretch}.planning-board-toolbar-left,.planning-board-toolbar-right{width:100%}.planning-board-search{flex:1;min-width:170px}}
 
 </style>
 </head>
@@ -953,17 +965,23 @@ button,input,select{font:inherit}
     <div id="planningBoardView" class="hidden planning-board-shell">
       <div class="planning-board-hero">
         <div>
-          <h1>Previsione <span id="planningBoardYear">—</span></h1>
-          <p>Vista unica del piano annuale di entrate e uscite, con natura della spesa, saving e razionali. Gli importi restano quelli costruiti in Analisi.</p>
+          <h1 id="planningBoardHeading">Previsione <span id="planningBoardYear">—</span></h1>
+          <p id="planningBoardSubtitle">Vista unica del piano e del trend rispetto allo storico. Gli importi restano quelli costruiti in Analisi.</p>
         </div>
         <div class="planning-board-hero-actions">
+          <div class="planning-period-box">
+            <span>Periodo</span>
+            <div class="mode-toggle">
+              <button class="btn compact" type="button" data-planning-horizon="CALENDAR">Anno corrente</button>
+              <button class="btn ghost compact" type="button" data-planning-horizon="ROLLING_12">12 mesi</button>
+            </div>
+          </div>
           <button id="planningBoardRefresh" class="btn ghost compact" type="button">↻ Aggiorna</button>
         </div>
       </div>
-
       <div id="planningBoardStatus"></div>
       <div id="planningBoardKpis" class="planning-board-kpis"></div>
-
+      <div id="planningNatureSummary" class="planning-nature-summary"></div>
       <div class="planning-board-toolbar">
         <div class="planning-board-toolbar-left">
           <div class="mode-toggle">
@@ -980,21 +998,19 @@ button,input,select{font:inherit}
           <label class="planning-board-search"><input id="planningBoardSearch" type="search" placeholder="Cerca categoria…" autocomplete="off"></label>
         </div>
       </div>
-
       <section class="planning-board-card">
         <div class="planning-board-table-wrap">
           <table class="planning-board-table">
-            <thead><tr><th>Categoria</th><th id="planningBoardYearHead">Piano</th><th>Saving / delta</th><th>Natura</th><th>Tipo previsione</th><th>Note / razionale</th><th></th></tr></thead>
+            <thead><tr><th>Categoria</th><th id="planningBoardYearHead">Piano</th><th>Var. vs storico</th><th>Natura</th><th>Tipo previsione</th><th>Note / razionale</th><th></th></tr></thead>
             <tbody id="planningBoardBody"><tr><td colspan="7" class="muted">Apri il tabellone per caricare il piano.</td></tr></tbody>
           </table>
         </div>
-        <div class="planning-board-legend">Il Saving/delta confronta il piano futuro con la base del metodo previsivo quando il confronto è tecnicamente disponibile. Gli importi si modificano in Analisi: il Tabellone non crea un secondo budget.</div>
+        <div id="planningBoardLegend" class="planning-board-legend"></div>
       </section>
-
       <div class="planning-insight-grid">
         <section class="planning-insight-card">
           <h3>Composizione uscite per natura</h3>
-          <p>Quanto del piano è obbligatorio, necessario o discrezionale.</p>
+          <p>Quanto del periodo è obbligatorio, necessario o discrezionale.</p>
           <div class="planning-nature-layout">
             <div class="planning-chart-wrap"><canvas id="planningNatureChart"></canvas></div>
             <div id="planningNatureLegend" class="planning-nature-legend"></div>
@@ -1007,7 +1023,7 @@ button,input,select{font:inherit}
         </section>
         <section class="planning-insight-card">
           <h3>Scenari rapidi</h3>
-          <p>What-if informativi: non modificano il piano.</p>
+          <p>What-if sulle discrezionali ancora pianificabili. Non modificano il piano.</p>
           <div id="planningQuickScenarios" class="planning-quick-list"></div>
         </section>
       </div>
@@ -1134,6 +1150,7 @@ let planningBoardVisible=false;
 let planningBoardLoading=false;
 let planningBoardData=null;
 let planningBoardFilter="ALL";
+let planningBoardHorizon="CALENDAR";
 let planningBoardLevel="L1_L2";
 let planningBoardSearch="";
 let planningNatureChart=null;
@@ -3652,207 +3669,107 @@ function showStandardReportingView(){
 
 
 function planningMetaRows(){return planningBoardData&&planningBoardData.meta&&Array.isArray(planningBoardData.meta.rows)?planningBoardData.meta.rows:[]}
-function planningMetaMap(){
-  const m=new Map();planningMetaRows().forEach(function(x){m.set(String(x.category_id),x)});return m;
-}
+function planningMetaMap(){const m=new Map();planningMetaRows().forEach(function(x){m.set(String(x.category_id),x)});return m}
 function planningNatureValue(meta,direction){return direction==="INCOME"?(meta&&meta.income_nature||""):(meta&&meta.expense_nature||"")}
-function planningNatureShort(v){
-  return {MANDATORY:"O",NECESSARY:"N",DISCRETIONARY:"D",FIXED:"F",PREDICTABLE:"P",VARIABLE:"V"}[v]||"?";
-}
-function planningNatureLabel(v){
-  return {MANDATORY:"Obbligatoria",NECESSARY:"Necessaria",DISCRETIONARY:"Discrezionale",FIXED:"Fissa",PREDICTABLE:"Prevedibile",VARIABLE:"Variabile"}[v]||"Non classificata";
-}
+function planningNatureShort(v){return {MANDATORY:"O",NECESSARY:"N",DISCRETIONARY:"D",FIXED:"F",PREDICTABLE:"P",VARIABLE:"V"}[v]||"?"}
+function planningNatureLabel(v){return {MANDATORY:"Obbligatoria",NECESSARY:"Necessaria",DISCRETIONARY:"Discrezionale",FIXED:"Fissa",PREDICTABLE:"Prevedibile",VARIABLE:"Variabile"}[v]||"Non classificata"}
 function planningNatureClass(v){return String(v||"unknown").toLowerCase()}
 function planningNatureSelectHtml(row,direction){
-  const meta=row.meta||{},value=planningNatureValue(meta,direction);
-  const opts=direction==="INCOME"
-    ?[["","?"],["FIXED","F"],["PREDICTABLE","P"],["VARIABLE","V"]]
-    :[["","?"],["MANDATORY","O"],["NECESSARY","N"],["DISCRETIONARY","D"]];
+  const meta=row.meta||{},value=planningNatureValue(meta,direction),opts=direction==="INCOME"?[["","?"],["FIXED","F"],["PREDICTABLE","P"],["VARIABLE","V"]]:[["","?"],["MANDATORY","O"],["NECESSARY","N"],["DISCRETIONARY","D"]];
   return '<select class="planning-nature-select" data-planning-nature="'+esc(row.category_id)+'" data-planning-direction="'+direction+'" title="'+esc(planningNatureLabel(value))+'">'+opts.map(function(o){return '<option value="'+o[0]+'"'+(o[0]===value?" selected":"")+'>'+o[1]+'</option>'}).join("")+'</select>';
 }
-function planningMethodName(v){
-  return {AVG6:"Media ultimi 6 mesi",AVG12:"Media ultimi 12 mesi",MEDIAN12:"Mediana ultimi 12 mesi",SAME_MONTH_LAST_YEAR:"Stesso mese A-1",LAST_VALUE:"Ultimo valore",FIXED:"Importo fisso",RANGE:"Range best-worst",ZERO:"Non si ripete"}[v]||String(v||"—");
-}
-function planningMonthsForYear(data){
-  const y=String(data&&data.current_year_start||"").slice(0,4)||String(new Date().getFullYear());
-  return Array.from({length:12},function(_,i){return y+"-"+String(i+1).padStart(2,"0")+"-01"});
-}
-function planningReportCellMap(direction){
-  const arr=direction==="INCOME"?(report&&report.income_forecast_cells||[]):(report&&report.forecast_cells||[]);
-  const m=new Map();arr.forEach(function(x){m.set(String(x.category_id)+"|"+String(x.month),x)});return m;
-}
-function planningReferenceAmount(f,cell){
-  const method=String(f&&f.forecast_method||""),adj=num(f&&f.adjustment_pct),suggested=num(f&&f.suggested_amount);
-  if(["FIXED","RANGE","ZERO"].includes(method))return null;
-  const denom=1+adj/100;
-  if(Math.abs(denom)>.0001)return suggested/denom;
-  if(!cell)return null;
-  if(method==="AVG6")return num(cell.avg6);
-  if(method==="AVG12")return num(cell.avg12);
-  if(method==="MEDIAN12")return num(cell.median12);
-  if(method==="SAME_MONTH_LAST_YEAR")return cell.same_month_last_year==null?null:num(cell.same_month_last_year);
-  if(method==="LAST_VALUE")return cell.last_value==null?null:num(cell.last_value);
-  return null;
+function planningMethodName(v){return {AVG6:"Media ultimi 6 mesi",AVG12:"Media ultimi 12 mesi",MEDIAN12:"Mediana ultimi 12 mesi",SAME_MONTH_LAST_YEAR:"Stesso mese A-1",LAST_VALUE:"Ultimo valore",FIXED:"Importo fisso",RANGE:"Range best-worst",ZERO:"Non si ripete"}[v]||String(v||"—")}
+function planningReportCellMap(direction){const arr=direction==="INCOME"?(report&&report.income_forecast_cells||[]):(report&&report.forecast_cells||[]),m=new Map();arr.forEach(function(x){m.set(String(x.category_id)+"|"+String(x.month),x)});return m}
+function planningDefinition(data){
+  if(!data)return null;
+  const current=String(data.current_month||"");
+  if(planningBoardHorizon==="ROLLING_12")return {comparisonMonths:monthSeries(addMonthsISO(current,-12),12),targetMonths:monthSeries(current,12),actualTargetMonths:[],forecastTargetMonths:monthSeries(current,12),comparisonLabel:"ultimi 12 mesi reali",targetLabel:"prossimi 12 mesi"};
+  const target=monthSeries(data.current_year_start,12);
+  return {comparisonMonths:monthSeries(data.previous_year_start,12),targetMonths:target,actualTargetMonths:target.filter(function(m){return m<current}),forecastTargetMonths:target.filter(function(m){return m>=current}),comparisonLabel:String(data.previous_year_start||"").slice(0,4),targetLabel:String(data.current_year_start||"").slice(0,4)};
 }
 function planningBuildRows(data,direction){
   if(!data)return [];
-  const metaMap=planningMetaMap(),months=planningMonthsForYear(data),current=String(data.current_month||""),actualMap=new Map(),forecastMap=new Map(),cellMap=planningReportCellMap(direction);
+  const metaMap=planningMetaMap(),def=planningDefinition(data),current=String(data.current_month||""),actualMap=new Map(),forecastMap=new Map(),cellMap=planningReportCellMap(direction);
   (data.actual_monthly||[]).forEach(function(x){actualMap.set(String(x.category_id)+"|"+String(x.month),num(x.amount))});
   (data.forecast_monthly||[]).forEach(function(x){forecastMap.set(String(x.category_id)+"|"+String(x.month),x)});
+  const actualTargetSet=new Set(def.actualTargetMonths),forecastTargetSet=new Set(def.forecastTargetMonths);
   return (data.categories||[]).map(function(cat){
-    const meta=metaMap.get(String(cat.category_id))||{},monthRows=[];
-    let annual=0,saving=0,lowAnnual=0,highAnnual=0,overrideCount=0;
-    months.forEach(function(month){
-      const key=String(cat.category_id)+"|"+month,isPast=month<current;
-      if(isPast){
-        const amount=num(actualMap.get(key));annual+=amount;lowAnnual+=amount;highAnnual+=amount;
-        monthRows.push({month:month,amount:amount,kind:"actual",override:false});return;
-      }
-      const f=forecastMap.get(key),amount=f?num(f.effective_amount):0;annual+=amount;
-      const overridden=!!(f&&f.override_amount!==null&&f.override_amount!==undefined);if(overridden)overrideCount++;
-      monthRows.push({month:month,amount:amount,kind:"plan",override:overridden,current:month===current});
-      if(f&&direction==="EXPENSE"){
-        const ref=planningReferenceAmount(f,cellMap.get(key));
-        if(ref!==null&&Number.isFinite(ref))saving+=ref-amount;
-      }
-      if(direction==="INCOME"){
-        const cell=cellMap.get(key);
-        let lo=amount,hi=amount;
-        if(cell&&!overridden&&cell.amount_model==="RANGE"){lo=num(cell.range_low);hi=num(cell.range_high)}
-        if(f&&f.actual_to_date!==null&&f.actual_to_date!==undefined){lo=Math.max(lo,num(f.actual_to_date));hi=Math.max(hi,num(f.actual_to_date))}
-        lowAnnual+=lo;highAnnual+=hi;
-      }
+    const meta=metaMap.get(String(cat.category_id))||{},monthRows=[];let planned=0,comparison=0,lowTotal=0,highTotal=0,overrideCount=0;
+    def.comparisonMonths.forEach(function(month){comparison+=num(actualMap.get(String(cat.category_id)+"|"+month))});
+    def.targetMonths.forEach(function(month){
+      const key=String(cat.category_id)+"|"+month;
+      if(actualTargetSet.has(month)){const amount=num(actualMap.get(key));planned+=amount;lowTotal+=amount;highTotal+=amount;monthRows.push({month:month,amount:amount,kind:"actual",override:false,current:false});return}
+      if(forecastTargetSet.has(month)){const f=forecastMap.get(key),amount=f?num(f.effective_amount):0,overridden=!!(f&&f.override_amount!==null&&f.override_amount!==undefined);planned+=amount;if(overridden)overrideCount++;let lo=amount,hi=amount;if(direction==="INCOME"){const cell=cellMap.get(key);if(cell&&!overridden&&cell.amount_model==="RANGE"){lo=num(cell.range_low);hi=num(cell.range_high)}if(f&&f.actual_to_date!==null&&f.actual_to_date!==undefined){lo=Math.max(lo,num(f.actual_to_date));hi=Math.max(hi,num(f.actual_to_date))}}lowTotal+=lo;highTotal+=hi;monthRows.push({month:month,amount:amount,kind:"plan",override:overridden,current:month===current});return}
+      monthRows.push({month:month,amount:0,kind:"plan",override:false,current:false});
     });
-    return {
-      direction:direction,category_id:cat.category_id,l1_id:cat.l1_id,l1_name:cat.l1_name,l2_name:cat.l2_name,
-      annual:annual,saving:saving,rangeLow:direction==="INCOME"?lowAnnual:annual,rangeHigh:direction==="INCOME"?highAnnual:annual,
-      overrideCount:overrideCount,months:monthRows,meta:meta
-    };
+    const deltaAbs=planned-comparison,deltaPct=comparison>0?deltaAbs*100/comparison:(Math.abs(planned)<.5?0:null);
+    return {direction:direction,category_id:cat.category_id,l1_id:cat.l1_id,l1_name:cat.l1_name,l2_name:cat.l2_name,annual:planned,comparison:comparison,deltaAbs:deltaAbs,deltaPct:deltaPct,rangeLow:direction==="INCOME"?lowTotal:planned,rangeHigh:direction==="INCOME"?highTotal:planned,overrideCount:overrideCount,months:monthRows,meta:meta};
   });
 }
-function planningGroupRows(rows){
-  const map=new Map();
-  rows.forEach(function(r){if(!map.has(String(r.l1_id)))map.set(String(r.l1_id),{id:r.l1_id,name:r.l1_name,direction:r.direction,rows:[]});map.get(String(r.l1_id)).rows.push(r)});
-  return Array.from(map.values()).sort(function(a,b){return String(a.name).localeCompare(String(b.name),"it")});
-}
-function planningDominantNature(rows,direction){
-  const sums=new Map(),total=rows.reduce(function(s,r){return s+num(r.annual)},0);
-  rows.forEach(function(r){const n=planningNatureValue(r.meta,direction);if(n)sums.set(n,(sums.get(n)||0)+num(r.annual))});
-  let best="",amount=0;sums.forEach(function(v,k){if(v>amount){amount=v;best=k}});
-  return {nature:best,pct:total>0?amount*100/total:0,total:total};
-}
+function planningGroupRows(rows){const map=new Map();rows.forEach(function(r){if(!map.has(String(r.l1_id)))map.set(String(r.l1_id),{id:r.l1_id,name:r.l1_name,direction:r.direction,rows:[]});map.get(String(r.l1_id)).rows.push(r)});return Array.from(map.values()).sort(function(a,b){return String(a.name).localeCompare(String(b.name),"it")})}
+function planningDominantNature(rows,direction){const sums=new Map(),total=rows.reduce(function(s,r){return s+num(r.annual)},0);rows.forEach(function(r){const n=planningNatureValue(r.meta,direction);if(n)sums.set(n,(sums.get(n)||0)+num(r.annual))});let best="",amount=0;sums.forEach(function(v,k){if(v>amount){amount=v;best=k}});return {nature:best,pct:total>0?amount*100/total:0,total:total}}
 function planningMethodHtml(row){
-  const m=row.meta||{},scope=m.forecast_scope||"CATEGORY",method=planningMethodName(m.forecast_method);
-  const override=row.overrideCount?'<span class="planning-plan-chip">'+row.overrideCount+' override</span>':"";
-  if(scope==="COUNTERPARTIES"){
-    const count=num(m.counterparty_setting_count),methods=String(m.counterparty_methods||"").split(",").map(function(x){return x.trim()}).filter(Boolean);
-    const detail=methods.length===1?planningMethodName(methods[0]):(methods.length>1?"Metodi misti":method);
-    return '<div class="planning-method"><strong>Controparti'+(count?" · "+count:"")+'</strong>'+override+'<div class="sub">'+esc(detail)+'</div></div>';
-  }
+  const m=row.meta||{},scope=m.forecast_scope||"CATEGORY",method=planningMethodName(m.forecast_method),override=row.overrideCount?'<span class="planning-plan-chip">'+row.overrideCount+' override</span>':"";
+  if(scope==="COUNTERPARTIES"){const count=num(m.counterparty_setting_count),methods=String(m.counterparty_methods||"").split(",").map(function(x){return x.trim()}).filter(Boolean),detail=methods.length===1?planningMethodName(methods[0]):(methods.length>1?"Metodi misti":method);return '<div class="planning-method"><strong>Controparti'+(count?" · "+count:"")+'</strong>'+override+'<div class="sub">'+esc(detail)+'</div></div>'}
   const adjustment=Math.abs(num(m.adjustment_pct))>.0001?' · '+(num(m.adjustment_pct)>0?"+":"")+num(m.adjustment_pct).toLocaleString("it-IT",{maximumFractionDigits:1})+"%":"";
   return '<div class="planning-method"><strong>'+esc(method)+'</strong>'+override+'<div class="sub">Livello L2'+adjustment+'</div></div>';
 }
-function planningL1NatureHtml(rows,direction){
-  const d=planningDominantNature(rows,direction);if(!d.nature)return '<span class="planning-nature-badge unknown">?</span>';
-  return '<span class="planning-nature-badge '+planningNatureClass(d.nature)+'" title="'+esc(planningNatureLabel(d.nature))+'">'+planningNatureShort(d.nature)+' '+d.pct.toLocaleString("it-IT",{maximumFractionDigits:0})+'%</span>';
+function planningL1NatureHtml(rows,direction){const d=planningDominantNature(rows,direction);if(!d.nature)return '<span class="planning-nature-badge unknown">?</span>';return '<span class="planning-nature-badge '+planningNatureClass(d.nature)+'" title="'+esc(planningNatureLabel(d.nature))+'">'+planningNatureShort(d.nature)+' '+d.pct.toLocaleString("it-IT",{maximumFractionDigits:0})+'%</span>'}
+function planningMonthPanelHtml(row){return '<tr class="planning-month-row"><td colspan="7"><div class="planning-month-panel"><div class="planning-month-head"><div class="small"><strong>'+esc(row.l2_name)+'</strong> · dettaglio mensile del periodo selezionato.</div><button class="btn ghost compact" type="button" data-planning-open-analysis="'+esc(row.category_id)+'" data-planning-open-direction="'+row.direction+'">Apri in Analisi</button></div><div class="planning-month-grid">'+row.months.map(function(m){return '<div class="planning-month-cell '+(m.kind==="actual"?"actual ":"")+(m.override?"override":"")+'"><div class="m">'+esc(monthLabel(m.month))+'</div><div class="a">'+money(m.amount)+'</div><div class="t">'+(m.kind==="actual"?"reale":(m.override?"override":"piano"))+'</div></div>'}).join("")+'</div></div></td></tr>'}
+function planningDeltaHtml(deltaAbs,deltaPct,direction,comparison){
+  const abs=num(deltaAbs),isNeutral=Math.abs(abs)<.5,pct=(deltaPct===null||deltaPct===undefined||!Number.isFinite(Number(deltaPct)))?null:num(deltaPct);
+  if(isNeutral)return '<div class="planning-delta-cell"><div class="planning-delta-track"><i class="planning-delta-zero"></i></div><span class="planning-delta-label neutral">0%</span></div>';
+  const favorable=direction==="EXPENSE"?abs<0:abs>0,quality=favorable?"good":"bad",sign=abs>0?"+":"−",pos=abs>0?"pos":"neg";
+  if(comparison<=0)return '<div class="planning-delta-cell"><div class="planning-delta-track"><i class="planning-delta-zero"></i></div><span class="planning-delta-label '+quality+'">'+sign+money(Math.abs(abs))+' <span class="planning-delta-new">nuova</span></span></div>';
+  const width=Math.min(50,Math.max(3,Math.abs(pct)/100*50));
+  return '<div class="planning-delta-cell"><div class="planning-delta-track"><i class="planning-delta-zero"></i><i class="planning-delta-fill '+pos+' '+quality+'" style="width:'+width.toFixed(1)+'%"></i></div><span class="planning-delta-label '+quality+'">'+(pct>0?"+":"")+pct.toLocaleString("it-IT",{maximumFractionDigits:1})+'% · '+sign+money(Math.abs(abs))+'</span></div>';
 }
-function planningMonthPanelHtml(row){
-  return '<tr class="planning-month-row"><td colspan="7"><div class="planning-month-panel"><div class="planning-month-head"><div class="small"><strong>'+esc(row.l2_name)+'</strong> · dettaglio mensile dello stesso piano usato in Analisi.</div><button class="btn ghost compact" type="button" data-planning-open-analysis="'+esc(row.category_id)+'" data-planning-open-direction="'+row.direction+'">Apri in Analisi</button></div><div class="planning-month-grid">'+row.months.map(function(m){return '<div class="planning-month-cell '+(m.kind==="actual"?"actual ":"")+(m.override?"override":"")+'"><div class="m">'+esc(monthLabel(m.month))+'</div><div class="a">'+money(m.amount)+'</div><div class="t">'+(m.kind==="actual"?"reale":(m.override?"override":"piano"))+'</div></div>'}).join("")+'</div></div></td></tr>';
-}
-function planningDeltaScale(rows){
-  return Math.max(1,...rows.filter(function(r){return r.direction==="EXPENSE"}).map(function(r){return Math.abs(num(r.saving))}));
-}
-function planningDeltaBarHtml(value,maxAbs){
-  const v=num(value);
-  if(Math.abs(v)<.5)return '<div class="planning-delta-cell"><div class="planning-delta-track"><i class="planning-delta-zero"></i></div><span class="planning-delta-label neutral">—</span></div>';
-  const pct=Math.min(50,Math.max(2,Math.abs(v)/Math.max(1,maxAbs)*50)),save=v>0,cls=save?"save":"grow";
-  return '<div class="planning-delta-cell"><div class="planning-delta-track"><i class="planning-delta-zero"></i><i class="planning-delta-fill '+cls+'" style="width:'+pct.toFixed(1)+'%"></i></div><span class="planning-delta-label '+cls+'">'+(save?"+":"−")+money(Math.abs(v))+'</span></div>';
-}
-function planningFilterRows(rows){
-  const q=planningBoardSearch.trim().toLocaleLowerCase("it");
-  if(!q)return rows.slice();
-  return rows.filter(function(r){return String(r.l1_name||"").toLocaleLowerCase("it").includes(q)||String(r.l2_name||"").toLocaleLowerCase("it").includes(q)});
-}
-function planningSectionHtml(direction,allRows,maxDelta){
+function planningSectionHtml(direction,allRows){
   const q=planningBoardSearch.trim().toLocaleLowerCase("it"),groups=planningGroupRows(allRows);let html='<tr class="planning-section-label"><td colspan="7">'+(direction==="INCOME"?"Entrate":"Spese")+'</td></tr>';
   groups.forEach(function(g){
-    const groupMatches=!q||String(g.name||"").toLocaleLowerCase("it").includes(q);
-    const visibleRows=groupMatches?g.rows:g.rows.filter(function(r){return String(r.l2_name||"").toLocaleLowerCase("it").includes(q)});
-    if(q&&!groupMatches&&!visibleRows.length)return;
-    const key=direction+"|"+g.id,searching=!!q,expanded=planningBoardLevel==="L1_L2"&&(searching||planningBoardExpandedL1.has(key));
-    const annual=g.rows.reduce(function(s,r){return s+r.annual},0),saving=g.rows.reduce(function(s,r){return s+r.saving},0);
-    const low=g.rows.reduce(function(s,r){return s+r.rangeLow},0),high=g.rows.reduce(function(s,r){return s+r.rangeHigh},0);
-    const delta=direction==="EXPENSE"?planningDeltaBarHtml(saving,maxDelta):(Math.abs(high-low)>.5?'<span class="planning-range">'+money(low)+' – '+money(high)+'</span>':"—");
-    html+='<tr class="planning-l1-row '+(direction==="INCOME"?"income":"expense")+'"><td><div class="planning-category">'+(planningBoardLevel==="L1_L2"?'<button class="planning-caret" data-planning-toggle-l1="'+esc(key)+'">'+(expanded?"▾":"▸")+'</button>':'<span class="planning-caret"></span>')+categoryIconHtml(g.name,direction==="INCOME"?"income":"expense",true)+'<span class="name">'+esc(g.name)+'</span></div></td><td>'+money(annual)+'</td><td>'+delta+'</td><td>'+planningL1NatureHtml(g.rows,direction)+'</td><td>—</td><td>—</td><td></td></tr>';
+    const groupMatches=!q||String(g.name||"").toLocaleLowerCase("it").includes(q),visibleRows=groupMatches?g.rows:g.rows.filter(function(r){return String(r.l2_name||"").toLocaleLowerCase("it").includes(q)});if(q&&!groupMatches&&!visibleRows.length)return;
+    const key=direction+"|"+g.id,searching=!!q,expanded=planningBoardLevel==="L1_L2"&&(searching||planningBoardExpandedL1.has(key)),annual=g.rows.reduce(function(s,r){return s+r.annual},0),comparison=g.rows.reduce(function(s,r){return s+r.comparison},0),deltaAbs=annual-comparison,deltaPct=comparison>0?deltaAbs*100/comparison:(Math.abs(annual)<.5?0:null);
+    html+='<tr class="planning-l1-row '+(direction==="INCOME"?"income":"expense")+'"><td><div class="planning-category">'+(planningBoardLevel==="L1_L2"?'<button class="planning-caret" data-planning-toggle-l1="'+esc(key)+'">'+(expanded?"▾":"▸")+'</button>':'<span class="planning-caret"></span>')+categoryIconHtml(g.name,direction==="INCOME"?"income":"expense",true)+'<span class="name">'+esc(g.name)+'</span></div></td><td>'+money(annual)+'</td><td>'+planningDeltaHtml(deltaAbs,deltaPct,direction,comparison)+'</td><td>'+planningL1NatureHtml(g.rows,direction)+'</td><td>—</td><td>—</td><td></td></tr>';
     if(!expanded)return;
-    visibleRows.slice().sort(function(a,b){return String(a.l2_name).localeCompare(String(b.l2_name),"it")}).forEach(function(r){
-      const l2Key=direction+"|"+r.category_id,open=planningBoardExpandedL2.has(l2Key),note=r.meta&&r.meta.rationale_note||"";
-      const l2Delta=direction==="EXPENSE"?planningDeltaBarHtml(r.saving,maxDelta):(Math.abs(r.rangeHigh-r.rangeLow)>.5?'<span class="planning-range">'+money(r.rangeLow)+' – '+money(r.rangeHigh)+'</span>':"—");
-      html+='<tr class="planning-l2-row"><td class="planning-l2-name"><div class="planning-category"><button class="planning-caret" data-planning-toggle-l2="'+esc(l2Key)+'">'+(open?"▾":"▸")+'</button>'+categoryIconHtml(r.l2_name,direction==="INCOME"?"income":"expense",false)+'<span class="name">'+esc(r.l2_name)+'</span></div></td><td><strong>'+money(r.annual)+'</strong></td><td>'+l2Delta+'</td><td>'+planningNatureSelectHtml(r,direction)+'</td><td>'+planningMethodHtml(r)+'</td><td><div class="planning-note" title="'+esc(note)+'">'+esc(note||"—")+'</div></td><td><button class="planning-open-analysis" type="button" data-planning-open-analysis="'+esc(r.category_id)+'" data-planning-open-direction="'+direction+'" title="Apri la previsione originale in Analisi">›</button></td></tr>';
-      if(open)html+=planningMonthPanelHtml(r);
-    });
+    visibleRows.slice().sort(function(a,b){return String(a.l2_name).localeCompare(String(b.l2_name),"it")}).forEach(function(r){const l2Key=direction+"|"+r.category_id,open=planningBoardExpandedL2.has(l2Key),note=r.meta&&r.meta.rationale_note||"";html+='<tr class="planning-l2-row"><td class="planning-l2-name"><div class="planning-category"><button class="planning-caret" data-planning-toggle-l2="'+esc(l2Key)+'">'+(open?"▾":"▸")+'</button>'+categoryIconHtml(r.l2_name,direction==="INCOME"?"income":"expense",false)+'<span class="name">'+esc(r.l2_name)+'</span></div></td><td><strong>'+money(r.annual)+'</strong></td><td>'+planningDeltaHtml(r.deltaAbs,r.deltaPct,direction,r.comparison)+'</td><td>'+planningNatureSelectHtml(r,direction)+'</td><td>'+planningMethodHtml(r)+'</td><td><div class="planning-note" title="'+esc(note)+'">'+esc(note||"—")+'</div></td><td><button class="planning-open-analysis" type="button" data-planning-open-analysis="'+esc(r.category_id)+'" data-planning-open-direction="'+direction+'" title="Apri la previsione originale in Analisi">›</button></td></tr>';if(open)html+=planningMonthPanelHtml(r)});
   });
   return html;
 }
-function planningRenderFilterButtons(){
-  document.querySelectorAll("[data-planning-filter]").forEach(function(b){const active=b.dataset.planningFilter===planningBoardFilter;b.classList.toggle("ghost",!active)});
-  document.querySelectorAll("[data-planning-level]").forEach(function(b){const active=b.dataset.planningLevel===planningBoardLevel;b.classList.toggle("ghost",!active)});
+function planningRenderFilterButtons(){document.querySelectorAll("[data-planning-filter]").forEach(function(b){b.classList.toggle("ghost",b.dataset.planningFilter!==planningBoardFilter)});document.querySelectorAll("[data-planning-level]").forEach(function(b){b.classList.toggle("ghost",b.dataset.planningLevel!==planningBoardLevel)});document.querySelectorAll("[data-planning-horizon]").forEach(function(b){b.classList.toggle("ghost",b.dataset.planningHorizon!==planningBoardHorizon)})}
+function planningDirectionTotals(rows){const planned=rows.reduce(function(s,r){return s+r.annual},0),comparison=rows.reduce(function(s,r){return s+r.comparison},0),delta=planned-comparison;return {planned:planned,comparison:comparison,delta:delta,pct:comparison>0?delta*100/comparison:(Math.abs(planned)<.5?0:null)}}
+function planningPctText(pct){if(pct===null||pct===undefined||!Number.isFinite(Number(pct)))return "nuovo";const v=num(pct);return (v>0?"+":"")+v.toLocaleString("it-IT",{maximumFractionDigits:1})+"%"}
+function planningDeltaQuality(delta,direction){const v=num(delta);if(Math.abs(v)<.5)return "neutral";return (direction==="EXPENSE"?v<0:v>0)?"good":"bad"}
+function planningNatureSummaryData(rows,direction){
+  const order=direction==="EXPENSE"?["MANDATORY","NECESSARY","DISCRETIONARY"]:["FIXED","PREDICTABLE","VARIABLE"],total=rows.reduce(function(s,r){return s+r.annual},0);
+  return order.map(function(nature){const matches=rows.filter(function(r){return planningNatureValue(r.meta,direction)===nature}),planned=matches.reduce(function(s,r){return s+r.annual},0),comparison=matches.reduce(function(s,r){return s+r.comparison},0),delta=planned-comparison,pctDelta=comparison>0?delta*100/comparison:(Math.abs(planned)<.5?0:null);return {nature:nature,planned:planned,comparison:comparison,delta:delta,pctDelta:pctDelta,share:total>0?planned*100/total:0}});
 }
-function planningNatureTotals(exp){
-  const out={MANDATORY:0,NECESSARY:0,DISCRETIONARY:0,UNKNOWN:0};
-  exp.forEach(function(r){const n=planningNatureValue(r.meta,"EXPENSE");if(n&&out[n]!==undefined)out[n]+=r.annual;else out.UNKNOWN+=r.annual});
-  return out;
+function renderPlanningNatureSummary(exp,inc){
+  function group(direction,rows){const items=planningNatureSummaryData(rows,direction),tot=planningDirectionTotals(rows),title=direction==="EXPENSE"?"Natura uscite":"Natura entrate",overallCls=planningDeltaQuality(tot.delta,direction);return '<section class="planning-nature-summary-group"><div class="planning-nature-summary-head"><strong>'+title+'</strong><span>Variazione periodo <b class="'+overallCls+'">'+planningPctText(tot.pct)+'</b></span></div><div class="planning-nature-summary-grid">'+items.map(function(x){const cls=planningDeltaQuality(x.delta,direction);return '<div class="planning-nature-summary-item"><div class="top"><span class="planning-nature-badge '+planningNatureClass(x.nature)+'">'+planningNatureShort(x.nature)+'</span><span>'+esc(planningNatureLabel(x.nature))+'</span></div><div class="pct">'+x.share.toLocaleString("it-IT",{maximumFractionDigits:0})+'%</div><div class="meta '+cls+'">'+money(x.planned)+' · Δ '+planningPctText(x.pctDelta)+'</div></div>'}).join("")+'</div></section>'} $("planningNatureSummary").innerHTML=group("EXPENSE",exp)+group("INCOME",inc);
 }
+function planningNatureTotals(exp){const out={MANDATORY:0,NECESSARY:0,DISCRETIONARY:0,UNKNOWN:0};exp.forEach(function(r){const n=planningNatureValue(r.meta,"EXPENSE");if(n&&out[n]!==undefined)out[n]+=r.annual;else out.UNKNOWN+=r.annual});return out}
 function renderPlanningNatureChart(exp){
-  const totals=planningNatureTotals(exp),labels=["Obbligatorie","Necessarie","Discrezionali"],values=[totals.MANDATORY,totals.NECESSARY,totals.DISCRETIONARY],colors=["#ef5a5a","#f4b63e","#2bbf83"];
-  if(totals.UNKNOWN>.5){labels.push("Non classificate");values.push(totals.UNKNOWN);colors.push("#aab4c3")}
-  const total=values.reduce(function(s,v){return s+v},0),canvas=$("planningNatureChart");
-  if(planningNatureChart){planningNatureChart.destroy();planningNatureChart=null}
-  if(canvas&&typeof Chart!=="undefined"){
-    const centerPlugin={id:"planningNatureCenter",afterDraw:function(chart){const area=chart.chartArea;if(!area)return;const ctx=chart.ctx,x=(area.left+area.right)/2,y=(area.top+area.bottom)/2;ctx.save();ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillStyle="#15234b";ctx.font="800 13px system-ui, sans-serif";ctx.fillText(money(total),x,y-5);ctx.fillStyle="#7a879c";ctx.font="500 9px system-ui, sans-serif";ctx.fillText("Totale",x,y+10);ctx.restore()}};
-    planningNatureChart=new Chart(canvas,{type:"doughnut",data:{labels:labels,datasets:[{data:values,backgroundColor:colors,borderWidth:0,hoverOffset:3}]},plugins:[centerPlugin],options:{responsive:true,maintainAspectRatio:false,cutout:"66%",plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){const v=num(ctx.raw);return ctx.label+": "+money(v)+" · "+(total?Math.round(v*100/total):0)+"%"}}}}}});
-  }
+  const totals=planningNatureTotals(exp),labels=["Obbligatorie","Necessarie","Discrezionali"],values=[totals.MANDATORY,totals.NECESSARY,totals.DISCRETIONARY],colors=["#ef5a5a","#f4b63e","#2bbf83"];if(totals.UNKNOWN>.5){labels.push("Non classificate");values.push(totals.UNKNOWN);colors.push("#aab4c3")}const total=values.reduce(function(s,v){return s+v},0),canvas=$("planningNatureChart");if(planningNatureChart){planningNatureChart.destroy();planningNatureChart=null}
+  if(canvas&&typeof Chart!=="undefined"){const centerPlugin={id:"planningNatureCenter",afterDraw:function(chart){const area=chart.chartArea;if(!area)return;const ctx=chart.ctx,x=(area.left+area.right)/2,y=(area.top+area.bottom)/2;ctx.save();ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillStyle="#15234b";ctx.font="800 14px system-ui, sans-serif";ctx.fillText(money(total),x,y-6);ctx.fillStyle="#7a879c";ctx.font="500 10px system-ui, sans-serif";ctx.fillText("Totale",x,y+11);ctx.restore()}};planningNatureChart=new Chart(canvas,{type:"doughnut",data:{labels:labels,datasets:[{data:values,backgroundColor:colors,borderWidth:0,hoverOffset:3}]},plugins:[centerPlugin],options:{responsive:true,maintainAspectRatio:false,cutout:"66%",plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){const v=num(ctx.raw);return ctx.label+": "+money(v)+" · "+(total?Math.round(v*100/total):0)+"%"}}}}}})}
   if($("planningNatureLegend"))$("planningNatureLegend").innerHTML=labels.map(function(label,i){const v=values[i],pct=total?v*100/total:0;return '<div class="planning-nature-legend-row"><i class="planning-nature-dot" style="background:'+colors[i]+'"></i><span>'+esc(label)+'</span><strong>'+money(v)+'</strong><span class="planning-nature-pct">'+pct.toLocaleString("it-IT",{maximumFractionDigits:0})+'%</span></div>'}).join("");
 }
 function renderPlanningMonthlyChart(exp,inc){
-  const months=planningMonthsForYear(planningBoardData.expense),labels=months.map(function(m){return new Intl.DateTimeFormat("it-IT",{month:"short"}).format(monthDate(m))});
+  const def=planningDefinition(planningBoardData.expense),months=def.targetMonths,labels=months.map(function(m){return planningBoardHorizon==="ROLLING_12"?monthLabel(m):new Intl.DateTimeFormat("it-IT",{month:"short"}).format(monthDate(m))});
   function series(nature){return months.map(function(m){return exp.filter(function(r){return planningNatureValue(r.meta,"EXPENSE")===nature}).reduce(function(s,r){const x=r.months.find(function(z){return z.month===m});return s+num(x&&x.amount)},0)})}
-  const income=months.map(function(m){return inc.reduce(function(s,r){const x=r.months.find(function(z){return z.month===m});return s+num(x&&x.amount)},0)});
-  const unknown=months.map(function(m){return exp.filter(function(r){return !planningNatureValue(r.meta,"EXPENSE")}).reduce(function(s,r){const x=r.months.find(function(z){return z.month===m});return s+num(x&&x.amount)},0)});
-  const datasets=[
-    {type:"bar",label:"Obbligatorie",data:series("MANDATORY"),backgroundColor:"#ef5a5a",stack:"expenses",borderWidth:0},
-    {type:"bar",label:"Necessarie",data:series("NECESSARY"),backgroundColor:"#f4b63e",stack:"expenses",borderWidth:0},
-    {type:"bar",label:"Discrezionali",data:series("DISCRETIONARY"),backgroundColor:"#2bbf83",stack:"expenses",borderWidth:0}
-  ];
-  if(unknown.some(function(v){return v>.5}))datasets.push({type:"bar",label:"Non classificate",data:unknown,backgroundColor:"#aab4c3",stack:"expenses",borderWidth:0});
-  datasets.push({type:"line",label:"Entrate",data:income,borderColor:"#2687e8",backgroundColor:"#2687e8",borderWidth:2,pointRadius:2.5,pointHoverRadius:4,tension:.22,yAxisID:"y"});
-  const canvas=$("planningMonthlyChart");if(planningMonthlyChart){planningMonthlyChart.destroy();planningMonthlyChart=null}
-  if(canvas&&typeof Chart!=="undefined")planningMonthlyChart=new Chart(canvas,{data:{labels:labels,datasets:datasets},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},plugins:{legend:{position:"bottom",labels:{boxWidth:9,boxHeight:9,font:{size:9}}},tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+": "+money(ctx.raw)}}}},scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:9}}},y:{stacked:true,beginAtZero:true,ticks:{font:{size:9},callback:function(v){return Number(v).toLocaleString("it-IT")}},grid:{color:"rgba(148,163,184,.16)"}}}}});
+  const income=months.map(function(m){return inc.reduce(function(s,r){const x=r.months.find(function(z){return z.month===m});return s+num(x&&x.amount)},0)}),unknown=months.map(function(m){return exp.filter(function(r){return !planningNatureValue(r.meta,"EXPENSE")}).reduce(function(s,r){const x=r.months.find(function(z){return z.month===m});return s+num(x&&x.amount)},0)}),datasets=[{type:"bar",label:"Obbligatorie",data:series("MANDATORY"),backgroundColor:"#ef5a5a",stack:"expenses",borderWidth:0},{type:"bar",label:"Necessarie",data:series("NECESSARY"),backgroundColor:"#f4b63e",stack:"expenses",borderWidth:0},{type:"bar",label:"Discrezionali",data:series("DISCRETIONARY"),backgroundColor:"#2bbf83",stack:"expenses",borderWidth:0}];
+  if(unknown.some(function(v){return v>.5}))datasets.push({type:"bar",label:"Non classificate",data:unknown,backgroundColor:"#aab4c3",stack:"expenses",borderWidth:0});datasets.push({type:"line",label:"Entrate",data:income,borderColor:"#2687e8",backgroundColor:"#2687e8",borderWidth:2.3,pointRadius:2.8,pointHoverRadius:4,tension:.22,yAxisID:"y"});const canvas=$("planningMonthlyChart");if(planningMonthlyChart){planningMonthlyChart.destroy();planningMonthlyChart=null}if(canvas&&typeof Chart!=="undefined")planningMonthlyChart=new Chart(canvas,{data:{labels:labels,datasets:datasets},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},plugins:{legend:{position:"bottom",labels:{boxWidth:10,boxHeight:10,font:{size:10}}},tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+": "+money(ctx.raw)}}}},scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:10}}},y:{stacked:true,beginAtZero:true,ticks:{font:{size:10},callback:function(v){return Number(v).toLocaleString("it-IT")}},grid:{color:"rgba(148,163,184,.16)"}}}}});
 }
 function renderPlanningQuickScenarios(exp,inc){
-  const income=inc.reduce(function(s,r){return s+r.annual},0),expenses=exp.reduce(function(s,r){return s+r.annual},0),current=String(planningBoardData.expense.current_month||"");
-  const futureDiscretionary=exp.filter(function(r){return planningNatureValue(r.meta,"EXPENSE")==="DISCRETIONARY"}).reduce(function(total,r){
-    return total+r.months.filter(function(m){return m.month>=current&&m.kind==="plan"}).reduce(function(s,m){return s+num(m.amount)},0);
-  },0);
-  const scenarios=[["Piano attuale",0],["Discrezionali future −25%",.25],["Discrezionali future −50%",.50],["Discrezionali future a zero",1]];
+  const income=inc.reduce(function(s,r){return s+r.annual},0),expenses=exp.reduce(function(s,r){return s+r.annual},0),futureDiscretionary=exp.filter(function(r){return planningNatureValue(r.meta,"EXPENSE")==="DISCRETIONARY"}).reduce(function(total,r){return total+r.months.filter(function(m){return m.kind==="plan"}).reduce(function(s,m){return s+num(m.amount)},0)},0),scenarios=[["Piano attuale",0],["Discrezionali future −25%",.25],["Discrezionali future −50%",.50],["Discrezionali future a zero",1]];
   $("planningQuickScenarios").innerHTML=scenarios.map(function(x,i){const balance=income-(expenses-futureDiscretionary*x[1]);return '<div class="planning-quick-row'+(i===0?" active":"")+'"><span class="name">'+esc(x[0])+'</span><span class="amount '+(balance>=0?"positive":"negative")+'">'+(balance>=0?"+":"")+money(balance)+'</span></div>'}).join("");
 }
 function renderPlanningBoard(){
-  if(!planningBoardData||!planningBoardData.expense||!planningBoardData.income)return;
-  planningRenderFilterButtons();
-  const exp=planningBuildRows(planningBoardData.expense,"EXPENSE"),inc=planningBuildRows(planningBoardData.income,"INCOME");
-  const expTotal=exp.reduce(function(s,r){return s+r.annual},0),incTotal=inc.reduce(function(s,r){return s+r.annual},0),saving=exp.reduce(function(s,r){return s+Math.max(0,r.saving)},0),balance=incTotal-expTotal;
-  const year=String(planningBoardData.expense.current_year_start||"").slice(0,4)||String(new Date().getFullYear());
-  $("planningBoardYear").textContent=year;$("planningBoardYearHead").textContent="Piano "+year;
-  $("planningBoardKpis").innerHTML=
-    '<div class="planning-board-kpi income"><div class="kpi-head"><span class="kpi-icon">'+analysisSvgIcon("Entrate")+'</span><span>Entrate previste</span></div><div class="v">'+money(incTotal)+'</div><div class="s">reale chiuso + piano dei mesi aperti</div></div>'+
-    '<div class="planning-board-kpi expense"><div class="kpi-head"><span class="kpi-icon">'+analysisSvgIcon("Shopping personale")+'</span><span>Uscite previste</span></div><div class="v">'+money(expTotal)+'</div><div class="s">stesso piano utilizzato in Analisi</div></div>'+
-    '<div class="planning-board-kpi balance"><div class="kpi-head"><span class="kpi-icon">'+analysisSvgIcon("chart")+'</span><span>Saldo annuale</span></div><div class="v '+(balance>=0?"positive":"negative")+'">'+(balance>=0?"+":"")+money(balance)+'</div><div class="s">entrate previste − uscite previste</div></div>'+
-    '<div class="planning-board-kpi saving"><div class="kpi-head"><span class="kpi-icon">'+analysisSvgIcon("Risparmio")+'</span><span>Saving vs riferimento</span></div><div class="v positive">+'+money(saving)+'</div><div class="s">solo dove la base previsiva è confrontabile</div></div>';
-  const maxDelta=planningDeltaScale(exp);let html="";
-  if(planningBoardFilter!=="EXPENSE")html+=planningSectionHtml("INCOME",inc,maxDelta);
-  if(planningBoardFilter!=="INCOME")html+=planningSectionHtml("EXPENSE",exp,maxDelta);
-  $("planningBoardBody").innerHTML=html||'<tr><td colspan="7" class="muted">Nessuna voce corrisponde ai filtri.</td></tr>';
+  if(!planningBoardData||!planningBoardData.expense||!planningBoardData.income)return;planningRenderFilterButtons();
+  const exp=planningBuildRows(planningBoardData.expense,"EXPENSE"),inc=planningBuildRows(planningBoardData.income,"INCOME"),expTotals=planningDirectionTotals(exp),incTotals=planningDirectionTotals(inc),balance=incTotals.planned-expTotals.planned,def=planningDefinition(planningBoardData.expense),year=String(planningBoardData.expense.current_year_start||"").slice(0,4)||String(new Date().getFullYear()),rolling=planningBoardHorizon==="ROLLING_12";
+  $("planningBoardYear").textContent=rolling?"prossimi 12 mesi":year;$("planningBoardYearHead").textContent=rolling?"Piano 12M":"Piano "+year;$("planningBoardSubtitle").textContent=rolling?"Prossimi 12 mesi pianificati confrontati con gli ultimi 12 mesi reali. Gli importi restano quelli costruiti in Analisi.":"Anno "+year+": mesi chiusi reali + mesi aperti pianificati, confrontati con "+def.comparisonLabel+".";
+  const incCls=planningDeltaQuality(incTotals.delta,"INCOME"),expCls=planningDeltaQuality(expTotals.delta,"EXPENSE");
+  $("planningBoardKpis").innerHTML='<div class="planning-board-kpi income"><div class="kpi-head"><span class="kpi-icon">'+analysisSvgIcon("Entrate")+'</span><span>Entrate previste</span></div><div class="v">'+money(incTotals.planned)+'</div><div class="s"><span>vs storico</span><strong class="planning-kpi-delta '+incCls+'">'+planningPctText(incTotals.pct)+'</strong></div></div><div class="planning-board-kpi expense"><div class="kpi-head"><span class="kpi-icon">'+analysisSvgIcon("Shopping personale")+'</span><span>Uscite previste</span></div><div class="v">'+money(expTotals.planned)+'</div><div class="s"><span>vs storico</span><strong class="planning-kpi-delta '+expCls+'">'+planningPctText(expTotals.pct)+'</strong></div></div><div class="planning-board-kpi balance"><div class="kpi-head"><span class="kpi-icon">'+analysisSvgIcon("chart")+'</span><span>Saldo previsto</span></div><div class="v '+(balance>=0?"positive":"negative")+'">'+(balance>=0?"+":"")+money(balance)+'</div><div class="s"><span>Media mensile</span><strong class="'+(balance>=0?"positive":"negative")+'">'+(balance/12>=0?"+":"")+money(balance/12)+'</strong></div></div>';
+  renderPlanningNatureSummary(exp,inc);let html="";if(planningBoardFilter!=="EXPENSE")html+=planningSectionHtml("INCOME",inc);if(planningBoardFilter!=="INCOME")html+=planningSectionHtml("EXPENSE",exp);$("planningBoardBody").innerHTML=html||'<tr><td colspan="7" class="muted">Nessuna voce corrisponde ai filtri.</td></tr>';
+  $("planningBoardLegend").textContent=rolling?"Variazione vs storico: piano dei prossimi 12 mesi confrontato con gli ultimi 12 mesi reali. Per le spese una diminuzione è verde; per le entrate è verde un aumento. “Nuova” indica storico pari a zero.":"Variazione vs storico: piano "+year+" confrontato con il consuntivo "+def.comparisonLabel+". Per le spese una diminuzione è verde; per le entrate è verde un aumento. “Nuova” indica storico pari a zero.";
   renderPlanningNatureChart(exp);renderPlanningMonthlyChart(exp,inc);renderPlanningQuickScenarios(exp,inc);
 }
 async function loadPlanningBoard(force){
@@ -3881,7 +3798,7 @@ function showPlanningBoardView(){
   loadPlanningBoard(false);
 }
 function openPlanningRowInAnalysis(category,direction){
-  showStandardReportingView();planMode="ANALYSIS";analysisViewMode=direction;analysisTimeMode="PROJECTION";analysisProjectionView="CALENDAR";$("analysisDirection").value=direction;renderMode();
+  showStandardReportingView();planMode="ANALYSIS";analysisViewMode=direction;analysisTimeMode="PROJECTION";analysisProjectionView=planningBoardHorizon==="ROLLING_12"?"ROLLING_12":"CALENDAR";$("analysisDirection").value=direction;if($("analysisProjectionView"))$("analysisProjectionView").value=analysisProjectionView;renderMode();
   loadAnalysisWorkspace(true).then(function(){openAnalysisDetail(category,"L2",null)});
 }
 
@@ -3965,6 +3882,8 @@ $("planningBoardTab").onclick=function(){showPlanningBoardView()};
 $("scenarioViewTab").onclick=function(){showScenarioView()};
 $("planningBoardRefresh").onclick=function(){planningBoardData=null;loadPlanningBoard(true)};
 $("planningBoardView").addEventListener("click",function(e){
+  const horizon=e.target.closest("[data-planning-horizon]");
+  if(horizon){planningBoardHorizon=horizon.dataset.planningHorizon||"CALENDAR";renderPlanningBoard();return}
   const filter=e.target.closest("[data-planning-filter]");
   if(filter){planningBoardFilter=filter.dataset.planningFilter||"ALL";renderPlanningBoard();return}
   const level=e.target.closest("[data-planning-level]");
