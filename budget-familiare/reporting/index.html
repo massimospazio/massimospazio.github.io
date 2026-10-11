@@ -1245,25 +1245,23 @@ async function rpc(name,args){
   let lastError=null;
   for(let attempt=0;attempt<retryDelays.length;attempt++){
     if(retryDelays[attempt])await waitMs(retryDelays[attempt]);
+    let r;
     try{
-      const r=await sb.rpc(name,args||{});
-      if(r.error){
-        lastError=r.error;
-        if(isJwtFutureError(r.error)&&attempt<retryDelays.length-1)continue;
-        const duration=performance.now()-started,kind=rpcErrorKind(r.error);
-        recordRpcMetric(name,duration,kind,r.error);
-        throw r.error;
-      }
-      recordRpcMetric(name,performance.now()-started,"OK");
-      return r.data;
+      r=await sb.rpc(name,args||{});
     }catch(error){
       lastError=error;
       if(isJwtFutureError(error)&&attempt<retryDelays.length-1)continue;
-      if(!(error===lastError&&attempt===retryDelays.length-1&&isJwtFutureError(error))){
-        if(!isJwtFutureError(error)||attempt===retryDelays.length-1)recordRpcMetric(name,performance.now()-started,rpcErrorKind(error),error);
-      }
+      recordRpcMetric(name,performance.now()-started,rpcErrorKind(error),error);
       throw error;
     }
+    if(r.error){
+      lastError=r.error;
+      if(isJwtFutureError(r.error)&&attempt<retryDelays.length-1)continue;
+      recordRpcMetric(name,performance.now()-started,rpcErrorKind(r.error),r.error);
+      throw r.error;
+    }
+    recordRpcMetric(name,performance.now()-started,"OK");
+    return r.data;
   }
   recordRpcMetric(name,performance.now()-started,rpcErrorKind(lastError),lastError);
   throw lastError;
