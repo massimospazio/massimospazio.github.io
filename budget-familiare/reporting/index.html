@@ -8,8 +8,8 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=73.14.0-20261011-0025"></script>
-<script src="../shared/app-config.js?v=73.14.0-20261011-0025"></script>
+<script src="../shared/supabase-client.js?v=73.14.1-20261011-0025"></script>
+<script src="../shared/app-config.js?v=73.14.1-20261011-0025"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 :root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#6b7280;--line:#e5e7eb;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 8px 24px rgba(15,23,42,.06)}
@@ -769,14 +769,14 @@ button,input,select{font:inherit}
 .analysis-hover-item.current-plan{background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8}
 .analysis-hover-item.current-actual{background:#f8fafc;border-color:#cbd5e1;color:#475569}
 
-/* V73.14.0 — Tassonomia L2 sempre visibile */
+/* V73.14.1 — Tassonomia L2 sempre visibile */
 .analysis-master-table tr.analysis-zero-row:not(.analysis-selected) .analysis-row-button{color:#64748b;font-weight:560}
 .analysis-master-table tr.analysis-zero-row:not(.analysis-selected) .analysis-master-amount strong{color:#64748b}
 .analysis-master-table tr.analysis-zero-row:not(.analysis-selected) .analysis-master-share{color:#94a3b8}
 .analysis-master-table tr.analysis-zero-row:not(.analysis-selected) .plan-icon.analysis-l2-icon{background:#f8fafc;color:#94a3b8;border-color:#e2e8f0}
 .analysis-zero-trend{display:inline-flex;align-items:center;justify-content:center;min-width:24px;color:#94a3b8;font-size:12px;font-weight:700}
 
-/* V73.14.0 — tabellone decisionale: periodo, trend vs storico, leggibilità */
+/* V73.14.1 — tabellone decisionale: periodo, trend vs storico, leggibilità */
 .planning-board-shell{display:grid;gap:14px}
 .planning-board-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;padding:5px 2px 2px}
 .planning-board-hero h1{margin:0;color:#0f1f55;font-size:32px;line-height:1.05;letter-spacing:-.65px}
@@ -856,6 +856,28 @@ button,input,select{font:inherit}
 .planning-quick-list{display:grid;gap:8px;margin-top:11px}.planning-quick-row{display:grid;grid-template-columns:1fr auto;gap:9px;align-items:center;border:1px solid #e1e8f2;border-radius:9px;padding:9px 10px;background:#fbfcff}.planning-quick-row.active{border-color:#8cbcff;background:#eff6ff}.planning-quick-row .name{font-size:11.5px;color:#31415f}.planning-quick-row .amount{font-size:12.5px;font-weight:850;font-variant-numeric:tabular-nums}.planning-quick-row .amount.positive{color:#078558}.planning-quick-row .amount.negative{color:#c23f3f}
 @media(max-width:1100px){.planning-board-kpis{grid-template-columns:repeat(3,1fr)}.planning-nature-summary{grid-template-columns:1fr}.planning-insight-grid{grid-template-columns:1fr 1fr}.planning-insight-grid .planning-insight-card:last-child{grid-column:1/-1}.planning-month-grid{grid-template-columns:repeat(6,1fr)}}
 @media(max-width:760px){.planning-board-hero{align-items:flex-start;flex-direction:column}.planning-board-kpis{grid-template-columns:1fr}.planning-nature-summary-grid{grid-template-columns:1fr}.planning-insight-grid{grid-template-columns:1fr}.planning-insight-grid .planning-insight-card:last-child{grid-column:auto}.planning-nature-layout{grid-template-columns:1fr;height:auto}.planning-chart-wrap{height:180px}.planning-month-grid{grid-template-columns:repeat(3,1fr)}.planning-board-toolbar{align-items:stretch}.planning-board-toolbar-left,.planning-board-toolbar-right{width:100%}.planning-board-search{flex:1;min-width:170px}}
+
+/* V73.14.1 compact decision board */
+.planning-board-table th,.planning-board-table td{padding:5px 9px;font-size:12.5px}
+.planning-l1-row td{font-size:13px}
+.planning-l2-name{padding-left:27px!important}
+.planning-caret{font-size:14px}
+.planning-nature-badge{min-width:32px;padding:3px 6px;font-size:11px}
+.planning-delta-track{height:12px;min-width:92px}
+.planning-delta-fill{top:2px;bottom:2px}
+.planning-delta-cell{grid-template-columns:minmax(86px,1fr) 118px;gap:8px}
+.planning-delta-text{display:grid;gap:0;line-height:1.05;text-align:right}
+.planning-delta-text strong{font-size:16px;font-weight:900;letter-spacing:-.2px}
+.planning-delta-text strong.good{color:#078558}.planning-delta-text strong.bad{color:#c74343}.planning-delta-text strong.neutral{color:#7c899d}
+.planning-delta-text span{font-size:9.5px;color:#68768d;margin-top:2px;white-space:nowrap}
+.planning-method{display:flex;align-items:center;gap:5px;min-height:24px}
+.planning-method-chip{display:inline-flex;align-items:center;gap:5px;border:1px solid #dbe4ef;background:#f7f9fc;border-radius:7px;padding:3px 7px;font-size:10.5px;font-weight:720;color:#34445f;white-space:nowrap}
+.planning-method-chip b{font-size:8.5px;color:#71809a;border-right:1px solid #d7dfeb;padding-right:5px}
+.planning-method-chip i{font-style:normal;font-size:12px;color:#426aa7}
+.planning-method-chip.zero{background:#fff1e8;border-color:#f3c9ad;color:#9a4417}
+.planning-method-chip.zero i{color:#d35418}.planning-method-chip.zero b{color:#a85a32;border-color:#eac2aa}
+.planning-method-count{font-size:9px;color:#7a879c}
+.planning-plan-chip{font-size:8.5px;padding:1px 5px}
 
 </style>
 </head>
@@ -995,6 +1017,11 @@ button,input,select{font:inherit}
             <button class="btn compact" type="button" data-planning-level="L1_L2">L1 e L2</button>
             <button class="btn ghost compact" type="button" data-planning-level="L1">Solo L1</button>
           </div>
+          <label class="small">Natura <select id="planningNatureFilter" class="select" style="min-height:34px;padding:5px 8px">
+            <option value="ALL">Tutte</option>
+            <optgroup label="Uscite"><option value="MANDATORY">O · Obbligatorie</option><option value="NECESSARY">N · Necessarie</option><option value="DISCRETIONARY">D · Discrezionali</option></optgroup>
+            <optgroup label="Entrate"><option value="FIXED">F · Fisse</option><option value="PREDICTABLE">P · Prevedibili</option><option value="VARIABLE">V · Variabili</option></optgroup>
+          </select></label>
           <label class="planning-board-search"><input id="planningBoardSearch" type="search" placeholder="Cerca categoria…" autocomplete="off"></label>
         </div>
       </div>
@@ -1151,6 +1178,7 @@ let planningBoardLoading=false;
 let planningBoardData=null;
 let planningBoardFilter="ALL";
 let planningBoardHorizon="CALENDAR";
+let planningBoardNatureFilter="ALL";
 let planningBoardLevel="L1_L2";
 let planningBoardSearch="";
 let planningNatureChart=null;
@@ -3674,9 +3702,9 @@ function planningNatureValue(meta,direction){return direction==="INCOME"?(meta&&
 function planningNatureShort(v){return {MANDATORY:"O",NECESSARY:"N",DISCRETIONARY:"D",FIXED:"F",PREDICTABLE:"P",VARIABLE:"V"}[v]||"?"}
 function planningNatureLabel(v){return {MANDATORY:"Obbligatoria",NECESSARY:"Necessaria",DISCRETIONARY:"Discrezionale",FIXED:"Fissa",PREDICTABLE:"Prevedibile",VARIABLE:"Variabile"}[v]||"Non classificata"}
 function planningNatureClass(v){return String(v||"unknown").toLowerCase()}
-function planningNatureSelectHtml(row,direction){
-  const meta=row.meta||{},value=planningNatureValue(meta,direction),opts=direction==="INCOME"?[["","?"],["FIXED","F"],["PREDICTABLE","P"],["VARIABLE","V"]]:[["","?"],["MANDATORY","O"],["NECESSARY","N"],["DISCRETIONARY","D"]];
-  return '<select class="planning-nature-select" data-planning-nature="'+esc(row.category_id)+'" data-planning-direction="'+direction+'" title="'+esc(planningNatureLabel(value))+'">'+opts.map(function(o){return '<option value="'+o[0]+'"'+(o[0]===value?" selected":"")+'>'+o[1]+'</option>'}).join("")+'</select>';
+function planningNatureBadgeHtml(row,direction){
+  const value=planningNatureValue(row.meta||{},direction);
+  return '<span class="planning-nature-badge '+planningNatureClass(value)+'" title="'+esc(planningNatureLabel(value))+'">'+planningNatureShort(value)+'</span>';
 }
 function planningMethodName(v){return {AVG6:"Media ultimi 6 mesi",AVG12:"Media ultimi 12 mesi",MEDIAN12:"Mediana ultimi 12 mesi",SAME_MONTH_LAST_YEAR:"Stesso mese A-1",LAST_VALUE:"Ultimo valore",FIXED:"Importo fisso",RANGE:"Range best-worst",ZERO:"Non si ripete"}[v]||String(v||"—")}
 function planningReportCellMap(direction){const arr=direction==="INCOME"?(report&&report.income_forecast_cells||[]):(report&&report.forecast_cells||[]),m=new Map();arr.forEach(function(x){m.set(String(x.category_id)+"|"+String(x.month),x)});return m}
@@ -3708,34 +3736,44 @@ function planningBuildRows(data,direction){
 }
 function planningGroupRows(rows){const map=new Map();rows.forEach(function(r){if(!map.has(String(r.l1_id)))map.set(String(r.l1_id),{id:r.l1_id,name:r.l1_name,direction:r.direction,rows:[]});map.get(String(r.l1_id)).rows.push(r)});return Array.from(map.values()).sort(function(a,b){return String(a.name).localeCompare(String(b.name),"it")})}
 function planningDominantNature(rows,direction){const sums=new Map(),total=rows.reduce(function(s,r){return s+num(r.annual)},0);rows.forEach(function(r){const n=planningNatureValue(r.meta,direction);if(n)sums.set(n,(sums.get(n)||0)+num(r.annual))});let best="",amount=0;sums.forEach(function(v,k){if(v>amount){amount=v;best=k}});return {nature:best,pct:total>0?amount*100/total:0,total:total}}
+function planningMethodIcon(method){
+  return ({AVG6:"▥",AVG12:"▥",MEDIAN12:"≋",SAME_MONTH_LAST_YEAR:"↶",LAST_VALUE:"◷",FIXED:"▣",RANGE:"↔",ZERO:"⊘"})[String(method||"")]||"•";
+}
+function planningMethodClass(method){return String(method||"").toUpperCase()==="ZERO"?" zero":""}
 function planningMethodHtml(row){
-  const m=row.meta||{},scope=m.forecast_scope||"CATEGORY",method=planningMethodName(m.forecast_method),override=row.overrideCount?'<span class="planning-plan-chip">'+row.overrideCount+' override</span>':"";
-  if(scope==="COUNTERPARTIES"){const count=num(m.counterparty_setting_count),methods=String(m.counterparty_methods||"").split(",").map(function(x){return x.trim()}).filter(Boolean),detail=methods.length===1?planningMethodName(methods[0]):(methods.length>1?"Metodi misti":method);return '<div class="planning-method"><strong>Controparti'+(count?" · "+count:"")+'</strong>'+override+'<div class="sub">'+esc(detail)+'</div></div>'}
-  const adjustment=Math.abs(num(m.adjustment_pct))>.0001?' · '+(num(m.adjustment_pct)>0?"+":"")+num(m.adjustment_pct).toLocaleString("it-IT",{maximumFractionDigits:1})+"%":"";
-  return '<div class="planning-method"><strong>'+esc(method)+'</strong>'+override+'<div class="sub">Livello L2'+adjustment+'</div></div>';
+  const m=row.meta||{},scope=m.forecast_scope||"CATEGORY",method=String(m.forecast_method||""),label=planningMethodName(method),override=row.overrideCount?'<span class="planning-plan-chip">'+row.overrideCount+' override</span>':"";
+  if(scope==="COUNTERPARTIES"){
+    const count=num(m.counterparty_setting_count),methods=String(m.counterparty_methods||"").split(",").map(function(x){return x.trim()}).filter(Boolean);
+    const one=methods.length===1?methods[0]:"",detail=one?planningMethodName(one):(methods.length>1?"Metodi misti":label),icon=one?planningMethodIcon(one):"⋯";
+    return '<div class="planning-method"><span class="planning-method-chip'+planningMethodClass(one)+'"><b>CP</b><i>'+icon+'</i>'+esc(detail)+'</span>'+override+(count?'<span class="planning-method-count">'+count+'</span>':"")+'</div>';
+  }
+  return '<div class="planning-method"><span class="planning-method-chip'+planningMethodClass(method)+'"><b>L2</b><i>'+planningMethodIcon(method)+'</i>'+esc(label)+'</span>'+override+'</div>';
 }
 function planningL1NatureHtml(rows,direction){const d=planningDominantNature(rows,direction);if(!d.nature)return '<span class="planning-nature-badge unknown">?</span>';return '<span class="planning-nature-badge '+planningNatureClass(d.nature)+'" title="'+esc(planningNatureLabel(d.nature))+'">'+planningNatureShort(d.nature)+' '+d.pct.toLocaleString("it-IT",{maximumFractionDigits:0})+'%</span>'}
 function planningMonthPanelHtml(row){return '<tr class="planning-month-row"><td colspan="7"><div class="planning-month-panel"><div class="planning-month-head"><div class="small"><strong>'+esc(row.l2_name)+'</strong> · dettaglio mensile del periodo selezionato.</div><button class="btn ghost compact" type="button" data-planning-open-analysis="'+esc(row.category_id)+'" data-planning-open-direction="'+row.direction+'">Apri in Analisi</button></div><div class="planning-month-grid">'+row.months.map(function(m){return '<div class="planning-month-cell '+(m.kind==="actual"?"actual ":"")+(m.override?"override":"")+'"><div class="m">'+esc(monthLabel(m.month))+'</div><div class="a">'+money(m.amount)+'</div><div class="t">'+(m.kind==="actual"?"reale":(m.override?"override":"piano"))+'</div></div>'}).join("")+'</div></div></td></tr>'}
 function planningDeltaHtml(deltaAbs,deltaPct,direction,comparison){
-  const abs=num(deltaAbs),isNeutral=Math.abs(abs)<.5,pct=(deltaPct===null||deltaPct===undefined||!Number.isFinite(Number(deltaPct)))?null:num(deltaPct);
-  if(isNeutral)return '<div class="planning-delta-cell"><div class="planning-delta-track"><i class="planning-delta-zero"></i></div><span class="planning-delta-label neutral">0%</span></div>';
+  const abs=num(deltaAbs),monthly=abs/12,isNeutral=Math.abs(abs)<.5,pct=(deltaPct===null||deltaPct===undefined||!Number.isFinite(Number(deltaPct)))?null:num(deltaPct);
+  if(isNeutral)return '<div class="planning-delta-cell"><div class="planning-delta-track"><i class="planning-delta-zero"></i></div><div class="planning-delta-text"><strong class="neutral">0%</strong><span>€0/mese</span></div></div>';
   const favorable=direction==="EXPENSE"?abs<0:abs>0,quality=favorable?"good":"bad",sign=abs>0?"+":"−",pos=abs>0?"pos":"neg";
-  if(comparison<=0)return '<div class="planning-delta-cell"><div class="planning-delta-track"><i class="planning-delta-zero"></i></div><span class="planning-delta-label '+quality+'">'+sign+money(Math.abs(abs))+' <span class="planning-delta-new">nuova</span></span></div>';
-  const width=Math.min(50,Math.max(3,Math.abs(pct)/100*50));
-  return '<div class="planning-delta-cell"><div class="planning-delta-track"><i class="planning-delta-zero"></i><i class="planning-delta-fill '+pos+' '+quality+'" style="width:'+width.toFixed(1)+'%"></i></div><span class="planning-delta-label '+quality+'">'+(pct>0?"+":"")+pct.toLocaleString("it-IT",{maximumFractionDigits:1})+'% · '+sign+money(Math.abs(abs))+'</span></div>';
+  if(comparison<=0)return '<div class="planning-delta-cell"><div class="planning-delta-track"><i class="planning-delta-zero"></i></div><div class="planning-delta-text"><strong class="'+quality+'">NUOVA</strong><span>'+sign+money(Math.abs(abs))+' · '+sign+money(Math.abs(monthly))+'/mese</span></div></div>';
+  const rounded=Math.round(pct),width=Math.min(50,Math.max(3,Math.abs(pct)/100*50));
+  return '<div class="planning-delta-cell"><div class="planning-delta-track"><i class="planning-delta-zero"></i><i class="planning-delta-fill '+pos+' '+quality+'" style="width:'+width.toFixed(1)+'%"></i></div><div class="planning-delta-text"><strong class="'+quality+'">'+(rounded>0?"+":"")+rounded+'%</strong><span>'+sign+money(Math.abs(abs))+' · '+sign+money(Math.abs(monthly))+'/mese</span></div></div>';
 }
 function planningSectionHtml(direction,allRows){
   const q=planningBoardSearch.trim().toLocaleLowerCase("it"),groups=planningGroupRows(allRows);let html='<tr class="planning-section-label"><td colspan="7">'+(direction==="INCOME"?"Entrate":"Spese")+'</td></tr>';
   groups.forEach(function(g){
-    const groupMatches=!q||String(g.name||"").toLocaleLowerCase("it").includes(q),visibleRows=groupMatches?g.rows:g.rows.filter(function(r){return String(r.l2_name||"").toLocaleLowerCase("it").includes(q)});if(q&&!groupMatches&&!visibleRows.length)return;
+    const groupMatches=!q||String(g.name||"").toLocaleLowerCase("it").includes(q);
+    let visibleRows=groupMatches?g.rows:g.rows.filter(function(r){return String(r.l2_name||"").toLocaleLowerCase("it").includes(q)});
+    if(planningBoardNatureFilter!=="ALL")visibleRows=visibleRows.filter(function(r){return planningNatureValue(r.meta,direction)===planningBoardNatureFilter});
+    if((q&&!groupMatches&&!visibleRows.length)||(planningBoardNatureFilter!=="ALL"&&!visibleRows.length))return;
     const key=direction+"|"+g.id,searching=!!q,expanded=planningBoardLevel==="L1_L2"&&(searching||planningBoardExpandedL1.has(key)),annual=g.rows.reduce(function(s,r){return s+r.annual},0),comparison=g.rows.reduce(function(s,r){return s+r.comparison},0),deltaAbs=annual-comparison,deltaPct=comparison>0?deltaAbs*100/comparison:(Math.abs(annual)<.5?0:null);
     html+='<tr class="planning-l1-row '+(direction==="INCOME"?"income":"expense")+'"><td><div class="planning-category">'+(planningBoardLevel==="L1_L2"?'<button class="planning-caret" data-planning-toggle-l1="'+esc(key)+'">'+(expanded?"▾":"▸")+'</button>':'<span class="planning-caret"></span>')+categoryIconHtml(g.name,direction==="INCOME"?"income":"expense",true)+'<span class="name">'+esc(g.name)+'</span></div></td><td>'+money(annual)+'</td><td>'+planningDeltaHtml(deltaAbs,deltaPct,direction,comparison)+'</td><td>'+planningL1NatureHtml(g.rows,direction)+'</td><td>—</td><td>—</td><td></td></tr>';
     if(!expanded)return;
-    visibleRows.slice().sort(function(a,b){return String(a.l2_name).localeCompare(String(b.l2_name),"it")}).forEach(function(r){const l2Key=direction+"|"+r.category_id,open=planningBoardExpandedL2.has(l2Key),note=r.meta&&r.meta.rationale_note||"";html+='<tr class="planning-l2-row"><td class="planning-l2-name"><div class="planning-category"><button class="planning-caret" data-planning-toggle-l2="'+esc(l2Key)+'">'+(open?"▾":"▸")+'</button>'+categoryIconHtml(r.l2_name,direction==="INCOME"?"income":"expense",false)+'<span class="name">'+esc(r.l2_name)+'</span></div></td><td><strong>'+money(r.annual)+'</strong></td><td>'+planningDeltaHtml(r.deltaAbs,r.deltaPct,direction,r.comparison)+'</td><td>'+planningNatureSelectHtml(r,direction)+'</td><td>'+planningMethodHtml(r)+'</td><td><div class="planning-note" title="'+esc(note)+'">'+esc(note||"—")+'</div></td><td><button class="planning-open-analysis" type="button" data-planning-open-analysis="'+esc(r.category_id)+'" data-planning-open-direction="'+direction+'" title="Apri la previsione originale in Analisi">›</button></td></tr>';if(open)html+=planningMonthPanelHtml(r)});
+    visibleRows.slice().sort(function(a,b){return String(a.l2_name).localeCompare(String(b.l2_name),"it")}).forEach(function(r){const l2Key=direction+"|"+r.category_id,open=planningBoardExpandedL2.has(l2Key),note=r.meta&&r.meta.rationale_note||"";html+='<tr class="planning-l2-row"><td class="planning-l2-name"><div class="planning-category"><button class="planning-caret" data-planning-toggle-l2="'+esc(l2Key)+'">'+(open?"▾":"▸")+'</button>'+categoryIconHtml(r.l2_name,direction==="INCOME"?"income":"expense",false)+'<span class="name">'+esc(r.l2_name)+'</span></div></td><td><strong>'+money(r.annual)+'</strong></td><td>'+planningDeltaHtml(r.deltaAbs,r.deltaPct,direction,r.comparison)+'</td><td>'+planningNatureBadgeHtml(r,direction)+'</td><td>'+planningMethodHtml(r)+'</td><td><div class="planning-note" title="'+esc(note)+'">'+esc(note||"—")+'</div></td><td><button class="planning-open-analysis" type="button" data-planning-open-analysis="'+esc(r.category_id)+'" data-planning-open-direction="'+direction+'" title="Apri la previsione originale in Analisi">›</button></td></tr>';if(open)html+=planningMonthPanelHtml(r)});
   });
   return html;
 }
-function planningRenderFilterButtons(){document.querySelectorAll("[data-planning-filter]").forEach(function(b){b.classList.toggle("ghost",b.dataset.planningFilter!==planningBoardFilter)});document.querySelectorAll("[data-planning-level]").forEach(function(b){b.classList.toggle("ghost",b.dataset.planningLevel!==planningBoardLevel)});document.querySelectorAll("[data-planning-horizon]").forEach(function(b){b.classList.toggle("ghost",b.dataset.planningHorizon!==planningBoardHorizon)})}
+function planningRenderFilterButtons(){document.querySelectorAll("[data-planning-filter]").forEach(function(b){b.classList.toggle("ghost",b.dataset.planningFilter!==planningBoardFilter)});document.querySelectorAll("[data-planning-level]").forEach(function(b){b.classList.toggle("ghost",b.dataset.planningLevel!==planningBoardLevel)});document.querySelectorAll("[data-planning-horizon]").forEach(function(b){b.classList.toggle("ghost",b.dataset.planningHorizon!==planningBoardHorizon)});if($("planningNatureFilter"))$("planningNatureFilter").value=planningBoardNatureFilter}
 function planningDirectionTotals(rows){const planned=rows.reduce(function(s,r){return s+r.annual},0),comparison=rows.reduce(function(s,r){return s+r.comparison},0),delta=planned-comparison;return {planned:planned,comparison:comparison,delta:delta,pct:comparison>0?delta*100/comparison:(Math.abs(planned)<.5?0:null)}}
 function planningPctText(pct){if(pct===null||pct===undefined||!Number.isFinite(Number(pct)))return "nuovo";const v=num(pct);return (v>0?"+":"")+v.toLocaleString("it-IT",{maximumFractionDigits:1})+"%"}
 function planningDeltaQuality(delta,direction){const v=num(delta);if(Math.abs(v)<.5)return "neutral";return (direction==="EXPENSE"?v<0:v>0)?"good":"bad"}
@@ -3896,18 +3934,7 @@ $("planningBoardView").addEventListener("click",function(e){
   if(open){openPlanningRowInAnalysis(open.dataset.planningOpenAnalysis,open.dataset.planningOpenDirection||"EXPENSE");return}
 });
 $("planningBoardSearch").addEventListener("input",function(){planningBoardSearch=this.value||"";renderPlanningBoard()});
-$("planningBoardView").addEventListener("change",async function(e){
-  const sel=e.target.closest("[data-planning-nature]");if(!sel)return;
-  const id=sel.dataset.planningNature,value=sel.value||null,direction=sel.dataset.planningDirection||"EXPENSE";
-  sel.disabled=true;
-  try{
-    await rpc("dashboard_reporting_save_category_nature_v1",{p_category_id:id,p_nature:value});
-    const meta=planningMetaRows().find(function(x){return String(x.category_id)===String(id)});
-    if(meta){if(direction==="INCOME")meta.income_nature=value;else meta.expense_nature=value}
-    renderPlanningBoard();msg($("planningBoardStatus"),"Natura aggiornata.");
-  }catch(err){msg($("planningBoardStatus"),err.message||"Errore salvataggio natura",true);renderPlanningBoard()}
-  finally{sel.disabled=false}
-});
+$("planningNatureFilter").addEventListener("change",function(){planningBoardNatureFilter=this.value||"ALL";renderPlanningBoard()});
 $("scenarioView").addEventListener("click",async function(e){
   const noteSave=e.target.closest("[data-scenario-extra-note-save]");
   if(noteSave){
