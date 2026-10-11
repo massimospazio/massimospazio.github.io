@@ -8,8 +8,8 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=73.17.0-20261011-0025"></script>
-<script src="../shared/app-config.js?v=73.17.0-20261011-0025"></script>
+<script src="../shared/supabase-client.js?v=73.18.0-20261011-0025"></script>
+<script src="../shared/app-config.js?v=73.18.0-20261011-0025"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 :root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#6b7280;--line:#e5e7eb;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 8px 24px rgba(15,23,42,.06)}
@@ -769,14 +769,14 @@ button,input,select{font:inherit}
 .analysis-hover-item.current-plan{background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8}
 .analysis-hover-item.current-actual{background:#f8fafc;border-color:#cbd5e1;color:#475569}
 
-/* V73.17.0 — Tassonomia L2 sempre visibile */
+/* V73.18.0 — Tassonomia L2 sempre visibile */
 .analysis-master-table tr.analysis-zero-row:not(.analysis-selected) .analysis-row-button{color:#64748b;font-weight:560}
 .analysis-master-table tr.analysis-zero-row:not(.analysis-selected) .analysis-master-amount strong{color:#64748b}
 .analysis-master-table tr.analysis-zero-row:not(.analysis-selected) .analysis-master-share{color:#94a3b8}
 .analysis-master-table tr.analysis-zero-row:not(.analysis-selected) .plan-icon.analysis-l2-icon{background:#f8fafc;color:#94a3b8;border-color:#e2e8f0}
 .analysis-zero-trend{display:inline-flex;align-items:center;justify-content:center;min-width:24px;color:#94a3b8;font-size:12px;font-weight:700}
 
-/* V73.17.0 — tabellone decisionale: periodo, trend vs storico, leggibilità */
+/* V73.18.0 — tabellone decisionale: periodo, trend vs storico, leggibilità */
 .planning-board-shell{display:grid;gap:14px}
 .planning-board-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;padding:5px 2px 2px}
 .planning-board-hero h1{margin:0;color:#0f1f55;font-size:32px;line-height:1.05;letter-spacing:-.65px}
@@ -857,7 +857,7 @@ button,input,select{font:inherit}
 @media(max-width:1100px){.planning-board-kpis{grid-template-columns:repeat(3,1fr)}.planning-nature-summary{grid-template-columns:1fr}.planning-insight-grid{grid-template-columns:1fr 1fr}.planning-insight-grid .planning-insight-card:last-child{grid-column:1/-1}.planning-month-grid{grid-template-columns:repeat(6,1fr)}}
 @media(max-width:760px){.planning-board-hero{align-items:flex-start;flex-direction:column}.planning-board-kpis{grid-template-columns:1fr}.planning-nature-summary-grid{grid-template-columns:1fr}.planning-insight-grid{grid-template-columns:1fr}.planning-insight-grid .planning-insight-card:last-child{grid-column:auto}.planning-nature-layout{grid-template-columns:1fr;height:auto}.planning-chart-wrap{height:180px}.planning-month-grid{grid-template-columns:repeat(3,1fr)}.planning-board-toolbar{align-items:stretch}.planning-board-toolbar-left,.planning-board-toolbar-right{width:100%}.planning-board-search{flex:1;min-width:170px}}
 
-/* V73.17.0 compact decision board */
+/* V73.18.0 compact decision board */
 .planning-board-table th,.planning-board-table td{padding:5px 9px;font-size:12.5px}
 .planning-l1-row td{font-size:13px}
 .planning-l2-name{padding-left:27px!important}
@@ -880,7 +880,7 @@ button,input,select{font:inherit}
 .planning-plan-chip{font-size:8.5px;padding:1px 5px}
 
 
-/* V73.17.0 — simulatore scenari nel Tabellone */
+/* V73.18.0 — simulatore scenari nel Tabellone */
 .planning-simulator-card{grid-column:1/-1;min-height:0}
 .planning-simulator-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
 .planning-simulator-scope{font-size:10px;color:#6d7b92;background:#f5f8fc;border:1px solid #e0e7f0;border-radius:999px;padding:4px 8px;white-space:nowrap}
@@ -910,7 +910,7 @@ button,input,select{font:inherit}
 @media(max-width:560px){.planning-simulator-results{grid-template-columns:1fr}.planning-sim-result{padding:9px}.planning-sim-result .v{font-size:19px}.planning-sim-row{grid-template-columns:1fr 64px;gap:8px}.planning-sim-presets .btn{flex:1 1 42%}.planning-sim-matrix-wrap{overflow-x:auto}.planning-sim-matrix{min-width:520px}}
 
 
-/* V73.17.0 — storico visibile e filtri previsione/note */
+/* V73.18.0 — storico visibile e filtri previsione/note */
 .planning-filter-select{min-height:34px;padding:5px 8px;font-size:12px}
 .planning-board-table{min-width:1320px}
 .planning-board-table th,.planning-board-table td{font-size:13px}
@@ -941,7 +941,7 @@ button,input,select{font:inherit}
 @media(max-width:900px){.planning-board-table{min-width:1250px}}
 
 
-/* V73.17.0 — Simulatore separato, baseline storico ordinario, entrate + spese */
+/* V73.18.0 — Simulatore separato, baseline storico ordinario, entrate + spese */
 .planning-board-shell .planning-insight-grid{grid-template-columns:.9fr 1.6fr}
 .planning-simulator-page{display:grid;gap:14px}
 .planning-simulator-standalone{min-height:0}
@@ -966,6 +966,31 @@ button,input,select{font:inherit}
 @media(max-width:1050px){.planning-sim-groups{grid-template-columns:1fr}.planning-board-shell .planning-insight-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:760px){.planning-board-shell .planning-insight-grid{grid-template-columns:1fr}.planning-sim-group .planning-sim-row{grid-template-columns:1fr 64px}.planning-sim-group .planning-sim-slider{grid-column:1/-1}}
 
+
+/* V73.18.0 — Bilancio hub: Storico + Previsione */
+.balance-hub-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:12px;padding:2px 2px 0}
+.balance-hub-head h2{margin:2px 0 0;font-size:29px;color:#10204d}.balance-hub-head p{margin:5px 0 0;color:#62718b;font-size:13px}
+.balance-hub-toggle .btn{min-width:108px}
+.balance-history-view{display:grid;gap:12px}
+.balance-history-toolbar{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;background:#fff;border:1px solid #dce5f2;border-radius:12px;padding:10px 12px}
+.historical-period-chip{display:inline-flex;padding:5px 9px;border-radius:999px;background:#eef5ff;color:#315caa;font-size:11px;font-weight:750}
+.historical-kpis{display:grid;grid-template-columns:repeat(6,minmax(130px,1fr));gap:9px}
+.historical-kpi{border:1px solid #dce5f2;border-radius:11px;background:#fff;padding:11px 12px;min-height:83px;box-shadow:0 4px 14px rgba(15,31,85,.03)}
+.historical-kpi.income{background:#f0fbf6;border-color:#cdebdc}.historical-kpi.expense{background:#fff3f3;border-color:#f0d5d5}.historical-kpi.balance{background:#eef6ff;border-color:#d4e4f7}.historical-kpi.extra{background:#fff9ed;border-color:#f0e1b9}.historical-kpi.total{background:#f3f7ff}.historical-kpi.months{background:#fafbfe}
+.historical-kpi .label{font-size:10.5px;font-weight:760;color:#5e6d87}.historical-kpi .value{font-size:22px;font-weight:880;margin-top:5px;white-space:nowrap}.historical-kpi .sub{font-size:10.5px;color:#6f7d93;margin-top:4px}
+.historical-structural-card{padding:12px}
+.historical-structural-strip{display:grid;grid-template-columns:1.25fr repeat(5,1fr);gap:8px}
+.historical-structural-item{border:1px solid #e2e8f0;border-radius:9px;padding:9px 10px;background:#fbfcfe;display:grid;gap:3px}.historical-structural-item>span{font-size:10.5px;color:#61708a}.historical-structural-item strong{font-size:18px;font-weight:870}.historical-structural-item small{font-size:9.5px;color:#7b879a}
+.historical-structural-item.margin{background:#eef9f4;border-color:#ccebdd}.historical-structural-item.residual{background:#eef6ff;border-color:#d6e5f6}
+.historical-chart{height:390px}
+.historical-bottom-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.historical-nature-composition{display:grid;gap:10px;margin-top:7px}.historical-composition-row{display:grid;gap:4px}.historical-composition-row .head{display:grid;grid-template-columns:10px 1fr auto 38px;gap:7px;align-items:center;font-size:11.5px}.historical-composition-row .head strong{font-size:12px}.historical-composition-row .head b{text-align:right;color:#63718a}
+.historical-composition-row .dot{width:9px;height:9px;border-radius:50%}.historical-composition-row .dot.mandatory,.historical-composition-row .bar i.mandatory{background:#ef5a5a}.historical-composition-row .dot.necessary,.historical-composition-row .bar i.necessary{background:#f4b63e}.historical-composition-row .dot.discretionary,.historical-composition-row .bar i.discretionary{background:#2bbf83}.historical-composition-row .dot.investment,.historical-composition-row .bar i.investment{background:#4f7bd9}.historical-composition-row .dot.unknown,.historical-composition-row .bar i.unknown{background:#94a3b8}
+.historical-composition-row .bar{height:7px;background:#edf1f6;border-radius:999px;overflow:hidden}.historical-composition-row .bar i{display:block;height:100%;border-radius:999px}
+.historical-compare-table{display:grid;margin-top:7px;border:1px solid #e1e7f0;border-radius:9px;overflow:hidden}.historical-compare-table .row{display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr;gap:7px;align-items:center;padding:9px 10px;border-top:1px solid #e7edf5;font-size:11.5px}.historical-compare-table .row:first-child{border-top:0}.historical-compare-table .row.head{background:#f4f7fb;font-size:10px;font-weight:800;color:#5d6b83}.historical-compare-table .row.active{background:#eef6ff}.historical-compare-table strong{text-align:right}.historical-compare-table .row span:not(:first-child){text-align:right}
+@media(max-width:1150px){.historical-kpis{grid-template-columns:repeat(3,1fr)}.historical-structural-strip{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:760px){.balance-hub-head{align-items:flex-start;flex-direction:column}.historical-kpis{grid-template-columns:1fr 1fr}.historical-structural-strip{grid-template-columns:1fr 1fr}.historical-bottom-grid{grid-template-columns:1fr}.historical-chart{height:330px}.balance-history-toolbar{align-items:stretch}.historical-compare-table{overflow-x:auto}.historical-compare-table .row{min-width:620px}}
+
 </style>
 </head>
 <body>
@@ -989,7 +1014,7 @@ button,input,select{font:inherit}
       <button id="reportingViewTab" class="tab active" type="button">Analisi</button>
       <button id="planningBoardTab" class="tab" type="button">Tabellone</button>
       <button id="planningSimulatorTab" class="tab" type="button">Simulatore</button>
-      <button id="scenarioViewTab" class="tab" type="button">Scenario</button>
+      <button id="scenarioViewTab" class="tab" type="button">Bilancio</button>
     </div>
     <div id="reportReturnBar" class="report-return-bar hidden"></div>
 
@@ -1263,6 +1288,83 @@ button,input,select{font:inherit}
     </div>
 
     <div id="scenarioView" class="hidden scenario-shell">
+      <div class="balance-hub-head">
+        <div>
+          <div class="scenario-eyebrow">MiaFinanza · Bilancio familiare</div>
+          <h2>Bilancio</h2>
+          <p>Passato e futuro dello stesso cash flow: prima capisci come è andata, poi verifica se il piano è sostenibile.</p>
+        </div>
+        <div class="mode-toggle balance-hub-toggle">
+          <button class="btn compact" type="button" data-balance-hub="HISTORY">Storico</button>
+          <button class="btn ghost compact" type="button" data-balance-hub="FORECAST">Previsione</button>
+        </div>
+      </div>
+
+      <div id="balanceHistoryView" class="balance-history-view">
+        <div class="balance-history-toolbar">
+          <div>
+            <span class="scenario-control-label">Periodo storico</span>
+            <div class="scenario-segment">
+              <button class="active" type="button" data-history-period="ROLLING_12">Ultimi 12 mesi</button>
+              <button type="button" data-history-period="LAST_YEAR">Ultimo anno solare</button>
+            </div>
+          </div>
+          <div>
+            <span class="scenario-control-label">Dati nel grafico</span>
+            <div class="scenario-segment">
+              <button class="active" type="button" data-history-scope="ORDINARY">Ordinario</button>
+              <button type="button" data-history-scope="TOTAL">Con straordinarie</button>
+            </div>
+          </div>
+          <div>
+            <span class="scenario-control-label">Lettura grafico</span>
+            <div class="scenario-segment">
+              <button class="active" type="button" data-history-chart="CASHFLOW">Cash flow</button>
+              <button type="button" data-history-chart="NATURE">Natura O/N/D</button>
+            </div>
+          </div>
+          <div id="historicalNatureFocusWrap" class="hidden">
+            <span class="scenario-control-label">Focus natura</span>
+            <div class="scenario-segment">
+              <button class="active" type="button" data-history-nature-focus="ALL">Tutte</button>
+              <button type="button" data-history-nature-focus="ON">O + N</button>
+              <button type="button" data-history-nature-focus="D">D</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="historicalBalanceStatus"></div>
+        <div id="historicalBalanceKpis" class="historical-kpis"></div>
+
+        <section class="scenario-card historical-structural-card">
+          <div class="scenario-card-head">
+            <div><h3>Quanto margine abbiamo davvero?</h3><p>Lo storico ordinario separato per natura mostra quanto resta dopo le spese essenziali e quanto viene assorbito dalle discrezionali.</p></div>
+          </div>
+          <div id="historicalStructuralStrip" class="historical-structural-strip"></div>
+        </section>
+
+        <section class="scenario-card scenario-chart-card">
+          <div class="scenario-card-head">
+            <div><h3 id="historicalChartTitle">Cash flow storico mese per mese</h3><p id="historicalChartSubtitle">Entrate, uscite, saldo mensile e saldo cumulato del periodo.</p></div>
+            <div id="historicalChartLegend" class="scenario-legend-inline"></div>
+          </div>
+          <div class="scenario-chart scenario-chart-main historical-chart"><canvas id="historicalBalanceChart"></canvas></div>
+          <div id="historicalChartNote" class="legend-note"></div>
+        </section>
+
+        <div class="historical-bottom-grid">
+          <section class="scenario-card">
+            <div class="scenario-card-head"><div><h3>Composizione uscite ordinarie</h3><p>O/N/D e altre uscite sul periodo selezionato.</p></div></div>
+            <div id="historicalNatureComposition" class="historical-nature-composition"></div>
+          </section>
+          <section class="scenario-card">
+            <div class="scenario-card-head"><div><h3>Confronto periodi</h3><p>Saldo ordinario e totale sui due riferimenti storici principali.</p></div></div>
+            <div id="historicalPeriodComparison"></div>
+          </section>
+        </div>
+      </div>
+
+      <div id="balanceForecastView" class="hidden">
       <div class="scenario-hero">
         <div>
           <div class="scenario-eyebrow">MiaFinanza · Budget per la Vita</div>
@@ -1344,6 +1446,7 @@ button,input,select{font:inherit}
         </div>
         <div id="scenarioExpenseInsight" class="scenario-insight"></div>
       </div>
+      </div>
     </div>
   </div>
 </div>
@@ -1375,6 +1478,13 @@ let scenarioBalanceChart=null;
 let scenarioFlowChart=null;
 let scenarioExpenseChart=null;
 let scenarioCompareChart=null;
+let historicalBalanceChart=null;
+let balanceHubMode="HISTORY";
+let historicalPeriodMode="ROLLING_12";
+let historicalScope="ORDINARY";
+let historicalChartMode="CASHFLOW";
+let historicalNatureFocus="ALL";
+let scenarioPlanningMeta=null;
 let scenarioHorizon="CALENDAR";
 let scenarioMode="SUMMARY";
 let scenarioExtraMode="ORDINARY";
@@ -3407,6 +3517,176 @@ function scenarioDisplayNet(row){
   if(scenarioExtraMode==="EXTRA")return num(row.extraordinaryNet);
   return num(row.ordinaryNet);
 }
+function historicalCurrentMonth(){
+  const exp=projectionDataFor("EXPENSE");
+  return exp&&exp.current_month?String(exp.current_month):localDateISO().slice(0,7)+"-01";
+}
+function historicalMonthsFor(mode){
+  const current=historicalCurrentMonth(),year=Number(current.slice(0,4));
+  if((mode||historicalPeriodMode)==="LAST_YEAR")return monthSeries(String(year-1)+"-01-01",12);
+  return monthSeries(addMonthsISO(current,-12),12);
+}
+function historicalMonthlyMap(){
+  const m=new Map();(scenarioActualRows||[]).forEach(function(x){m.set(String(x.month_start),x)});return m;
+}
+function historicalRowsFor(mode){
+  const map=historicalMonthlyMap();
+  return historicalMonthsFor(mode).map(function(month){
+    return map.get(month)||{month_start:month,incoming:0,outgoing:0,net:0,incoming_ordinary:0,outgoing_ordinary:0,net_ordinary:0,incoming_extraordinary:0,outgoing_extraordinary:0,net_extraordinary:0};
+  });
+}
+function historicalTotalsFor(mode){
+  const rows=historicalRowsFor(mode);
+  const sum=function(key){return rows.reduce(function(s,x){return s+num(x[key])},0)};
+  const ordinaryIncome=sum("incoming_ordinary"),ordinaryOut=sum("outgoing_ordinary"),ordinaryNet=sum("net_ordinary");
+  const totalIncome=sum("incoming"),totalOut=sum("outgoing"),totalNet=sum("net");
+  return {rows:rows,ordinaryIncome:ordinaryIncome,ordinaryOut:ordinaryOut,ordinaryNet:ordinaryNet,totalIncome:totalIncome,totalOut:totalOut,totalNet:totalNet,extraNet:totalNet-ordinaryNet,
+    ordinaryPositive:rows.filter(function(x){return num(x.net_ordinary)>=0}).length,
+    totalPositive:rows.filter(function(x){return num(x.net)>=0}).length};
+}
+function historicalMetaMap(){
+  const rows=scenarioPlanningMeta&&Array.isArray(scenarioPlanningMeta.rows)?scenarioPlanningMeta.rows:[];
+  return new Map(rows.map(function(x){return [String(x.category_id),x]}));
+}
+function historicalCategoryRows(mode){
+  const months=new Set(historicalMonthsFor(mode));
+  return (scenarioActualCategories||[]).filter(function(x){return months.has(String(x.month_start))});
+}
+function historicalCategoryAmount(x,scope){
+  return scope==="TOTAL"?num(x.total_amount):num(x.ordinary_amount);
+}
+function historicalNatureForCategory(x){
+  if(String(x.direction)==="INVESTMENT")return "INVESTMENT";
+  if(String(x.direction)!=="EXPENSE")return null;
+  const meta=historicalMetaMap().get(String(x.l2_id||""));
+  return meta&&meta.expense_nature?meta.expense_nature:"UNKNOWN";
+}
+function historicalNatureTotals(mode,scope){
+  const out={MANDATORY:0,NECESSARY:0,DISCRETIONARY:0,INVESTMENT:0,UNKNOWN:0};
+  historicalCategoryRows(mode).forEach(function(x){
+    const nature=historicalNatureForCategory(x);if(!nature)return;
+    out[nature]=(out[nature]||0)+historicalCategoryAmount(x,scope||"ORDINARY");
+  });
+  return out;
+}
+function historicalMonthlyNature(mode,scope){
+  const months=historicalMonthsFor(mode),base=new Map(months.map(function(m){return [m,{MANDATORY:0,NECESSARY:0,DISCRETIONARY:0,INVESTMENT:0,UNKNOWN:0}]}));
+  historicalCategoryRows(mode).forEach(function(x){
+    const nature=historicalNatureForCategory(x);if(!nature||!base.has(String(x.month_start)))return;
+    base.get(String(x.month_start))[nature]+=historicalCategoryAmount(x,scope||"ORDINARY");
+  });
+  return base;
+}
+function historicalPeriodLabel(mode){
+  const months=historicalMonthsFor(mode),first=months[0],last=months[months.length-1];
+  return mode==="LAST_YEAR"?"Anno "+first.slice(0,4):monthLabel(first)+" – "+monthLabel(last);
+}
+function historicalSigned(v){v=num(v);return (v>0?"+":v<0?"−":"")+money(Math.abs(v))}
+function historicalKpiCard(label,value,sub,tone){
+  return '<div class="historical-kpi '+(tone||"")+'"><div class="label">'+esc(label)+'</div><div class="value '+(num(value)>=0?"positive":"negative")+'">'+historicalSigned(value)+'</div><div class="sub">'+sub+'</div></div>';
+}
+function renderHistoricalKpis(){
+  const t=historicalTotalsFor(historicalPeriodMode),period=historicalPeriodLabel(historicalPeriodMode);
+  $("historicalBalanceKpis").innerHTML=
+    '<div class="historical-kpi income"><div class="label">Entrate ordinarie</div><div class="value positive">'+money(t.ordinaryIncome)+'</div><div class="sub">Ø '+money(t.ordinaryIncome/12)+'/mese</div></div>'+
+    '<div class="historical-kpi expense"><div class="label">Uscite ordinarie</div><div class="value negative">'+money(t.ordinaryOut)+'</div><div class="sub">Ø '+money(t.ordinaryOut/12)+'/mese</div></div>'+
+    historicalKpiCard("Saldo ordinario",t.ordinaryNet,'Ø '+historicalSigned(t.ordinaryNet/12)+'/mese',"balance")+
+    historicalKpiCard("Impatto straordinarie",t.extraNet,(t.extraNet>=0?"Migliora":"Riduce")+" il saldo del periodo","extra")+
+    historicalKpiCard("Saldo totale",t.totalNet,'Ø '+historicalSigned(t.totalNet/12)+'/mese',"total")+
+    '<div class="historical-kpi months"><div class="label">Mesi positivi / negativi</div><div class="value">'+t.ordinaryPositive+' / '+(12-t.ordinaryPositive)+'</div><div class="sub">Ordinario · Totale '+t.totalPositive+' / '+(12-t.totalPositive)+'</div></div>';
+  if($("historicalBalanceStatus"))$("historicalBalanceStatus").innerHTML='<div class="historical-period-chip">'+esc(period)+'</div>';
+}
+function renderHistoricalStructural(){
+  const t=historicalTotalsFor(historicalPeriodMode),n=historicalNatureTotals(historicalPeriodMode,"ORDINARY");
+  const on=n.MANDATORY+n.NECESSARY,margin=t.ordinaryIncome-on,residualAfterD=margin-n.DISCRETIONARY,other=Math.max(0,t.ordinaryOut-n.MANDATORY-n.NECESSARY-n.DISCRETIONARY);
+  function item(label,value,sub,cls){return '<div class="historical-structural-item '+(cls||"")+'"><span>'+esc(label)+'</span><strong class="'+(value>=0?"positive":"negative")+'">'+historicalSigned(value)+'</strong><small>'+esc(sub)+'</small></div>'}
+  $("historicalStructuralStrip").innerHTML=
+    item("Margine dopo O + N",margin,"Entrate ordinarie − obbligatorie − necessarie","margin")+
+    item("Obbligatorie",n.MANDATORY,"Ø "+money(n.MANDATORY/12)+"/mese","mandatory")+
+    item("Necessarie",n.NECESSARY,"Ø "+money(n.NECESSARY/12)+"/mese","necessary")+
+    item("Discrezionali",n.DISCRETIONARY,"Ø "+money(n.DISCRETIONARY/12)+"/mese","discretionary")+
+    item("Residuo dopo D",residualAfterD,"Prima di altre uscite / investimenti","residual")+
+    item("Altre / investimenti",other,"Spiega la differenza col saldo ordinario","other");
+}
+function renderHistoricalNatureComposition(){
+  const n=historicalNatureTotals(historicalPeriodMode,"ORDINARY"),total=n.MANDATORY+n.NECESSARY+n.DISCRETIONARY+n.INVESTMENT+n.UNKNOWN;
+  const rows=[
+    ["Obbligatorie","MANDATORY",n.MANDATORY],["Necessarie","NECESSARY",n.NECESSARY],["Discrezionali","DISCRETIONARY",n.DISCRETIONARY],
+    ["Investimenti","INVESTMENT",n.INVESTMENT],["Altre / non classificate","UNKNOWN",n.UNKNOWN]
+  ].filter(function(x){return x[2]>.5});
+  $("historicalNatureComposition").innerHTML=rows.map(function(x){
+    const pct=total?x[2]*100/total:0;
+    return '<div class="historical-composition-row"><div class="head"><span class="dot '+x[1].toLowerCase()+'"></span><span>'+esc(x[0])+'</span><strong>'+money(x[2])+'</strong><b>'+Math.round(pct)+'%</b></div><div class="bar"><i class="'+x[1].toLowerCase()+'" style="width:'+Math.max(1,pct).toFixed(1)+'%"></i></div></div>';
+  }).join("");
+}
+function renderHistoricalPeriodComparison(){
+  const modes=[["Ultimi 12 mesi","ROLLING_12"],["Ultimo anno solare","LAST_YEAR"]];
+  $("historicalPeriodComparison").innerHTML='<div class="historical-compare-table"><div class="row head"><span>Periodo</span><span>Saldo ordinario</span><span>Saldo totale</span><span>Ø totale/mese</span></div>'+
+    modes.map(function(x){const t=historicalTotalsFor(x[1]);return '<div class="row '+(x[1]===historicalPeriodMode?"active":"")+'"><span>'+esc(x[0])+'</span><strong class="'+(t.ordinaryNet>=0?"positive":"negative")+'">'+historicalSigned(t.ordinaryNet)+'</strong><strong class="'+(t.totalNet>=0?"positive":"negative")+'">'+historicalSigned(t.totalNet)+'</strong><span>'+historicalSigned(t.totalNet/12)+'</span></div>'}).join("")+'</div>';
+}
+function historicalChartRows(){return historicalRowsFor(historicalPeriodMode)}
+function renderHistoricalChart(){
+  if(historicalBalanceChart){historicalBalanceChart.destroy();historicalBalanceChart=null}
+  const rows=historicalChartRows(),months=historicalMonthsFor(historicalPeriodMode),labels=months.map(monthLabel),scope=historicalScope;
+  $("historicalNatureFocusWrap").classList.toggle("hidden",historicalChartMode!=="NATURE");
+  document.querySelectorAll("[data-history-period]").forEach(function(b){b.classList.toggle("active",b.dataset.historyPeriod===historicalPeriodMode)});
+  document.querySelectorAll("[data-history-scope]").forEach(function(b){b.classList.toggle("active",b.dataset.historyScope===historicalScope)});
+  document.querySelectorAll("[data-history-chart]").forEach(function(b){b.classList.toggle("active",b.dataset.historyChart===historicalChartMode)});
+  document.querySelectorAll("[data-history-nature-focus]").forEach(function(b){b.classList.toggle("active",b.dataset.historyNatureFocus===historicalNatureFocus)});
+  const income=rows.map(function(x){return scope==="TOTAL"?num(x.incoming):num(x.incoming_ordinary)});
+  const outgoing=rows.map(function(x){return scope==="TOTAL"?num(x.outgoing):num(x.outgoing_ordinary)});
+  const net=income.map(function(v,i){return v-outgoing[i]});
+  let running=0,cumulative=net.map(function(v){running+=v;return running});
+  let datasets=[];
+  if(historicalChartMode==="CASHFLOW"){
+    $("historicalChartTitle").textContent="Cash flow storico mese per mese";
+    $("historicalChartSubtitle").textContent=(scope==="TOTAL"?"Include":"Esclude")+" i movimenti straordinari. La linea mostra il saldo cumulato del periodo partendo da zero.";
+    $("historicalChartLegend").innerHTML='<span><i class="scenario-bar income"></i> Entrate</span><span><i class="scenario-bar expense"></i> Uscite</span><span><i class="scenario-bar balance"></i> Saldo mese</span><span><i class="scenario-line solid"></i> Cumulato periodo</span>';
+    datasets=[
+      {type:"bar",label:"Entrate",data:income,backgroundColor:"rgba(14,168,122,.78)",borderRadius:3,yAxisID:"y"},
+      {type:"bar",label:"Uscite",data:outgoing,backgroundColor:"rgba(239,91,115,.76)",borderRadius:3,yAxisID:"y"},
+      {type:"bar",label:"Saldo mese",data:net,backgroundColor:net.map(function(v){return v>=0?"rgba(34,197,94,.12)":"rgba(239,68,68,.12)"}),borderColor:net.map(function(v){return v>=0?"#15803d":"#b91c1c"}),borderWidth:1.7,borderRadius:3,yAxisID:"y"},
+      {type:"line",label:"Cumulato periodo",data:cumulative,borderColor:"#334155",backgroundColor:"#334155",borderWidth:2.4,pointRadius:2.7,tension:.2,yAxisID:"y2"}
+    ];
+    $("historicalChartNote").textContent="Saldo cumulato del periodo ≠ liquidità dei conti: parte da zero e serve a vedere come il cash flow storico ha costruito o distrutto margine.";
+  }else{
+    const natureMap=historicalMonthlyNature(historicalPeriodMode,scope),get=function(key){return months.map(function(m){return num(natureMap.get(m)&&natureMap.get(m)[key])})};
+    const O=get("MANDATORY"),N=get("NECESSARY"),D=get("DISCRETIONARY"),other=months.map(function(m){const x=natureMap.get(m)||{};return num(x.INVESTMENT)+num(x.UNKNOWN)});
+    $("historicalChartTitle").textContent="Spese per natura mese per mese";
+    $("historicalChartSubtitle").textContent="Confronta la parte essenziale O+N con le discrezionali e osserva il margine rispetto alle entrate.";
+    const all=historicalNatureFocus==="ALL",on=historicalNatureFocus==="ON",donly=historicalNatureFocus==="D";
+    if(all||on)datasets.push({type:"bar",label:"Obbligatorie",data:O,backgroundColor:"#ef5a5a",stack:"nature",borderWidth:0});
+    if(all||on)datasets.push({type:"bar",label:"Necessarie",data:N,backgroundColor:"#f4b63e",stack:"nature",borderWidth:0});
+    if(all||donly)datasets.push({type:"bar",label:"Discrezionali",data:D,backgroundColor:"#2bbf83",stack:"nature",borderWidth:0});
+    if(all)datasets.push({type:"bar",label:"Altre / investimenti",data:other,backgroundColor:"#94a3b8",stack:"nature",borderWidth:0});
+    datasets.push({type:"line",label:"Entrate",data:income,borderColor:"#2687e8",backgroundColor:"#2687e8",borderWidth:2.3,pointRadius:2.6,tension:.2,yAxisID:"y"});
+    if(on){
+      const margin=income.map(function(v,i){return v-O[i]-N[i]});
+      datasets.push({type:"line",label:"Margine dopo O+N",data:margin,borderColor:"#15803d",backgroundColor:"#15803d",borderDash:[6,4],borderWidth:2.2,pointRadius:2.3,tension:.2,yAxisID:"y"});
+    }
+    $("historicalChartLegend").innerHTML='<span><i class="scenario-bar income"></i> Natura spesa</span><span><i class="scenario-line solid"></i> Entrate</span>'+(on?'<span><i class="scenario-line solid"></i> Margine O+N</span>':'');
+    $("historicalChartNote").textContent=on?"Margine dopo O+N = entrate del mese − obbligatorie − necessarie. È il margine teoricamente disponibile per discrezionali, risparmio/progetti e altre uscite.":"La natura deriva dall'anagrafica delle categorie L2; investimenti e voci senza natura restano separati.";
+  }
+  historicalBalanceChart=new Chart($("historicalBalanceChart"),{
+    data:{labels:labels,datasets:datasets},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},
+      plugins:{legend:{display:true,position:"bottom",labels:{boxWidth:10,boxHeight:10,font:{size:11}}},tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+": "+money(ctx.raw)}}}},
+      scales:{x:{stacked:historicalChartMode==="NATURE",grid:{display:false},ticks:{font:{size:11}}},
+        y:{stacked:historicalChartMode==="NATURE",beginAtZero:false,ticks:{font:{size:11},callback:function(v){return money(v)}},grid:{color:"rgba(148,163,184,.18)"}},
+        y2:{display:historicalChartMode==="CASHFLOW",position:"right",grid:{drawOnChartArea:false},ticks:{font:{size:11},callback:function(v){return money(v)}}}}
+    }
+  });
+}
+function renderHistoricalBalance(){
+  if(!Array.isArray(scenarioActualRows)){msg($("historicalBalanceStatus"),"Carico lo storico…");return}
+  renderHistoricalKpis();renderHistoricalStructural();renderHistoricalChart();renderHistoricalNatureComposition();renderHistoricalPeriodComparison();
+}
+function renderBalanceHub(){
+  document.querySelectorAll("[data-balance-hub]").forEach(function(b){b.classList.toggle("ghost",b.dataset.balanceHub!==balanceHubMode)});
+  $("balanceHistoryView").classList.toggle("hidden",balanceHubMode!=="HISTORY");
+  $("balanceForecastView").classList.toggle("hidden",balanceHubMode!=="FORECAST");
+  if(balanceHubMode==="HISTORY")renderHistoricalBalance();else renderScenario();
+}
 function scenarioPlanData(){
   const exp=projectionDataFor("EXPENSE"),inc=projectionDataFor("INCOME");if(!exp||!inc)return null;
   const def=scenarioDefinition(exp),expActual=scenarioProjectionActualMap(exp),incActual=scenarioProjectionActualMap(inc),expForecast=scenarioProjectionForecastMap(exp),incForecast=scenarioProjectionForecastMap(inc),cash=scenarioCashflowMap(),liq=scenarioLiquidityMap();
@@ -3868,8 +4148,8 @@ function renderScenario(){
 async function loadScenarioData(force){
   if(scenarioLoading)return;
   if(!report){$("scenarioStatus").innerHTML='<div class="scenario-loading"><span class="spinner"></span>Attendo il caricamento del Reporting…</div>';return}
-  const needExpense=force||!projectionDataFor("EXPENSE"),needIncome=force||!projectionDataFor("INCOME"),needActual=force||!Array.isArray(scenarioActualRows),needRationales=force||!Array.isArray(scenarioForecastRationales);
-  if(!needExpense&&!needIncome&&!needActual&&!needRationales){renderScenario();return}
+  const needExpense=force||!projectionDataFor("EXPENSE"),needIncome=force||!projectionDataFor("INCOME"),needActual=force||!Array.isArray(scenarioActualRows),needRationales=force||!Array.isArray(scenarioForecastRationales),needMeta=force||!scenarioPlanningMeta;
+  if(!needExpense&&!needIncome&&!needActual&&!needRationales&&!needMeta){renderBalanceHub();return}
   scenarioLoading=true;$("scenarioStatus").innerHTML='<div class="scenario-loading"><span class="spinner"></span>Costruisco lo scenario…</div>';
   try{
     const jobs=[];
@@ -3877,6 +4157,7 @@ async function loadScenarioData(force){
     if(needIncome)jobs.push({kind:"INCOME",promise:rpc("dashboard_reporting_analysis_projection_v1",{p_direction:"INCOME"})});
     if(needActual)jobs.push({kind:"ACTUAL",promise:rpc("dashboard_reporting_scenario_actual_v3",{p_months:30})});
     if(needRationales)jobs.push({kind:"RATIONALES",promise:rpc("dashboard_reporting_scenario_rationales_v1",{p_months:12})});
+    if(needMeta)jobs.push({kind:"META",promise:rpc("dashboard_reporting_planning_meta_v1")});
     const values=await Promise.all(jobs.map(function(x){return x.promise}));
     jobs.forEach(function(job,i){
       if(job.kind==="ACTUAL"){
@@ -3886,9 +4167,11 @@ async function loadScenarioData(force){
         scenarioExtraordinaryMovements=Array.isArray(actual.extraordinary_movements)?actual.extraordinary_movements:[];
       }else if(job.kind==="RATIONALES"){
         const semantic=values[i]||{};scenarioForecastRationales=Array.isArray(semantic.rows)?semantic.rows:[];
+      }else if(job.kind==="META"){
+        scenarioPlanningMeta=values[i]||{rows:[]};
       }else analysisProjectionData.set(job.kind,values[i]||{});
     });
-    renderScenario();
+    renderBalanceHub();
   }catch(e){
     msg($("scenarioStatus"),e.message||"Errore nel caricamento dello scenario",true);
   }finally{scenarioLoading=false}
@@ -3897,7 +4180,7 @@ function showScenarioView(){
   scenarioVisible=true;planningBoardVisible=false;planningSimulatorVisible=false;
   $("standardReportingView").classList.add("hidden");$("planningBoardView").classList.add("hidden");$("planningSimulatorView").classList.add("hidden");$("scenarioView").classList.remove("hidden");
   $("reportingViewTab").classList.remove("active");$("planningBoardTab").classList.remove("active");$("planningSimulatorTab").classList.remove("active");$("scenarioViewTab").classList.add("active");
-  const u=new URL(window.location.href);u.searchParams.set("view","scenario");history.replaceState(null,"",u);
+  const u=new URL(window.location.href);u.searchParams.set("view","balance");history.replaceState(null,"",u);
   loadScenarioData(false);
 }
 function showStandardReportingView(){
@@ -4240,7 +4523,7 @@ function renderReportReturnBar(params){
 }
 function openReportingFromUrl(){
   if(reportDeepLinkHandled)return;const params=new URLSearchParams(window.location.search),category=params.get("category");renderReportReturnBar(params);
-  if(params.get("view")==="scenario"){reportDeepLinkHandled=true;showScenarioView();return}
+  if(params.get("view")==="scenario"||params.get("view")==="balance"){reportDeepLinkHandled=true;showScenarioView();return}
   if(params.get("view")==="board"){reportDeepLinkHandled=true;showPlanningBoardView();return}
   if(params.get("view")==="simulator"){reportDeepLinkHandled=true;showPlanningSimulatorView();return}
   if(!category)return;reportDeepLinkHandled=true;showStandardReportingView();
@@ -4319,6 +4602,16 @@ $("planningNatureFilter").addEventListener("change",function(){planningBoardNatu
 $("planningForecastFilter").addEventListener("change",function(){planningBoardForecastFilter=this.value||"ALL";renderPlanningBoard()});
 $("planningNoteFilter").addEventListener("change",function(){planningBoardNoteFilter=this.value||"ALL";renderPlanningBoard()});
 $("scenarioView").addEventListener("click",async function(e){
+  const hub=e.target.closest("[data-balance-hub]");
+  if(hub){balanceHubMode=hub.dataset.balanceHub||"HISTORY";renderBalanceHub();return}
+  const hp=e.target.closest("[data-history-period]");
+  if(hp){historicalPeriodMode=hp.dataset.historyPeriod||"ROLLING_12";renderHistoricalBalance();return}
+  const hs=e.target.closest("[data-history-scope]");
+  if(hs){historicalScope=hs.dataset.historyScope||"ORDINARY";renderHistoricalChart();return}
+  const hc=e.target.closest("[data-history-chart]");
+  if(hc){historicalChartMode=hc.dataset.historyChart||"CASHFLOW";renderHistoricalChart();return}
+  const hf=e.target.closest("[data-history-nature-focus]");
+  if(hf){historicalNatureFocus=hf.dataset.historyNatureFocus||"ALL";renderHistoricalChart();return}
   const noteSave=e.target.closest("[data-scenario-extra-note-save]");
   if(noteSave){
     const id=noteSave.dataset.scenarioExtraNoteSave,input=$("scenarioView").querySelector('[data-scenario-extra-note="'+CSS.escape(id)+'"]');
