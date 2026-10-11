@@ -8,8 +8,8 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=73.18.1-20261011-0025"></script>
-<script src="../shared/app-config.js?v=73.18.1-20261011-0025"></script>
+<script src="../shared/supabase-client.js?v=73.18.2-20261011-0025"></script>
+<script src="../shared/app-config.js?v=73.18.2-20261011-0025"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 :root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#6b7280;--line:#e5e7eb;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 8px 24px rgba(15,23,42,.06)}
@@ -769,14 +769,14 @@ button,input,select{font:inherit}
 .analysis-hover-item.current-plan{background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8}
 .analysis-hover-item.current-actual{background:#f8fafc;border-color:#cbd5e1;color:#475569}
 
-/* V73.18.1 — Tassonomia L2 sempre visibile */
+/* V73.18.2 — Tassonomia L2 sempre visibile */
 .analysis-master-table tr.analysis-zero-row:not(.analysis-selected) .analysis-row-button{color:#64748b;font-weight:560}
 .analysis-master-table tr.analysis-zero-row:not(.analysis-selected) .analysis-master-amount strong{color:#64748b}
 .analysis-master-table tr.analysis-zero-row:not(.analysis-selected) .analysis-master-share{color:#94a3b8}
 .analysis-master-table tr.analysis-zero-row:not(.analysis-selected) .plan-icon.analysis-l2-icon{background:#f8fafc;color:#94a3b8;border-color:#e2e8f0}
 .analysis-zero-trend{display:inline-flex;align-items:center;justify-content:center;min-width:24px;color:#94a3b8;font-size:12px;font-weight:700}
 
-/* V73.18.1 — tabellone decisionale: periodo, trend vs storico, leggibilità */
+/* V73.18.2 — tabellone decisionale: periodo, trend vs storico, leggibilità */
 .planning-board-shell{display:grid;gap:14px}
 .planning-board-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;padding:5px 2px 2px}
 .planning-board-hero h1{margin:0;color:#0f1f55;font-size:32px;line-height:1.05;letter-spacing:-.65px}
@@ -857,7 +857,7 @@ button,input,select{font:inherit}
 @media(max-width:1100px){.planning-board-kpis{grid-template-columns:repeat(3,1fr)}.planning-nature-summary{grid-template-columns:1fr}.planning-insight-grid{grid-template-columns:1fr 1fr}.planning-insight-grid .planning-insight-card:last-child{grid-column:1/-1}.planning-month-grid{grid-template-columns:repeat(6,1fr)}}
 @media(max-width:760px){.planning-board-hero{align-items:flex-start;flex-direction:column}.planning-board-kpis{grid-template-columns:1fr}.planning-nature-summary-grid{grid-template-columns:1fr}.planning-insight-grid{grid-template-columns:1fr}.planning-insight-grid .planning-insight-card:last-child{grid-column:auto}.planning-nature-layout{grid-template-columns:1fr;height:auto}.planning-chart-wrap{height:180px}.planning-month-grid{grid-template-columns:repeat(3,1fr)}.planning-board-toolbar{align-items:stretch}.planning-board-toolbar-left,.planning-board-toolbar-right{width:100%}.planning-board-search{flex:1;min-width:170px}}
 
-/* V73.18.1 compact decision board */
+/* V73.18.2 compact decision board */
 .planning-board-table th,.planning-board-table td{padding:5px 9px;font-size:12.5px}
 .planning-l1-row td{font-size:13px}
 .planning-l2-name{padding-left:27px!important}
@@ -880,7 +880,7 @@ button,input,select{font:inherit}
 .planning-plan-chip{font-size:8.5px;padding:1px 5px}
 
 
-/* V73.18.1 — simulatore scenari nel Tabellone */
+/* V73.18.2 — simulatore scenari nel Tabellone */
 .planning-simulator-card{grid-column:1/-1;min-height:0}
 .planning-simulator-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
 .planning-simulator-scope{font-size:10px;color:#6d7b92;background:#f5f8fc;border:1px solid #e0e7f0;border-radius:999px;padding:4px 8px;white-space:nowrap}
@@ -910,7 +910,7 @@ button,input,select{font:inherit}
 @media(max-width:560px){.planning-simulator-results{grid-template-columns:1fr}.planning-sim-result{padding:9px}.planning-sim-result .v{font-size:19px}.planning-sim-row{grid-template-columns:1fr 64px;gap:8px}.planning-sim-presets .btn{flex:1 1 42%}.planning-sim-matrix-wrap{overflow-x:auto}.planning-sim-matrix{min-width:520px}}
 
 
-/* V73.18.1 — storico visibile e filtri previsione/note */
+/* V73.18.2 — storico visibile e filtri previsione/note */
 .planning-filter-select{min-height:34px;padding:5px 8px;font-size:12px}
 .planning-board-table{min-width:1320px}
 .planning-board-table th,.planning-board-table td{font-size:13px}
@@ -941,7 +941,7 @@ button,input,select{font:inherit}
 @media(max-width:900px){.planning-board-table{min-width:1250px}}
 
 
-/* V73.18.1 — Simulatore separato, baseline storico ordinario, entrate + spese */
+/* V73.18.2 — Simulatore separato, baseline storico ordinario, entrate + spese */
 .planning-board-shell .planning-insight-grid{grid-template-columns:.9fr 1.6fr}
 .planning-simulator-page{display:grid;gap:14px}
 .planning-simulator-standalone{min-height:0}
@@ -967,7 +967,7 @@ button,input,select{font:inherit}
 @media(max-width:760px){.planning-board-shell .planning-insight-grid{grid-template-columns:1fr}.planning-sim-group .planning-sim-row{grid-template-columns:1fr 64px}.planning-sim-group .planning-sim-slider{grid-column:1/-1}}
 
 
-/* V73.18.1 — Bilancio hub: Storico + Previsione */
+/* V73.18.2 — Bilancio hub: Storico + Previsione */
 .balance-hub-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:12px;padding:2px 2px 0}
 .balance-hub-head h2{margin:2px 0 0;font-size:29px;color:#10204d}.balance-hub-head p{margin:5px 0 0;color:#62718b;font-size:13px}
 .balance-hub-toggle .btn{min-width:108px}
@@ -992,7 +992,7 @@ button,input,select{font:inherit}
 @media(max-width:760px){.balance-hub-head{align-items:flex-start;flex-direction:column}.historical-kpis{grid-template-columns:1fr 1fr}.historical-structural-strip{grid-template-columns:1fr 1fr}.historical-bottom-grid{grid-template-columns:1fr}.historical-chart{height:330px}.balance-history-toolbar{align-items:stretch}.historical-compare-table{overflow-x:auto}.historical-compare-table .row{min-width:620px}}
 
 
-/* V73.18.1 — natura categoria visibile in Analisi */
+/* V73.18.2 — natura categoria visibile in Analisi */
 .analysis-nature-badge{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:20px;padding:0 6px;border-radius:7px;font-size:10.5px;font-weight:850;line-height:1;white-space:nowrap;margin-left:2px}
 .analysis-nature-badge.l1{min-width:42px}
 .analysis-nature-badge.mandatory{background:#fee2e2;color:#b91c1c}
@@ -1002,6 +1002,15 @@ button,input,select{font:inherit}
 .analysis-nature-badge.predictable{background:#e0e7ff;color:#4338ca}
 .analysis-nature-badge.variable{background:#ffedd5;color:#c2410c}
 .analysis-nature-badge.unknown{background:#f1f5f9;color:#64748b}
+
+
+/* V73.18.2 — regole Bilancio esplicite e tooltip informativi */
+.info-tip{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;border:1px solid #b9c7d9;background:#f7faff;color:#44617f;font-size:10px;font-weight:850;line-height:1;vertical-align:middle;cursor:help;user-select:none}
+.info-tip:hover,.info-tip:focus{background:#eaf3ff;border-color:#7aa7df;color:#1d4f91;outline:none}
+.historical-kpi .label{display:flex;align-items:center;gap:4px;min-height:17px}
+.historical-extra-breakdown{display:flex!important;gap:7px!important;flex-wrap:wrap}
+.historical-extra-breakdown span{white-space:nowrap}
+.historical-structural-item>span{display:flex;align-items:center;gap:4px}
 
 </style>
 </head>
@@ -1322,10 +1331,10 @@ button,input,select{font:inherit}
             </div>
           </div>
           <div>
-            <span class="scenario-control-label">Dati nel grafico</span>
+            <span class="scenario-control-label">Straordinarie nel grafico <span class="info-tip" tabindex="0" title="Questo selettore modifica solo il grafico. I KPI superiori mostrano sempre sia la lettura ordinaria sia quella totale, così il confronto resta visibile.">i</span></span>
             <div class="scenario-segment">
               <button class="active" type="button" data-history-scope="ORDINARY">Ordinario</button>
-              <button type="button" data-history-scope="TOTAL">Con straordinarie</button>
+              <button type="button" data-history-scope="TOTAL">Totale</button>
             </div>
           </div>
           <div>
@@ -3580,8 +3589,8 @@ function historicalTotalsFor(mode){
   const rows=historicalRowsFor(mode);
   const sum=function(key){return rows.reduce(function(s,x){return s+num(x[key])},0)};
   const ordinaryIncome=sum("incoming_ordinary"),ordinaryOut=sum("outgoing_ordinary"),ordinaryNet=sum("net_ordinary");
-  const totalIncome=sum("incoming"),totalOut=sum("outgoing"),totalNet=sum("net");
-  return {rows:rows,ordinaryIncome:ordinaryIncome,ordinaryOut:ordinaryOut,ordinaryNet:ordinaryNet,totalIncome:totalIncome,totalOut:totalOut,totalNet:totalNet,extraNet:totalNet-ordinaryNet,
+  const totalIncome=sum("incoming"),totalOut=sum("outgoing"),totalNet=sum("net"),extraIncome=sum("incoming_extraordinary"),extraOut=sum("outgoing_extraordinary"),extraNet=extraIncome-extraOut;
+  return {rows:rows,ordinaryIncome:ordinaryIncome,ordinaryOut:ordinaryOut,ordinaryNet:ordinaryNet,totalIncome:totalIncome,totalOut:totalOut,totalNet:totalNet,extraIncome:extraIncome,extraOut:extraOut,extraNet:extraNet,
     ordinaryPositive:rows.filter(function(x){return num(x.net_ordinary)>=0}).length,
     totalPositive:rows.filter(function(x){return num(x.net)>=0}).length};
 }
@@ -3623,31 +3632,36 @@ function historicalPeriodLabel(mode){
   return mode==="LAST_YEAR"?"Anno "+first.slice(0,4):monthLabel(first)+" – "+monthLabel(last);
 }
 function historicalSigned(v){v=num(v);return (v>0?"+":v<0?"−":"")+money(Math.abs(v))}
-function historicalKpiCard(label,value,sub,tone){
-  return '<div class="historical-kpi '+(tone||"")+'"><div class="label">'+esc(label)+'</div><div class="value '+(num(value)>=0?"positive":"negative")+'">'+historicalSigned(value)+'</div><div class="sub">'+sub+'</div></div>';
+function historicalInfo(text){
+  return '<span class="info-tip" tabindex="0" title="'+esc(text)+'">i</span>';
+}
+function historicalKpiCard(label,value,sub,tone,info){
+  return '<div class="historical-kpi '+(tone||"")+'"><div class="label">'+esc(label)+(info?" "+historicalInfo(info):"")+'</div><div class="value '+(num(value)>=0?"positive":"negative")+'">'+historicalSigned(value)+'</div><div class="sub">'+sub+'</div></div>';
 }
 function renderHistoricalKpis(){
   const t=historicalTotalsFor(historicalPeriodMode),period=historicalPeriodLabel(historicalPeriodMode);
   $("historicalBalanceKpis").innerHTML=
-    '<div class="historical-kpi income"><div class="label">Entrate ordinarie</div><div class="value positive">'+money(t.ordinaryIncome)+'</div><div class="sub">Ø '+money(t.ordinaryIncome/12)+'/mese</div></div>'+
-    '<div class="historical-kpi expense"><div class="label">Uscite ordinarie</div><div class="value negative">'+money(t.ordinaryOut)+'</div><div class="sub">Ø '+money(t.ordinaryOut/12)+'/mese</div></div>'+
-    historicalKpiCard("Saldo ordinario",t.ordinaryNet,'Ø '+historicalSigned(t.ordinaryNet/12)+'/mese',"balance")+
-    historicalKpiCard("Impatto straordinarie",t.extraNet,(t.extraNet>=0?"Migliora":"Riduce")+" il saldo del periodo","extra")+
-    historicalKpiCard("Saldo totale",t.totalNet,'Ø '+historicalSigned(t.totalNet/12)+'/mese',"total")+
-    '<div class="historical-kpi months"><div class="label">Mesi positivi / negativi</div><div class="value">'+t.ordinaryPositive+' / '+(12-t.ordinaryPositive)+'</div><div class="sub">Ordinario · Totale '+t.totalPositive+' / '+(12-t.totalPositive)+'</div></div>';
+    '<div class="historical-kpi income"><div class="label">Entrate ordinarie '+historicalInfo("Entrate del periodo escluse quelle marcate come straordinarie. I giroconti interni restano esclusi dal reporting.")+'</div><div class="value positive">'+money(t.ordinaryIncome)+'</div><div class="sub">Ø '+money(t.ordinaryIncome/12)+'/mese</div></div>'+
+    '<div class="historical-kpi expense"><div class="label">Uscite ordinarie '+historicalInfo("Uscite del periodo escluse quelle marcate come straordinarie. Questa è la base usata per leggere la sostenibilità strutturale della famiglia.")+'</div><div class="value negative">'+money(t.ordinaryOut)+'</div><div class="sub">Ø '+money(t.ordinaryOut/12)+'/mese</div></div>'+
+    historicalKpiCard("Saldo ordinario",t.ordinaryNet,'Ø '+historicalSigned(t.ordinaryNet/12)+'/mese',"balance","Entrate ordinarie meno tutte le uscite ordinarie del periodo. Include obbligatorie, necessarie, discrezionali, investimenti e altre uscite ordinarie; esclude le straordinarie.")+
+    '<div class="historical-kpi extra"><div class="label">Impatto straordinarie '+historicalInfo("Entrate straordinarie meno uscite straordinarie. Spiega la differenza tra saldo ordinario e saldo totale.")+'</div><div class="value '+(t.extraNet>=0?"positive":"negative")+'">'+historicalSigned(t.extraNet)+'</div><div class="sub historical-extra-breakdown"><span>Entrate +'+money(t.extraIncome)+'</span><span>Uscite −'+money(t.extraOut)+'</span></div></div>'+
+    historicalKpiCard("Saldo totale",t.totalNet,'Ø '+historicalSigned(t.totalNet/12)+'/mese',"total","Risultato effettivo del periodo: saldo ordinario più l'impatto netto delle entrate e uscite straordinarie.")+
+    '<div class="historical-kpi months"><div class="label">Mesi positivi / negativi '+historicalInfo("Il conteggio principale usa il saldo ordinario. Sotto viene mostrato anche il conteggio includendo le straordinarie.")+'</div><div class="value">'+t.ordinaryPositive+' / '+(12-t.ordinaryPositive)+'</div><div class="sub">Ordinario · Totale '+t.totalPositive+' / '+(12-t.totalPositive)+'</div></div>';
   if($("historicalBalanceStatus"))$("historicalBalanceStatus").innerHTML='<div class="historical-period-chip">'+esc(period)+'</div>';
 }
 function renderHistoricalStructural(){
   const t=historicalTotalsFor(historicalPeriodMode),n=historicalNatureTotals(historicalPeriodMode,"ORDINARY");
   const on=n.MANDATORY+n.NECESSARY,margin=t.ordinaryIncome-on,residualAfterD=margin-n.DISCRETIONARY,other=Math.max(0,t.ordinaryOut-n.MANDATORY-n.NECESSARY-n.DISCRETIONARY);
-  function item(label,value,sub,cls){return '<div class="historical-structural-item '+(cls||"")+'"><span>'+esc(label)+'</span><strong class="'+(value>=0?"positive":"negative")+'">'+historicalSigned(value)+'</strong><small>'+esc(sub)+'</small></div>'}
+  function item(label,value,sub,cls,info){
+    return '<div class="historical-structural-item '+(cls||"")+'"><span>'+esc(label)+(info?" "+historicalInfo(info):"")+'</span><strong class="'+(value>=0?"positive":"negative")+'">'+historicalSigned(value)+'</strong><small>'+esc(sub)+'</small></div>';
+  }
   $("historicalStructuralStrip").innerHTML=
-    item("Margine dopo O + N",margin,"Entrate ordinarie − obbligatorie − necessarie","margin")+
-    item("Obbligatorie",n.MANDATORY,"Ø "+money(n.MANDATORY/12)+"/mese","mandatory")+
-    item("Necessarie",n.NECESSARY,"Ø "+money(n.NECESSARY/12)+"/mese","necessary")+
-    item("Discrezionali",n.DISCRETIONARY,"Ø "+money(n.DISCRETIONARY/12)+"/mese","discretionary")+
-    item("Residuo dopo D",residualAfterD,"Prima di altre uscite / investimenti","residual")+
-    item("Altre / investimenti",other,"Spiega la differenza col saldo ordinario","other");
+    item("Margine strutturale",margin,"Entrate ordinarie − obbligatorie − necessarie","margin","Indica il margine teoricamente disponibile per spese discrezionali, risparmio, progetti e altre uscite. Non è il saldo bancario e non include le straordinarie.")+
+    item("Obbligatorie",n.MANDATORY,"Ø "+money(n.MANDATORY/12)+"/mese","mandatory","Spese difficilmente comprimibili nel breve periodo. La natura deriva dalle categorie L2.")+
+    item("Necessarie",n.NECESSARY,"Ø "+money(n.NECESSARY/12)+"/mese","necessary","Spese necessarie ma potenzialmente ottimizzabili. La natura deriva dalle categorie L2.")+
+    item("Discrezionali",n.DISCRETIONARY,"Ø "+money(n.DISCRETIONARY/12)+"/mese","discretionary","Spese rinunciabili o riducibili. Sono la parte più direttamente governabile del margine strutturale.")+
+    item("Residuo dopo D",residualAfterD,"Prima di altre uscite / investimenti","residual","Margine strutturale meno le spese discrezionali. Non coincide ancora con il saldo ordinario se esistono investimenti o altre uscite ordinarie.")+
+    item("Altre / investimenti",other,"Spiega la differenza col saldo ordinario","other","Uscite ordinarie non comprese nelle nature O/N/D, inclusi investimenti e categorie non classificate.");
 }
 function renderHistoricalNatureComposition(){
   const n=historicalNatureTotals(historicalPeriodMode,"ORDINARY"),total=n.MANDATORY+n.NECESSARY+n.DISCRETIONARY+n.INVESTMENT+n.UNKNOWN;
@@ -3689,7 +3703,7 @@ function renderHistoricalChart(){
       {type:"bar",label:"Saldo mese",data:net,backgroundColor:net.map(function(v){return v>=0?"rgba(34,197,94,.12)":"rgba(239,68,68,.12)"}),borderColor:net.map(function(v){return v>=0?"#15803d":"#b91c1c"}),borderWidth:1.7,borderRadius:3,yAxisID:"y"},
       {type:"line",label:"Cumulato periodo",data:cumulative,borderColor:"#334155",backgroundColor:"#334155",borderWidth:2.4,pointRadius:2.7,tension:.2,yAxisID:"y2"}
     ];
-    $("historicalChartNote").textContent="Saldo cumulato del periodo ≠ liquidità dei conti: parte da zero e serve a vedere come il cash flow storico ha costruito o distrutto margine.";
+    $("historicalChartNote").textContent="Il selettore Ordinario/Totale modifica solo questo grafico. I KPI sopra mantengono entrambe le letture. Il saldo cumulato parte da zero e non rappresenta la liquidità dei conti.";
   }else{
     const natureMap=historicalMonthlyNature(historicalPeriodMode,scope),get=function(key){return months.map(function(m){return num(natureMap.get(m)&&natureMap.get(m)[key])})};
     const O=get("MANDATORY"),N=get("NECESSARY"),D=get("DISCRETIONARY"),other=months.map(function(m){const x=natureMap.get(m)||{};return num(x.INVESTMENT)+num(x.UNKNOWN)});
@@ -3703,10 +3717,10 @@ function renderHistoricalChart(){
     datasets.push({type:"line",label:"Entrate",data:income,borderColor:"#2687e8",backgroundColor:"#2687e8",borderWidth:2.3,pointRadius:2.6,tension:.2,yAxisID:"y"});
     if(on){
       const margin=income.map(function(v,i){return v-O[i]-N[i]});
-      datasets.push({type:"line",label:"Margine dopo O+N",data:margin,borderColor:"#15803d",backgroundColor:"#15803d",borderDash:[6,4],borderWidth:2.2,pointRadius:2.3,tension:.2,yAxisID:"y"});
+      datasets.push({type:"line",label:"Margine strutturale",data:margin,borderColor:"#15803d",backgroundColor:"#15803d",borderDash:[6,4],borderWidth:2.2,pointRadius:2.3,tension:.2,yAxisID:"y"});
     }
-    $("historicalChartLegend").innerHTML='<span><i class="scenario-bar income"></i> Natura spesa</span><span><i class="scenario-line solid"></i> Entrate</span>'+(on?'<span><i class="scenario-line solid"></i> Margine O+N</span>':'');
-    $("historicalChartNote").textContent=on?"Margine dopo O+N = entrate del mese − obbligatorie − necessarie. È il margine teoricamente disponibile per discrezionali, risparmio/progetti e altre uscite.":"La natura deriva dall'anagrafica delle categorie L2; investimenti e voci senza natura restano separati.";
+    $("historicalChartLegend").innerHTML='<span><i class="scenario-bar income"></i> Natura spesa</span><span><i class="scenario-line solid"></i> Entrate</span>'+(on?'<span><i class="scenario-line solid"></i> Margine strutturale</span>':'');
+    $("historicalChartNote").textContent=on?"Margine strutturale = entrate del mese − obbligatorie − necessarie. È il margine teoricamente disponibile per discrezionali, risparmio/progetti e altre uscite.":"La natura deriva dall'anagrafica delle categorie L2; investimenti e voci senza natura restano separati.";
   }
   historicalBalanceChart=new Chart($("historicalBalanceChart"),{
     data:{labels:labels,datasets:datasets},
