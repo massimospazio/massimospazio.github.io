@@ -8,8 +8,8 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=73.15.0-20261011-0025"></script>
-<script src="../shared/app-config.js?v=73.15.0-20261011-0025"></script>
+<script src="../shared/supabase-client.js?v=73.16.0-20261011-0025"></script>
+<script src="../shared/app-config.js?v=73.16.0-20261011-0025"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 :root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#6b7280;--line:#e5e7eb;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 8px 24px rgba(15,23,42,.06)}
@@ -769,14 +769,14 @@ button,input,select{font:inherit}
 .analysis-hover-item.current-plan{background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8}
 .analysis-hover-item.current-actual{background:#f8fafc;border-color:#cbd5e1;color:#475569}
 
-/* V73.15.0 — Tassonomia L2 sempre visibile */
+/* V73.16.0 — Tassonomia L2 sempre visibile */
 .analysis-master-table tr.analysis-zero-row:not(.analysis-selected) .analysis-row-button{color:#64748b;font-weight:560}
 .analysis-master-table tr.analysis-zero-row:not(.analysis-selected) .analysis-master-amount strong{color:#64748b}
 .analysis-master-table tr.analysis-zero-row:not(.analysis-selected) .analysis-master-share{color:#94a3b8}
 .analysis-master-table tr.analysis-zero-row:not(.analysis-selected) .plan-icon.analysis-l2-icon{background:#f8fafc;color:#94a3b8;border-color:#e2e8f0}
 .analysis-zero-trend{display:inline-flex;align-items:center;justify-content:center;min-width:24px;color:#94a3b8;font-size:12px;font-weight:700}
 
-/* V73.15.0 — tabellone decisionale: periodo, trend vs storico, leggibilità */
+/* V73.16.0 — tabellone decisionale: periodo, trend vs storico, leggibilità */
 .planning-board-shell{display:grid;gap:14px}
 .planning-board-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;padding:5px 2px 2px}
 .planning-board-hero h1{margin:0;color:#0f1f55;font-size:32px;line-height:1.05;letter-spacing:-.65px}
@@ -857,7 +857,7 @@ button,input,select{font:inherit}
 @media(max-width:1100px){.planning-board-kpis{grid-template-columns:repeat(3,1fr)}.planning-nature-summary{grid-template-columns:1fr}.planning-insight-grid{grid-template-columns:1fr 1fr}.planning-insight-grid .planning-insight-card:last-child{grid-column:1/-1}.planning-month-grid{grid-template-columns:repeat(6,1fr)}}
 @media(max-width:760px){.planning-board-hero{align-items:flex-start;flex-direction:column}.planning-board-kpis{grid-template-columns:1fr}.planning-nature-summary-grid{grid-template-columns:1fr}.planning-insight-grid{grid-template-columns:1fr}.planning-insight-grid .planning-insight-card:last-child{grid-column:auto}.planning-nature-layout{grid-template-columns:1fr;height:auto}.planning-chart-wrap{height:180px}.planning-month-grid{grid-template-columns:repeat(3,1fr)}.planning-board-toolbar{align-items:stretch}.planning-board-toolbar-left,.planning-board-toolbar-right{width:100%}.planning-board-search{flex:1;min-width:170px}}
 
-/* V73.15.0 compact decision board */
+/* V73.16.0 compact decision board */
 .planning-board-table th,.planning-board-table td{padding:5px 9px;font-size:12.5px}
 .planning-l1-row td{font-size:13px}
 .planning-l2-name{padding-left:27px!important}
@@ -880,7 +880,7 @@ button,input,select{font:inherit}
 .planning-plan-chip{font-size:8.5px;padding:1px 5px}
 
 
-/* V73.15.0 — simulatore scenari nel Tabellone */
+/* V73.16.0 — simulatore scenari nel Tabellone */
 .planning-simulator-card{grid-column:1/-1;min-height:0}
 .planning-simulator-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
 .planning-simulator-scope{font-size:10px;color:#6d7b92;background:#f5f8fc;border:1px solid #e0e7f0;border-radius:999px;padding:4px 8px;white-space:nowrap}
@@ -908,6 +908,37 @@ button,input,select{font:inherit}
 .planning-sim-note{margin-top:9px;padding:7px 9px;border-radius:8px;background:#eef5ff;color:#58708e;font-size:9.5px}
 @media(max-width:900px){.planning-simulator-results{grid-template-columns:1fr 1fr}.planning-sim-expense-line{grid-column:1/-1}.planning-sim-row{grid-template-columns:1fr 72px}.planning-sim-slider{grid-column:1/-1;grid-row:2}.planning-sim-output{grid-column:2;grid-row:1}}
 @media(max-width:560px){.planning-simulator-results{grid-template-columns:1fr}.planning-sim-result{padding:9px}.planning-sim-result .v{font-size:19px}.planning-sim-row{grid-template-columns:1fr 64px;gap:8px}.planning-sim-presets .btn{flex:1 1 42%}.planning-sim-matrix-wrap{overflow-x:auto}.planning-sim-matrix{min-width:520px}}
+
+
+/* V73.16.0 — storico visibile e filtri previsione/note */
+.planning-filter-select{min-height:34px;padding:5px 8px;font-size:12px}
+.planning-board-table{min-width:1320px}
+.planning-board-table th,.planning-board-table td{font-size:13px}
+.planning-board-table th{font-size:12.5px}
+.planning-board-table th:nth-child(1){width:22%}
+.planning-board-table th:nth-child(2){width:10%;text-align:right}
+.planning-board-table th:nth-child(3){width:10%;text-align:right}
+.planning-board-table th:nth-child(4){width:18%}
+.planning-board-table th:nth-child(5){width:7%;text-align:center}
+.planning-board-table th:nth-child(6){width:17%}
+.planning-board-table th:nth-child(7){width:13%}
+.planning-board-table th:nth-child(8){width:3%}
+.planning-board-table td:nth-child(2),.planning-board-table td:nth-child(3){text-align:right}
+.planning-board-table td:nth-child(5){text-align:center}
+.planning-value-cell{display:grid;gap:2px;line-height:1.08;white-space:nowrap}
+.planning-value-cell strong{font-size:14px;font-weight:860;color:#15234b}
+.planning-value-cell span{font-size:11.5px;color:#68768d;font-weight:650}
+.planning-l1-row .planning-value-cell strong{font-size:14.5px}
+.planning-l1-row .planning-value-cell span{font-size:11.5px}
+.planning-delta-text span{font-size:11px}
+.planning-method-chip{font-size:11.5px;padding:3px 7px}
+.planning-method-chip b{font-size:10px}
+.planning-method-chip i{font-size:13px}
+.planning-plan-chip{font-size:10px}
+.planning-note{font-size:12.5px}
+.planning-board-legend{font-size:11.5px}
+.planning-section-label td{font-size:11px}
+@media(max-width:900px){.planning-board-table{min-width:1250px}}
 
 </style>
 </head>
@@ -1052,14 +1083,36 @@ button,input,select{font:inherit}
             <optgroup label="Uscite"><option value="MANDATORY">O · Obbligatorie</option><option value="NECESSARY">N · Necessarie</option><option value="DISCRETIONARY">D · Discrezionali</option></optgroup>
             <optgroup label="Entrate"><option value="FIXED">F · Fisse</option><option value="PREDICTABLE">P · Prevedibili</option><option value="VARIABLE">V · Variabili</option></optgroup>
           </select></label>
+          <label class="small">Previsione <select id="planningForecastFilter" class="select planning-filter-select">
+            <option value="ALL">Tutti i tipi</option>
+            <optgroup label="Livello">
+              <option value="SCOPE:CATEGORY">L2</option>
+              <option value="SCOPE:COUNTERPARTIES">Controparti</option>
+            </optgroup>
+            <optgroup label="Metodo">
+              <option value="METHOD:AVG6">Media 6 mesi</option>
+              <option value="METHOD:AVG12">Media 12 mesi</option>
+              <option value="METHOD:MEDIAN12">Mediana 12 mesi</option>
+              <option value="METHOD:SAME_MONTH_LAST_YEAR">Stesso mese A-1</option>
+              <option value="METHOD:LAST_VALUE">Ultimo valore</option>
+              <option value="METHOD:FIXED">Importo fisso</option>
+              <option value="METHOD:RANGE">Range best-worst</option>
+              <option value="METHOD:ZERO">⊘ Non si ripete</option>
+            </optgroup>
+          </select></label>
+          <label class="small">Note <select id="planningNoteFilter" class="select planning-filter-select">
+            <option value="ALL">Tutte</option>
+            <option value="WITH">Con note</option>
+            <option value="WITHOUT">Senza note</option>
+          </select></label>
           <label class="planning-board-search"><input id="planningBoardSearch" type="search" placeholder="Cerca categoria…" autocomplete="off"></label>
         </div>
       </div>
       <section class="planning-board-card">
         <div class="planning-board-table-wrap">
           <table class="planning-board-table">
-            <thead><tr><th>Categoria</th><th id="planningBoardYearHead">Piano</th><th>Var. vs storico</th><th>Natura</th><th>Tipo previsione</th><th>Note / razionale</th><th></th></tr></thead>
-            <tbody id="planningBoardBody"><tr><td colspan="7" class="muted">Apri il tabellone per caricare il piano.</td></tr></tbody>
+            <thead><tr><th>Categoria</th><th id="planningBoardHistoryHead">Storico</th><th id="planningBoardYearHead">Piano</th><th>Var. vs storico</th><th>Natura</th><th>Tipo previsione</th><th>Note / razionale</th><th></th></tr></thead>
+            <tbody id="planningBoardBody"><tr><td colspan="8" class="muted">Apri il tabellone per caricare il piano.</td></tr></tbody>
           </table>
         </div>
         <div id="planningBoardLegend" class="planning-board-legend"></div>
@@ -1240,6 +1293,8 @@ let planningBoardData=null;
 let planningBoardFilter="ALL";
 let planningBoardHorizon="CALENDAR";
 let planningBoardNatureFilter="ALL";
+let planningBoardForecastFilter="ALL";
+let planningBoardNoteFilter="ALL";
 let planningBoardLevel="L1_L2";
 let planningBoardSearch="";
 let planningNatureChart=null;
@@ -3811,8 +3866,27 @@ function planningMethodHtml(row){
   }
   return '<div class="planning-method"><span class="planning-method-chip'+planningMethodClass(method)+'"><b>L2</b><i>'+planningMethodIcon(method)+'</i>'+esc(label)+'</span>'+override+'</div>';
 }
+function planningForecastFilterMatch(row){
+  const filter=planningBoardForecastFilter||"ALL";if(filter==="ALL")return true;
+  const m=row.meta||{},scope=String(m.forecast_scope||"CATEGORY"),method=String(m.forecast_method||"");
+  if(filter.indexOf("SCOPE:")===0)return scope===filter.slice(6);
+  if(filter.indexOf("METHOD:")===0){
+    const wanted=filter.slice(7);
+    if(method===wanted)return true;
+    if(scope==="COUNTERPARTIES")return String(m.counterparty_methods||"").split(",").map(function(x){return x.trim()}).includes(wanted);
+  }
+  return false;
+}
+function planningNoteFilterMatch(row){
+  const filter=planningBoardNoteFilter||"ALL";if(filter==="ALL")return true;
+  const has=!!String(row.meta&&row.meta.rationale_note||"").trim();
+  return filter==="WITH"?has:!has;
+}
+function planningValueHtml(value){
+  return '<div class="planning-value-cell"><strong>'+money(value)+'</strong><span>Ø '+money(num(value)/12)+'/mese</span></div>';
+}
 function planningL1NatureHtml(rows,direction){const d=planningDominantNature(rows,direction);if(!d.nature)return '<span class="planning-nature-badge unknown">?</span>';return '<span class="planning-nature-badge '+planningNatureClass(d.nature)+'" title="'+esc(planningNatureLabel(d.nature))+'">'+planningNatureShort(d.nature)+' '+d.pct.toLocaleString("it-IT",{maximumFractionDigits:0})+'%</span>'}
-function planningMonthPanelHtml(row){return '<tr class="planning-month-row"><td colspan="7"><div class="planning-month-panel"><div class="planning-month-head"><div class="small"><strong>'+esc(row.l2_name)+'</strong> · dettaglio mensile del periodo selezionato.</div><button class="btn ghost compact" type="button" data-planning-open-analysis="'+esc(row.category_id)+'" data-planning-open-direction="'+row.direction+'">Apri in Analisi</button></div><div class="planning-month-grid">'+row.months.map(function(m){return '<div class="planning-month-cell '+(m.kind==="actual"?"actual ":"")+(m.override?"override":"")+'"><div class="m">'+esc(monthLabel(m.month))+'</div><div class="a">'+money(m.amount)+'</div><div class="t">'+(m.kind==="actual"?"reale":(m.override?"override":"piano"))+'</div></div>'}).join("")+'</div></div></td></tr>'}
+function planningMonthPanelHtml(row){return '<tr class="planning-month-row"><td colspan="8"><div class="planning-month-panel"><div class="planning-month-head"><div class="small"><strong>'+esc(row.l2_name)+'</strong> · dettaglio mensile del periodo selezionato.</div><button class="btn ghost compact" type="button" data-planning-open-analysis="'+esc(row.category_id)+'" data-planning-open-direction="'+row.direction+'">Apri in Analisi</button></div><div class="planning-month-grid">'+row.months.map(function(m){return '<div class="planning-month-cell '+(m.kind==="actual"?"actual ":"")+(m.override?"override":"")+'"><div class="m">'+esc(monthLabel(m.month))+'</div><div class="a">'+money(m.amount)+'</div><div class="t">'+(m.kind==="actual"?"reale":(m.override?"override":"piano"))+'</div></div>'}).join("")+'</div></div></td></tr>'}
 function planningDeltaHtml(deltaAbs,deltaPct,direction,comparison){
   const abs=num(deltaAbs),monthly=abs/12,isNeutral=Math.abs(abs)<.5,pct=(deltaPct===null||deltaPct===undefined||!Number.isFinite(Number(deltaPct)))?null:num(deltaPct);
   if(isNeutral)return '<div class="planning-delta-cell"><div class="planning-delta-track"><i class="planning-delta-zero"></i></div><div class="planning-delta-text"><strong class="neutral">0%</strong><span>€0/mese</span></div></div>';
@@ -3822,20 +3896,38 @@ function planningDeltaHtml(deltaAbs,deltaPct,direction,comparison){
   return '<div class="planning-delta-cell"><div class="planning-delta-track"><i class="planning-delta-zero"></i><i class="planning-delta-fill '+pos+' '+quality+'" style="width:'+width.toFixed(1)+'%"></i></div><div class="planning-delta-text"><strong class="'+quality+'">'+(rounded>0?"+":"")+rounded+'%</strong><span>'+sign+money(Math.abs(abs))+' · '+sign+money(Math.abs(monthly))+'/mese</span></div></div>';
 }
 function planningSectionHtml(direction,allRows){
-  const q=planningBoardSearch.trim().toLocaleLowerCase("it"),groups=planningGroupRows(allRows);let html='<tr class="planning-section-label"><td colspan="7">'+(direction==="INCOME"?"Entrate":"Spese")+'</td></tr>';
+  const q=planningBoardSearch.trim().toLocaleLowerCase("it"),groups=planningGroupRows(allRows);
+  let html='<tr class="planning-section-label"><td colspan="8">'+(direction==="INCOME"?"Entrate":"Spese")+'</td></tr>';
   groups.forEach(function(g){
     const groupMatches=!q||String(g.name||"").toLocaleLowerCase("it").includes(q);
     let visibleRows=groupMatches?g.rows:g.rows.filter(function(r){return String(r.l2_name||"").toLocaleLowerCase("it").includes(q)});
     if(planningBoardNatureFilter!=="ALL")visibleRows=visibleRows.filter(function(r){return planningNatureValue(r.meta,direction)===planningBoardNatureFilter});
-    if((q&&!groupMatches&&!visibleRows.length)||(planningBoardNatureFilter!=="ALL"&&!visibleRows.length))return;
-    const key=direction+"|"+g.id,searching=!!q,expanded=planningBoardLevel==="L1_L2"&&(searching||planningBoardExpandedL1.has(key)),annual=g.rows.reduce(function(s,r){return s+r.annual},0),comparison=g.rows.reduce(function(s,r){return s+r.comparison},0),deltaAbs=annual-comparison,deltaPct=comparison>0?deltaAbs*100/comparison:(Math.abs(annual)<.5?0:null);
-    html+='<tr class="planning-l1-row '+(direction==="INCOME"?"income":"expense")+'"><td><div class="planning-category">'+(planningBoardLevel==="L1_L2"?'<button class="planning-caret" data-planning-toggle-l1="'+esc(key)+'">'+(expanded?"▾":"▸")+'</button>':'<span class="planning-caret"></span>')+categoryIconHtml(g.name,direction==="INCOME"?"income":"expense",true)+'<span class="name">'+esc(g.name)+'</span></div></td><td>'+money(annual)+'</td><td>'+planningDeltaHtml(deltaAbs,deltaPct,direction,comparison)+'</td><td>'+planningL1NatureHtml(g.rows,direction)+'</td><td>—</td><td>—</td><td></td></tr>';
+    visibleRows=visibleRows.filter(planningForecastFilterMatch).filter(planningNoteFilterMatch);
+    if(!visibleRows.length)return;
+    const key=direction+"|"+g.id,searching=!!q,filtering=planningBoardNatureFilter!=="ALL"||planningBoardForecastFilter!=="ALL"||planningBoardNoteFilter!=="ALL";
+    const expanded=planningBoardLevel==="L1_L2"&&(searching||filtering||planningBoardExpandedL1.has(key));
+    const annual=visibleRows.reduce(function(s,r){return s+r.annual},0),comparison=visibleRows.reduce(function(s,r){return s+r.comparison},0),deltaAbs=annual-comparison,deltaPct=comparison>0?deltaAbs*100/comparison:(Math.abs(annual)<.5?0:null);
+    html+='<tr class="planning-l1-row '+(direction==="INCOME"?"income":"expense")+'">'+
+      '<td><div class="planning-category">'+(planningBoardLevel==="L1_L2"?'<button class="planning-caret" data-planning-toggle-l1="'+esc(key)+'">'+(expanded?"▾":"▸")+'</button>':'<span class="planning-caret"></span>')+categoryIconHtml(g.name,direction==="INCOME"?"income":"expense",true)+'<span class="name">'+esc(g.name)+'</span></div></td>'+
+      '<td>'+planningValueHtml(comparison)+'</td><td>'+planningValueHtml(annual)+'</td>'+
+      '<td>'+planningDeltaHtml(deltaAbs,deltaPct,direction,comparison)+'</td>'+
+      '<td>'+planningL1NatureHtml(visibleRows,direction)+'</td><td>—</td><td>—</td><td></td></tr>';
     if(!expanded)return;
-    visibleRows.slice().sort(function(a,b){return String(a.l2_name).localeCompare(String(b.l2_name),"it")}).forEach(function(r){const l2Key=direction+"|"+r.category_id,open=planningBoardExpandedL2.has(l2Key),note=r.meta&&r.meta.rationale_note||"";html+='<tr class="planning-l2-row"><td class="planning-l2-name"><div class="planning-category"><button class="planning-caret" data-planning-toggle-l2="'+esc(l2Key)+'">'+(open?"▾":"▸")+'</button>'+categoryIconHtml(r.l2_name,direction==="INCOME"?"income":"expense",false)+'<span class="name">'+esc(r.l2_name)+'</span></div></td><td><strong>'+money(r.annual)+'</strong></td><td>'+planningDeltaHtml(r.deltaAbs,r.deltaPct,direction,r.comparison)+'</td><td>'+planningNatureBadgeHtml(r,direction)+'</td><td>'+planningMethodHtml(r)+'</td><td><div class="planning-note" title="'+esc(note)+'">'+esc(note||"—")+'</div></td><td><button class="planning-open-analysis" type="button" data-planning-open-analysis="'+esc(r.category_id)+'" data-planning-open-direction="'+direction+'" title="Apri la previsione originale in Analisi">›</button></td></tr>';if(open)html+=planningMonthPanelHtml(r)});
+    visibleRows.slice().sort(function(a,b){return String(a.l2_name).localeCompare(String(b.l2_name),"it")}).forEach(function(r){
+      const l2Key=direction+"|"+r.category_id,open=planningBoardExpandedL2.has(l2Key),note=r.meta&&r.meta.rationale_note||"";
+      html+='<tr class="planning-l2-row">'+
+        '<td class="planning-l2-name"><div class="planning-category"><button class="planning-caret" data-planning-toggle-l2="'+esc(l2Key)+'">'+(open?"▾":"▸")+'</button>'+categoryIconHtml(r.l2_name,direction==="INCOME"?"income":"expense",false)+'<span class="name">'+esc(r.l2_name)+'</span></div></td>'+
+        '<td>'+planningValueHtml(r.comparison)+'</td><td>'+planningValueHtml(r.annual)+'</td>'+
+        '<td>'+planningDeltaHtml(r.deltaAbs,r.deltaPct,direction,r.comparison)+'</td>'+
+        '<td>'+planningNatureBadgeHtml(r,direction)+'</td><td>'+planningMethodHtml(r)+'</td>'+
+        '<td><div class="planning-note" title="'+esc(note)+'">'+esc(note||"—")+'</div></td>'+
+        '<td><button class="planning-open-analysis" type="button" data-planning-open-analysis="'+esc(r.category_id)+'" data-planning-open-direction="'+direction+'" title="Apri la previsione originale in Analisi">›</button></td></tr>';
+      if(open)html+=planningMonthPanelHtml(r);
+    });
   });
   return html;
 }
-function planningRenderFilterButtons(){document.querySelectorAll("[data-planning-filter]").forEach(function(b){b.classList.toggle("ghost",b.dataset.planningFilter!==planningBoardFilter)});document.querySelectorAll("[data-planning-level]").forEach(function(b){b.classList.toggle("ghost",b.dataset.planningLevel!==planningBoardLevel)});document.querySelectorAll("[data-planning-horizon]").forEach(function(b){b.classList.toggle("ghost",b.dataset.planningHorizon!==planningBoardHorizon)});if($("planningNatureFilter"))$("planningNatureFilter").value=planningBoardNatureFilter}
+function planningRenderFilterButtons(){document.querySelectorAll("[data-planning-filter]").forEach(function(b){b.classList.toggle("ghost",b.dataset.planningFilter!==planningBoardFilter)});document.querySelectorAll("[data-planning-level]").forEach(function(b){b.classList.toggle("ghost",b.dataset.planningLevel!==planningBoardLevel)});document.querySelectorAll("[data-planning-horizon]").forEach(function(b){b.classList.toggle("ghost",b.dataset.planningHorizon!==planningBoardHorizon)});if($("planningNatureFilter"))$("planningNatureFilter").value=planningBoardNatureFilter;if($("planningForecastFilter"))$("planningForecastFilter").value=planningBoardForecastFilter;if($("planningNoteFilter"))$("planningNoteFilter").value=planningBoardNoteFilter}
 function planningDirectionTotals(rows){const planned=rows.reduce(function(s,r){return s+r.annual},0),comparison=rows.reduce(function(s,r){return s+r.comparison},0),delta=planned-comparison;return {planned:planned,comparison:comparison,delta:delta,pct:comparison>0?delta*100/comparison:(Math.abs(planned)<.5?0:null)}}
 function planningPctText(pct){if(pct===null||pct===undefined||!Number.isFinite(Number(pct)))return "nuovo";const v=num(pct);return (v>0?"+":"")+v.toLocaleString("it-IT",{maximumFractionDigits:1})+"%"}
 function planningDeltaQuality(delta,direction){const v=num(delta);if(Math.abs(v)<.5)return "neutral";return (direction==="EXPENSE"?v<0:v>0)?"good":"bad"}
@@ -3932,10 +4024,10 @@ function renderPlanningSimulator(exp,inc){
 function renderPlanningBoard(){
   if(!planningBoardData||!planningBoardData.expense||!planningBoardData.income)return;planningRenderFilterButtons();
   const exp=planningBuildRows(planningBoardData.expense,"EXPENSE"),inc=planningBuildRows(planningBoardData.income,"INCOME"),expTotals=planningDirectionTotals(exp),incTotals=planningDirectionTotals(inc),balance=incTotals.planned-expTotals.planned,def=planningDefinition(planningBoardData.expense),year=String(planningBoardData.expense.current_year_start||"").slice(0,4)||String(new Date().getFullYear()),rolling=planningBoardHorizon==="ROLLING_12";
-  $("planningBoardYear").textContent=rolling?"prossimi 12 mesi":year;$("planningBoardYearHead").textContent=rolling?"Piano 12M":"Piano "+year;$("planningBoardSubtitle").textContent=rolling?"Prossimi 12 mesi pianificati confrontati con gli ultimi 12 mesi reali. Gli importi restano quelli costruiti in Analisi.":"Anno "+year+": mesi chiusi reali + mesi aperti pianificati, confrontati con "+def.comparisonLabel+".";
+  $("planningBoardYear").textContent=rolling?"prossimi 12 mesi":year;$("planningBoardHistoryHead").textContent=rolling?"Storico 12M":"Storico "+def.comparisonLabel;$("planningBoardYearHead").textContent=rolling?"Piano 12M":"Piano "+year;$("planningBoardSubtitle").textContent=rolling?"Prossimi 12 mesi pianificati confrontati con gli ultimi 12 mesi reali. Gli importi restano quelli costruiti in Analisi.":"Anno "+year+": mesi chiusi reali + mesi aperti pianificati, confrontati con "+def.comparisonLabel+".";
   const incCls=planningDeltaQuality(incTotals.delta,"INCOME"),expCls=planningDeltaQuality(expTotals.delta,"EXPENSE");
   $("planningBoardKpis").innerHTML='<div class="planning-board-kpi income"><div class="kpi-head"><span class="kpi-icon">'+analysisSvgIcon("Entrate")+'</span><span>Entrate previste</span></div><div class="v">'+money(incTotals.planned)+'</div><div class="s"><span>vs storico</span><strong class="planning-kpi-delta '+incCls+'">'+planningPctText(incTotals.pct)+'</strong></div></div><div class="planning-board-kpi expense"><div class="kpi-head"><span class="kpi-icon">'+analysisSvgIcon("Shopping personale")+'</span><span>Uscite previste</span></div><div class="v">'+money(expTotals.planned)+'</div><div class="s"><span>vs storico</span><strong class="planning-kpi-delta '+expCls+'">'+planningPctText(expTotals.pct)+'</strong></div></div><div class="planning-board-kpi balance"><div class="kpi-head"><span class="kpi-icon">'+analysisSvgIcon("chart")+'</span><span>Saldo previsto</span></div><div class="v '+(balance>=0?"positive":"negative")+'">'+(balance>=0?"+":"")+money(balance)+'</div><div class="s"><span>Media mensile</span><strong class="'+(balance>=0?"positive":"negative")+'">'+(balance/12>=0?"+":"")+money(balance/12)+'</strong></div></div>';
-  renderPlanningNatureSummary(exp,inc);let html="";if(planningBoardFilter!=="EXPENSE")html+=planningSectionHtml("INCOME",inc);if(planningBoardFilter!=="INCOME")html+=planningSectionHtml("EXPENSE",exp);$("planningBoardBody").innerHTML=html||'<tr><td colspan="7" class="muted">Nessuna voce corrisponde ai filtri.</td></tr>';
+  renderPlanningNatureSummary(exp,inc);let html="";if(planningBoardFilter!=="EXPENSE")html+=planningSectionHtml("INCOME",inc);if(planningBoardFilter!=="INCOME")html+=planningSectionHtml("EXPENSE",exp);$("planningBoardBody").innerHTML=html||'<tr><td colspan="8" class="muted">Nessuna voce corrisponde ai filtri.</td></tr>';
   $("planningBoardLegend").textContent=rolling?"Variazione vs storico: piano dei prossimi 12 mesi confrontato con gli ultimi 12 mesi reali. Per le spese una diminuzione è verde; per le entrate è verde un aumento. “Nuova” indica storico pari a zero.":"Variazione vs storico: piano "+year+" confrontato con il consuntivo "+def.comparisonLabel+". Per le spese una diminuzione è verde; per le entrate è verde un aumento. “Nuova” indica storico pari a zero.";
   renderPlanningNatureChart(exp);renderPlanningMonthlyChart(exp,inc);renderPlanningSimulator(exp,inc);
 }
@@ -4075,6 +4167,8 @@ $("planningBoardView").addEventListener("input",function(e){
 });
 $("planningBoardSearch").addEventListener("input",function(){planningBoardSearch=this.value||"";renderPlanningBoard()});
 $("planningNatureFilter").addEventListener("change",function(){planningBoardNatureFilter=this.value||"ALL";renderPlanningBoard()});
+$("planningForecastFilter").addEventListener("change",function(){planningBoardForecastFilter=this.value||"ALL";renderPlanningBoard()});
+$("planningNoteFilter").addEventListener("change",function(){planningBoardNoteFilter=this.value||"ALL";renderPlanningBoard()});
 $("scenarioView").addEventListener("click",async function(e){
   const noteSave=e.target.closest("[data-scenario-extra-note-save]");
   if(noteSave){
