@@ -233,7 +233,7 @@
         <div class="card kpi"><div class="label">Da classificare</div><div id="kCategorize" class="value">—</div><div class="sub">Categoria mancante · priorità alta</div></div>
         <div class="card kpi"><div class="label">Da rivedere</div><div id="kReview" class="value">—</div><div class="sub">Eccezioni MCC non automatizzabili</div></div>
         <div class="card kpi"><div class="label">Confermati</div><div id="kReviewed" class="value">—</div><div class="sub">Sempre riapribili</div></div>
-        <div class="card kpi"><div class="label">Giroconti</div><div id="kInternalTransfers" class="value">—</div><div class="sub">Esclusi da entrate e spese</div></div>
+        <div class="card kpi"><div class="label">Trasferimenti</div><div id="kInternalTransfers" class="value">—</div><div class="sub">Interni/familiari esclusi da entrate e spese</div></div>
         <div class="card kpi"><div class="label">Copertura categorie</div><div id="kCategory" class="value">—</div></div>
       </div>
 
@@ -1378,7 +1378,7 @@ function movementKindBadge(x){return `<span class="pill" title="Canale tecnico d
 function transactionTypeLabel(t){return ({EXPENSE:'Spesa',INCOME:'Entrata',TRANSFER:'Trasferimento',FEE:'Commissione',INTEREST:'Interesse',INVESTMENT:'Investimento',OTHER:'Altro',OPENING_BALANCE:'Saldo iniziale'})[String(t||'').toUpperCase()]||t||'—'}
 function transferSemantic(row){
   if(String(row?.transaction_type||'').toUpperCase()!=='TRANSFER')return null;
-  if(isInternalTransferMovement(row))return {key:'INTERNAL',label:'Giroconto interno',title:'Trasferimento confermato tra conti interni; escluso da entrate, spese, budget e previsioni.'};
+  if(isInternalTransferMovement(row))return {key:'INTERNAL',label:'Trasferimento familiare',title:'Spostamento di liquidità tra conti o membri della famiglia; escluso da entrate, spese, budget e previsioni economiche.'};
   return {key:'PENDING',label:'Bonifico da verificare',title:'Bonifico non ancora confermato come giroconto interno né classificato come spesa/entrata reale.'};
 }
 function transactionTypeDisplayLabel(row){
