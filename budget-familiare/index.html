@@ -1644,7 +1644,7 @@ function filteredMovements(){
     if(noteFilter==='HAS'&&!hasNote)return false;
     if(noteFilter==='NONE'&&hasNote)return false;
     if(reportingFilter==='LEGACY'&&!x.needs_temporality_review)return false;
-    if(reportingFilter==='EXCEPTIONAL'&&x.effective_temporality!=='EXCEPTIONAL')return false;
+    if(reportingFilter==='EXCEPTIONAL'&&(x.effective_temporality!=='EXCEPTIONAL'||x.needs_temporality_review))return false;
     if(reportingFilter==='OVERRIDE'&&!x.nature_override&&!x.temporality_override)return false;
     if(dir&&movementDirection(x).key!==dir)return false;
     if(cp==='__NONE__'&&x.counterparty_id)return false;
@@ -2166,7 +2166,9 @@ function updateClassificationPipelineState(){
   if(catState)catState.textContent=categoryId?categoryNameById(categoryId):'Categoria mancante';
   if(ctxState){
     const project=$('classProject')?.value||'',tags=document.querySelectorAll('[data-class-tag]:checked').length,splits=Number(selectedRow?.split_count||0);
-    ctxState.textContent=(project||tags||splits)?[project?'progetto':null,tags?tags+' tag':null,splits?splits+' quote':null].filter(Boolean).join(' · '):'Facoltativo';
+    const natureOverride=selectedRow?.nature_override,temporalityOverride=selectedRow?.temporality_override,legacy=!!selectedRow?.needs_temporality_review;
+    const parts=[project?'progetto':null,tags?tags+' tag':null,splits?splits+' quote':null,natureOverride?'natura '+movementNatureShort(natureOverride):null,temporalityOverride?'temporalità '+movementTemporalityShort(temporalityOverride):null,legacy?'⚠ E legacy':null].filter(Boolean);
+    ctxState.textContent=parts.length?parts.join(' · '):'Facoltativo';
   }
 }
 function movementDateTimeLabel(row){
