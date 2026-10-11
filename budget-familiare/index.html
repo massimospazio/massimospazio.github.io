@@ -147,6 +147,14 @@
 .category-nature-select{min-width:92px;min-height:28px;border:1px solid #d7dfeb;border-radius:7px;background:#fff;padding:3px 6px;font-size:11px;font-weight:750}
 .category-nature-select.expense{background:#fffdf8}.category-nature-select.income{background:#f7fbff}
 .category-nature-cell{white-space:nowrap}
+
+/* V73.19.0 — temporalità categoria */
+.category-temporality-select{min-width:118px;min-height:28px;border:1px solid #d7dfeb;border-radius:7px;background:#fbfcff;padding:3px 6px;font-size:11px;font-weight:750}
+.category-temporality-select.exceptional{background:#fff4e8;border-color:#f1b874;color:#9a4d00}
+.category-temporality-cell{white-space:nowrap}
+.category-info-tip{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;margin-left:4px;border-radius:50%;border:1px solid #b9c7d9;background:#f7faff;color:#44617f;font-size:10px;font-weight:850;line-height:1;vertical-align:middle;cursor:help}
+.category-info-tip:hover,.category-info-tip:focus{background:#eaf3ff;border-color:#7aa7df;color:#1d4f91;outline:none}
+
 </style>
 </head>
 <body>
@@ -2599,6 +2607,46 @@ async function saveCategoryNature(select){
   }catch(e){alert(e.message||'Errore salvataggio natura');renderCategoriesCatalog()}
   finally{select.disabled=false}
 }
+function categoryTemporalityValue(cat){
+  if(!cat||!cat.parent_id)return "";
+  const meta=categoryPlanningMetaMap().get(String(cat.id))||{};
+  return meta.temporality||"";
+}
+function categoryTemporalitySelectHtml(cat){
+  if(!cat||!cat.parent_id)return '<span class="muted">—</span>';
+  const value=categoryTemporalityValue(cat),isTransfer=String(categoryL1Name(cat)||'')==='Trasferimenti';
+  const opts=[
+    ["","—"],
+    ["RECURRING","R · Ricorrente"],
+    ["PLANNED_OCCASIONAL","P · Occasionale"],
+    ["EXCEPTIONAL","E · Eccezionale"],
+    ["NOT_APPLICABLE","X · Non applicabile"]
+  ];
+  return '<select class="category-temporality-select '+(value==="EXCEPTIONAL"?"exceptional":"")+'" data-category-temporality="'+cat.id+'" '+(isTransfer?'title="I trasferimenti tecnici restano Non applicabili"':'')+'>'+
+    opts.map(o=>'<option value="'+o[0]+'" '+(o[0]===value?'selected':'')+' '+(isTransfer&&o[0]!=="NOT_APPLICABLE"?'disabled':'')+'>'+o[1]+'</option>').join('')+
+    '</select>';
+}
+async function saveCategoryTemporality(select){
+  const id=select.dataset.categoryTemporality,value=select.value||null,meta=(catData?.planningMeta?.rows||[]).find(x=>String(x.category_id)===String(id));
+  if(value==="EXCEPTIONAL"){
+    const ok=confirm("Usare E · Eccezionale come default di categoria?\n\nÈ pensato soprattutto per eventi imprevisti e dovrebbe essere raro. In una prossima evoluzione potrai impostarlo come override sul singolo movimento. Conferma solo se l'intera categoria è normalmente eccezionale.");
+    if(!ok){renderCategoriesCatalog();return}
+  }
+  select.disabled=true;
+  try{
+    await rpc('dashboard_reporting_save_category_temporality_v1',{p_category_id:id,p_temporality:value});
+    if(meta)meta.temporality=value;
+    else{
+      catData.planningMeta=catData.planningMeta||{rows:[]};
+      catData.planningMeta.rows.push({category_id:id,temporality:value});
+    }
+    select.classList.toggle('exceptional',value==="EXCEPTIONAL");
+  }catch(e){alert(e.message||'Errore salvataggio temporalità');renderCategoriesCatalog()}
+  finally{select.disabled=false}
+}
+function categoryTemporalityInfoHtml(){
+  return '<span class="category-info-tip" tabindex="0" title="Temporalità predefinita della categoria. R = Ricorrente: fa parte del normale funzionamento, anche se annuale o stagionale. P = Occasionale/programmabile: non ricorrente ma normale e prevedibile nel bilancio. E = Eccezionale/imprevista: evento fuori dal normale piano; da usare raramente e, in futuro, soprattutto come override del singolo movimento. X = Non applicabile: movimento tecnico, trasferimento o voce che non deve partecipare a questa lettura. R e P sono entrambe strutturali; E servirà a separare gli eventi eccezionali.">i</span>';
+}
 function categoryAuditMap(){
   return new Map((catData?.categoryAudit?.rows||[]).map(x=>[String(x.category_id),x]));
 }
@@ -2937,15 +2985,16 @@ function categoryL2PanelHtml(l1Row){
       :categoryActionsMenu(r);
     let inline='';
     if(categoryActionState&&String(categoryActionState.id)===String(r.cat.id)){
-      inline='<tr class="category-action-row"><td colspan="9">'+categoryActionPanelHtml(r.cat,categoryActionState.action)+'</td></tr>';
+      inline='<tr class="category-action-row"><td colspan="11">'+categoryActionPanelHtml(r.cat,categoryActionState.action)+'</td></tr>';
     }else if(categoryCounterpartyState&&String(categoryCounterpartyState.id)===String(r.cat.id)){
-      inline='<tr class="category-action-row"><td colspan="9">'+categoryCounterpartyPanelHtml(r.cat)+'</td></tr>';
+      inline='<tr class="category-action-row"><td colspan="11">'+categoryCounterpartyPanelHtml(r.cat)+'</td></tr>';
     }else if(categoryDependencyStateMatches(r.cat.id,false)){
-      inline='<tr class="category-action-row"><td colspan="9">'+categoryDependencyPanelHtml(r.cat)+'</td></tr>';
+      inline='<tr class="category-action-row"><td colspan="11">'+categoryDependencyPanelHtml(r.cat)+'</td></tr>';
     }
     return '<tr class="category-l2-data-row '+(isDirect?'category-direct-row ':'')+(selected?'category-l2-row-selected':'')+'" data-search="'+esc(String(r.name||'').toLowerCase())+'">'+
       '<td><div class="category-l2-name"><span class="mini-icon">'+(isDirect?'↳':esc(categoryL1Icon(r.name)))+'</span>'+esc(r.name)+(Number(raw.child_count||0)>0?'<span class="pill">'+nfmt(raw.child_count)+' L3</span>':'')+'</div></td>'+
       '<td class="category-nature-cell">'+(isDirect?'<span class="muted">—</span>':categoryNatureSelectHtml(r.cat))+'</td>'+
+      '<td class="category-temporality-cell">'+(isDirect?'<span class="muted">—</span>':categoryTemporalitySelectHtml(r.cat))+'</td>'+
       '<td>'+nfmt(m.movement_count||0)+'</td>'+
       '<td>'+categoryAmountHtml(m.value,maxValue,true)+'</td>'+
       '<td>'+categoryAuditFrequencyHtml(m)+'</td>'+
@@ -2963,6 +3012,7 @@ function categoryL2PanelHtml(l1Row){
     '<div class="table-wrap"><table class="category-l2-table"><thead><tr>'+
       '<th>'+categoryL2SortHeader('Categoria L2','NAME')+'</th>'+
       '<th>Natura</th>'+
+      '<th>Temporalità '+categoryTemporalityInfoHtml()+'</th>'+
       '<th>'+categoryL2SortHeader('Mov.','MOVEMENTS')+'</th>'+
       '<th>'+categoryL2SortHeader('Importo','VALUE')+'</th>'+
       '<th>'+categoryL2SortHeader('Frequenza','FREQUENCY')+'</th>'+
@@ -2970,7 +3020,7 @@ function categoryL2PanelHtml(l1Row){
       '<th>'+categoryL2SortHeader('Controparti','COUNTERPARTIES')+'</th>'+
       '<th>'+categoryL2SortHeader('Dipendenze','DEPENDENCIES')+'</th>'+
       '<th>Azioni</th></tr></thead><tbody>'+
-      (body||'<tr><td colspan="9" class="muted">Nessuna categoria L2.</td></tr>')+
+      (body||'<tr><td colspan="10" class="muted">Nessuna categoria L2.</td></tr>')+
     '</tbody></table></div>'+
     '<div class="category-l2-summary"><div><span class="muted small">Totale '+esc(l1.name)+'</span><strong>'+nfmt(m.movement_count||0)+' movimenti · '+euroInt(m.value||0)+'</strong></div><div><span class="muted small">Frequenza complessiva</span><strong>'+nfmt(m.active_months||0)+'/'+nfmt(m.month_count||0)+' · '+nfmt(m.active_pct||0)+'%</strong></div><div><span class="muted small">Controparti</span><strong>'+nfmt(m.counterparty_count||0)+'</strong></div></div>'+
   '</div>';
@@ -2989,7 +3039,7 @@ function renderCategoriesCatalog(){
   renderCategoryAuditKpis();
   const rows=visibleCategoryRows(),maxValue=Math.max(0,...rows.map(r=>Number(r.metric?.value||0)));
   const head=categoryViewMode==='L1'
-    ?'<tr><th>'+categorySortHeader('Macro categoria L1','L1')+'</th><th>'+categorySortHeader('Categorie L2','CHILDREN')+'</th><th>Natura</th><th>'+categorySortHeader('Mov.','MOVEMENTS')+'</th><th>'+categorySortHeader('Importo','VALUE')+'</th><th>'+categorySortHeader('Frequenza','FREQUENCY')+'</th><th>'+categorySortHeader('Ultimo uso','LAST_USED')+'</th><th>'+categorySortHeader('Controparti','COUNTERPARTIES')+'</th><th>'+categorySortHeader('Dipendenze','DEPENDENCIES')+'</th><th>Azioni</th></tr>'
+    ?'<tr><th>'+categorySortHeader('Macro categoria L1','L1')+'</th><th>'+categorySortHeader('Categorie L2','CHILDREN')+'</th><th>Natura</th><th>Temporalità '+categoryTemporalityInfoHtml()+'</th><th>'+categorySortHeader('Mov.','MOVEMENTS')+'</th><th>'+categorySortHeader('Importo','VALUE')+'</th><th>'+categorySortHeader('Frequenza','FREQUENCY')+'</th><th>'+categorySortHeader('Ultimo uso','LAST_USED')+'</th><th>'+categorySortHeader('Controparti','COUNTERPARTIES')+'</th><th>'+categorySortHeader('Dipendenze','DEPENDENCIES')+'</th><th>Azioni</th></tr>'
     :'<tr><th>'+categorySortHeader('L1','L1')+'</th><th>'+categorySortHeader('Categoria','NAME')+'</th><th>Natura</th><th>'+categorySortHeader('Mov.','MOVEMENTS')+'</th><th>'+categorySortHeader('Importo','VALUE')+'</th><th>'+categorySortHeader('Frequenza','FREQUENCY')+'</th><th>'+categorySortHeader('Ultimo uso','LAST_USED')+'</th><th>'+categorySortHeader('Controparti','COUNTERPARTIES')+'</th><th>'+categorySortHeader('Dipendenze','DEPENDENCIES')+'</th><th>Azioni</th></tr>';
   const body=rows.map(r=>{
     const m=r.metric||{},raw=r.raw||{},empty=Number(raw.movement_count||0)===0&&Number(raw.dependency_count||0)===0&&Number(raw.child_count||0)===0;
@@ -3002,16 +3052,17 @@ function renderCategoriesCatalog(){
     const cpButton='<button type="button" class="category-counterparty-link '+(Number(m.counterparty_count||0)===0?'zero':'')+'" data-category-counterparties="'+r.cat.id+'" title="'+esc((m.without_counterparty_movements?m.without_counterparty_movements+' movimenti senza controparte · ':'')+'Apri elenco controparti')+'">'+nfmt(m.counterparty_count||0)+'</button>';
     let inline='';
     if(categoryActionState&&String(categoryActionState.id)===String(r.cat.id)){
-      inline='<tr class="category-action-row"><td colspan="10">'+categoryActionPanelHtml(r.cat,categoryActionState.action)+'</td></tr>';
+      inline='<tr class="category-action-row"><td colspan="11">'+categoryActionPanelHtml(r.cat,categoryActionState.action)+'</td></tr>';
     }else if(categoryCounterpartyState&&String(categoryCounterpartyState.id)===String(r.cat.id)){
-      inline='<tr class="category-action-row"><td colspan="10">'+categoryCounterpartyPanelHtml(r.cat)+'</td></tr>';
+      inline='<tr class="category-action-row"><td colspan="11">'+categoryCounterpartyPanelHtml(r.cat)+'</td></tr>';
     }else if(categoryDependencyStateMatches(r.cat.id,depDesc)){
-      inline='<tr class="category-action-row"><td colspan="10">'+categoryDependencyPanelHtml(r.cat)+'</td></tr>';
+      inline='<tr class="category-action-row"><td colspan="11">'+categoryDependencyPanelHtml(r.cat)+'</td></tr>';
     }else if(l1Expanded){
-      inline='<tr class="category-action-row"><td colspan="10">'+categoryL2PanelHtml(r)+'</td></tr>';
+      inline='<tr class="category-action-row"><td colspan="11">'+categoryL2PanelHtml(r)+'</td></tr>';
     }
     return '<tr class="'+(r.kind==='DIRECT'?'direct-row ':'')+(selected?'category-main-selected':'')+'" data-category-row="'+r.cat.id+'">'+prefix+
       '<td class="category-nature-cell">'+(categoryViewMode==='L1'?'<span class="muted">—</span>':categoryNatureSelectHtml(r.cat))+'</td>'+
+      '<td class="category-temporality-cell">'+(categoryViewMode==='L1'?'<span class="muted">—</span>':categoryTemporalitySelectHtml(r.cat))+'</td>'+
       '<td>'+nfmt(m.movement_count||0)+'</td>'+
       '<td>'+categoryAmountHtml(m.value,maxValue)+'</td>'+
       '<td>'+categoryAuditFrequencyHtml(m)+'</td>'+
@@ -3020,7 +3071,7 @@ function renderCategoriesCatalog(){
       '<td>'+categoryAuditDepsHtml(m,r.cat.id,depDesc)+'</td>'+
       '<td>'+categoryActionsMenu(r)+'</td></tr>'+inline;
   }).join('');
-  $('categoriesTable').innerHTML=categoryPeriodNoteHtml()+'<div class="muted small" style="margin:0 0 7px">'+nfmt(rows.length)+' righe · '+(categoryViewMode==='L1'?'aggregazione L1 · clicca ▸ per esplorare le L2':'categorie operative cross-L1')+' · '+esc(analysisDirectionLabel())+' · '+esc(categoryPeriodLabel())+'</div><div class="category-flat-wrap"><table class="table category-flat-table"><thead>'+head+'</thead><tbody>'+(body||'<tr><td colspan="10" class="muted">Nessuna categoria con i filtri selezionati.</td></tr>')+'</tbody></table></div>';
+  $('categoriesTable').innerHTML=categoryPeriodNoteHtml()+'<div class="muted small" style="margin:0 0 7px">'+nfmt(rows.length)+' righe · '+(categoryViewMode==='L1'?'aggregazione L1 · clicca ▸ per esplorare le L2':'categorie operative cross-L1')+' · '+esc(analysisDirectionLabel())+' · '+esc(categoryPeriodLabel())+'</div><div class="category-flat-wrap"><table class="table category-flat-table"><thead>'+head+'</thead><tbody>'+(body||'<tr><td colspan="11" class="muted">Nessuna categoria con i filtri selezionati.</td></tr>')+'</tbody></table></div>';
 }
 async function loadCategoryAuditPeriod(period){
   const next=period||'12M';if(categoryAuditLoading||next===categoryAuditPeriod)return;
@@ -4145,7 +4196,7 @@ $('tab-catalogs').addEventListener('input',e=>{
     document.querySelectorAll('.category-l2-data-row').forEach(tr=>tr.classList.toggle('hidden',q&&!String(tr.dataset.search||'').includes(q)));
   }
 });
-$('tab-catalogs').addEventListener('change',e=>{const nature=e.target.closest('[data-category-nature]');if(nature){saveCategoryNature(nature);return}if(e.target.id==='categoryMergeDestination'){previewCategoryMigration();return}const one=e.target.closest('[data-select-counterparty]');if(one){one.checked?selectedCounterpartyIds.add(one.dataset.selectCounterparty):selectedCounterpartyIds.delete(one.dataset.selectCounterparty);syncCounterpartyBulkBar();return}const all=e.target.closest('[data-select-visible-counterparties]');if(all){for(const m of counterpartyFilteredRows())all.checked?selectedCounterpartyIds.add(m.id):selectedCounterpartyIds.delete(m.id);renderMerchantsCatalog();return}});
+$('tab-catalogs').addEventListener('change',e=>{const nature=e.target.closest('[data-category-nature]');if(nature){saveCategoryNature(nature);return}const temporality=e.target.closest('[data-category-temporality]');if(temporality){saveCategoryTemporality(temporality);return}if(e.target.id==='categoryMergeDestination'){previewCategoryMigration();return}const one=e.target.closest('[data-select-counterparty]');if(one){one.checked?selectedCounterpartyIds.add(one.dataset.selectCounterparty):selectedCounterpartyIds.delete(one.dataset.selectCounterparty);syncCounterpartyBulkBar();return}const all=e.target.closest('[data-select-visible-counterparties]');if(all){for(const m of counterpartyFilteredRows())all.checked?selectedCounterpartyIds.add(m.id):selectedCounterpartyIds.delete(m.id);renderMerchantsCatalog();return}});
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>activateMainTab(b.dataset.tab));
 $('rpcDiagnosticsOpen')?.addEventListener('click',openRpcDiagnostics);
 $('rpcPerformanceAlert')?.addEventListener('click',openRpcDiagnostics);
