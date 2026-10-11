@@ -2985,11 +2985,11 @@ function categoryL2PanelHtml(l1Row){
       :categoryActionsMenu(r);
     let inline='';
     if(categoryActionState&&String(categoryActionState.id)===String(r.cat.id)){
-      inline='<tr class="category-action-row"><td colspan="11">'+categoryActionPanelHtml(r.cat,categoryActionState.action)+'</td></tr>';
+      inline='<tr class="category-action-row"><td colspan="10">'+categoryActionPanelHtml(r.cat,categoryActionState.action)+'</td></tr>';
     }else if(categoryCounterpartyState&&String(categoryCounterpartyState.id)===String(r.cat.id)){
-      inline='<tr class="category-action-row"><td colspan="11">'+categoryCounterpartyPanelHtml(r.cat)+'</td></tr>';
+      inline='<tr class="category-action-row"><td colspan="10">'+categoryCounterpartyPanelHtml(r.cat)+'</td></tr>';
     }else if(categoryDependencyStateMatches(r.cat.id,false)){
-      inline='<tr class="category-action-row"><td colspan="11">'+categoryDependencyPanelHtml(r.cat)+'</td></tr>';
+      inline='<tr class="category-action-row"><td colspan="10">'+categoryDependencyPanelHtml(r.cat)+'</td></tr>';
     }
     return '<tr class="category-l2-data-row '+(isDirect?'category-direct-row ':'')+(selected?'category-l2-row-selected':'')+'" data-search="'+esc(String(r.name||'').toLowerCase())+'">'+
       '<td><div class="category-l2-name"><span class="mini-icon">'+(isDirect?'↳':esc(categoryL1Icon(r.name)))+'</span>'+esc(r.name)+(Number(raw.child_count||0)>0?'<span class="pill">'+nfmt(raw.child_count)+' L3</span>':'')+'</div></td>'+
@@ -3040,7 +3040,7 @@ function renderCategoriesCatalog(){
   const rows=visibleCategoryRows(),maxValue=Math.max(0,...rows.map(r=>Number(r.metric?.value||0)));
   const head=categoryViewMode==='L1'
     ?'<tr><th>'+categorySortHeader('Macro categoria L1','L1')+'</th><th>'+categorySortHeader('Categorie L2','CHILDREN')+'</th><th>Natura</th><th>Temporalità '+categoryTemporalityInfoHtml()+'</th><th>'+categorySortHeader('Mov.','MOVEMENTS')+'</th><th>'+categorySortHeader('Importo','VALUE')+'</th><th>'+categorySortHeader('Frequenza','FREQUENCY')+'</th><th>'+categorySortHeader('Ultimo uso','LAST_USED')+'</th><th>'+categorySortHeader('Controparti','COUNTERPARTIES')+'</th><th>'+categorySortHeader('Dipendenze','DEPENDENCIES')+'</th><th>Azioni</th></tr>'
-    :'<tr><th>'+categorySortHeader('L1','L1')+'</th><th>'+categorySortHeader('Categoria','NAME')+'</th><th>Natura</th><th>'+categorySortHeader('Mov.','MOVEMENTS')+'</th><th>'+categorySortHeader('Importo','VALUE')+'</th><th>'+categorySortHeader('Frequenza','FREQUENCY')+'</th><th>'+categorySortHeader('Ultimo uso','LAST_USED')+'</th><th>'+categorySortHeader('Controparti','COUNTERPARTIES')+'</th><th>'+categorySortHeader('Dipendenze','DEPENDENCIES')+'</th><th>Azioni</th></tr>';
+    :'<tr><th>'+categorySortHeader('L1','L1')+'</th><th>'+categorySortHeader('Categoria','NAME')+'</th><th>Natura</th><th>Temporalità '+categoryTemporalityInfoHtml()+'</th><th>'+categorySortHeader('Mov.','MOVEMENTS')+'</th><th>'+categorySortHeader('Importo','VALUE')+'</th><th>'+categorySortHeader('Frequenza','FREQUENCY')+'</th><th>'+categorySortHeader('Ultimo uso','LAST_USED')+'</th><th>'+categorySortHeader('Controparti','COUNTERPARTIES')+'</th><th>'+categorySortHeader('Dipendenze','DEPENDENCIES')+'</th><th>Azioni</th></tr>';
   const body=rows.map(r=>{
     const m=r.metric||{},raw=r.raw||{},empty=Number(raw.movement_count||0)===0&&Number(raw.dependency_count||0)===0&&Number(raw.child_count||0)===0;
     const l1Expanded=categoryViewMode==='L1'&&String(categoryL1ExpandedId||'')===String(r.cat.id);
