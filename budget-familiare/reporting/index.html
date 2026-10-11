@@ -8,8 +8,8 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=73.18.0-20261011-0025"></script>
-<script src="../shared/app-config.js?v=73.18.0-20261011-0025"></script>
+<script src="../shared/supabase-client.js?v=73.18.1-20261011-0025"></script>
+<script src="../shared/app-config.js?v=73.18.1-20261011-0025"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 :root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#6b7280;--line:#e5e7eb;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 8px 24px rgba(15,23,42,.06)}
@@ -769,14 +769,14 @@ button,input,select{font:inherit}
 .analysis-hover-item.current-plan{background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8}
 .analysis-hover-item.current-actual{background:#f8fafc;border-color:#cbd5e1;color:#475569}
 
-/* V73.18.0 — Tassonomia L2 sempre visibile */
+/* V73.18.1 — Tassonomia L2 sempre visibile */
 .analysis-master-table tr.analysis-zero-row:not(.analysis-selected) .analysis-row-button{color:#64748b;font-weight:560}
 .analysis-master-table tr.analysis-zero-row:not(.analysis-selected) .analysis-master-amount strong{color:#64748b}
 .analysis-master-table tr.analysis-zero-row:not(.analysis-selected) .analysis-master-share{color:#94a3b8}
 .analysis-master-table tr.analysis-zero-row:not(.analysis-selected) .plan-icon.analysis-l2-icon{background:#f8fafc;color:#94a3b8;border-color:#e2e8f0}
 .analysis-zero-trend{display:inline-flex;align-items:center;justify-content:center;min-width:24px;color:#94a3b8;font-size:12px;font-weight:700}
 
-/* V73.18.0 — tabellone decisionale: periodo, trend vs storico, leggibilità */
+/* V73.18.1 — tabellone decisionale: periodo, trend vs storico, leggibilità */
 .planning-board-shell{display:grid;gap:14px}
 .planning-board-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;padding:5px 2px 2px}
 .planning-board-hero h1{margin:0;color:#0f1f55;font-size:32px;line-height:1.05;letter-spacing:-.65px}
@@ -857,7 +857,7 @@ button,input,select{font:inherit}
 @media(max-width:1100px){.planning-board-kpis{grid-template-columns:repeat(3,1fr)}.planning-nature-summary{grid-template-columns:1fr}.planning-insight-grid{grid-template-columns:1fr 1fr}.planning-insight-grid .planning-insight-card:last-child{grid-column:1/-1}.planning-month-grid{grid-template-columns:repeat(6,1fr)}}
 @media(max-width:760px){.planning-board-hero{align-items:flex-start;flex-direction:column}.planning-board-kpis{grid-template-columns:1fr}.planning-nature-summary-grid{grid-template-columns:1fr}.planning-insight-grid{grid-template-columns:1fr}.planning-insight-grid .planning-insight-card:last-child{grid-column:auto}.planning-nature-layout{grid-template-columns:1fr;height:auto}.planning-chart-wrap{height:180px}.planning-month-grid{grid-template-columns:repeat(3,1fr)}.planning-board-toolbar{align-items:stretch}.planning-board-toolbar-left,.planning-board-toolbar-right{width:100%}.planning-board-search{flex:1;min-width:170px}}
 
-/* V73.18.0 compact decision board */
+/* V73.18.1 compact decision board */
 .planning-board-table th,.planning-board-table td{padding:5px 9px;font-size:12.5px}
 .planning-l1-row td{font-size:13px}
 .planning-l2-name{padding-left:27px!important}
@@ -880,7 +880,7 @@ button,input,select{font:inherit}
 .planning-plan-chip{font-size:8.5px;padding:1px 5px}
 
 
-/* V73.18.0 — simulatore scenari nel Tabellone */
+/* V73.18.1 — simulatore scenari nel Tabellone */
 .planning-simulator-card{grid-column:1/-1;min-height:0}
 .planning-simulator-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
 .planning-simulator-scope{font-size:10px;color:#6d7b92;background:#f5f8fc;border:1px solid #e0e7f0;border-radius:999px;padding:4px 8px;white-space:nowrap}
@@ -910,7 +910,7 @@ button,input,select{font:inherit}
 @media(max-width:560px){.planning-simulator-results{grid-template-columns:1fr}.planning-sim-result{padding:9px}.planning-sim-result .v{font-size:19px}.planning-sim-row{grid-template-columns:1fr 64px;gap:8px}.planning-sim-presets .btn{flex:1 1 42%}.planning-sim-matrix-wrap{overflow-x:auto}.planning-sim-matrix{min-width:520px}}
 
 
-/* V73.18.0 — storico visibile e filtri previsione/note */
+/* V73.18.1 — storico visibile e filtri previsione/note */
 .planning-filter-select{min-height:34px;padding:5px 8px;font-size:12px}
 .planning-board-table{min-width:1320px}
 .planning-board-table th,.planning-board-table td{font-size:13px}
@@ -941,7 +941,7 @@ button,input,select{font:inherit}
 @media(max-width:900px){.planning-board-table{min-width:1250px}}
 
 
-/* V73.18.0 — Simulatore separato, baseline storico ordinario, entrate + spese */
+/* V73.18.1 — Simulatore separato, baseline storico ordinario, entrate + spese */
 .planning-board-shell .planning-insight-grid{grid-template-columns:.9fr 1.6fr}
 .planning-simulator-page{display:grid;gap:14px}
 .planning-simulator-standalone{min-height:0}
@@ -967,7 +967,7 @@ button,input,select{font:inherit}
 @media(max-width:760px){.planning-board-shell .planning-insight-grid{grid-template-columns:1fr}.planning-sim-group .planning-sim-row{grid-template-columns:1fr 64px}.planning-sim-group .planning-sim-slider{grid-column:1/-1}}
 
 
-/* V73.18.0 — Bilancio hub: Storico + Previsione */
+/* V73.18.1 — Bilancio hub: Storico + Previsione */
 .balance-hub-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:12px;padding:2px 2px 0}
 .balance-hub-head h2{margin:2px 0 0;font-size:29px;color:#10204d}.balance-hub-head p{margin:5px 0 0;color:#62718b;font-size:13px}
 .balance-hub-toggle .btn{min-width:108px}
@@ -990,6 +990,18 @@ button,input,select{font:inherit}
 .historical-compare-table{display:grid;margin-top:7px;border:1px solid #e1e7f0;border-radius:9px;overflow:hidden}.historical-compare-table .row{display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr;gap:7px;align-items:center;padding:9px 10px;border-top:1px solid #e7edf5;font-size:11.5px}.historical-compare-table .row:first-child{border-top:0}.historical-compare-table .row.head{background:#f4f7fb;font-size:10px;font-weight:800;color:#5d6b83}.historical-compare-table .row.active{background:#eef6ff}.historical-compare-table strong{text-align:right}.historical-compare-table .row span:not(:first-child){text-align:right}
 @media(max-width:1150px){.historical-kpis{grid-template-columns:repeat(3,1fr)}.historical-structural-strip{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:760px){.balance-hub-head{align-items:flex-start;flex-direction:column}.historical-kpis{grid-template-columns:1fr 1fr}.historical-structural-strip{grid-template-columns:1fr 1fr}.historical-bottom-grid{grid-template-columns:1fr}.historical-chart{height:330px}.balance-history-toolbar{align-items:stretch}.historical-compare-table{overflow-x:auto}.historical-compare-table .row{min-width:620px}}
+
+
+/* V73.18.1 — natura categoria visibile in Analisi */
+.analysis-nature-badge{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:20px;padding:0 6px;border-radius:7px;font-size:10.5px;font-weight:850;line-height:1;white-space:nowrap;margin-left:2px}
+.analysis-nature-badge.l1{min-width:42px}
+.analysis-nature-badge.mandatory{background:#fee2e2;color:#b91c1c}
+.analysis-nature-badge.necessary{background:#fef3c7;color:#a16207}
+.analysis-nature-badge.discretionary{background:#d1fae5;color:#047857}
+.analysis-nature-badge.fixed{background:#dbeafe;color:#1d4ed8}
+.analysis-nature-badge.predictable{background:#e0e7ff;color:#4338ca}
+.analysis-nature-badge.variable{background:#ffedd5;color:#c2410c}
+.analysis-nature-badge.unknown{background:#f1f5f9;color:#64748b}
 
 </style>
 </head>
@@ -2538,9 +2550,10 @@ async function loadAnalysisWorkspace(force,preserveSelection){
   try{
     const data=await Promise.all([
       rpc("dashboard_reporting_analysis_workspace_v2",{p_direction:analysisCurrentDirection(),p_period_months:analysisPeriodMonths()}),
-      rpc("dashboard_reporting_liquidity_history_v2",{p_period_months:analysisPeriodMonths()}).catch(function(){return {available:false,reason:"UNAVAILABLE",rows:[]}})
+      rpc("dashboard_reporting_liquidity_history_v2",{p_period_months:analysisPeriodMonths()}).catch(function(){return {available:false,reason:"UNAVAILABLE",rows:[]}}),
+      scenarioPlanningMeta?Promise.resolve(scenarioPlanningMeta):rpc("dashboard_reporting_planning_meta_v1").catch(function(){return {rows:[]}})
     ]);
-    if(seq!==analysisLoadSeq)return;analysisWorkspace=data[0]||{};analysisWorkspace.liquidity_history=data[1]||{available:false,rows:[]};analysisWorkspaceKey=key;
+    if(seq!==analysisLoadSeq)return;analysisWorkspace=data[0]||{};analysisWorkspace.liquidity_history=data[1]||{available:false,rows:[]};scenarioPlanningMeta=data[2]||{rows:[]};analysisWorkspaceKey=key;
     if(preserveSelection){
       analysisSelectedMonth=null;analysisDetailData=null;analysisDetailKey="";analysisForecastEditor=null;analysisForecastEditorKey="";analysisForecastDraft=null;analysisForecastDraftKey="";
       if(await restoreAnalysisSelection(preserveSelection))return;
@@ -2568,11 +2581,34 @@ function renderAnalysis(){
   $("analysisBalanceView").classList.add("hidden");$("analysisHierarchyView").classList.remove("hidden");renderAnalysisMaster();if(analysisDetailData)renderAnalysisDetail();
 }
 
+function analysisNatureMetaMap(){
+  const rows=scenarioPlanningMeta&&Array.isArray(scenarioPlanningMeta.rows)?scenarioPlanningMeta.rows:[];
+  return new Map(rows.map(function(x){return [String(x.category_id),x]}));
+}
+function analysisNatureValueForCategory(categoryId,direction){
+  const meta=analysisNatureMetaMap().get(String(categoryId))||{};
+  return direction==="INCOME"?(meta.income_nature||""):(meta.expense_nature||"");
+}
+function analysisNatureBadge(value,pct,isL1){
+  if(!value)return '<span class="analysis-nature-badge unknown" title="Natura non classificata">?</span>';
+  const label=planningNatureLabel(value),short=planningNatureShort(value),suffix=isL1&&Number.isFinite(Number(pct))?" "+Math.round(num(pct))+"%":"";
+  return '<span class="analysis-nature-badge '+planningNatureClass(value)+(isL1?" l1":"")+'" title="'+esc(label)+(isL1?" prevalente":"")+'">'+short+suffix+'</span>';
+}
+function analysisL1NatureBadge(rows,direction,amountField){
+  const totals=new Map(),total=(rows||[]).reduce(function(s,r){return s+Math.max(0,num(r[amountField]))},0);
+  (rows||[]).forEach(function(r){const nature=analysisNatureValueForCategory(r.category_id,direction);if(nature)totals.set(nature,(totals.get(nature)||0)+Math.max(0,num(r[amountField])))});
+  let best="",amount=0;totals.forEach(function(v,k){if(v>amount){best=k;amount=v}});
+  return analysisNatureBadge(best,total>0?amount*100/total:0,true);
+}
+function analysisL2NatureBadge(row,direction){
+  if(row&&row.is_direct)return '<span class="analysis-nature-badge unknown" title="Voce diretta L1: natura non definita">?</span>';
+  return analysisNatureBadge(analysisNatureValueForCategory(row&&row.category_id,direction),null,false);
+}
 function renderProjectionMaster(){
   const data=projectionDataFor(analysisCurrentDirection());if(!data)return;
-  const rows=projectionHierarchyRows(data),l1=rows.filter(function(x){return x.level==="L1"}).sort(function(a,b){return String(a.l1_name||"").localeCompare(String(b.l1_name||""),"it")});
+  const rows=projectionHierarchyRows(data),direction=analysisCurrentDirection(),l1=rows.filter(function(x){return x.level==="L1"}).sort(function(a,b){return String(a.l1_name||"").localeCompare(String(b.l1_name||""),"it")});
   const l2ByL1=new Map();rows.filter(function(x){return x.level==="L2"}).forEach(function(x){if(!l2ByL1.has(x.l1_id))l2ByL1.set(x.l1_id,[]);l2ByL1.get(x.l1_id).push(x)});
-  const prefix=analysisCurrentDirection()==="INCOME"?"AI:":"AE:",def=projectionDefinition(data);let html="";
+  const prefix=direction==="INCOME"?"AI:":"AE:",def=projectionDefinition(data);let html="";
   $("analysisMasterHead").innerHTML='<tr><th>Categoria / Voce</th><th>'+(analysisProjectionView==="ROLLING_12"?"Prossimi 12m":"Previsto "+esc(def.targetLabel))+'</th><th>Δ</th></tr>';
   $("analysisLegendNote").innerHTML=analysisProjectionView==="ROLLING_12"
     ?'Menu categorie: il dettaglio a destra confronta <strong>ultimi 12 mesi reali</strong> e <strong>prossimi 12 previsti</strong>.'
@@ -2580,7 +2616,10 @@ function renderProjectionMaster(){
   function rowHtml(r,isL1){
     const id=prefix+r.category_id,collapsed=isL1&&collapsedL1.has(id),selected=String(analysisSelectedCategory||"")===String(r.category_id),name=isL1?r.l1_name:(r.l2_name||r.l1_name),indent=isL1?"":" style=\"padding-left:30px\"";
     const zero=Math.abs(num(r.projected_total))<.005&&Math.abs(num(r.comparison_total))<.005&&Math.abs(num(r.actual_total))<.005;
-    const first=isL1?'<div class="plan-label"><button class="caret" data-toggle-l1="'+esc(id)+'">'+(collapsed?"▸":"▾")+'</button>'+categoryIconHtml(name,analysisCurrentDirection()==="INCOME"?"income":"expense",true)+'<button class="analysis-row-button" data-analysis-select="'+esc(r.category_id)+'" data-analysis-level="L1">'+esc(name)+'</button></div>':'<span class="plan-label">'+categoryIconHtml(name,analysisCurrentDirection()==="INCOME"?"income":"expense",false)+'<button class="analysis-row-button" data-analysis-select="'+esc(r.category_id)+'" data-analysis-level="L2">'+esc(name)+'</button></span>';
+    const children=isL1?(l2ByL1.get(r.category_id)||[]):null,nature=isL1?analysisL1NatureBadge(children,direction,"projected_total"):analysisL2NatureBadge(r,direction);
+    const first=isL1
+      ?'<div class="plan-label"><button class="caret" data-toggle-l1="'+esc(id)+'">'+(collapsed?"▸":"▾")+'</button>'+categoryIconHtml(name,direction==="INCOME"?"income":"expense",true)+'<button class="analysis-row-button" data-analysis-select="'+esc(r.category_id)+'" data-analysis-level="L1">'+esc(name)+'</button>'+nature+'</div>'
+      :'<span class="plan-label">'+categoryIconHtml(name,direction==="INCOME"?"income":"expense",false)+'<button class="analysis-row-button" data-analysis-select="'+esc(r.category_id)+'" data-analysis-level="L2">'+esc(name)+'</button>'+nature+'</span>';
     const amount='<div class="analysis-master-amount"><strong>'+money(r.projected_total)+'</strong><span class="analysis-master-share">'+num(r.share_pct).toLocaleString("it-IT",{maximumFractionDigits:1})+'%</span></div>';
     return '<tr class="'+(isL1?"l1-row ":"")+(zero?"analysis-zero-row ":"")+(selected?"analysis-selected":"")+'"'+(zero?' title="Categoria disponibile in anagrafica, senza storico o piano nel periodo"':'')+'><td'+indent+'>'+first+'</td><td>'+amount+'</td><td>'+(zero?'<span class="analysis-zero-trend">—</span>':projectionDeltaHtml(r.delta_pct))+'</td></tr>';
   }
@@ -2595,20 +2634,22 @@ function renderProjectionMaster(){
 function renderAnalysisMaster(){
   if(analysisTimeMode==="PROJECTION"){renderProjectionMaster();return}
   if($("analysisMasterHead"))$("analysisMasterHead").innerHTML='<tr><th>Categoria / Voce</th><th>Importo</th><th>Δ A-1</th></tr>';
-  if($("analysisLegendNote"))$("analysisLegendNote").textContent="Menu categorie: importo, peso sul totale e trend servono solo a scegliere cosa approfondire nel pannello a destra.";
-  if(!analysisWorkspace)return;const rows=analysisWorkspace.rows||[],l1=rows.filter(function(x){return x.level==="L1"}).sort(function(a,b){return String(a.l1_name||"").localeCompare(String(b.l1_name||""),"it")});
+  if($("analysisLegendNote"))$("analysisLegendNote").textContent="Menu categorie: importo, peso sul totale, natura e trend servono a scegliere cosa approfondire nel pannello a destra.";
+  if(!analysisWorkspace)return;
+  const rows=analysisWorkspace.rows||[],direction=analysisCurrentDirection(),l1=rows.filter(function(x){return x.level==="L1"}).sort(function(a,b){return String(a.l1_name||"").localeCompare(String(b.l1_name||""),"it")});
   const l2ByL1=new Map();rows.filter(function(x){return x.level==="L2"}).forEach(function(x){if(!l2ByL1.has(x.l1_id))l2ByL1.set(x.l1_id,[]);l2ByL1.get(x.l1_id).push(x)});
-  const prefix=analysisCurrentDirection()==="INCOME"?"AI:":"AE:";let html="";
+  const prefix=direction==="INCOME"?"AI:":"AE:";let html="";
   function amountHtml(total,share){return '<div class="analysis-master-amount"><strong>'+money(total)+'</strong><span class="analysis-master-share">'+num(share).toLocaleString("it-IT",{maximumFractionDigits:1})+'%</span></div>'}
   l1.forEach(function(g){
-    const id=prefix+g.category_id,collapsed=collapsedL1.has(id),selected=String(analysisSelectedCategory||"")===String(g.category_id);
-    const l1Zero=Math.abs(num(g.total))<.005;
-    html+='<tr class="l1-row'+(l1Zero?" analysis-zero-row":"")+(selected?" analysis-selected":"")+'"'+(l1Zero?' title="Categoria disponibile in anagrafica, senza dati nel periodo"':'')+'><td><div class="plan-label"><button class="caret" data-toggle-l1="'+esc(id)+'">'+(collapsed?"▸":"▾")+'</button>'+categoryIconHtml(g.l1_name,analysisCurrentDirection()==="INCOME"?"income":"expense",true)+'<button class="analysis-row-button" data-analysis-select="'+esc(g.category_id)+'" data-analysis-level="L1">'+esc(g.l1_name)+'</button></div></td><td>'+amountHtml(g.total,g.share_pct)+'</td><td>'+(l1Zero?'<span class="analysis-zero-trend">—</span>':analysisTrendHtml("L1",g.category_id))+'</td></tr>';
-    if(!collapsed)(l2ByL1.get(g.category_id)||[]).sort(function(a,b){return String(a.l2_name||a.l1_name||"").localeCompare(String(b.l2_name||b.l1_name||""),"it")}).forEach(function(r){
-      const name=r.is_direct?"Diretto su "+r.l1_name:(r.l2_name||r.l1_name),sel=String(analysisSelectedCategory||"")===String(r.category_id),zero=Math.abs(num(r.total))<.005;
-      html+='<tr class="'+(zero?"analysis-zero-row ":"")+(sel?"analysis-selected":"")+'"'+(zero?' title="Categoria disponibile in anagrafica, senza dati nel periodo"':'')+'><td style="padding-left:30px"><span class="plan-label">'+categoryIconHtml(name,analysisCurrentDirection()==="INCOME"?"income":"expense",false)+'<button class="analysis-row-button" data-analysis-select="'+esc(r.category_id)+'" data-analysis-level="L2">'+esc(name)+'</button></span></td><td>'+amountHtml(r.total,r.share_pct)+'</td><td>'+(zero?'<span class="analysis-zero-trend">—</span>':analysisTrendHtml("L2",r.category_id))+'</td></tr>';
+    const id=prefix+g.category_id,collapsed=collapsedL1.has(id),selected=String(analysisSelectedCategory||"")===String(g.category_id),children=l2ByL1.get(g.category_id)||[];
+    const l1Zero=Math.abs(num(g.total))<.005,nature=analysisL1NatureBadge(children,direction,"total");
+    html+='<tr class="l1-row'+(l1Zero?" analysis-zero-row":"")+(selected?" analysis-selected":"")+'"'+(l1Zero?' title="Categoria disponibile in anagrafica, senza dati nel periodo"':'')+'><td><div class="plan-label"><button class="caret" data-toggle-l1="'+esc(id)+'">'+(collapsed?"▸":"▾")+'</button>'+categoryIconHtml(g.l1_name,direction==="INCOME"?"income":"expense",true)+'<button class="analysis-row-button" data-analysis-select="'+esc(g.category_id)+'" data-analysis-level="L1">'+esc(g.l1_name)+'</button>'+nature+'</div></td><td>'+amountHtml(g.total,g.share_pct)+'</td><td>'+(l1Zero?'<span class="analysis-zero-trend">—</span>':analysisTrendHtml("L1",g.category_id))+'</td></tr>';
+    if(!collapsed)children.sort(function(a,b){return String(a.l2_name||a.l1_name||"").localeCompare(String(b.l2_name||b.l1_name||""),"it")}).forEach(function(r){
+      const name=r.is_direct?"Diretto su "+r.l1_name:(r.l2_name||r.l1_name),sel=String(analysisSelectedCategory||"")===String(r.category_id),zero=Math.abs(num(r.total))<.005,natureL2=analysisL2NatureBadge(r,direction);
+      html+='<tr class="'+(zero?"analysis-zero-row ":"")+(sel?"analysis-selected":"")+'"'+(zero?' title="Categoria disponibile in anagrafica, senza dati nel periodo"':'')+'><td style="padding-left:30px"><span class="plan-label">'+categoryIconHtml(name,direction==="INCOME"?"income":"expense",false)+'<button class="analysis-row-button" data-analysis-select="'+esc(r.category_id)+'" data-analysis-level="L2">'+esc(name)+'</button>'+natureL2+'</span></td><td>'+amountHtml(r.total,r.share_pct)+'</td><td>'+(zero?'<span class="analysis-zero-trend">—</span>':analysisTrendHtml("L2",r.category_id))+'</td></tr>';
     });
-  });$("analysisBody").innerHTML=html||'<tr><td colspan="3" class="muted">Nessun dato nel periodo selezionato.</td></tr>';
+  });
+  $("analysisBody").innerHTML=html||'<tr><td colspan="3" class="muted">Nessun dato nel periodo selezionato.</td></tr>';
 }
 
 function analysisCollapseOthers(id){
