@@ -156,6 +156,16 @@
 .category-info-tip{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;margin-left:4px;border-radius:50%;border:1px solid #b9c7d9;background:#f7faff;color:#44617f;font-size:10px;font-weight:850;line-height:1;vertical-align:middle;cursor:help}
 .category-info-tip:hover,.category-info-tip:focus{background:#eaf3ff;border-color:#7aa7df;color:#1d4f91;outline:none}
 
+
+/* V73.21.0 — override Natura/Temporalità sul movimento */
+.movement-attribute-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.movement-attribute-effective{display:inline-flex;align-items:center;gap:5px;margin-top:4px}
+.movement-attribute-badge{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:20px;padding:0 6px;border-radius:7px;background:#eef3f8;color:#40536a;font-size:10.5px;font-weight:850}
+.movement-attribute-badge.override{background:#e8f2ff;color:#235aa6}.movement-attribute-badge.exceptional{background:#fff0df;color:#a45108}
+.movement-legacy-warning{border:1px solid #f0c789;background:#fff8e8;color:#79521d;border-radius:9px;padding:9px 11px;font-size:11.5px;line-height:1.35}
+.movement-reporting-badges{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
+.movement-reporting-badges .legacy{background:#fff1dc;color:#9a5400}.movement-reporting-badges .override{background:#eaf3ff;color:#245c9f}
+
 </style>
 </head>
 <body>
@@ -314,7 +324,17 @@
               <div class="context-grid">
                 <div class="field"><label>Progetto</label><select id="classProject" class="select"></select></div>
                 <div class="field"><label>Tag</label><div id="classTags" class="tag-picker"></div></div>
-                <div class="field"><label>Reporting</label><label style="display:flex;gap:8px;align-items:center;min-height:36px"><input id="classExtraordinary" type="checkbox" /> <strong>Straordinario per il reporting</strong></label><div id="classExtraordinaryState" class="small muted">Caricamento stato…</div></div>
+                <div class="field">
+                  <label>Natura movimento <span class="help" data-tip="Override facoltativo del default della categoria. Usalo solo quando questo movimento è realmente diverso dalla categoria; se la categoria è sbagliata, è meglio riclassificare il movimento.">?</span></label>
+                  <select id="classNatureOverride" class="select"></select>
+                  <div id="classNatureOverrideState" class="small muted">Caricamento…</div>
+                </div>
+                <div class="field">
+                  <label>Temporalità movimento <span class="help" data-tip="Override facoltativo del default della categoria. R = Ricorrente, P = Occasionale/programmabile, E = Eccezionale/imprevista, X = Non applicabile. E sostituisce il vecchio concetto di Straordinario.">?</span></label>
+                  <select id="classTemporalityOverride" class="select"></select>
+                  <div id="classTemporalityOverrideState" class="small muted">Caricamento…</div>
+                </div>
+                <div id="classLegacyExtraordinary" class="movement-legacy-warning hidden" style="grid-column:1/-1"></div>
                 <div class="field" style="grid-column:1/-1">
                   <label>Nota personale</label>
                   <textarea id="classUserNote" class="input" rows="3" maxlength="4000" placeholder="Es. verificato: acquisto per scuola, pagamento visita, movimento corretto…"></textarea>
@@ -324,7 +344,7 @@
                   </div>
                 </div>
               </div>
-              <div class="note">Progetto, tag e nota personale si applicano solo al movimento aperto. La nota non modifica classificazione o protezione. Lo stato Straordinario viene salvato subito.</div>
+              <div class="note">Natura e Temporalità possono avere un override sul singolo movimento; in assenza di override valgono i default della categoria. E · Eccezionale sostituisce progressivamente il vecchio flag Straordinario. Se conosci la spesa reale, preferisci correggere la categoria invece di usare un override per compensare una categoria errata.</div>
             </div>
 
             <div id="splitBox" class="split-box">
@@ -370,6 +390,12 @@
           <select id="movementKind" class="select"><option value="">Tutti i canali</option><option value="CARTA">Carta</option><option value="BONIFICO">Bonifico</option><option value="ADDEBITO">Addebito</option><option value="ALTRO">Altro</option></select>
           <select id="movementType" class="select"><option value="">Tutti i tipi movimento</option><option value="EXPENSE">Spesa</option><option value="INCOME">Entrata</option><option value="TRANSFER">Tutti i trasferimenti</option><option value="TRANSFER_INTERNAL">↳ Giroconto interno</option><option value="TRANSFER_PENDING">↳ Bonifico da verificare</option><option value="FEE">Commissione</option><option value="INTEREST">Interesse</option><option value="INVESTMENT">Investimento</option><option value="OTHER">Altro</option></select>
           <select id="movementNote" class="select"><option value="">Tutte le note</option><option value="HAS">Con nota</option><option value="NONE">Senza nota</option></select>
+          <select id="movementReporting" class="select">
+            <option value="">Tutta la temporalità</option>
+            <option value="LEGACY">⚠ Straordinari legacy da verificare</option>
+            <option value="EXCEPTIONAL">E · Eccezionali</option>
+            <option value="OVERRIDE">Con override Natura/Temporalità</option>
+          </select>
           <input id="movementCounterpartySearch" class="input" list="v62CounterpartyFilterOptions" placeholder="Cerca controparte..." autocomplete="off" />
           <select id="movementCounterparty" class="hidden"><option value="">Tutte le controparti</option></select>
           <select id="movementCategory" class="select"><option value="">Tutte le categorie</option></select>
@@ -1367,7 +1393,17 @@ function movementTypeMatches(row,filter){
   if(filter==='TRANSFER_PENDING')return transferSemantic(row)?.key==='PENDING';
   return String(row?.transaction_type||'')===filter;
 }
-function movementContextHtml(x){const project=x?.project_name?`<div><strong>${esc(x.project_name)}</strong></div>`:'';const tags=(x?.tags||[]).map(t=>`<span class="pill">#${esc(t.name)}</span>`).join('');return project||tags?`${project}${tags}`:'<span class="muted">—</span>'}
+function movementContextHtml(x){
+  const project=x?.project_name?`<div><strong>${esc(x.project_name)}</strong></div>`:'';
+  const tags=(x?.tags||[]).map(t=>`<span class="pill">#${esc(t.name)}</span>`).join('');
+  let reporting='';
+  if(x?.needs_temporality_review)reporting='<div class="movement-reporting-badges"><span class="pill legacy">⚠ E legacy</span></div>';
+  else if(x?.nature_override||x?.temporality_override){
+    const bits=[x?.nature_override?movementNatureShort(x.nature_override):'',x?.temporality_override?movementTemporalityShort(x.temporality_override):''].filter(Boolean).join(' · ');
+    reporting='<div class="movement-reporting-badges"><span class="pill override">Override '+esc(bits)+'</span></div>';
+  }
+  return project||tags||reporting?`${project}${tags}${reporting}`:'<span class="muted">—</span>';
+}
 function movementNoteIcon(row){
   const note=String(row?.user_note||'').trim();
   if(!note)return '<span class="movement-note-empty" aria-label="Nessuna nota">—</span>';
@@ -1595,7 +1631,7 @@ function movementAutomationMatches(row,filter){
   return key===filter;
 }
 function filteredMovements(){
-  const q=$('movementSearch').value.trim().toLowerCase(),status=$('movementStatus').value,automation=$('movementAutomation').value,bank=$('movementBank').value,kind=$('movementKind').value,type=$('movementType').value,noteFilter=$('movementNote').value,dir=$('movementDirection').value,cp=$('movementCounterparty').value,cat=$('movementCategory').value,project=$('movementProject').value,tag=$('movementTag').value,from=$('movementDateFrom').value,to=$('movementDateTo').value;
+  const q=$('movementSearch').value.trim().toLowerCase(),status=$('movementStatus').value,automation=$('movementAutomation').value,bank=$('movementBank').value,kind=$('movementKind').value,type=$('movementType').value,noteFilter=$('movementNote').value,reportingFilter=$('movementReporting')?.value||'',dir=$('movementDirection').value,cp=$('movementCounterparty').value,cat=$('movementCategory').value,project=$('movementProject').value,tag=$('movementTag').value,from=$('movementDateFrom').value,to=$('movementDateTo').value;
   let rows=(catData?.movements||[]).filter(x=>{
     const hay=[x.description,x.counterparty_name,x.category_path,x.raw_causale,x.raw_type,x.user_note,transactionTypeDisplayLabel(x),transactionTypeLabel(x.transaction_type),movementKindLabel(x.movement_kind),x.project_name,futureAutomationInfo(x).label,...(x.tags||[]).map(t=>t.name)].join(' ').toLowerCase();
     if(q&&!textSearchMatches(hay,q))return false;
@@ -1607,6 +1643,9 @@ function filteredMovements(){
     const hasNote=!!String(x.user_note||'').trim();
     if(noteFilter==='HAS'&&!hasNote)return false;
     if(noteFilter==='NONE'&&hasNote)return false;
+    if(reportingFilter==='LEGACY'&&!x.needs_temporality_review)return false;
+    if(reportingFilter==='EXCEPTIONAL'&&x.effective_temporality!=='EXCEPTIONAL')return false;
+    if(reportingFilter==='OVERRIDE'&&!x.nature_override&&!x.temporality_override)return false;
     if(dir&&movementDirection(x).key!==dir)return false;
     if(cp==='__NONE__'&&x.counterparty_id)return false;
     if(cp&&cp!=='__NONE__'&&x.counterparty_id!==cp)return false;
@@ -1632,7 +1671,7 @@ function filteredMovements(){
 }
 function sortMovements(rows){const mult=sortDir==='asc'?1:-1;return [...rows].sort((a,b)=>{let av=a[sortKey],bv=b[sortKey];if(sortKey==='amount'){av=Math.abs(Number(a.amount||0));bv=Math.abs(Number(b.amount||0))}if(sortKey==='has_note'){av=String(a.user_note||'').trim()?1:0;bv=String(b.user_note||'').trim()?1:0}if(sortKey==='counterparty_name'){av=a.counterparty_name||'';bv=b.counterparty_name||''}if(sortKey==='category_path'){av=a.category_path||'';bv=b.category_path||''}if(sortKey==='description'){av=a.description||'';bv=b.description||''}if(typeof av==='number'||typeof bv==='number')return (Number(av||0)-Number(bv||0))*mult;return String(av||'').localeCompare(String(bv||''),'it',{numeric:true,sensitivity:'base'})*mult})}
 function sortHeader(label,key){const arrow=sortKey===key?(sortDir==='asc'?' ↑':' ↓'):'';return `<button class="sortbtn" data-sort="${key}">${esc(label)}${arrow}</button>`}
-function renderMovements(){const rows=filteredMovements();$('movementSummary').textContent=`${nfmt(rows.length)} movimenti visualizzati · volume ${euro(rows.reduce((s,x)=>s+Math.abs(Number(x.amount||0)),0))}${movementCategoryScopeLabel?' · categoria '+movementCategoryScopeLabel:''}${fuzzySuggestionsError?' · suggerimenti fuzzy non disponibili':''}`;$('viewList').className=`btn ${viewMode==='list'?'secondary':'ghost'} compact`;$('viewGrouped').className=`btn ${viewMode==='grouped'?'secondary':'ghost'} compact`;if(viewMode==='grouped')renderGrouped(rows);else renderMovementList(rows);syncBulkSelectionUi()}
+function renderMovements(){const rows=filteredMovements(),legacyCount=(catData?.movements||[]).filter(x=>x.needs_temporality_review).length;$('movementSummary').textContent=`${nfmt(rows.length)} movimenti visualizzati · volume ${euro(rows.reduce((s,x)=>s+Math.abs(Number(x.amount||0)),0))}${legacyCount?' · ⚠ '+nfmt(legacyCount)+' straordinari legacy da verificare':''}${movementCategoryScopeLabel?' · categoria '+movementCategoryScopeLabel:''}${fuzzySuggestionsError?' · suggerimenti fuzzy non disponibili':''}`;$('viewList').className=`btn ${viewMode==='list'?'secondary':'ghost'} compact`;$('viewGrouped').className=`btn ${viewMode==='grouped'?'secondary':'ghost'} compact`;if(viewMode==='grouped')renderGrouped(rows);else renderMovementList(rows);syncBulkSelectionUi()}
 function syncBulkSelectionUi(){
   const count=selectedMovementIds.size,disabled=count===0;
   if($('bulkSelectedCount'))$('bulkSelectedCount').textContent=`${nfmt(count)} ${count===1?'selezionato':'selezionati'}`;
@@ -2097,6 +2136,9 @@ function resetClassificationPanel(close=true){
   if($('pipelineStepCounterparty'))$('pipelineStepCounterparty').open=true;if($('pipelineStepCategory'))$('pipelineStepCategory').open=false;if($('pipelineStepContext'))$('pipelineStepContext').open=false;syncClassificationPipelineNav();
   $('selectedDescription').textContent='';if($('movementFacts'))$('movementFacts').innerHTML='';$('splitRows').innerHTML='';$('splitEditor').classList.add('hidden');$('toggleSplitEditor').textContent='Dividi movimento';msg($('splitMsg'),'');$('classMerchant').value='';$('classCategory').value='';syncSearchFromSelect('classMerchantSearch','classMerchant');if($('clearClassMerchant'))$('clearClassMerchant').classList.add('hidden');$('classProject').value='';
   document.querySelectorAll('[data-class-tag]').forEach(cb=>cb.checked=false);
+  if($('classNatureOverride'))$('classNatureOverride').innerHTML='';if($('classNatureOverrideState'))$('classNatureOverrideState').textContent='';
+  if($('classTemporalityOverride'))$('classTemporalityOverride').innerHTML='';if($('classTemporalityOverrideState'))$('classTemporalityOverrideState').textContent='';
+  if($('classLegacyExtraordinary')){$('classLegacyExtraordinary').classList.add('hidden');$('classLegacyExtraordinary').innerHTML='';}
   $('classMode').value='all';$('quickCounterpartyBox').classList.add('hidden');$('transferTarget').value='EXPENSE';$('transferDecision').classList.add('hidden');$('transferDecisionHint').textContent='';msg($('classMsg'),'');
   if(close)$('classifyBox').classList.add('hidden');
 }
@@ -2142,21 +2184,140 @@ function movementDateTimeLabel(row){
   return [weekday?weekday.charAt(0).toUpperCase()+weekday.slice(1):'',dateStr,time?`ore ${time}`:''].filter(Boolean).join(' · ');
 }
 function updateTransferDecisionHint(){if(!$('transferDecision')||$('transferDecision').classList.contains('hidden'))return;const v=$('transferTarget').value;$('transferDecisionHint').textContent=v==='TRANSFER'?'Il movimento sarà un giroconto interno e verrà escluso da entrate, spese, budget e previsioni.':v==='EXPENSE'?'Il bonifico verrà trattato come una spesa reale.':'Il bonifico verrà trattato come un’entrata reale.'}
-async function loadReportingExtraordinaryState(row){
-  const cb=$('classExtraordinary'),state=$('classExtraordinaryState');
-  if(!cb||!state)return;
-  cb.disabled=true;cb.checked=false;state.textContent='Caricamento stato…';
+function movementNatureShort(v){
+  return ({MANDATORY:"O",NECESSARY:"N",DISCRETIONARY:"D",FIXED:"F",PREDICTABLE:"P",VARIABLE:"V"})[v]||"—";
+}
+function movementNatureLabel(v){
+  return ({MANDATORY:"Obbligatoria",NECESSARY:"Necessaria",DISCRETIONARY:"Discrezionale",FIXED:"Fissa",PREDICTABLE:"Prevedibile",VARIABLE:"Variabile"})[v]||"Non definita";
+}
+function movementTemporalityShort(v){
+  return ({RECURRING:"R",PLANNED_OCCASIONAL:"P",EXCEPTIONAL:"E",NOT_APPLICABLE:"X"})[v]||"—";
+}
+function movementTemporalityLabel(v){
+  return ({RECURRING:"Ricorrente",PLANNED_OCCASIONAL:"Occasionale/programmabile",EXCEPTIONAL:"Eccezionale/imprevista",NOT_APPLICABLE:"Non applicabile"})[v]||"Non definita";
+}
+function selectedMovementCategory(){
+  const id=$("classCategory")?.value||selectedRow?.category_id||"";
+  return (catData?.categories||[]).find(function(x){return String(x.id)===String(id)})||null;
+}
+function movementCategoryMeta(cat){
+  if(!cat)return {};
+  let id=cat.id;
+  if(Number(cat.depth||0)>2&&cat.parent_id)id=cat.parent_id;
+  return categoryPlanningMetaMap().get(String(id))||{};
+}
+function movementCategoryDefaults(){
+  const cat=selectedMovementCategory(),meta=movementCategoryMeta(cat);
+  if(!cat)return {nature:"",temporality:"",income:false,locked:false};
+  const income=categoryIsIncomeTaxonomy(cat);
+  return {
+    nature:income?(meta.income_nature||""):(meta.expense_nature||""),
+    temporality:meta.temporality||"",
+    income:income,
+    locked:categoryNatureLocked(cat)
+  };
+}
+function movementApplyReportingAttributes(flag){
+  if(!selectedRow)return;
+  const f=flag||{};
+  selectedRow.reporting_attributes=f;
+  selectedRow.is_extraordinary=!!f.is_extraordinary;
+  selectedRow.nature_override=f.nature_override||null;
+  selectedRow.temporality_override=f.temporality_override||null;
+  selectedRow.effective_nature=f.effective_nature||null;
+  selectedRow.effective_temporality=f.effective_temporality||null;
+  selectedRow.nature_source=f.nature_source||"NONE";
+  selectedRow.temporality_source=f.temporality_source||"NONE";
+  selectedRow.needs_temporality_review=!!f.legacy_extraordinary;
+  const local=(catData?.movements||[]).find(function(x){return String(x.id)===String(selectedRow.id)});
+  if(local)Object.assign(local,{
+    is_extraordinary:selectedRow.is_extraordinary,
+    nature_override:selectedRow.nature_override,
+    temporality_override:selectedRow.temporality_override,
+    effective_nature:selectedRow.effective_nature,
+    effective_temporality:selectedRow.effective_temporality,
+    nature_source:selectedRow.nature_source,
+    temporality_source:selectedRow.temporality_source,
+    needs_temporality_review:selectedRow.needs_temporality_review
+  });
+  renderMovementAttributeControls();
+}
+function renderMovementAttributeControls(){
+  if(!selectedRow)return;
+  const nSel=$("classNatureOverride"),tSel=$("classTemporalityOverride"),nState=$("classNatureOverrideState"),tState=$("classTemporalityOverrideState"),legacy=$("classLegacyExtraordinary");
+  if(!nSel||!tSel)return;
+  const f=selectedRow.reporting_attributes||selectedRow,defaults=movementCategoryDefaults();
+  const target=selectedRow.is_bank_transfer?($("transferTarget")?.value||selectedRow.transaction_type):selectedRow.transaction_type;
+  const technical=target==="TRANSFER";
+  const nValue=f.nature_override||"",tValue=f.temporality_override||"";
+  const natureOpts=defaults.income
+    ?[["","Usa default categoria"],["FIXED","F · Fissa"],["PREDICTABLE","P · Prevedibile"],["VARIABLE","V · Variabile"]]
+    :[["","Usa default categoria"],["MANDATORY","O · Obbligatoria"],["NECESSARY","N · Necessaria"],["DISCRETIONARY","D · Discrezionale"]];
+  if(defaults.locked){
+    nSel.innerHTML='<option value="">NC · natura non applicabile</option>';
+    nSel.disabled=true;
+    if(nState)nState.textContent="Uscita NC: pesa sul Bilancio ma non riceve O/N/D. Se conosci la spesa reale, correggi la categoria.";
+  }else{
+    nSel.innerHTML=natureOpts.map(function(o){return '<option value="'+o[0]+'" '+(o[0]===nValue?'selected':'')+'>'+o[1]+'</option>'}).join("");
+    nSel.disabled=technical;
+    const effective=nValue||defaults.nature||"";
+    if(nState)nState.innerHTML=effective
+      ?'<span class="movement-attribute-effective"><span class="movement-attribute-badge '+(nValue?"override":"")+'">'+movementNatureShort(effective)+'</span>'+esc(movementNatureLabel(effective))+' · '+(nValue?"override movimento":"default categoria")+'</span>'
+      :'<span class="muted">Natura non definita.</span>';
+  }
+  const isLegacy=!!f.legacy_extraordinary||String(f.temporality_source||"")==="LEGACY_EXTRAORDINARY";
+  const tOpts=[["","Usa default categoria"],["RECURRING","R · Ricorrente"],["PLANNED_OCCASIONAL","P · Occasionale"],["EXCEPTIONAL","E · Eccezionale"],["NOT_APPLICABLE","X · Non applicabile"]];
+  if(isLegacy&&!tValue)tOpts.unshift(["__LEGACY__","⚠ E legacy · da verificare"]);
+  tSel.innerHTML=tOpts.map(function(o){const selected=(o[0]==="__LEGACY__"&&isLegacy&&!tValue)||(o[0]===tValue&&o[0]!=="__LEGACY__");return '<option value="'+o[0]+'" '+(selected?'selected':'')+' '+(o[0]==="__LEGACY__"?'disabled':'')+'>'+o[1]+'</option>'}).join("");
+  tSel.disabled=technical;
+  const effectiveT=tValue||(isLegacy?"EXCEPTIONAL":defaults.temporality||"");
+  if(tState)tState.innerHTML=effectiveT
+    ?'<span class="movement-attribute-effective"><span class="movement-attribute-badge '+(tValue?"override ":"")+(effectiveT==="EXCEPTIONAL"?"exceptional":"")+'">'+movementTemporalityShort(effectiveT)+'</span>'+esc(movementTemporalityLabel(effectiveT))+' · '+(isLegacy&&!tValue?"legacy da verificare":tValue?"override movimento":"default categoria")+'</span>'
+    :'<span class="muted">Temporalità non definita.</span>';
+  if(legacy){
+    legacy.classList.toggle("hidden",!isLegacy);
+    legacy.innerHTML=isLegacy
+      ?'<strong>⚠ Vecchio “Straordinario” da verificare.</strong> Oggi il Bilancio continua a trattarlo come straordinario per compatibilità. Scegli <strong>E</strong> per confermarlo oppure R/P/X (o il default categoria) per riclassificarlo e rimuovere il vecchio flag.'
+      :'';
+  }
+  if(technical){
+    if(nState)nState.textContent="Giroconto interno: escluso dal reporting economico; Natura non utilizzata.";
+    if(tState)tState.textContent="Giroconto interno: Temporalità non utilizzata nel reporting economico.";
+  }
+}
+async function loadReportingAttributesState(row){
+  const nSel=$("classNatureOverride"),tSel=$("classTemporalityOverride");
+  if(nSel)nSel.disabled=true;if(tSel)tSel.disabled=true;
   try{
     const flag=await rpc('dashboard_reporting_transaction_flag_v1',{p_transaction_id:row.id});
     if(!selectedRow||selectedRow.id!==row.id)return;
-    cb.checked=!!flag?.is_extraordinary;
-    selectedRow.is_extraordinary=!!flag?.is_extraordinary;
-    state.textContent=cb.checked?'Escluso da medie e forecast ordinario':'Incluso nelle medie e nel forecast ordinario';
+    movementApplyReportingAttributes(flag||{});
   }catch(e){
-    cb.checked=false;cb.disabled=true;state.textContent='Stato reporting non disponibile per questo movimento';
-    return;
+    if($("classNatureOverrideState"))$("classNatureOverrideState").textContent="Attributi reporting non disponibili";
+    if($("classTemporalityOverrideState"))$("classTemporalityOverrideState").textContent=e.message||"Errore caricamento";
   }
-  cb.disabled=false;
+}
+async function saveMovementNatureOverride(){
+  if(!selectedRow)return;
+  const sel=$("classNatureOverride"),state=$("classNatureOverrideState");
+  if(!sel||sel.disabled)return;
+  const value=sel.value||null;sel.disabled=true;if(state)state.textContent="Salvataggio…";
+  try{
+    const flag=await rpc('dashboard_reporting_set_transaction_nature_v1',{p_transaction_id:selectedRow.id,p_nature_override:value});
+    movementApplyReportingAttributes(flag||{});
+    renderMovements();updateClassificationPipelineState();
+  }catch(e){if(state)state.textContent=e.message||"Errore salvataggio Natura";renderMovementAttributeControls()}
+}
+async function saveMovementTemporalityOverride(){
+  if(!selectedRow)return;
+  const sel=$("classTemporalityOverride"),state=$("classTemporalityOverrideState");
+  if(!sel||sel.disabled||sel.value==="__LEGACY__")return;
+  const value=sel.value||null;sel.disabled=true;if(state)state.textContent="Salvataggio…";
+  try{
+    const flag=await rpc('dashboard_reporting_set_transaction_temporality_v1',{p_transaction_id:selectedRow.id,p_temporality_override:value});
+    movementApplyReportingAttributes(flag||{});
+    renderMovements();updateClassificationPipelineState();
+  }catch(e){if(state)state.textContent=e.message||"Errore salvataggio Temporalità";renderMovementAttributeControls()}
 }
 function openMovementFromUrl(){
   if(deepLinkHandled)return;
@@ -2187,7 +2348,7 @@ function openClassify(row,options={}){
   if($('classUserNoteState'))$('classUserNoteState').textContent=row.user_note?'Nota salvata.':'Nessuna nota.';
   $('classMode').value='all';
   if(selectedRow.is_bank_transfer)$('transferTarget').value=classificationTargetForRow(row);
-  updateTransferDecisionHint();$('classifyBox').classList.remove('hidden');$('classifyBox').scrollIntoView({behavior:'smooth',block:'start'});msg($('classMsg'),'');$('splitEditor').classList.add('hidden');$('toggleSplitEditor').textContent=Number(row.split_count||0)>0?`Ripartizione (${nfmt(row.split_count)})`:'Dividi movimento';loadSplitsForMovement(row.id);loadReportingExtraordinaryState(row);updateClassificationPipelineState();setClassificationPipelineStep('counterparty',false);updateClassificationSaveBar();
+  updateTransferDecisionHint();$('classifyBox').classList.remove('hidden');$('classifyBox').scrollIntoView({behavior:'smooth',block:'start'});msg($('classMsg'),'');$('splitEditor').classList.add('hidden');$('toggleSplitEditor').textContent=Number(row.split_count||0)>0?`Ripartizione (${nfmt(row.split_count)})`:'Dividi movimento';loadSplitsForMovement(row.id);loadReportingAttributesState(row);updateClassificationPipelineState();setClassificationPipelineStep('counterparty',false);updateClassificationSaveBar();
 }
 function clearSelectedMovementCounterparty(){
   if(!selectedRow)return;
@@ -4077,7 +4238,7 @@ function clearMovementFilters(){movementCategoryScopeIds=null;movementCategorySc
 document.querySelectorAll('[data-pipeline-next]').forEach(b=>b.addEventListener('click',()=>setClassificationPipelineStep(b.dataset.pipelineNext)));
 ['pipelineStepCounterparty','pipelineStepCategory','pipelineStepContext'].forEach(id=>$(id)?.addEventListener('toggle',()=>{if($(id)?.open){for(const other of Object.values(classificationPipelineMap()))if(other!==id&&$(other))$(other).open=false}syncClassificationPipelineNav()}));
 $('classProject')?.addEventListener('change',()=>{updateClassificationPipelineState();updateClassificationSaveBar()});$('classTags')?.addEventListener('change',()=>{updateClassificationPipelineState();updateClassificationSaveBar()});
-['movementSearch','movementStatus','movementAutomation','movementBank','movementKind','movementType','movementNote','movementDirection','movementCounterpartySearch','movementCounterparty','movementCategory','movementProject','movementTag','movementDateFrom','movementDateTo'].forEach(id=>$(id).value='');renderMovements()}
+['movementSearch','movementStatus','movementAutomation','movementBank','movementKind','movementType','movementNote','movementReporting','movementDirection','movementCounterpartySearch','movementCounterparty','movementCategory','movementProject','movementTag','movementDateFrom','movementDateTo'].forEach(id=>{if($(id))$(id).value=''});renderMovements()}
 $('coherenceRefresh').onclick=loadCoherence;
 $('duplicateRefresh').onclick=loadCoherence;
 $('duplicateTable').addEventListener('click',e=>{const b=e.target.closest('[data-merge-counterparty]');if(b)mergeSuggestedCounterparty(b)});
@@ -4128,7 +4289,7 @@ $('previewParsingCorrection').onclick=previewParsingCorrection;
 $('saveParsingCorrection').onclick=saveParsingCorrection;
 $('movementProtectionBox').addEventListener('click',e=>{const unlock=e.target.closest('[data-unlock-manual]');if(unlock)unlockSelectedManualProtection(unlock)});
 $('movementFacts').addEventListener('click',e=>{const unlock=e.target.closest('[data-header-unlock-manual]');if(unlock)unlockSelectedManualProtection(unlock)});
-$('cancelQuickCounterparty').onclick=()=>{$('quickCounterpartyBox').classList.add('hidden');msg($('quickCounterpartyMsg'),'')};$('saveQuickCounterparty').onclick=saveQuickCounterparty;$('classMerchant').onchange=()=>{syncClassificationCategoryFromMerchant(false);renderClassificationSuggestion();renderMovementAliasBox();renderFutureAutomationBox();updateClassificationPipelineState();updateClassificationSaveBar()};$('classCategory').onchange=()=>{renderClassificationSuggestion();renderFutureAutomationBox();updateClassificationPipelineState();updateClassificationSaveBar()};$('transferTarget').onchange=()=>{updateTransferDecisionHint();renderClassificationSuggestion();renderFutureAutomationBox();updateClassificationPipelineState();updateClassificationSaveBar()};['movementSearch','movementStatus','movementAutomation','movementBank','movementKind','movementType','movementNote','movementDirection','movementCategory','movementProject','movementTag','movementDateFrom','movementDateTo'].forEach(id=>$(id).addEventListener(id==='movementSearch'?'input':'change',renderMovements));$('movementCounterpartySearch').addEventListener('input',applyMovementCounterpartySearch);$('movementCounterpartySearch').addEventListener('change',applyMovementCounterpartySearch);$('clearMovementFilters').onclick=clearMovementFilters;$('viewList').onclick=()=>{viewMode='list';renderMovements()};$('viewGrouped').onclick=()=>{viewMode='grouped';renderMovements()};$('bulkSelectVisible').onclick=selectVisibleMovements;$('bulkClearSelection').onclick=clearSelectedMovements;$('bulkApplyChanges').onclick=applyBulkMovementChanges;
+$('cancelQuickCounterparty').onclick=()=>{$('quickCounterpartyBox').classList.add('hidden');msg($('quickCounterpartyMsg'),'')};$('saveQuickCounterparty').onclick=saveQuickCounterparty;$('classMerchant').onchange=()=>{syncClassificationCategoryFromMerchant(false);renderClassificationSuggestion();renderMovementAliasBox();renderFutureAutomationBox();updateClassificationPipelineState();updateClassificationSaveBar()};$('classCategory').onchange=()=>{renderClassificationSuggestion();renderFutureAutomationBox();renderMovementAttributeControls();updateClassificationPipelineState();updateClassificationSaveBar()};$('transferTarget').onchange=()=>{updateTransferDecisionHint();renderClassificationSuggestion();renderFutureAutomationBox();renderMovementAttributeControls();updateClassificationPipelineState();updateClassificationSaveBar()};['movementSearch','movementStatus','movementAutomation','movementBank','movementKind','movementType','movementNote','movementReporting','movementDirection','movementCategory','movementProject','movementTag','movementDateFrom','movementDateTo'].forEach(id=>$(id)?.addEventListener(id==='movementSearch'?'input':'change',renderMovements));$('movementCounterpartySearch').addEventListener('input',applyMovementCounterpartySearch);$('movementCounterpartySearch').addEventListener('change',applyMovementCounterpartySearch);$('clearMovementFilters').onclick=clearMovementFilters;$('viewList').onclick=()=>{viewMode='list';renderMovements()};$('viewGrouped').onclick=()=>{viewMode='grouped';renderMovements()};$('bulkSelectVisible').onclick=selectVisibleMovements;$('bulkClearSelection').onclick=clearSelectedMovements;$('bulkApplyChanges').onclick=applyBulkMovementChanges;
 $('movementsTable').addEventListener('click',e=>{const fuzzy=e.target.closest('[data-confirm-fuzzy-counterparty]');if(fuzzy){confirmFuzzyCounterparty(fuzzy);return}const auto=e.target.closest('[data-automation-target]');if(auto){openAutomationTarget(auto.dataset.automationTarget,auto.dataset.automationId);return}const sort=e.target.closest('[data-sort]');if(sort){setSort(sort.dataset.sort);return}const edit=e.target.closest('[data-edit-movement]');if(edit){const row=(catData?.movements||[]).find(x=>x.id===edit.dataset.editMovement);if(row)openClassify(row);return}const tg=e.target.closest('[data-toggle-group]');if(tg){const g=(window.__groupRows||[])[Number(tg.dataset.toggleGroup)];if(!g)return;if(expandedGroups.has(g.key))expandedGroups.delete(g.key);else expandedGroups.add(g.key);renderMovements()}});
 $('movementsTable').addEventListener('change',e=>{const cb=e.target.closest('[data-select-movement]');if(!cb)return;cb.checked?selectedMovementIds.add(cb.dataset.selectMovement):selectedMovementIds.delete(cb.dataset.selectMovement);syncBulkSelectionUi()});
 ['categorySearch','categoryL1Filter','categoryDependencyFilter','merchantSearch','merchantL1Filter','merchantL2Filter','merchantStatusFilter','projectSearch','projectTypeFilter','projectStatusFilter','tagSearch','tagStatusFilter','mccSearch','mccStatusFilter','compoundRuleSearch','compoundRuleStatusFilter','parsingRuleSearch'].forEach(id=>$(id)?.addEventListener(id.endsWith('Search')?'input':'change',renderCatalogs));[['classMerchantSearch','classMerchant'],['compoundRuleMerchantSearch','compoundRuleMerchant'],['bulkCounterpartySearch','bulkCounterparty']].forEach(x=>bindCounterpartySearch(...x));$('expandAllCategories').onclick=()=>{(catData?.categories||[]).filter(x=>Number(x.depth)===1).forEach(x=>expandedCategoryGroups.add(x.level1_name||x.name));renderCategoriesCatalog()};$('collapseAllCategories').onclick=()=>{expandedCategoryGroups.clear();renderCategoriesCatalog()};
@@ -4177,23 +4338,8 @@ const cpsinline=e.target.closest('[data-save-counterparty-inline]');if(cpsinline
 const cpd=e.target.closest('[data-toggle-counterparty-detail]');if(cpd){const k=cpd.dataset.toggleCounterpartyDetail;if(expandedCounterpartyDetails.has(k))expandedCounterpartyDetails.delete(k);else{expandedCounterpartyDetails.add(k);expandedCounterpartyMovementDetails.delete(k);expandedCounterpartyAliasDetails.delete(k)}renderMerchantsCatalog();return}
 const cpc=e.target.closest('[data-close-counterparty-detail]');if(cpc){expandedCounterpartyDetails.delete(cpc.dataset.closeCounterpartyDetail);renderMerchantsCatalog();return}
 const cpmg=e.target.closest('[data-merge-counterparty]');if(cpmg){mergeSuggestedCounterparty(cpmg);return}const cm=e.target.closest('[data-toggle-category-movements]');if(cm){const k=cm.dataset.toggleCategoryMovements;expandedCategoryMovementDetails.has(k)?expandedCategoryMovementDetails.delete(k):expandedCategoryMovementDetails.add(k);renderCategoriesCatalog();return}const cpm=e.target.closest('[data-toggle-counterparty-movements]');if(cpm){const k=cpm.dataset.toggleCounterpartyMovements;if(expandedCounterpartyMovementDetails.has(k))expandedCounterpartyMovementDetails.delete(k);else{expandedCounterpartyMovementDetails.add(k);expandedCounterpartyAliasDetails.delete(k);expandedCounterpartyDetails.delete(k)}renderMerchantsCatalog();return}const cpa=e.target.closest('[data-toggle-counterparty-aliases]');if(cpa){const k=cpa.dataset.toggleCounterpartyAliases;if(expandedCounterpartyAliasDetails.has(k))expandedCounterpartyAliasDetails.delete(k);else{expandedCounterpartyAliasDetails.add(k);expandedCounterpartyMovementDetails.delete(k);expandedCounterpartyDetails.delete(k)}renderMerchantsCatalog();return}const cap=e.target.closest('[data-cancel-alias-panel]');if(cap){expandedCounterpartyAliasDetails.delete(cap.dataset.cancelAliasPanel);renderMerchantsCatalog();return}const emv=e.target.closest('[data-edit-movement]');if(emv){const row=(catData?.movements||[]).find(x=>x.id===emv.dataset.editMovement);if(row){activateMainTab('categorization');openClassify(row)}return}const aa=e.target.closest('[data-add-alias]');if(aa){addCounterpartyAlias(aa);return}const ma=e.target.closest('[data-move-alias]');if(ma){moveCounterpartyAlias(ma);return}const da=e.target.closest('[data-delete-alias]');if(da){deleteCounterpartyAlias(da);return}const cg=e.target.closest('[data-toggle-category-group]');if(cg){const k=cg.dataset.toggleCategoryGroup;expandedCategoryGroups.has(k)?expandedCategoryGroups.delete(k):expandedCategoryGroups.add(k);renderCategoriesCatalog();return}const mg=e.target.closest('[data-toggle-counterparty-group]');if(mg){const k=mg.dataset.toggleCounterpartyGroup;expandedCounterpartyGroups.has(k)?expandedCounterpartyGroups.delete(k):expandedCounterpartyGroups.add(k);renderMerchantsCatalog();return}const mm=e.target.closest('[data-toggle-mcc-movements]');if(mm){const row=mm.closest('[data-mcc-row]'),k=row?.dataset.mccRow;if(k){expandedMccMovementDetails.has(k)?expandedMccMovementDetails.delete(k):expandedMccMovementDetails.add(k);renderMccCatalog()}return}const em=e.target.closest('[data-edit-mcc]');if(em){editMccCategory(em);return}const cmc=e.target.closest('[data-cancel-mcc-edit]');if(cmc){cancelMccEdit(cmc);return}const sm=e.target.closest('[data-save-mcc]');if(sm){saveMccCategory(sm);return}const sh=e.target.closest('[data-catalog-sort]');if(sh){setCatalogSort(sh.dataset.catalogSort,sh.dataset.catalogKey);return}const del=e.target.closest('[data-delete-entity]');if(del){deleteCatalogEntity(del);return}const cc=e.target.closest('[data-edit-cat]');if(cc){editCategory(cc.dataset.editCat);return}const m=e.target.closest('[data-edit-merch]');if(m){editMerchant(m.dataset.editMerch);return}const p=e.target.closest('[data-edit-project]');if(p){editProject(p.dataset.editProject);return}const t=e.target.closest('[data-edit-tag]');if(t){editTag(t.dataset.editTag);return}const rr=e.target.closest('[data-edit-rule]');if(rr){editCompoundRule(rr.dataset.editRule);return}const pr=e.target.closest('[data-edit-parsing]');if(pr){editParsingRule(pr.dataset.editParsing);return}});
-$('classExtraordinary').addEventListener('change',async e=>{
-  if(!selectedRow)return;
-  const cb=e.target,state=$('classExtraordinaryState'),desired=cb.checked;
-  cb.disabled=true;state.textContent='Salvataggio…';
-  try{
-    await rpc('dashboard_reporting_set_extraordinary_v1',{
-      p_transaction_id:selectedRow.id,
-      p_is_extraordinary:desired,
-      p_note:desired?'Segnato dal dettaglio movimento':null
-    });
-    selectedRow.is_extraordinary=desired;
-    state.textContent=desired?'Escluso da medie e forecast ordinario':'Incluso nelle medie e nel forecast ordinario';
-  }catch(err){
-    cb.checked=!desired;
-    state.textContent=err.message||'Errore aggiornamento reporting';
-  }finally{cb.disabled=false}
-});
+$('classNatureOverride')?.addEventListener('change',saveMovementNatureOverride);
+$('classTemporalityOverride')?.addEventListener('change',saveMovementTemporalityOverride);
 $('tab-catalogs').addEventListener('input',e=>{
   const s=e.target.closest('[data-category-cp-search]');
   if(s){
