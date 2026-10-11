@@ -8,8 +8,8 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=73.16.0-20261011-0025"></script>
-<script src="../shared/app-config.js?v=73.16.0-20261011-0025"></script>
+<script src="../shared/supabase-client.js?v=73.17.0-20261011-0025"></script>
+<script src="../shared/app-config.js?v=73.17.0-20261011-0025"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 :root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#6b7280;--line:#e5e7eb;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 8px 24px rgba(15,23,42,.06)}
@@ -769,14 +769,14 @@ button,input,select{font:inherit}
 .analysis-hover-item.current-plan{background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8}
 .analysis-hover-item.current-actual{background:#f8fafc;border-color:#cbd5e1;color:#475569}
 
-/* V73.16.0 — Tassonomia L2 sempre visibile */
+/* V73.17.0 — Tassonomia L2 sempre visibile */
 .analysis-master-table tr.analysis-zero-row:not(.analysis-selected) .analysis-row-button{color:#64748b;font-weight:560}
 .analysis-master-table tr.analysis-zero-row:not(.analysis-selected) .analysis-master-amount strong{color:#64748b}
 .analysis-master-table tr.analysis-zero-row:not(.analysis-selected) .analysis-master-share{color:#94a3b8}
 .analysis-master-table tr.analysis-zero-row:not(.analysis-selected) .plan-icon.analysis-l2-icon{background:#f8fafc;color:#94a3b8;border-color:#e2e8f0}
 .analysis-zero-trend{display:inline-flex;align-items:center;justify-content:center;min-width:24px;color:#94a3b8;font-size:12px;font-weight:700}
 
-/* V73.16.0 — tabellone decisionale: periodo, trend vs storico, leggibilità */
+/* V73.17.0 — tabellone decisionale: periodo, trend vs storico, leggibilità */
 .planning-board-shell{display:grid;gap:14px}
 .planning-board-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;padding:5px 2px 2px}
 .planning-board-hero h1{margin:0;color:#0f1f55;font-size:32px;line-height:1.05;letter-spacing:-.65px}
@@ -857,7 +857,7 @@ button,input,select{font:inherit}
 @media(max-width:1100px){.planning-board-kpis{grid-template-columns:repeat(3,1fr)}.planning-nature-summary{grid-template-columns:1fr}.planning-insight-grid{grid-template-columns:1fr 1fr}.planning-insight-grid .planning-insight-card:last-child{grid-column:1/-1}.planning-month-grid{grid-template-columns:repeat(6,1fr)}}
 @media(max-width:760px){.planning-board-hero{align-items:flex-start;flex-direction:column}.planning-board-kpis{grid-template-columns:1fr}.planning-nature-summary-grid{grid-template-columns:1fr}.planning-insight-grid{grid-template-columns:1fr}.planning-insight-grid .planning-insight-card:last-child{grid-column:auto}.planning-nature-layout{grid-template-columns:1fr;height:auto}.planning-chart-wrap{height:180px}.planning-month-grid{grid-template-columns:repeat(3,1fr)}.planning-board-toolbar{align-items:stretch}.planning-board-toolbar-left,.planning-board-toolbar-right{width:100%}.planning-board-search{flex:1;min-width:170px}}
 
-/* V73.16.0 compact decision board */
+/* V73.17.0 compact decision board */
 .planning-board-table th,.planning-board-table td{padding:5px 9px;font-size:12.5px}
 .planning-l1-row td{font-size:13px}
 .planning-l2-name{padding-left:27px!important}
@@ -880,7 +880,7 @@ button,input,select{font:inherit}
 .planning-plan-chip{font-size:8.5px;padding:1px 5px}
 
 
-/* V73.16.0 — simulatore scenari nel Tabellone */
+/* V73.17.0 — simulatore scenari nel Tabellone */
 .planning-simulator-card{grid-column:1/-1;min-height:0}
 .planning-simulator-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
 .planning-simulator-scope{font-size:10px;color:#6d7b92;background:#f5f8fc;border:1px solid #e0e7f0;border-radius:999px;padding:4px 8px;white-space:nowrap}
@@ -910,7 +910,7 @@ button,input,select{font:inherit}
 @media(max-width:560px){.planning-simulator-results{grid-template-columns:1fr}.planning-sim-result{padding:9px}.planning-sim-result .v{font-size:19px}.planning-sim-row{grid-template-columns:1fr 64px;gap:8px}.planning-sim-presets .btn{flex:1 1 42%}.planning-sim-matrix-wrap{overflow-x:auto}.planning-sim-matrix{min-width:520px}}
 
 
-/* V73.16.0 — storico visibile e filtri previsione/note */
+/* V73.17.0 — storico visibile e filtri previsione/note */
 .planning-filter-select{min-height:34px;padding:5px 8px;font-size:12px}
 .planning-board-table{min-width:1320px}
 .planning-board-table th,.planning-board-table td{font-size:13px}
@@ -940,6 +940,32 @@ button,input,select{font:inherit}
 .planning-section-label td{font-size:11px}
 @media(max-width:900px){.planning-board-table{min-width:1250px}}
 
+
+/* V73.17.0 — Simulatore separato, baseline storico ordinario, entrate + spese */
+.planning-board-shell .planning-insight-grid{grid-template-columns:.9fr 1.6fr}
+.planning-simulator-page{display:grid;gap:14px}
+.planning-simulator-standalone{min-height:0}
+.planning-sim-groups{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:13px}
+.planning-sim-group{border:1px solid #e0e7f0;border-radius:12px;background:#fff;overflow:hidden}
+.planning-sim-group.income{border-color:#ccebdd}.planning-sim-group.expense{border-color:#f0d3d3}
+.planning-sim-group-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;background:#f7f9fc}
+.planning-sim-group.income .planning-sim-group-head{background:#effaf5}.planning-sim-group.expense .planning-sim-group-head{background:#fff3f3}
+.planning-sim-group-head>div{display:grid;gap:2px}.planning-sim-group-head strong{font-size:14px;color:#17254d}.planning-sim-group-head span{font-size:11px;color:#6d7b92}
+.planning-sim-group>.planning-simulator-controls{margin-top:0;border-top:0;padding:0 12px}
+.planning-sim-group .planning-sim-row{grid-template-columns:minmax(190px,.95fr) minmax(250px,1.45fr) 72px;padding:9px 0}
+.planning-sim-tickbar{height:6px;margin-top:-1px;background:repeating-linear-gradient(to right,#b9c5d5 0 1px,transparent 1px 10%);opacity:.8}
+.planning-sim-presets-main{padding:9px;border:1px solid #e0e7f0;border-radius:10px;background:#f8fafc}
+.planning-sim-forecast-preset{border-color:#86b6ff!important}
+.planning-simulator-mode-note{margin-top:8px;padding:8px 10px;border-radius:9px;background:#eef5ff;color:#526a87;font-size:11.5px;line-height:1.35}
+.planning-simulator-mode-note strong{color:#1f4f9e}
+.planning-simulator-results .mini{font-size:11px;color:#68768d;margin-top:4px}
+.planning-sim-flow{font-size:17px!important}.planning-sim-flow span{color:#8a97aa;font-weight:600}
+.planningSimulatorView.forecast-mode .planning-sim-groups{opacity:.62}
+#planningSimulatorView.forecast-mode .planning-sim-groups{opacity:.62}
+#planningSimulatorView.forecast-mode .planning-sim-group:hover{opacity:1}
+@media(max-width:1050px){.planning-sim-groups{grid-template-columns:1fr}.planning-board-shell .planning-insight-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:760px){.planning-board-shell .planning-insight-grid{grid-template-columns:1fr}.planning-sim-group .planning-sim-row{grid-template-columns:1fr 64px}.planning-sim-group .planning-sim-slider{grid-column:1/-1}}
+
 </style>
 </head>
 <body>
@@ -962,6 +988,7 @@ button,input,select{font:inherit}
       <a class="tab" href="../">Dashboard</a>
       <button id="reportingViewTab" class="tab active" type="button">Analisi</button>
       <button id="planningBoardTab" class="tab" type="button">Tabellone</button>
+      <button id="planningSimulatorTab" class="tab" type="button">Simulatore</button>
       <button id="scenarioViewTab" class="tab" type="button">Scenario</button>
     </div>
     <div id="reportReturnBar" class="report-return-bar hidden"></div>
@@ -1131,43 +1158,108 @@ button,input,select{font:inherit}
           <p>Uscite impilate per natura; la linea rappresenta le entrate.</p>
           <div class="planning-chart-wrap"><canvas id="planningMonthlyChart"></canvas></div>
         </section>
-        <section class="planning-insight-card planning-simulator-card">
-          <div class="planning-simulator-head">
-            <div><h3>Simulatore scenari</h3><p>What-if sulle spese ancora pianificabili. Non modifica il piano.</p></div>
-            <span id="planningSimulatorScope" class="planning-simulator-scope"></span>
-          </div>
-          <div id="planningSimulatorResults" class="planning-simulator-results"></div>
-          <div class="planning-simulator-controls">
-            <div class="planning-sim-row mandatory">
-              <div class="planning-sim-name"><span class="planning-nature-badge mandatory">O</span><div><strong>Obbligatorie</strong><span>Mutuo, tasse, assicurazioni e altri vincoli.</span></div></div>
-              <div class="planning-sim-slider"><div class="planning-sim-range"><span>-20%</span><span>0%</span><span>+20%</span></div><input type="range" min="-20" max="20" step="5" value="0" data-planning-sim="MANDATORY" aria-label="Variazione spese obbligatorie"></div>
-              <output id="planningSimMandatory" class="planning-sim-output neutral">0%</output>
-            </div>
-            <div class="planning-sim-row necessary">
-              <div class="planning-sim-name"><span class="planning-nature-badge necessary">N</span><div><strong>Necessarie</strong><span>Alimentari, trasporti, salute e altre spese ottimizzabili.</span></div></div>
-              <div class="planning-sim-slider"><div class="planning-sim-range"><span>-50%</span><span>0%</span><span>+30%</span></div><input type="range" min="-50" max="30" step="5" value="0" data-planning-sim="NECESSARY" aria-label="Variazione spese necessarie"></div>
-              <output id="planningSimNecessary" class="planning-sim-output neutral">0%</output>
-            </div>
-            <div class="planning-sim-row discretionary">
-              <div class="planning-sim-name"><span class="planning-nature-badge discretionary">D</span><div><strong>Discrezionali</strong><span>Ristoranti, svago, viaggi e altre spese rinunciabili.</span></div></div>
-              <div class="planning-sim-slider"><div class="planning-sim-range"><span>-100%</span><span>0%</span><span>+50%</span></div><input type="range" min="-100" max="50" step="5" value="0" data-planning-sim="DISCRETIONARY" aria-label="Variazione spese discrezionali"></div>
-              <output id="planningSimDiscretionary" class="planning-sim-output neutral">0%</output>
-            </div>
-          </div>
-          <div class="planning-sim-presets" aria-label="Scenari predefiniti">
-            <button class="btn ghost compact" type="button" data-planning-sim-preset="RESET">↻ Reset</button>
-            <button class="btn ghost compact" type="button" data-planning-sim-preset="D25">D −25%</button>
-            <button class="btn ghost compact" type="button" data-planning-sim-preset="D50">D −50%</button>
-            <button class="btn ghost compact" type="button" data-planning-sim-preset="D100">D −100%</button>
-            <button class="btn ghost compact" type="button" data-planning-sim-preset="N10D50">N −10% + D −50%</button>
-          </div>
-          <div class="planning-sim-matrix-wrap">
-            <div class="planning-sim-matrix-head"><div><strong>Combinazioni rapide</strong><span>Saldo simulato variando Necessarie × Discrezionali.</span></div><span id="planningSimMatrixNote"></span></div>
-            <div id="planningSimMatrix"></div>
-          </div>
-          <div class="planning-sim-note">Le spese già sostenute non vengono modificate: le percentuali si applicano soltanto alla quota futura del periodo selezionato.</div>
-        </section>
+
       </div>
+    </div>
+
+    <div id="planningSimulatorView" class="hidden planning-simulator-page">
+      <div class="planning-board-hero">
+        <div>
+          <h1>Simulatore what-if</h1>
+          <p>Parti dallo storico ordinario, varia entrate e spese per natura e misura subito l'effetto sul saldo. Nessuna simulazione modifica il piano.</p>
+        </div>
+        <div class="planning-board-hero-actions">
+          <div class="planning-period-box">
+            <span>Baseline</span>
+            <div class="mode-toggle">
+              <button class="btn compact" type="button" data-simulator-horizon="CALENDAR">Anno precedente</button>
+              <button class="btn ghost compact" type="button" data-simulator-horizon="ROLLING_12">Ultimi 12 mesi</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="planningSimulatorStatus"></div>
+
+      <section class="planning-insight-card planning-simulator-card planning-simulator-standalone">
+        <div class="planning-simulator-head">
+          <div>
+            <h3>Scenario simulato</h3>
+            <p>Baseline: storico ordinario con movimenti straordinari esclusi. Le percentuali si applicano all'intero periodo storico selezionato.</p>
+          </div>
+          <span id="planningSimulatorScope" class="planning-simulator-scope"></span>
+        </div>
+
+        <div id="planningSimulatorResults" class="planning-simulator-results"></div>
+
+        <div class="planning-sim-presets planning-sim-presets-main" aria-label="Scenari predefiniti">
+          <button class="btn ghost compact" type="button" data-planning-sim-preset="RESET">Storico invariato</button>
+          <button class="btn ghost compact planning-sim-forecast-preset" type="button" data-planning-sim-preset="FORECAST">★ Previsione attuale</button>
+          <button class="btn ghost compact" type="button" data-planning-sim-preset="D25">D −25%</button>
+          <button class="btn ghost compact" type="button" data-planning-sim-preset="D50">D −50%</button>
+          <button class="btn ghost compact" type="button" data-planning-sim-preset="D100">D −100%</button>
+          <button class="btn ghost compact" type="button" data-planning-sim-preset="N10D50">N −10% + D −50%</button>
+        </div>
+        <div id="planningSimulatorModeNote" class="planning-simulator-mode-note"></div>
+
+        <div class="planning-sim-groups">
+          <section class="planning-sim-group income">
+            <div class="planning-sim-group-head">
+              <div><strong>Entrate</strong><span>Variazione rispetto allo storico ordinario.</span></div>
+              <span>F / P / V</span>
+            </div>
+            <div class="planning-simulator-controls">
+              <div class="planning-sim-row income-fixed">
+                <div class="planning-sim-name"><span class="planning-nature-badge fixed">F</span><div><strong>Fisse</strong><span>Stipendi e altre entrate stabili.</span></div></div>
+                <div class="planning-sim-slider"><div class="planning-sim-range"><span>-20%</span><span>0%</span><span>+20%</span></div><input type="range" min="-20" max="20" step="1" value="0" data-planning-sim="FIXED" aria-label="Variazione entrate fisse"><div class="planning-sim-tickbar"></div></div>
+                <output id="planningSimFixed" class="planning-sim-output neutral">0%</output>
+              </div>
+              <div class="planning-sim-row income-predictable">
+                <div class="planning-sim-name"><span class="planning-nature-badge predictable">P</span><div><strong>Prevedibili</strong><span>Entrate ricorrenti ma non perfettamente fisse.</span></div></div>
+                <div class="planning-sim-slider"><div class="planning-sim-range"><span>-50%</span><span>0%</span><span>+50%</span></div><input type="range" min="-50" max="50" step="1" value="0" data-planning-sim="PREDICTABLE" aria-label="Variazione entrate prevedibili"><div class="planning-sim-tickbar"></div></div>
+                <output id="planningSimPredictable" class="planning-sim-output neutral">0%</output>
+              </div>
+              <div class="planning-sim-row income-variable">
+                <div class="planning-sim-name"><span class="planning-nature-badge variable">V</span><div><strong>Variabili</strong><span>Bonus, rimborsi e altre entrate non garantite.</span></div></div>
+                <div class="planning-sim-slider"><div class="planning-sim-range"><span>-100%</span><span>0%</span><span>+100%</span></div><input type="range" min="-100" max="100" step="1" value="0" data-planning-sim="VARIABLE" aria-label="Variazione entrate variabili"><div class="planning-sim-tickbar"></div></div>
+                <output id="planningSimVariable" class="planning-sim-output neutral">0%</output>
+              </div>
+            </div>
+          </section>
+
+          <section class="planning-sim-group expense">
+            <div class="planning-sim-group-head">
+              <div><strong>Spese</strong><span>Variazione rispetto allo storico ordinario.</span></div>
+              <span>O / N / D</span>
+            </div>
+            <div class="planning-simulator-controls">
+              <div class="planning-sim-row mandatory">
+                <div class="planning-sim-name"><span class="planning-nature-badge mandatory">O</span><div><strong>Obbligatorie</strong><span>Mutuo, tasse, assicurazioni e altri vincoli.</span></div></div>
+                <div class="planning-sim-slider"><div class="planning-sim-range"><span>-20%</span><span>0%</span><span>+20%</span></div><input type="range" min="-20" max="20" step="1" value="0" data-planning-sim="MANDATORY" aria-label="Variazione spese obbligatorie"><div class="planning-sim-tickbar"></div></div>
+                <output id="planningSimMandatory" class="planning-sim-output neutral">0%</output>
+              </div>
+              <div class="planning-sim-row necessary">
+                <div class="planning-sim-name"><span class="planning-nature-badge necessary">N</span><div><strong>Necessarie</strong><span>Alimentari, trasporti, salute e altre spese ottimizzabili.</span></div></div>
+                <div class="planning-sim-slider"><div class="planning-sim-range"><span>-50%</span><span>0%</span><span>+30%</span></div><input type="range" min="-50" max="30" step="1" value="0" data-planning-sim="NECESSARY" aria-label="Variazione spese necessarie"><div class="planning-sim-tickbar"></div></div>
+                <output id="planningSimNecessary" class="planning-sim-output neutral">0%</output>
+              </div>
+              <div class="planning-sim-row discretionary">
+                <div class="planning-sim-name"><span class="planning-nature-badge discretionary">D</span><div><strong>Discrezionali</strong><span>Ristoranti, svago, viaggi e altre spese rinunciabili.</span></div></div>
+                <div class="planning-sim-slider"><div class="planning-sim-range"><span>-100%</span><span>0%</span><span>+50%</span></div><input type="range" min="-100" max="50" step="1" value="0" data-planning-sim="DISCRETIONARY" aria-label="Variazione spese discrezionali"><div class="planning-sim-tickbar"></div></div>
+                <output id="planningSimDiscretionary" class="planning-sim-output neutral">0%</output>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div class="planning-sim-matrix-wrap">
+          <div class="planning-sim-matrix-head">
+            <div><strong>Combinazioni rapide Necessarie × Discrezionali</strong><span>Le entrate e le Obbligatorie mantengono i valori impostati negli slider.</span></div>
+            <span id="planningSimMatrixNote"></span>
+          </div>
+          <div id="planningSimMatrix"></div>
+        </div>
+        <div class="planning-sim-note">Lo scenario “Previsione attuale” usa direttamente il piano costruito in Analisi. Gli scenari personalizzati partono invece dallo storico ordinario e applicano le percentuali selezionate.</div>
+      </section>
     </div>
 
     <div id="scenarioView" class="hidden scenario-shell">
@@ -1288,6 +1380,7 @@ let scenarioMode="SUMMARY";
 let scenarioExtraMode="ORDINARY";
 let scenarioVisible=false;
 let planningBoardVisible=false;
+let planningSimulatorVisible=false;
 let planningBoardLoading=false;
 let planningBoardData=null;
 let planningBoardFilter="ALL";
@@ -1299,7 +1392,9 @@ let planningBoardLevel="L1_L2";
 let planningBoardSearch="";
 let planningNatureChart=null;
 let planningMonthlyChart=null;
-let planningSimulation={MANDATORY:0,NECESSARY:0,DISCRETIONARY:0};
+let planningSimulatorHorizon="CALENDAR";
+let planningSimulationMode="CUSTOM";
+let planningSimulation={MANDATORY:0,NECESSARY:0,DISCRETIONARY:0,FIXED:0,PREDICTABLE:0,VARIABLE:0};
 const planningBoardExpandedL1=new Set();
 const planningBoardExpandedL2=new Set();
 let scenarioLoading=false;
@@ -3799,16 +3894,16 @@ async function loadScenarioData(force){
   }finally{scenarioLoading=false}
 }
 function showScenarioView(){
-  scenarioVisible=true;planningBoardVisible=false;
-  $("standardReportingView").classList.add("hidden");$("planningBoardView").classList.add("hidden");$("scenarioView").classList.remove("hidden");
-  $("reportingViewTab").classList.remove("active");$("planningBoardTab").classList.remove("active");$("scenarioViewTab").classList.add("active");
+  scenarioVisible=true;planningBoardVisible=false;planningSimulatorVisible=false;
+  $("standardReportingView").classList.add("hidden");$("planningBoardView").classList.add("hidden");$("planningSimulatorView").classList.add("hidden");$("scenarioView").classList.remove("hidden");
+  $("reportingViewTab").classList.remove("active");$("planningBoardTab").classList.remove("active");$("planningSimulatorTab").classList.remove("active");$("scenarioViewTab").classList.add("active");
   const u=new URL(window.location.href);u.searchParams.set("view","scenario");history.replaceState(null,"",u);
   loadScenarioData(false);
 }
 function showStandardReportingView(){
-  scenarioVisible=false;planningBoardVisible=false;
-  $("scenarioView").classList.add("hidden");$("planningBoardView").classList.add("hidden");$("standardReportingView").classList.remove("hidden");
-  $("scenarioViewTab").classList.remove("active");$("planningBoardTab").classList.remove("active");$("reportingViewTab").classList.add("active");
+  scenarioVisible=false;planningBoardVisible=false;planningSimulatorVisible=false;
+  $("scenarioView").classList.add("hidden");$("planningBoardView").classList.add("hidden");$("planningSimulatorView").classList.add("hidden");$("standardReportingView").classList.remove("hidden");
+  $("scenarioViewTab").classList.remove("active");$("planningBoardTab").classList.remove("active");$("planningSimulatorTab").classList.remove("active");$("reportingViewTab").classList.add("active");
   const u=new URL(window.location.href);u.searchParams.delete("view");history.replaceState(null,"",u);
 }
 
@@ -3825,16 +3920,16 @@ function planningNatureBadgeHtml(row,direction){
 }
 function planningMethodName(v){return {AVG6:"Media ultimi 6 mesi",AVG12:"Media ultimi 12 mesi",MEDIAN12:"Mediana ultimi 12 mesi",SAME_MONTH_LAST_YEAR:"Stesso mese A-1",LAST_VALUE:"Ultimo valore",FIXED:"Importo fisso",RANGE:"Range best-worst",ZERO:"Non si ripete"}[v]||String(v||"—")}
 function planningReportCellMap(direction){const arr=direction==="INCOME"?(report&&report.income_forecast_cells||[]):(report&&report.forecast_cells||[]),m=new Map();arr.forEach(function(x){m.set(String(x.category_id)+"|"+String(x.month),x)});return m}
-function planningDefinition(data){
+function planningDefinition(data,horizonOverride){
   if(!data)return null;
-  const current=String(data.current_month||"");
-  if(planningBoardHorizon==="ROLLING_12")return {comparisonMonths:monthSeries(addMonthsISO(current,-12),12),targetMonths:monthSeries(current,12),actualTargetMonths:[],forecastTargetMonths:monthSeries(current,12),comparisonLabel:"ultimi 12 mesi reali",targetLabel:"prossimi 12 mesi"};
+  const horizon=horizonOverride||planningBoardHorizon,current=String(data.current_month||"");
+  if(horizon==="ROLLING_12")return {comparisonMonths:monthSeries(addMonthsISO(current,-12),12),targetMonths:monthSeries(current,12),actualTargetMonths:[],forecastTargetMonths:monthSeries(current,12),comparisonLabel:"ultimi 12 mesi reali",targetLabel:"prossimi 12 mesi"};
   const target=monthSeries(data.current_year_start,12);
   return {comparisonMonths:monthSeries(data.previous_year_start,12),targetMonths:target,actualTargetMonths:target.filter(function(m){return m<current}),forecastTargetMonths:target.filter(function(m){return m>=current}),comparisonLabel:String(data.previous_year_start||"").slice(0,4),targetLabel:String(data.current_year_start||"").slice(0,4)};
 }
-function planningBuildRows(data,direction){
+function planningBuildRows(data,direction,horizonOverride){
   if(!data)return [];
-  const metaMap=planningMetaMap(),def=planningDefinition(data),current=String(data.current_month||""),actualMap=new Map(),forecastMap=new Map(),cellMap=planningReportCellMap(direction);
+  const metaMap=planningMetaMap(),def=planningDefinition(data,horizonOverride),current=String(data.current_month||""),actualMap=new Map(),forecastMap=new Map(),cellMap=planningReportCellMap(direction);
   (data.actual_monthly||[]).forEach(function(x){actualMap.set(String(x.category_id)+"|"+String(x.month),num(x.amount))});
   (data.forecast_monthly||[]).forEach(function(x){forecastMap.set(String(x.category_id)+"|"+String(x.month),x)});
   const actualTargetSet=new Set(def.actualTargetMonths),forecastTargetSet=new Set(def.forecastTargetMonths);
@@ -3950,72 +4045,112 @@ function renderPlanningMonthlyChart(exp,inc){
   const income=months.map(function(m){return inc.reduce(function(s,r){const x=r.months.find(function(z){return z.month===m});return s+num(x&&x.amount)},0)}),unknown=months.map(function(m){return exp.filter(function(r){return !planningNatureValue(r.meta,"EXPENSE")}).reduce(function(s,r){const x=r.months.find(function(z){return z.month===m});return s+num(x&&x.amount)},0)}),datasets=[{type:"bar",label:"Obbligatorie",data:series("MANDATORY"),backgroundColor:"#ef5a5a",stack:"expenses",borderWidth:0},{type:"bar",label:"Necessarie",data:series("NECESSARY"),backgroundColor:"#f4b63e",stack:"expenses",borderWidth:0},{type:"bar",label:"Discrezionali",data:series("DISCRETIONARY"),backgroundColor:"#2bbf83",stack:"expenses",borderWidth:0}];
   if(unknown.some(function(v){return v>.5}))datasets.push({type:"bar",label:"Non classificate",data:unknown,backgroundColor:"#aab4c3",stack:"expenses",borderWidth:0});datasets.push({type:"line",label:"Entrate",data:income,borderColor:"#2687e8",backgroundColor:"#2687e8",borderWidth:2.3,pointRadius:2.8,pointHoverRadius:4,tension:.22,yAxisID:"y"});const canvas=$("planningMonthlyChart");if(planningMonthlyChart){planningMonthlyChart.destroy();planningMonthlyChart=null}if(canvas&&typeof Chart!=="undefined")planningMonthlyChart=new Chart(canvas,{data:{labels:labels,datasets:datasets},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},plugins:{legend:{position:"bottom",labels:{boxWidth:10,boxHeight:10,font:{size:10}}},tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+": "+money(ctx.raw)}}}},scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:10}}},y:{stacked:true,beginAtZero:true,ticks:{font:{size:10},callback:function(v){return Number(v).toLocaleString("it-IT")}},grid:{color:"rgba(148,163,184,.16)"}}}}});
 }
-function planningFutureExpenseByNature(exp){
-  const out={MANDATORY:0,NECESSARY:0,DISCRETIONARY:0,UNKNOWN:0};
-  exp.forEach(function(r){
-    const nature=planningNatureValue(r.meta,"EXPENSE")||"UNKNOWN";
-    const future=r.months.filter(function(m){return m.kind==="plan"}).reduce(function(s,m){return s+num(m.futureAmount)},0);
-    if(out[nature]===undefined)out.UNKNOWN+=future;else out[nature]+=future;
+function planningSimulationNatureTotals(rows,direction,field){
+  const keys=direction==="EXPENSE"?["MANDATORY","NECESSARY","DISCRETIONARY"]:["FIXED","PREDICTABLE","VARIABLE"],out={UNKNOWN:0};
+  keys.forEach(function(k){out[k]=0});
+  rows.forEach(function(r){
+    const nature=planningNatureValue(r.meta,direction)||"UNKNOWN",value=num(r[field]);
+    if(out[nature]===undefined)out.UNKNOWN+=value;else out[nature]+=value;
   });
   return out;
 }
-function planningSimulationCalc(exp,inc,override){
-  const sim=override||planningSimulation,future=planningFutureExpenseByNature(exp);
-  const income=inc.reduce(function(s,r){return s+r.annual},0),expenses=exp.reduce(function(s,r){return s+r.annual},0);
-  const change=
-    future.MANDATORY*num(sim.MANDATORY)/100+
-    future.NECESSARY*num(sim.NECESSARY)/100+
-    future.DISCRETIONARY*num(sim.DISCRETIONARY)/100;
-  const simulatedExpenses=Math.max(0,expenses+change),currentBalance=income-expenses,simulatedBalance=income-simulatedExpenses,impact=simulatedBalance-currentBalance;
-  const futureMonths=exp.length?Math.max(1,exp[0].months.filter(function(m){return m.kind==="plan"}).length):12;
-  return {income:income,expenses:expenses,simulatedExpenses:simulatedExpenses,currentBalance:currentBalance,simulatedBalance:simulatedBalance,impact:impact,monthlyImpact:impact/futureMonths,futureMonths:futureMonths,future:future};
+function planningSimulationRange(key){
+  return {
+    MANDATORY:[-20,20],NECESSARY:[-50,30],DISCRETIONARY:[-100,50],
+    FIXED:[-20,20],PREDICTABLE:[-50,50],VARIABLE:[-100,100]
+  }[key]||[-100,100];
+}
+function planningSimulationSet(next){
+  const keys=["MANDATORY","NECESSARY","DISCRETIONARY","FIXED","PREDICTABLE","VARIABLE"],out={};
+  keys.forEach(function(k){const range=planningSimulationRange(k),v=next&&next[k]!==undefined?num(next[k]):num(planningSimulation[k]);out[k]=Math.max(range[0],Math.min(range[1],v))});
+  planningSimulation=out;planningSimulationMode="CUSTOM";
+}
+function planningSimulationCalc(exp,inc,override,modeOverride){
+  const sim=override||planningSimulation,mode=modeOverride||planningSimulationMode;
+  const baseExp=planningSimulationNatureTotals(exp,"EXPENSE","comparison"),baseInc=planningSimulationNatureTotals(inc,"INCOME","comparison");
+  const planExp=planningSimulationNatureTotals(exp,"EXPENSE","annual"),planInc=planningSimulationNatureTotals(inc,"INCOME","annual");
+  const baselineExpenses=Object.values(baseExp).reduce(function(s,v){return s+num(v)},0),baselineIncome=Object.values(baseInc).reduce(function(s,v){return s+num(v)},0),baselineBalance=baselineIncome-baselineExpenses;
+  let simulatedExpenses,simulatedIncome;
+  if(mode==="FORECAST"){
+    simulatedExpenses=Object.values(planExp).reduce(function(s,v){return s+num(v)},0);
+    simulatedIncome=Object.values(planInc).reduce(function(s,v){return s+num(v)},0);
+  }else{
+    simulatedExpenses=baseExp.UNKNOWN+
+      baseExp.MANDATORY*(1+num(sim.MANDATORY)/100)+
+      baseExp.NECESSARY*(1+num(sim.NECESSARY)/100)+
+      baseExp.DISCRETIONARY*(1+num(sim.DISCRETIONARY)/100);
+    simulatedIncome=baseInc.UNKNOWN+
+      baseInc.FIXED*(1+num(sim.FIXED)/100)+
+      baseInc.PREDICTABLE*(1+num(sim.PREDICTABLE)/100)+
+      baseInc.VARIABLE*(1+num(sim.VARIABLE)/100);
+  }
+  simulatedExpenses=Math.max(0,simulatedExpenses);simulatedIncome=Math.max(0,simulatedIncome);
+  const simulatedBalance=simulatedIncome-simulatedExpenses,impact=simulatedBalance-baselineBalance;
+  return {baselineIncome:baselineIncome,baselineExpenses:baselineExpenses,baselineBalance:baselineBalance,simulatedIncome:simulatedIncome,simulatedExpenses:simulatedExpenses,simulatedBalance:simulatedBalance,impact:impact,monthlyBalance:simulatedBalance/12,monthlyImpact:impact/12,baseExp:baseExp,baseInc:baseInc,planExp:planExp,planInc:planInc};
 }
 function planningSimPct(v){const n=Math.round(num(v));return (n>0?"+":"")+n+"%"}
-function planningSimulationSet(next){
-  planningSimulation={
-    MANDATORY:Math.max(-20,Math.min(20,num(next.MANDATORY))),
-    NECESSARY:Math.max(-50,Math.min(30,num(next.NECESSARY))),
-    DISCRETIONARY:Math.max(-100,Math.min(50,num(next.DISCRETIONARY)))
+function planningSimulationPreset(code){
+  if(code==="FORECAST"){planningSimulationMode="FORECAST";return}
+  if(code==="D25")planningSimulationSet({MANDATORY:0,NECESSARY:0,DISCRETIONARY:-25,FIXED:0,PREDICTABLE:0,VARIABLE:0});
+  else if(code==="D50")planningSimulationSet({MANDATORY:0,NECESSARY:0,DISCRETIONARY:-50,FIXED:0,PREDICTABLE:0,VARIABLE:0});
+  else if(code==="D100")planningSimulationSet({MANDATORY:0,NECESSARY:0,DISCRETIONARY:-100,FIXED:0,PREDICTABLE:0,VARIABLE:0});
+  else if(code==="N10D50")planningSimulationSet({MANDATORY:0,NECESSARY:-10,DISCRETIONARY:-50,FIXED:0,PREDICTABLE:0,VARIABLE:0});
+  else planningSimulationSet({MANDATORY:0,NECESSARY:0,DISCRETIONARY:0,FIXED:0,PREDICTABLE:0,VARIABLE:0});
+}
+function planningSimulationOutputClass(key,value){
+  const v=num(value);if(Math.abs(v)<.001)return "neutral";
+  const isIncome=["FIXED","PREDICTABLE","VARIABLE"].includes(key),favorable=isIncome?v>0:v<0;
+  return favorable?"reduce":"increase";
+}
+function planningSimulationRows(){
+  if(!planningBoardData)return {exp:[],inc:[]};
+  return {
+    exp:planningBuildRows(planningBoardData.expense,"EXPENSE",planningSimulatorHorizon),
+    inc:planningBuildRows(planningBoardData.income,"INCOME",planningSimulatorHorizon)
   };
 }
-function planningSimulationPreset(code){
-  if(code==="D25")planningSimulationSet({MANDATORY:0,NECESSARY:0,DISCRETIONARY:-25});
-  else if(code==="D50")planningSimulationSet({MANDATORY:0,NECESSARY:0,DISCRETIONARY:-50});
-  else if(code==="D100")planningSimulationSet({MANDATORY:0,NECESSARY:0,DISCRETIONARY:-100});
-  else if(code==="N10D50")planningSimulationSet({MANDATORY:0,NECESSARY:-10,DISCRETIONARY:-50});
-  else planningSimulationSet({MANDATORY:0,NECESSARY:0,DISCRETIONARY:0});
-}
-function renderPlanningSimulator(exp,inc){
-  const calc=planningSimulationCalc(exp,inc),impactCls=calc.impact>0.5?"positive":(calc.impact<-.5?"negative":""),expenseCls=calc.simulatedExpenses<calc.expenses-.5?"good":(calc.simulatedExpenses>calc.expenses+.5?"bad":"");
-  $("planningSimulatorScope").textContent=planningBoardHorizon==="ROLLING_12"?"prossimi 12 mesi":"solo quota futura dell'anno";
+function renderPlanningSimulatorView(){
+  if(!planningBoardData||!planningBoardData.expense||!planningBoardData.income)return;
+  const rows=planningSimulationRows(),exp=rows.exp,inc=rows.inc,calc=planningSimulationCalc(exp,inc),impactCls=calc.impact>0.5?"positive":(calc.impact<-.5?"negative":"");
+  document.querySelectorAll("[data-simulator-horizon]").forEach(function(b){b.classList.toggle("ghost",b.dataset.simulatorHorizon!==planningSimulatorHorizon)});
+  $("planningSimulatorScope").textContent=planningSimulatorHorizon==="ROLLING_12"?"ultimi 12 mesi ordinari":"anno precedente ordinario";
   $("planningSimulatorResults").innerHTML=
-    '<div class="planning-sim-result"><div class="k">Saldo attuale</div><div class="v '+(calc.currentBalance>=0?"positive":"negative")+'">'+(calc.currentBalance>=0?"+":"")+money(calc.currentBalance)+'</div></div>'+
-    '<div class="planning-sim-result simulated"><div class="k">Saldo simulato</div><div class="v '+(calc.simulatedBalance>=0?"positive":"negative")+'">'+(calc.simulatedBalance>=0?"+":"")+money(calc.simulatedBalance)+'</div></div>'+
-    '<div class="planning-sim-result"><div class="k">Impatto sul saldo</div><div class="v '+impactCls+'">'+(calc.impact>=0?"+":"")+money(calc.impact)+'</div></div>'+
-    '<div class="planning-sim-result"><div class="k">Impatto medio / mese futuro</div><div class="v '+impactCls+'">'+(calc.monthlyImpact>=0?"+":"")+money(calc.monthlyImpact)+'/mese</div></div>'+
-    '<div class="planning-sim-expense-line"><span>Uscite previste</span><strong>'+money(calc.expenses)+'</strong><span>→</span><strong class="after '+expenseCls+'">'+money(calc.simulatedExpenses)+'</strong></div>';
-  const map={MANDATORY:"planningSimMandatory",NECESSARY:"planningSimNecessary",DISCRETIONARY:"planningSimDiscretionary"};
-  document.querySelectorAll("[data-planning-sim]").forEach(function(input){
+    '<div class="planning-sim-result"><div class="k">Saldo storico</div><div class="v '+(calc.baselineBalance>=0?"positive":"negative")+'">'+(calc.baselineBalance>=0?"+":"")+money(calc.baselineBalance)+'</div><div class="mini">Ø '+money(calc.baselineBalance/12)+'/mese</div></div>'+
+    '<div class="planning-sim-result simulated"><div class="k">'+(planningSimulationMode==="FORECAST"?"Saldo previsione attuale":"Saldo simulato")+'</div><div class="v '+(calc.simulatedBalance>=0?"positive":"negative")+'">'+(calc.simulatedBalance>=0?"+":"")+money(calc.simulatedBalance)+'</div><div class="mini">Ø '+money(calc.monthlyBalance)+'/mese</div></div>'+
+    '<div class="planning-sim-result"><div class="k">Impatto vs storico</div><div class="v '+impactCls+'">'+(calc.impact>=0?"+":"")+money(calc.impact)+'</div><div class="mini">'+(calc.monthlyImpact>=0?"+":"")+money(calc.monthlyImpact)+'/mese</div></div>'+
+    '<div class="planning-sim-result"><div class="k">Entrate / Uscite</div><div class="v planning-sim-flow">'+money(calc.simulatedIncome)+' <span>/</span> '+money(calc.simulatedExpenses)+'</div><div class="mini">Storico '+money(calc.baselineIncome)+' / '+money(calc.baselineExpenses)+'</div></div>';
+  $("planningSimulatorModeNote").innerHTML=planningSimulationMode==="FORECAST"
+    ?'<strong>★ Previsione attuale</strong> — risultato esatto del piano costruito in Analisi. Muovi uno slider per tornare allo scenario personalizzato.'
+    :'<strong>Scenario personalizzato</strong> — storico ordinario × variazioni impostate. Le voci senza natura restano invariate.';
+  $("planningSimulatorView").classList.toggle("forecast-mode",planningSimulationMode==="FORECAST");
+
+  const outputMap={MANDATORY:"planningSimMandatory",NECESSARY:"planningSimNecessary",DISCRETIONARY:"planningSimDiscretionary",FIXED:"planningSimFixed",PREDICTABLE:"planningSimPredictable",VARIABLE:"planningSimVariable"};
+  document.querySelectorAll("#planningSimulatorView [data-planning-sim]").forEach(function(input){
     const key=input.dataset.planningSim,value=num(planningSimulation[key]);input.value=String(value);
-    const out=$(map[key]);if(out){out.value=planningSimPct(value);out.textContent=planningSimPct(value);out.className="planning-sim-output "+(value<0?"reduce":(value>0?"increase":"neutral"))}
+    const out=$(outputMap[key]);if(out){out.value=planningSimPct(value);out.textContent=planningSimPct(value);out.className="planning-sim-output "+planningSimulationOutputClass(key,value)}
   });
-  document.querySelectorAll("[data-planning-sim-preset]").forEach(function(b){
-    const code=b.dataset.planningSimPreset,active=
-      code==="RESET"&&planningSimulation.MANDATORY===0&&planningSimulation.NECESSARY===0&&planningSimulation.DISCRETIONARY===0||
-      code==="D25"&&planningSimulation.MANDATORY===0&&planningSimulation.NECESSARY===0&&planningSimulation.DISCRETIONARY===-25||
-      code==="D50"&&planningSimulation.MANDATORY===0&&planningSimulation.NECESSARY===0&&planningSimulation.DISCRETIONARY===-50||
-      code==="D100"&&planningSimulation.MANDATORY===0&&planningSimulation.NECESSARY===0&&planningSimulation.DISCRETIONARY===-100||
-      code==="N10D50"&&planningSimulation.MANDATORY===0&&planningSimulation.NECESSARY===-10&&planningSimulation.DISCRETIONARY===-50;
+  document.querySelectorAll("#planningSimulatorView [data-planning-sim-preset]").forEach(function(b){
+    const code=b.dataset.planningSimPreset;
+    const active=code==="FORECAST"?planningSimulationMode==="FORECAST":
+      planningSimulationMode==="CUSTOM"&&(
+        code==="RESET"&&["MANDATORY","NECESSARY","DISCRETIONARY","FIXED","PREDICTABLE","VARIABLE"].every(function(k){return num(planningSimulation[k])===0})||
+        code==="D25"&&planningSimulation.DISCRETIONARY===-25&&planningSimulation.MANDATORY===0&&planningSimulation.NECESSARY===0&&planningSimulation.FIXED===0&&planningSimulation.PREDICTABLE===0&&planningSimulation.VARIABLE===0||
+        code==="D50"&&planningSimulation.DISCRETIONARY===-50&&planningSimulation.MANDATORY===0&&planningSimulation.NECESSARY===0&&planningSimulation.FIXED===0&&planningSimulation.PREDICTABLE===0&&planningSimulation.VARIABLE===0||
+        code==="D100"&&planningSimulation.DISCRETIONARY===-100&&planningSimulation.MANDATORY===0&&planningSimulation.NECESSARY===0&&planningSimulation.FIXED===0&&planningSimulation.PREDICTABLE===0&&planningSimulation.VARIABLE===0||
+        code==="N10D50"&&planningSimulation.NECESSARY===-10&&planningSimulation.DISCRETIONARY===-50&&planningSimulation.MANDATORY===0&&planningSimulation.FIXED===0&&planningSimulation.PREDICTABLE===0&&planningSimulation.VARIABLE===0
+      );
     b.classList.toggle("active",!!active);
   });
-  const ns=[0,-10,-20,-30],ds=[0,-25,-50,-100],o=num(planningSimulation.MANDATORY);
-  $("planningSimMatrixNote").textContent=o===0?"O invariata":"O "+planningSimPct(o)+" applicata a tutte le celle";
+
+  const ns=[0,-10,-20,-30],ds=[0,-25,-50,-100],fixed={MANDATORY:num(planningSimulation.MANDATORY),FIXED:num(planningSimulation.FIXED),PREDICTABLE:num(planningSimulation.PREDICTABLE),VARIABLE:num(planningSimulation.VARIABLE)};
+  $("planningSimMatrixNote").textContent="O "+planningSimPct(fixed.MANDATORY)+" · F "+planningSimPct(fixed.FIXED)+" · P "+planningSimPct(fixed.PREDICTABLE)+" · V "+planningSimPct(fixed.VARIABLE);
   let html='<table class="planning-sim-matrix"><thead><tr><th>Necessarie ↓ / Discrezionali →</th>'+ds.map(function(d){return '<th>'+planningSimPct(d)+'</th>'}).join("")+'</tr></thead><tbody>';
   ns.forEach(function(n){
     html+='<tr><th class="row-head">'+planningSimPct(n)+'</th>';
     ds.forEach(function(d){
-      const r=planningSimulationCalc(exp,inc,{MANDATORY:o,NECESSARY:n,DISCRETIONARY:d}),active=n===num(planningSimulation.NECESSARY)&&d===num(planningSimulation.DISCRETIONARY),cls=(r.simulatedBalance<0?"negative ":"")+(active?"active":"");
-      html+='<td><button type="button" class="'+cls.trim()+'" data-planning-sim-matrix-n="'+n+'" data-planning-sim-matrix-d="'+d+'" title="N '+planningSimPct(n)+' · D '+planningSimPct(d)+'">'+(r.simulatedBalance>=0?"+":"")+money(r.simulatedBalance)+'</button></td>';
+      const custom={MANDATORY:fixed.MANDATORY,NECESSARY:n,DISCRETIONARY:d,FIXED:fixed.FIXED,PREDICTABLE:fixed.PREDICTABLE,VARIABLE:fixed.VARIABLE};
+      const r=planningSimulationCalc(exp,inc,custom,"CUSTOM"),active=planningSimulationMode==="CUSTOM"&&n===num(planningSimulation.NECESSARY)&&d===num(planningSimulation.DISCRETIONARY),cls=(r.simulatedBalance<0?"negative ":"")+(active?"active":"");
+      html+='<td><button type="button" class="'+cls.trim()+'" data-planning-sim-matrix-n="'+n+'" data-planning-sim-matrix-d="'+d+'">'+(r.simulatedBalance>=0?"+":"")+money(r.simulatedBalance)+'</button></td>';
     });
     html+='</tr>';
   });
@@ -4029,11 +4164,11 @@ function renderPlanningBoard(){
   $("planningBoardKpis").innerHTML='<div class="planning-board-kpi income"><div class="kpi-head"><span class="kpi-icon">'+analysisSvgIcon("Entrate")+'</span><span>Entrate previste</span></div><div class="v">'+money(incTotals.planned)+'</div><div class="s"><span>vs storico</span><strong class="planning-kpi-delta '+incCls+'">'+planningPctText(incTotals.pct)+'</strong></div></div><div class="planning-board-kpi expense"><div class="kpi-head"><span class="kpi-icon">'+analysisSvgIcon("Shopping personale")+'</span><span>Uscite previste</span></div><div class="v">'+money(expTotals.planned)+'</div><div class="s"><span>vs storico</span><strong class="planning-kpi-delta '+expCls+'">'+planningPctText(expTotals.pct)+'</strong></div></div><div class="planning-board-kpi balance"><div class="kpi-head"><span class="kpi-icon">'+analysisSvgIcon("chart")+'</span><span>Saldo previsto</span></div><div class="v '+(balance>=0?"positive":"negative")+'">'+(balance>=0?"+":"")+money(balance)+'</div><div class="s"><span>Media mensile</span><strong class="'+(balance>=0?"positive":"negative")+'">'+(balance/12>=0?"+":"")+money(balance/12)+'</strong></div></div>';
   renderPlanningNatureSummary(exp,inc);let html="";if(planningBoardFilter!=="EXPENSE")html+=planningSectionHtml("INCOME",inc);if(planningBoardFilter!=="INCOME")html+=planningSectionHtml("EXPENSE",exp);$("planningBoardBody").innerHTML=html||'<tr><td colspan="8" class="muted">Nessuna voce corrisponde ai filtri.</td></tr>';
   $("planningBoardLegend").textContent=rolling?"Variazione vs storico: piano dei prossimi 12 mesi confrontato con gli ultimi 12 mesi reali. Per le spese una diminuzione è verde; per le entrate è verde un aumento. “Nuova” indica storico pari a zero.":"Variazione vs storico: piano "+year+" confrontato con il consuntivo "+def.comparisonLabel+". Per le spese una diminuzione è verde; per le entrate è verde un aumento. “Nuova” indica storico pari a zero.";
-  renderPlanningNatureChart(exp);renderPlanningMonthlyChart(exp,inc);renderPlanningSimulator(exp,inc);
+  renderPlanningNatureChart(exp);renderPlanningMonthlyChart(exp,inc);
 }
 async function loadPlanningBoard(force){
   if(planningBoardLoading)return;
-  if(!force&&planningBoardData&&planningBoardData.expense&&planningBoardData.income){renderPlanningBoard();return}
+  if(!force&&planningBoardData&&planningBoardData.expense&&planningBoardData.income){if(planningBoardVisible)renderPlanningBoard();if(planningSimulatorVisible)renderPlanningSimulatorView();return}
   planningBoardLoading=true;msg($("planningBoardStatus"),"Carico il piano annuale…");
   try{
     const expPromise=analysisProjectionData.has("EXPENSE")?Promise.resolve(analysisProjectionData.get("EXPENSE")):rpc("dashboard_reporting_analysis_projection_v1",{p_direction:"EXPENSE"});
@@ -4045,15 +4180,22 @@ async function loadPlanningBoard(force){
       (planningBoardData.income.categories||[]).forEach(function(x){if(x.l1_id)planningBoardExpandedL1.add("INCOME|"+x.l1_id)});
       (planningBoardData.expense.categories||[]).forEach(function(x){if(x.l1_id)planningBoardExpandedL1.add("EXPENSE|"+x.l1_id)});
     }
-    msg($("planningBoardStatus"),"");renderPlanningBoard();
-  }catch(e){msg($("planningBoardStatus"),e.message||"Errore caricamento tabellone",true)}
+    msg($("planningBoardStatus"),"");if($("planningSimulatorStatus"))msg($("planningSimulatorStatus"),"");if(planningBoardVisible)renderPlanningBoard();if(planningSimulatorVisible)renderPlanningSimulatorView();
+  }catch(e){msg($("planningBoardStatus"),e.message||"Errore caricamento tabellone",true);if($("planningSimulatorStatus"))msg($("planningSimulatorStatus"),e.message||"Errore caricamento simulatore",true)}
   finally{planningBoardLoading=false}
 }
 function showPlanningBoardView(){
-  planningBoardVisible=true;scenarioVisible=false;
-  $("standardReportingView").classList.add("hidden");$("scenarioView").classList.add("hidden");$("planningBoardView").classList.remove("hidden");
-  $("reportingViewTab").classList.remove("active");$("scenarioViewTab").classList.remove("active");$("planningBoardTab").classList.add("active");
+  planningBoardVisible=true;planningSimulatorVisible=false;scenarioVisible=false;
+  $("standardReportingView").classList.add("hidden");$("scenarioView").classList.add("hidden");$("planningSimulatorView").classList.add("hidden");$("planningBoardView").classList.remove("hidden");
+  $("reportingViewTab").classList.remove("active");$("scenarioViewTab").classList.remove("active");$("planningSimulatorTab").classList.remove("active");$("planningBoardTab").classList.add("active");
   const u=new URL(window.location.href);u.searchParams.set("view","board");history.replaceState(null,"",u);
+  loadPlanningBoard(false);
+}
+function showPlanningSimulatorView(){
+  planningBoardVisible=false;planningSimulatorVisible=true;scenarioVisible=false;
+  $("standardReportingView").classList.add("hidden");$("scenarioView").classList.add("hidden");$("planningBoardView").classList.add("hidden");$("planningSimulatorView").classList.remove("hidden");
+  $("reportingViewTab").classList.remove("active");$("scenarioViewTab").classList.remove("active");$("planningBoardTab").classList.remove("active");$("planningSimulatorTab").classList.add("active");
+  const u=new URL(window.location.href);u.searchParams.set("view","simulator");history.replaceState(null,"",u);
   loadPlanningBoard(false);
 }
 function openPlanningRowInAnalysis(category,direction){
@@ -4085,7 +4227,7 @@ function renderMode(){renderAnalysis()}
 function renderAll(){
   renderBalances();renderAnalysis();renderExtraordinary();
   if(scenarioVisible)loadScenarioData(false);
-  if(planningBoardVisible)loadPlanningBoard(false);
+  if(planningBoardVisible||planningSimulatorVisible)loadPlanningBoard(false);
 }
 function renderReportReturnBar(params){
   const bar=$("reportReturnBar");if(!bar)return;
@@ -4100,6 +4242,7 @@ function openReportingFromUrl(){
   if(reportDeepLinkHandled)return;const params=new URLSearchParams(window.location.search),category=params.get("category");renderReportReturnBar(params);
   if(params.get("view")==="scenario"){reportDeepLinkHandled=true;showScenarioView();return}
   if(params.get("view")==="board"){reportDeepLinkHandled=true;showPlanningBoardView();return}
+  if(params.get("view")==="simulator"){reportDeepLinkHandled=true;showPlanningSimulatorView();return}
   if(!category)return;reportDeepLinkHandled=true;showStandardReportingView();
   const requested=(params.get("direction")||"").toUpperCase();let direction=requested==="INCOME"||requested==="EXPENSE"?requested:"EXPENSE";const incomeRows=report.income_forecast_categories||[],expenseRows=report.forecast_categories||[];
   if(incomeRows.some(function(x){return String(x.category_id)===String(category)}))direction="INCOME";else if(expenseRows.some(function(x){return String(x.category_id)===String(category)}))direction="EXPENSE";
@@ -4138,13 +4281,10 @@ async function copyFirstMonth(kind,category,btn){
 
 $("reportingViewTab").onclick=function(){showStandardReportingView()};
 $("planningBoardTab").onclick=function(){showPlanningBoardView()};
+$("planningSimulatorTab").onclick=function(){showPlanningSimulatorView()};
 $("scenarioViewTab").onclick=function(){showScenarioView()};
 $("planningBoardRefresh").onclick=function(){planningBoardData=null;loadPlanningBoard(true)};
 $("planningBoardView").addEventListener("click",function(e){
-  const preset=e.target.closest("[data-planning-sim-preset]");
-  if(preset){planningSimulationPreset(preset.dataset.planningSimPreset);if(planningBoardData){renderPlanningSimulator(planningBuildRows(planningBoardData.expense,"EXPENSE"),planningBuildRows(planningBoardData.income,"INCOME"))}return}
-  const cell=e.target.closest("[data-planning-sim-matrix-n]");
-  if(cell){planningSimulationSet({MANDATORY:planningSimulation.MANDATORY,NECESSARY:num(cell.dataset.planningSimMatrixN),DISCRETIONARY:num(cell.dataset.planningSimMatrixD)});if(planningBoardData){renderPlanningSimulator(planningBuildRows(planningBoardData.expense,"EXPENSE"),planningBuildRows(planningBoardData.income,"INCOME"))}return}
   const horizon=e.target.closest("[data-planning-horizon]");
   if(horizon){planningBoardHorizon=horizon.dataset.planningHorizon||"CALENDAR";renderPlanningBoard();return}
   const filter=e.target.closest("[data-planning-filter]");
@@ -4158,12 +4298,21 @@ $("planningBoardView").addEventListener("click",function(e){
   const open=e.target.closest("[data-planning-open-analysis]");
   if(open){openPlanningRowInAnalysis(open.dataset.planningOpenAnalysis,open.dataset.planningOpenDirection||"EXPENSE");return}
 });
-$("planningBoardView").addEventListener("input",function(e){
-  const sim=e.target.closest("[data-planning-sim]");
-  if(!sim)return;
-  const next={MANDATORY:planningSimulation.MANDATORY,NECESSARY:planningSimulation.NECESSARY,DISCRETIONARY:planningSimulation.DISCRETIONARY};
-  next[sim.dataset.planningSim]=num(sim.value);planningSimulationSet(next);
-  if(planningBoardData)renderPlanningSimulator(planningBuildRows(planningBoardData.expense,"EXPENSE"),planningBuildRows(planningBoardData.income,"INCOME"));
+$("planningSimulatorView").addEventListener("click",function(e){
+  const horizon=e.target.closest("[data-simulator-horizon]");
+  if(horizon){planningSimulatorHorizon=horizon.dataset.simulatorHorizon||"CALENDAR";renderPlanningSimulatorView();return}
+  const preset=e.target.closest("[data-planning-sim-preset]");
+  if(preset){planningSimulationPreset(preset.dataset.planningSimPreset);renderPlanningSimulatorView();return}
+  const cell=e.target.closest("[data-planning-sim-matrix-n]");
+  if(cell){
+    const next={MANDATORY:planningSimulation.MANDATORY,NECESSARY:num(cell.dataset.planningSimMatrixN),DISCRETIONARY:num(cell.dataset.planningSimMatrixD),FIXED:planningSimulation.FIXED,PREDICTABLE:planningSimulation.PREDICTABLE,VARIABLE:planningSimulation.VARIABLE};
+    planningSimulationSet(next);renderPlanningSimulatorView();return;
+  }
+});
+$("planningSimulatorView").addEventListener("input",function(e){
+  const sim=e.target.closest("[data-planning-sim]");if(!sim)return;
+  const next={MANDATORY:planningSimulation.MANDATORY,NECESSARY:planningSimulation.NECESSARY,DISCRETIONARY:planningSimulation.DISCRETIONARY,FIXED:planningSimulation.FIXED,PREDICTABLE:planningSimulation.PREDICTABLE,VARIABLE:planningSimulation.VARIABLE};
+  next[sim.dataset.planningSim]=num(sim.value);planningSimulationSet(next);renderPlanningSimulatorView();
 });
 $("planningBoardSearch").addEventListener("input",function(){planningBoardSearch=this.value||"";renderPlanningBoard()});
 $("planningNatureFilter").addEventListener("change",function(){planningBoardNatureFilter=this.value||"ALL";renderPlanningBoard()});
