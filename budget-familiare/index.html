@@ -142,6 +142,11 @@
 
 .version-diagnostics{border:0;background:transparent;color:var(--muted);padding:0;margin:0;cursor:pointer;font-size:12px}.version-diagnostics:hover{text-decoration:underline;color:var(--accent)}.rpc-version-line{display:flex;align-items:center;gap:6px;margin-top:2px}.rpc-performance-alert{border:0;background:transparent;padding:1px 4px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:800;line-height:1}.rpc-performance-alert.warn{color:#a16207;background:#fef9c3}.rpc-performance-alert.critical{color:#b91c1c;background:#fee2e2}.rpc-performance-alert:hover{filter:brightness(.96)}
 .rpc-diag-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.42);z-index:9998;display:flex;align-items:center;justify-content:center;padding:20px}.rpc-diag-backdrop.hidden{display:none}.rpc-diag-panel{width:min(980px,96vw);max-height:88vh;overflow:auto;background:#fff;border-radius:14px;box-shadow:0 22px 60px rgba(15,23,42,.22);padding:16px}.rpc-diag-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}.rpc-diag-head h2{margin:0;font-size:18px}.rpc-diag-summary{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}.rpc-diag-chip{padding:5px 8px;border-radius:999px;background:#f3f4f6;font-size:12px}.rpc-diag-ok{color:#166534}.rpc-diag-slow{color:#92400e}.rpc-diag-critical,.rpc-diag-error{color:#991b1b}.rpc-diag-table td,.rpc-diag-table th{font-size:12px;vertical-align:top}.rpc-diag-name{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px}.rpc-diag-error-text{max-width:310px;white-space:normal;word-break:break-word}
+
+/* V73.14.1 — natura categoria configurata in anagrafica */
+.category-nature-select{min-width:92px;min-height:28px;border:1px solid #d7dfeb;border-radius:7px;background:#fff;padding:3px 6px;font-size:11px;font-weight:750}
+.category-nature-select.expense{background:#fffdf8}.category-nature-select.income{background:#f7fbff}
+.category-nature-cell{white-space:nowrap}
 </style>
 </head>
 <body>
@@ -904,6 +909,7 @@ async function loadMovementsData(){
     const movements=await rpc('dashboard_movements_read_v2');
     const counterparties=await rpc('dashboard_counterparties_read_v1');
     const categoryAudit=await rpc('dashboard_category_audit_v7',{p_period:categoryAuditPeriod,p_direction:analysisDirection});
+    const planningMeta=await rpc('dashboard_reporting_planning_meta_v1').catch(e=>{console.error('Planning meta',e);return {rows:[]}});
     fuzzySuggestionsError=null;
     const fuzzySuggestions=await rpc('dashboard_counterparty_fuzzy_suggestions_v1').catch(e=>{fuzzySuggestionsError=e?.message||'Errore caricamento suggerimenti fuzzy';console.error('Fuzzy suggestions',e);return null});
     duplicateSuggestionsError=null;
@@ -920,6 +926,7 @@ async function loadMovementsData(){
     catData.compoundRules=rulesData?.compound_rules||[];
     catData.parsingRules=parsingRules||[];
     catData.categoryAudit=categoryAudit||{summary:{},months:[],rows:[]};
+    catData.planningMeta=planningMeta||{rows:[]};
     duplicateSuggestions=duplicates||[];
     if(Array.isArray(fuzzySuggestions)){fuzzySuggestionsError=null;counterpartyFuzzySuggestions=fuzzySuggestions}else counterpartyFuzzySuggestions=[];
     renderMovementsPage();
@@ -2566,6 +2573,32 @@ async function setAnalysisDirection(direction){
     syncAnalysisDirectionControls();
   }
 }
+function categoryPlanningMetaMap(){return new Map((catData?.planningMeta?.rows||[]).map(x=>[String(x.category_id),x]))}
+function categoryNatureValue(cat){
+  if(!cat||!cat.parent_id)return "";
+  const meta=categoryPlanningMetaMap().get(String(cat.id))||{},income=categoryIsIncomeTaxonomy(cat);
+  return income?(meta.income_nature||""):(meta.expense_nature||"");
+}
+function categoryNatureSelectHtml(cat){
+  if(!cat||!cat.parent_id)return '<span class="muted">—</span>';
+  const income=categoryIsIncomeTaxonomy(cat),value=categoryNatureValue(cat),opts=income
+    ?[["","—"],["FIXED","F · Fissa"],["PREDICTABLE","P · Prevedibile"],["VARIABLE","V · Variabile"]]
+    :[["","—"],["MANDATORY","O · Obbligatoria"],["NECESSARY","N · Necessaria"],["DISCRETIONARY","D · Discrezionale"]];
+  return '<select class="category-nature-select '+(income?"income":"expense")+'" data-category-nature="'+cat.id+'">'+opts.map(o=>'<option value="'+o[0]+'" '+(o[0]===value?'selected':'')+'>'+o[1]+'</option>').join('')+'</select>';
+}
+async function saveCategoryNature(select){
+  const id=select.dataset.categoryNature,value=select.value||null,meta=(catData?.planningMeta?.rows||[]).find(x=>String(x.category_id)===String(id)),cat=categoryById(id);
+  select.disabled=true;
+  try{
+    await rpc('dashboard_reporting_save_category_nature_v1',{p_category_id:id,p_nature:value});
+    if(meta){if(categoryIsIncomeTaxonomy(cat))meta.income_nature=value;else meta.expense_nature=value}
+    else{
+      catData.planningMeta=catData.planningMeta||{rows:[]};
+      catData.planningMeta.rows.push({category_id:id,income_nature:categoryIsIncomeTaxonomy(cat)?value:null,expense_nature:categoryIsIncomeTaxonomy(cat)?null:value});
+    }
+  }catch(e){alert(e.message||'Errore salvataggio natura');renderCategoriesCatalog()}
+  finally{select.disabled=false}
+}
 function categoryAuditMap(){
   return new Map((catData?.categoryAudit?.rows||[]).map(x=>[String(x.category_id),x]));
 }
@@ -2904,14 +2937,15 @@ function categoryL2PanelHtml(l1Row){
       :categoryActionsMenu(r);
     let inline='';
     if(categoryActionState&&String(categoryActionState.id)===String(r.cat.id)){
-      inline='<tr class="category-action-row"><td colspan="8">'+categoryActionPanelHtml(r.cat,categoryActionState.action)+'</td></tr>';
+      inline='<tr class="category-action-row"><td colspan="9">'+categoryActionPanelHtml(r.cat,categoryActionState.action)+'</td></tr>';
     }else if(categoryCounterpartyState&&String(categoryCounterpartyState.id)===String(r.cat.id)){
-      inline='<tr class="category-action-row"><td colspan="8">'+categoryCounterpartyPanelHtml(r.cat)+'</td></tr>';
+      inline='<tr class="category-action-row"><td colspan="9">'+categoryCounterpartyPanelHtml(r.cat)+'</td></tr>';
     }else if(categoryDependencyStateMatches(r.cat.id,false)){
-      inline='<tr class="category-action-row"><td colspan="8">'+categoryDependencyPanelHtml(r.cat)+'</td></tr>';
+      inline='<tr class="category-action-row"><td colspan="9">'+categoryDependencyPanelHtml(r.cat)+'</td></tr>';
     }
     return '<tr class="category-l2-data-row '+(isDirect?'category-direct-row ':'')+(selected?'category-l2-row-selected':'')+'" data-search="'+esc(String(r.name||'').toLowerCase())+'">'+
       '<td><div class="category-l2-name"><span class="mini-icon">'+(isDirect?'↳':esc(categoryL1Icon(r.name)))+'</span>'+esc(r.name)+(Number(raw.child_count||0)>0?'<span class="pill">'+nfmt(raw.child_count)+' L3</span>':'')+'</div></td>'+
+      '<td class="category-nature-cell">'+(isDirect?'<span class="muted">—</span>':categoryNatureSelectHtml(r.cat))+'</td>'+
       '<td>'+nfmt(m.movement_count||0)+'</td>'+
       '<td>'+categoryAmountHtml(m.value,maxValue,true)+'</td>'+
       '<td>'+categoryAuditFrequencyHtml(m)+'</td>'+
@@ -2928,6 +2962,7 @@ function categoryL2PanelHtml(l1Row){
     '</div>'+
     '<div class="table-wrap"><table class="category-l2-table"><thead><tr>'+
       '<th>'+categoryL2SortHeader('Categoria L2','NAME')+'</th>'+
+      '<th>Natura</th>'+
       '<th>'+categoryL2SortHeader('Mov.','MOVEMENTS')+'</th>'+
       '<th>'+categoryL2SortHeader('Importo','VALUE')+'</th>'+
       '<th>'+categoryL2SortHeader('Frequenza','FREQUENCY')+'</th>'+
@@ -2935,7 +2970,7 @@ function categoryL2PanelHtml(l1Row){
       '<th>'+categoryL2SortHeader('Controparti','COUNTERPARTIES')+'</th>'+
       '<th>'+categoryL2SortHeader('Dipendenze','DEPENDENCIES')+'</th>'+
       '<th>Azioni</th></tr></thead><tbody>'+
-      (body||'<tr><td colspan="8" class="muted">Nessuna categoria L2.</td></tr>')+
+      (body||'<tr><td colspan="9" class="muted">Nessuna categoria L2.</td></tr>')+
     '</tbody></table></div>'+
     '<div class="category-l2-summary"><div><span class="muted small">Totale '+esc(l1.name)+'</span><strong>'+nfmt(m.movement_count||0)+' movimenti · '+euroInt(m.value||0)+'</strong></div><div><span class="muted small">Frequenza complessiva</span><strong>'+nfmt(m.active_months||0)+'/'+nfmt(m.month_count||0)+' · '+nfmt(m.active_pct||0)+'%</strong></div><div><span class="muted small">Controparti</span><strong>'+nfmt(m.counterparty_count||0)+'</strong></div></div>'+
   '</div>';
@@ -2954,8 +2989,8 @@ function renderCategoriesCatalog(){
   renderCategoryAuditKpis();
   const rows=visibleCategoryRows(),maxValue=Math.max(0,...rows.map(r=>Number(r.metric?.value||0)));
   const head=categoryViewMode==='L1'
-    ?'<tr><th>'+categorySortHeader('Macro categoria L1','L1')+'</th><th>'+categorySortHeader('Categorie L2','CHILDREN')+'</th><th>'+categorySortHeader('Mov.','MOVEMENTS')+'</th><th>'+categorySortHeader('Importo','VALUE')+'</th><th>'+categorySortHeader('Frequenza','FREQUENCY')+'</th><th>'+categorySortHeader('Ultimo uso','LAST_USED')+'</th><th>'+categorySortHeader('Controparti','COUNTERPARTIES')+'</th><th>'+categorySortHeader('Dipendenze','DEPENDENCIES')+'</th><th>Azioni</th></tr>'
-    :'<tr><th>'+categorySortHeader('L1','L1')+'</th><th>'+categorySortHeader('Categoria','NAME')+'</th><th>'+categorySortHeader('Mov.','MOVEMENTS')+'</th><th>'+categorySortHeader('Importo','VALUE')+'</th><th>'+categorySortHeader('Frequenza','FREQUENCY')+'</th><th>'+categorySortHeader('Ultimo uso','LAST_USED')+'</th><th>'+categorySortHeader('Controparti','COUNTERPARTIES')+'</th><th>'+categorySortHeader('Dipendenze','DEPENDENCIES')+'</th><th>Azioni</th></tr>';
+    ?'<tr><th>'+categorySortHeader('Macro categoria L1','L1')+'</th><th>'+categorySortHeader('Categorie L2','CHILDREN')+'</th><th>Natura</th><th>'+categorySortHeader('Mov.','MOVEMENTS')+'</th><th>'+categorySortHeader('Importo','VALUE')+'</th><th>'+categorySortHeader('Frequenza','FREQUENCY')+'</th><th>'+categorySortHeader('Ultimo uso','LAST_USED')+'</th><th>'+categorySortHeader('Controparti','COUNTERPARTIES')+'</th><th>'+categorySortHeader('Dipendenze','DEPENDENCIES')+'</th><th>Azioni</th></tr>'
+    :'<tr><th>'+categorySortHeader('L1','L1')+'</th><th>'+categorySortHeader('Categoria','NAME')+'</th><th>Natura</th><th>'+categorySortHeader('Mov.','MOVEMENTS')+'</th><th>'+categorySortHeader('Importo','VALUE')+'</th><th>'+categorySortHeader('Frequenza','FREQUENCY')+'</th><th>'+categorySortHeader('Ultimo uso','LAST_USED')+'</th><th>'+categorySortHeader('Controparti','COUNTERPARTIES')+'</th><th>'+categorySortHeader('Dipendenze','DEPENDENCIES')+'</th><th>Azioni</th></tr>';
   const body=rows.map(r=>{
     const m=r.metric||{},raw=r.raw||{},empty=Number(raw.movement_count||0)===0&&Number(raw.dependency_count||0)===0&&Number(raw.child_count||0)===0;
     const l1Expanded=categoryViewMode==='L1'&&String(categoryL1ExpandedId||'')===String(r.cat.id);
@@ -2967,15 +3002,16 @@ function renderCategoriesCatalog(){
     const cpButton='<button type="button" class="category-counterparty-link '+(Number(m.counterparty_count||0)===0?'zero':'')+'" data-category-counterparties="'+r.cat.id+'" title="'+esc((m.without_counterparty_movements?m.without_counterparty_movements+' movimenti senza controparte · ':'')+'Apri elenco controparti')+'">'+nfmt(m.counterparty_count||0)+'</button>';
     let inline='';
     if(categoryActionState&&String(categoryActionState.id)===String(r.cat.id)){
-      inline='<tr class="category-action-row"><td colspan="9">'+categoryActionPanelHtml(r.cat,categoryActionState.action)+'</td></tr>';
+      inline='<tr class="category-action-row"><td colspan="10">'+categoryActionPanelHtml(r.cat,categoryActionState.action)+'</td></tr>';
     }else if(categoryCounterpartyState&&String(categoryCounterpartyState.id)===String(r.cat.id)){
-      inline='<tr class="category-action-row"><td colspan="9">'+categoryCounterpartyPanelHtml(r.cat)+'</td></tr>';
+      inline='<tr class="category-action-row"><td colspan="10">'+categoryCounterpartyPanelHtml(r.cat)+'</td></tr>';
     }else if(categoryDependencyStateMatches(r.cat.id,depDesc)){
-      inline='<tr class="category-action-row"><td colspan="9">'+categoryDependencyPanelHtml(r.cat)+'</td></tr>';
+      inline='<tr class="category-action-row"><td colspan="10">'+categoryDependencyPanelHtml(r.cat)+'</td></tr>';
     }else if(l1Expanded){
-      inline='<tr class="category-action-row"><td colspan="9">'+categoryL2PanelHtml(r)+'</td></tr>';
+      inline='<tr class="category-action-row"><td colspan="10">'+categoryL2PanelHtml(r)+'</td></tr>';
     }
     return '<tr class="'+(r.kind==='DIRECT'?'direct-row ':'')+(selected?'category-main-selected':'')+'" data-category-row="'+r.cat.id+'">'+prefix+
+      '<td class="category-nature-cell">'+(categoryViewMode==='L1'?'<span class="muted">—</span>':categoryNatureSelectHtml(r.cat))+'</td>'+
       '<td>'+nfmt(m.movement_count||0)+'</td>'+
       '<td>'+categoryAmountHtml(m.value,maxValue)+'</td>'+
       '<td>'+categoryAuditFrequencyHtml(m)+'</td>'+
@@ -2984,7 +3020,7 @@ function renderCategoriesCatalog(){
       '<td>'+categoryAuditDepsHtml(m,r.cat.id,depDesc)+'</td>'+
       '<td>'+categoryActionsMenu(r)+'</td></tr>'+inline;
   }).join('');
-  $('categoriesTable').innerHTML=categoryPeriodNoteHtml()+'<div class="muted small" style="margin:0 0 7px">'+nfmt(rows.length)+' righe · '+(categoryViewMode==='L1'?'aggregazione L1 · clicca ▸ per esplorare le L2':'categorie operative cross-L1')+' · '+esc(analysisDirectionLabel())+' · '+esc(categoryPeriodLabel())+'</div><div class="category-flat-wrap"><table class="table category-flat-table"><thead>'+head+'</thead><tbody>'+(body||'<tr><td colspan="9" class="muted">Nessuna categoria con i filtri selezionati.</td></tr>')+'</tbody></table></div>';
+  $('categoriesTable').innerHTML=categoryPeriodNoteHtml()+'<div class="muted small" style="margin:0 0 7px">'+nfmt(rows.length)+' righe · '+(categoryViewMode==='L1'?'aggregazione L1 · clicca ▸ per esplorare le L2':'categorie operative cross-L1')+' · '+esc(analysisDirectionLabel())+' · '+esc(categoryPeriodLabel())+'</div><div class="category-flat-wrap"><table class="table category-flat-table"><thead>'+head+'</thead><tbody>'+(body||'<tr><td colspan="10" class="muted">Nessuna categoria con i filtri selezionati.</td></tr>')+'</tbody></table></div>';
 }
 async function loadCategoryAuditPeriod(period){
   const next=period||'12M';if(categoryAuditLoading||next===categoryAuditPeriod)return;
@@ -4109,7 +4145,7 @@ $('tab-catalogs').addEventListener('input',e=>{
     document.querySelectorAll('.category-l2-data-row').forEach(tr=>tr.classList.toggle('hidden',q&&!String(tr.dataset.search||'').includes(q)));
   }
 });
-$('tab-catalogs').addEventListener('change',e=>{if(e.target.id==='categoryMergeDestination'){previewCategoryMigration();return}const one=e.target.closest('[data-select-counterparty]');if(one){one.checked?selectedCounterpartyIds.add(one.dataset.selectCounterparty):selectedCounterpartyIds.delete(one.dataset.selectCounterparty);syncCounterpartyBulkBar();return}const all=e.target.closest('[data-select-visible-counterparties]');if(all){for(const m of counterpartyFilteredRows())all.checked?selectedCounterpartyIds.add(m.id):selectedCounterpartyIds.delete(m.id);renderMerchantsCatalog();return}});
+$('tab-catalogs').addEventListener('change',e=>{const nature=e.target.closest('[data-category-nature]');if(nature){saveCategoryNature(nature);return}if(e.target.id==='categoryMergeDestination'){previewCategoryMigration();return}const one=e.target.closest('[data-select-counterparty]');if(one){one.checked?selectedCounterpartyIds.add(one.dataset.selectCounterparty):selectedCounterpartyIds.delete(one.dataset.selectCounterparty);syncCounterpartyBulkBar();return}const all=e.target.closest('[data-select-visible-counterparties]');if(all){for(const m of counterpartyFilteredRows())all.checked?selectedCounterpartyIds.add(m.id):selectedCounterpartyIds.delete(m.id);renderMerchantsCatalog();return}});
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>activateMainTab(b.dataset.tab));
 $('rpcDiagnosticsOpen')?.addEventListener('click',openRpcDiagnostics);
 $('rpcPerformanceAlert')?.addEventListener('click',openRpcDiagnostics);
