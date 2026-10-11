@@ -3788,9 +3788,9 @@ function planningBuildRows(data,direction){
     def.comparisonMonths.forEach(function(month){comparison+=num(actualMap.get(String(cat.category_id)+"|"+month))});
     def.targetMonths.forEach(function(month){
       const key=String(cat.category_id)+"|"+month;
-      if(actualTargetSet.has(month)){const amount=num(actualMap.get(key));planned+=amount;lowTotal+=amount;highTotal+=amount;monthRows.push({month:month,amount:amount,kind:"actual",override:false,current:false});return}
-      if(forecastTargetSet.has(month)){const f=forecastMap.get(key),amount=f?num(f.effective_amount):0,overridden=!!(f&&f.override_amount!==null&&f.override_amount!==undefined);planned+=amount;if(overridden)overrideCount++;let lo=amount,hi=amount;if(direction==="INCOME"){const cell=cellMap.get(key);if(cell&&!overridden&&cell.amount_model==="RANGE"){lo=num(cell.range_low);hi=num(cell.range_high)}if(f&&f.actual_to_date!==null&&f.actual_to_date!==undefined){lo=Math.max(lo,num(f.actual_to_date));hi=Math.max(hi,num(f.actual_to_date))}}lowTotal+=lo;highTotal+=hi;monthRows.push({month:month,amount:amount,kind:"plan",override:overridden,current:month===current});return}
-      monthRows.push({month:month,amount:0,kind:"plan",override:false,current:false});
+      if(actualTargetSet.has(month)){const amount=num(actualMap.get(key));planned+=amount;lowTotal+=amount;highTotal+=amount;monthRows.push({month:month,amount:amount,futureAmount:0,kind:"actual",override:false,current:false});return}
+      if(forecastTargetSet.has(month)){const f=forecastMap.get(key),amount=f?num(f.effective_amount):0,actualToDate=f?num(f.actual_to_date):0,overridden=!!(f&&f.override_amount!==null&&f.override_amount!==undefined);planned+=amount;if(overridden)overrideCount++;let lo=amount,hi=amount;if(direction==="INCOME"){const cell=cellMap.get(key);if(cell&&!overridden&&cell.amount_model==="RANGE"){lo=num(cell.range_low);hi=num(cell.range_high)}if(f&&f.actual_to_date!==null&&f.actual_to_date!==undefined){lo=Math.max(lo,actualToDate);hi=Math.max(hi,actualToDate)}}lowTotal+=lo;highTotal+=hi;const futureAmount=month===current?Math.max(0,amount-actualToDate):amount;monthRows.push({month:month,amount:amount,futureAmount:futureAmount,kind:"plan",override:overridden,current:month===current});return}
+      monthRows.push({month:month,amount:0,futureAmount:0,kind:"plan",override:false,current:false});
     });
     const deltaAbs=planned-comparison,deltaPct=comparison>0?deltaAbs*100/comparison:(Math.abs(planned)<.5?0:null);
     return {direction:direction,category_id:cat.category_id,l1_id:cat.l1_id,l1_name:cat.l1_name,l2_name:cat.l2_name,annual:planned,comparison:comparison,deltaAbs:deltaAbs,deltaPct:deltaPct,rangeLow:direction==="INCOME"?lowTotal:planned,rangeHigh:direction==="INCOME"?highTotal:planned,overrideCount:overrideCount,months:monthRows,meta:meta};
@@ -3862,7 +3862,7 @@ function planningFutureExpenseByNature(exp){
   const out={MANDATORY:0,NECESSARY:0,DISCRETIONARY:0,UNKNOWN:0};
   exp.forEach(function(r){
     const nature=planningNatureValue(r.meta,"EXPENSE")||"UNKNOWN";
-    const future=r.months.filter(function(m){return m.kind==="plan"}).reduce(function(s,m){return s+num(m.amount)},0);
+    const future=r.months.filter(function(m){return m.kind==="plan"}).reduce(function(s,m){return s+num(m.futureAmount)},0);
     if(out[nature]===undefined)out.UNKNOWN+=future;else out[nature]+=future;
   });
   return out;
@@ -3875,7 +3875,8 @@ function planningSimulationCalc(exp,inc,override){
     future.NECESSARY*num(sim.NECESSARY)/100+
     future.DISCRETIONARY*num(sim.DISCRETIONARY)/100;
   const simulatedExpenses=Math.max(0,expenses+change),currentBalance=income-expenses,simulatedBalance=income-simulatedExpenses,impact=simulatedBalance-currentBalance;
-  return {income:income,expenses:expenses,simulatedExpenses:simulatedExpenses,currentBalance:currentBalance,simulatedBalance:simulatedBalance,impact:impact,monthlyImpact:impact/12,future:future};
+  const futureMonths=exp.length?Math.max(1,exp[0].months.filter(function(m){return m.kind==="plan"}).length):12;
+  return {income:income,expenses:expenses,simulatedExpenses:simulatedExpenses,currentBalance:currentBalance,simulatedBalance:simulatedBalance,impact:impact,monthlyImpact:impact/futureMonths,futureMonths:futureMonths,future:future};
 }
 function planningSimPct(v){const n=Math.round(num(v));return (n>0?"+":"")+n+"%"}
 function planningSimulationSet(next){
@@ -3899,7 +3900,7 @@ function renderPlanningSimulator(exp,inc){
     '<div class="planning-sim-result"><div class="k">Saldo attuale</div><div class="v '+(calc.currentBalance>=0?"positive":"negative")+'">'+(calc.currentBalance>=0?"+":"")+money(calc.currentBalance)+'</div></div>'+
     '<div class="planning-sim-result simulated"><div class="k">Saldo simulato</div><div class="v '+(calc.simulatedBalance>=0?"positive":"negative")+'">'+(calc.simulatedBalance>=0?"+":"")+money(calc.simulatedBalance)+'</div></div>'+
     '<div class="planning-sim-result"><div class="k">Impatto sul saldo</div><div class="v '+impactCls+'">'+(calc.impact>=0?"+":"")+money(calc.impact)+'</div></div>'+
-    '<div class="planning-sim-result"><div class="k">Impatto medio mensile</div><div class="v '+impactCls+'">'+(calc.monthlyImpact>=0?"+":"")+money(calc.monthlyImpact)+'/mese</div></div>'+
+    '<div class="planning-sim-result"><div class="k">Impatto medio / mese futuro</div><div class="v '+impactCls+'">'+(calc.monthlyImpact>=0?"+":"")+money(calc.monthlyImpact)+'/mese</div></div>'+
     '<div class="planning-sim-expense-line"><span>Uscite previste</span><strong>'+money(calc.expenses)+'</strong><span>→</span><strong class="after '+expenseCls+'">'+money(calc.simulatedExpenses)+'</strong></div>';
   const map={MANDATORY:"planningSimMandatory",NECESSARY:"planningSimNecessary",DISCRETIONARY:"planningSimDiscretionary"};
   document.querySelectorAll("[data-planning-sim]").forEach(function(input){
