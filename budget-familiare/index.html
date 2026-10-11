@@ -152,6 +152,7 @@
 .category-temporality-select{min-width:118px;min-height:28px;border:1px solid #d7dfeb;border-radius:7px;background:#fbfcff;padding:3px 6px;font-size:11px;font-weight:750}
 .category-temporality-select.exceptional{background:#fff4e8;border-color:#f1b874;color:#9a4d00}
 .category-temporality-cell{white-space:nowrap}
+.category-nature-nc{display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:28px;padding:0 7px;border:1px solid #cbd5e1;border-radius:7px;background:#f8fafc;color:#475569;font-size:11px;font-weight:850;cursor:help}
 .category-info-tip{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;margin-left:4px;border-radius:50%;border:1px solid #b9c7d9;background:#f7faff;color:#44617f;font-size:10px;font-weight:850;line-height:1;vertical-align:middle;cursor:help}
 .category-info-tip:hover,.category-info-tip:focus{background:#eaf3ff;border-color:#7aa7df;color:#1d4f91;outline:none}
 
@@ -2582,6 +2583,10 @@ async function setAnalysisDirection(direction){
   }
 }
 function categoryPlanningMetaMap(){return new Map((catData?.planningMeta?.rows||[]).map(x=>[String(x.category_id),x]))}
+function categoryNatureLocked(cat){
+  if(!cat||!cat.parent_id)return false;
+  return String(categoryL1Name(cat)||"")==="Altro"&&["Prelievo contanti","Da classificare"].includes(String(cat.name||""));
+}
 function categoryNatureValue(cat){
   if(!cat||!cat.parent_id)return "";
   const meta=categoryPlanningMetaMap().get(String(cat.id))||{},income=categoryIsIncomeTaxonomy(cat);
@@ -2589,6 +2594,12 @@ function categoryNatureValue(cat){
 }
 function categoryNatureSelectHtml(cat){
   if(!cat||!cat.parent_id)return '<span class="muted">—</span>';
+  if(categoryNatureLocked(cat)){
+    const reason=String(cat.name)==="Prelievo contanti"
+      ?"Il prelievo è usato come proxy prudenziale di spesa cash non ancora dettagliata: pesa sul Bilancio ma non può essere classificato O/N/D."
+      :"Questa categoria raccoglie volutamente piccole uscite non classificate: pesano sul Bilancio ma non hanno una Natura O/N/D affidabile.";
+    return '<span class="category-nature-nc" title="'+esc(reason)+'">NC</span>';
+  }
   const income=categoryIsIncomeTaxonomy(cat),value=categoryNatureValue(cat),opts=income
     ?[["","—"],["FIXED","F · Fissa"],["PREDICTABLE","P · Prevedibile"],["VARIABLE","V · Variabile"]]
     :[["","—"],["MANDATORY","O · Obbligatoria"],["NECESSARY","N · Necessaria"],["DISCRETIONARY","D · Discrezionale"]];
@@ -2645,7 +2656,7 @@ async function saveCategoryTemporality(select){
   finally{select.disabled=false}
 }
 function categoryTemporalityInfoHtml(){
-  return '<span class="category-info-tip" tabindex="0" title="Temporalità predefinita della categoria. R = Ricorrente: fa parte del normale funzionamento, anche se annuale o stagionale. P = Occasionale/programmabile: non ricorrente ma normale e prevedibile nel bilancio. E = Eccezionale/imprevista: evento fuori dal normale piano; da usare raramente e, in futuro, soprattutto come override del singolo movimento. X = Non applicabile: movimento tecnico, trasferimento o voce che non deve partecipare a questa lettura. R e P sono entrambe strutturali; E servirà a separare gli eventi eccezionali.">i</span>';
+  return '<span class="category-info-tip" tabindex="0" title="Temporalità predefinita della categoria. R = Ricorrente: fa parte del normale funzionamento, anche se annuale o stagionale. P = Occasionale/programmabile: non ricorrente ma normale e prevedibile nel bilancio. E = Eccezionale/imprevista: evento fuori dal normale piano; da usare raramente e, in futuro, soprattutto come override del singolo movimento. X = Non applicabile: R/P/E non descrivono correttamente questa voce. X NON significa escluso dal Bilancio: l’inclusione economica è una regola separata. R e P sono entrambe strutturali; E servirà a separare gli eventi eccezionali.">i</span>';
 }
 function categoryAuditMap(){
   return new Map((catData?.categoryAudit?.rows||[]).map(x=>[String(x.category_id),x]));
