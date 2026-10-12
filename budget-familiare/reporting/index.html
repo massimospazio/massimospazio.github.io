@@ -3928,10 +3928,6 @@ function historicalUnclassifiedBreakdown(mode,scope){
   });
   return out;
 }
-function historicalPeriodLabel(mode){
-  const months=historicalMonthsFor(mode),first=months[0],last=months[months.length-1];
-  return mode==="LAST_YEAR"?"Anno "+first.slice(0,4):monthLabel(first)+" – "+monthLabel(last);
-}
 function historicalSigned(v){v=num(v);return (v>0?"+":v<0?"−":"")+money(Math.abs(v))}
 function historicalInfo(text){
   return '<span class="info-tip" tabindex="0" title="'+esc(text)+'">i</span>';
@@ -4295,15 +4291,16 @@ function renderHistoricalChart(){
     $("historicalChartNote").textContent="Il selettore Ordinario/Totale modifica solo questo grafico. Il saldo cumulato parte da zero e non rappresenta la liquidità dei conti. Clicca la barra Uscite di un mese per vedere da quali categorie e movimenti deriva.";
   }else{
     const natureMap=historicalMonthlyNature(historicalPeriodMode,scope),get=function(key){return months.map(function(m){return num(natureMap.get(m)&&natureMap.get(m)[key])})};
-    const O=get("MANDATORY"),N=get("NECESSARY"),D=get("DISCRETIONARY"),NC=get("UNCLASSIFIED"),other=months.map(function(m){const x=natureMap.get(m)||{};return num(x.INVESTMENT)+num(x.UNKNOWN)});
+    const O=get("MANDATORY"),N=get("NECESSARY"),D=get("DISCRETIONARY"),NC=get("UNCLASSIFIED"),OTHER=get("UNKNOWN"),INV=get("INVESTMENT");
     $("historicalChartTitle").textContent="Spese per natura mese per mese";
     $("historicalChartSubtitle").textContent="Confronta O, N e le uscite non classificate NC con le discrezionali e osserva il margine strutturale rispetto alle entrate.";
     const all=historicalNatureFocus==="ALL",on=historicalNatureFocus==="ON",donly=historicalNatureFocus==="D";
     if(all||on)datasets.push({type:"bar",label:"Obbligatorie",data:O,backgroundColor:"#ef5a5a",stack:"nature",borderWidth:0});
     if(all||on)datasets.push({type:"bar",label:"Necessarie",data:N,backgroundColor:"#f4b63e",stack:"nature",borderWidth:0});
     if(all||on)datasets.push({type:"bar",label:"NC · Non classificate",data:NC,backgroundColor:"#64748b",stack:"nature",borderWidth:0});
-    if(all||donly)datasets.push({type:"bar",label:"Discrezionali",data:D,backgroundColor:"#2bbf83",stack:"nature",borderWidth:0});
-    if(all)datasets.push({type:"bar",label:"Altre / investimenti",data:other,backgroundColor:"#a8b3c3",stack:"nature",borderWidth:0});
+    if(all||donly)datasets.push({type:"bar",label:"Discrezionali",data:D,backgroundColor:"#8b5cf6",stack:"nature",borderWidth:0});
+    if(all)datasets.push({type:"bar",label:"Altre operative",data:OTHER,backgroundColor:"#94a3b8",stack:"nature",borderWidth:0});
+    if(all)datasets.push({type:"bar",label:"Investimenti",data:INV,backgroundColor:"#06b6d4",stack:"nature",borderWidth:0});
     datasets.push({type:"line",label:"Entrate",data:income,borderColor:"#2687e8",backgroundColor:"#2687e8",borderWidth:2.3,pointRadius:2.6,tension:.2,yAxisID:"y"});
     if(on){
       const margin=income.map(function(v,i){return v-O[i]-N[i]-NC[i]});
@@ -4319,12 +4316,12 @@ function renderHistoricalChart(){
         const hit=chart.getElementsAtEventForMode(evt,"nearest",{intersect:true},true);
         if(!hit.length){chart.canvas.style.cursor="default";return}
         const label=chart.data.datasets[hit[0].datasetIndex]&&chart.data.datasets[hit[0].datasetIndex].label;
-        const clickable=historicalChartMode==="NATURE"?["Obbligatorie","Necessarie","NC · Non classificate","Discrezionali","Altre / investimenti"].includes(label):label==="Uscite";
+        const clickable=historicalChartMode==="NATURE"?["Obbligatorie","Necessarie","NC · Non classificate","Discrezionali","Altre operative","Investimenti"].includes(label):label==="Uscite";
         chart.canvas.style.cursor=clickable?"pointer":"default";
       },
       onClick:function(evt,els,chart){
         const hit=chart.getElementsAtEventForMode(evt,"nearest",{intersect:true},true);if(!hit.length)return;
-        const h=hit[0],ds=chart.data.datasets[h.datasetIndex],label=ds&&ds.label,month=months[h.index],map={"Obbligatorie":"MANDATORY","Necessarie":"NECESSARY","NC · Non classificate":"UNCLASSIFIED","Discrezionali":"DISCRETIONARY","Altre / investimenti":"UNKNOWN"};
+        const h=hit[0],ds=chart.data.datasets[h.datasetIndex],label=ds&&ds.label,month=months[h.index],map={"Obbligatorie":"MANDATORY","Necessarie":"NECESSARY","NC · Non classificate":"UNCLASSIFIED","Discrezionali":"DISCRETIONARY","Altre operative":"UNKNOWN","Investimenti":"INVESTMENT"};
         if(historicalChartMode==="NATURE"&&map[label])openBalanceNatureDrill(map[label],month,"MONTH_NATURE");
         else if(historicalChartMode==="CASHFLOW"&&label==="Uscite")openBalanceNatureDrill("ALL_EXPENSE",month,"MONTH_CASHFLOW");
       },
