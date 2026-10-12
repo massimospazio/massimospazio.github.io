@@ -9,7 +9,7 @@
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
 <script src="../shared/supabase-client.js?v=73.24.0-20261012-1415"></script>
-<script src="../shared/app-config.js?v=73.27.0-20261012-1905"></script>
+<script src="../shared/app-config.js?v=73.28.0-20261012-2025"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 :root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#6b7280;--line:#e5e7eb;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 8px 24px rgba(15,23,42,.06)}
@@ -1521,6 +1521,7 @@ button,input,select{font:inherit}
             <div>
               <h3 id="balanceDrillTitle">Dettaglio natura</h3>
               <p id="balanceDrillSubtitle">Seleziona una componente del grafico per approfondire.</p>
+              <div id="balanceDrillTemporality" class="balance-drill-temporality"></div>
             </div>
             <div class="balance-drill-head-actions">
               <span id="balanceDrillTotal" class="balance-drill-total">—</span>
@@ -4015,6 +4016,12 @@ function balanceDrillMonthSets(){
   if(mode==="FORECAST_12")return {all:months,actual:[],forecast:months.slice()};
   return {all:months,actual:months.slice(),forecast:[]};
 }
+function balanceModeMonthSets(mode,month){const current=historicalCurrentMonth(),months=month?[month]:historicalMonthsFor(mode||historicalPeriodMode),m=mode||historicalPeriodMode;if(m==="CURRENT_YEAR")return {all:months,actual:months.filter(function(x){return x<current}),forecast:months.filter(function(x){return x>=current})};if(m==="FORECAST_12")return {all:months,actual:[],forecast:months.slice()};return {all:months,actual:months.slice(),forecast:[]}}
+function balanceTemporalKey(v){const x=String(v||"").toUpperCase();return x==="RECURRING"?"R":x==="PLANNED_OCCASIONAL"?"P":x==="EXCEPTIONAL"?"E":x==="NOT_APPLICABLE"?"X":"U"}
+function balanceTemporalBreakdown(nature,mode,month,scope){const out={R:0,P:0,E:0,X:0,U:0},sets=balanceModeMonthSets(mode,month),actualSet=new Set(sets.actual),viewScope=scope||"ORDINARY",add=function(k,v){out[k]=(out[k]||0)+Math.max(0,num(v))};(scenarioActualCategories||[]).forEach(function(x){if(!actualSet.has(String(x.month_start)))return;const dir=String(x.direction||"");if(nature==="INVESTMENT"){if(dir!=="INVESTMENT")return;const temporal=String(x.investment_temporality||""),funding=String(x.investment_funding_source||"CURRENT_SURPLUS");if(!(temporal==="RECURRING"||(temporal==="PLANNED_OCCASIONAL"&&funding!=="PRIOR_WEALTH")))return;add(balanceTemporalKey(temporal),num(x.ordinary_amount));if(viewScope==="TOTAL")add("E",num(x.extraordinary_amount));return}if(dir!=="EXPENSE")return;const catNature=historicalNatureForCategory(x);if(nature!=="ALL_EXPENSE"&&catNature!==nature)return;const meta=historicalMetaMap().get(String(x.l2_id||""))||{};add(balanceTemporalKey(meta.temporality),num(x.ordinary_amount));if(viewScope==="TOTAL")add("E",num(x.extraordinary_amount))});if(sets.forecast.length){if(nature==="INVESTMENT")add("R",sets.forecast.reduce(function(s,m){return s+num(scenarioForecastInvestment(m))},0));else{const data=projectionDataFor("EXPENSE"),fmap=balanceProjectionCategoryTotals(data,sets.forecast,"FORECAST"),meta=historicalMetaMap();(data&&data.categories||[]).forEach(function(cat){const cn=balanceDrillNatureForProjectionCat(cat);if(nature!=="ALL_EXPENSE"&&cn!==nature)return;const amount=num(fmap.get(String(cat.category_id)));if(amount<=.005)return;add(balanceTemporalKey((meta.get(String(cat.category_id))||{}).temporality),amount)})}}out.total=out.R+out.P+out.E+out.X+out.U;return out}
+function balanceTemporalTitle(b){if(!b||!b.total)return "Temporalità non disponibile";const p=function(v){return (v*100/b.total).toLocaleString("it-IT",{maximumFractionDigits:0})+"%"};return "R "+p(b.R)+" · P "+p(b.P)+" · E "+p(b.E)+" · X "+p(b.X)+(b.U>.5?" · n.d. "+p(b.U):"")}
+function balanceTemporalPiecesHtml(b){if(!b||!b.total)return '<span class="balance-erode-temporal-piece u" style="width:100%"></span>';return [["R","r"],["P","p"],["E","e"],["X","x"],["U","u"]].filter(function(k){return b[k[0]]>.005}).map(function(k){return '<span class="balance-erode-temporal-piece '+k[1]+'" style="width:'+(b[k[0]]*100/b.total).toFixed(2)+'%"></span>'}).join("")}
+function balanceTemporalChipsHtml(b){if(!b||!b.total)return "";const defs=[["R","r","R · Ricorrente"],["P","p","P · Occasionale / programmabile"],["E","e","E · Eccezionale"],["X","x","X · Non applicabile"],["U","u","? · Non definita"]];return defs.filter(function(d){return b[d[0]]>.5}).map(function(d){const pct=b[d[0]]*100/b.total;return '<span class="balance-drill-temporal-chip '+d[1]+'"><i></i><b>'+esc(d[2])+'</b><span>'+money(b[d[0]])+' · '+pct.toLocaleString("it-IT",{maximumFractionDigits:0})+'%</span></span>'}).join("")}
 function balanceDrillRowsForSelection(){
   if(!balanceDrillSelection)return [];
   const nature=balanceDrillSelection.nature,sets=balanceDrillMonthSets(),scope=balanceDrillSelection.scope||"ORDINARY",rows=new Map();
@@ -4076,6 +4083,8 @@ function renderBalanceDrill(){
   box.classList.add("nature-"+String(balanceDrillSelection.nature||"").toLowerCase());
   $("balanceDrillTitle").textContent=balanceDrillNatureLabel(balanceDrillSelection.nature)+" · "+balanceDrillPeriodLabel();
   $("balanceDrillSubtitle").textContent=mixed?"Consuntivo e previsione nello stesso dettaglio.":forecastOnly?"Previsione per categoria; il dettaglio movimenti usa la base storica.":"Macro-categorie L1, poi L2, controparti e movimenti.";
+  const temporal=balanceTemporalBreakdown(balanceDrillSelection.nature,balanceDrillSelection.mode,balanceDrillSelection.month,balanceDrillSelection.scope);
+  if($("balanceDrillTemporality"))$("balanceDrillTemporality").innerHTML=balanceTemporalChipsHtml(temporal);
   $("balanceDrillTotal").textContent=money(total);
   $("balanceDrillCategoryHint").textContent=groups.length+" L1 · "+balanceDrillRows.length+" L2";
   $("balanceDrillSort").value=balanceDrillSort;
@@ -4157,14 +4166,14 @@ async function loadBalanceDrillCategory(categoryId){
 function openBalanceNatureDrill(nature,month,origin){
   if(!nature)return;
   balanceDrillSelection={nature:nature,month:month||null,origin:origin||"CHART",mode:historicalPeriodMode,scope:historicalScope};
-  balanceDrillCategoryId=null;balanceDrillDetail=null;balanceDrillCounterparty="";balanceDrillSort="AMOUNT";
+  balanceDrillCategoryId=null;balanceDrillDetail=null;balanceDrillCounterparty="";balanceDrillSort="AMOUNT";balanceDrillExpandedL1=null;
   renderBalanceDrill();
   const first=balanceDrillRows.find(function(x){return String(x.id).indexOf("__")!==0});
   if(first)loadBalanceDrillCategory(first.id);
   $("balanceNatureDetail")?.scrollIntoView({behavior:"smooth",block:"nearest"});
 }
 function closeBalanceNatureDrill(){
-  balanceDrillSelection=null;balanceDrillRows=[];balanceDrillCategoryId=null;balanceDrillDetail=null;balanceDrillCounterparty="";
+  balanceDrillSelection=null;balanceDrillRows=[];balanceDrillCategoryId=null;balanceDrillDetail=null;balanceDrillCounterparty="";balanceDrillExpandedL1=null;
   $("balanceNatureDetail")?.classList.add("hidden");
 }
 async function openBalanceDrillInAnalysis(categoryId){
@@ -4196,10 +4205,13 @@ function renderBalanceErosion(){
     ["o","Obbligatorie",t.mandatory,"MANDATORY"],["n","Necessarie",t.necessary,"NECESSARY"],["nc","NC",t.unclassified,"UNCLASSIFIED"],["d","Discrezionali",t.discretionary,"DISCRETIONARY"],
     ["other","Altre operative",t.otherOperating,"UNKNOWN"],["save","Risparmio",t.savings,"INVESTMENT"],["free","Residuo",Math.max(0,t.available),null]
   ];
-  const visible=parts.filter(function(x){return x[2]>.5});
+  const visible=parts.filter(function(x){return x[2]>.5}),tb=balanceTemporalBreakdown("ALL_EXPENSE",historicalPeriodMode,null,historicalScope);
+  const tp=function(key,cls){if(!(tb[key]>.5)||!tb.total)return "";return '<span class="balance-erode-temporal-piece '+cls+'" style="width:'+(tb[key]*100/tb.total).toFixed(2)+'%"></span>'};
+  const temporal=tb.total?'<div class="balance-erode-temporal-row" title="'+esc(balanceTemporalTitle(tb))+'">'+tp("R","r")+tp("P","p")+tp("E","e")+tp("X","x")+tp("U","u")+'</div><div class="balance-erode-temporal-legend"><strong>Temporalità uscite</strong><span><i></i>R ricorrente</span><span class="p"><i></i>P occasionale / programmabile</span><span class="e"><i></i>E eccezionale</span><span class="x"><i></i>X non applicabile</span><span class="u"><i></i>? n.d.</span></div>':"";
   $("balanceErosionWidget").innerHTML=
-    '<div class="balance-erode-head"><div><strong>Dove vanno le entrate?</strong><div class="muted small">Composizione delle entrate del periodo</div></div><b>'+historicalSigned(t.available)+'</b></div>'+
+    '<div class="balance-erode-head"><div><strong>Dove vanno le entrate?</strong><div class="muted small">Natura delle spese · la linea sottile mostra la Temporalità</div></div><b>'+historicalSigned(t.available)+'</b></div>'+
     '<div class="balance-erode-bar">'+visible.map(function(x){return '<span class="balance-erode-seg '+x[0]+'" style="width:'+Math.max(.7,x[2]*100/base).toFixed(2)+'%" title="'+esc(x[1])+' · '+money(x[2])+'"></span>'}).join("")+'</div>'+
+    temporal+
     '<div class="balance-erode-legend">'+visible.map(function(x){
       const pct=x[2]*100/base;
       return x[3]
@@ -5311,6 +5323,7 @@ $("historicalYearSelect")?.addEventListener("change",function(){
 $("scenarioView").addEventListener("click",async function(e){
   const closeDrill=e.target.closest("[data-balance-drill-close]");if(closeDrill){closeBalanceNatureDrill();return}
   const nature=e.target.closest("[data-balance-nature]");if(nature){openBalanceNatureDrill(nature.dataset.balanceNature,null,"EROSION");return}
+  const drillL1=e.target.closest("[data-balance-drill-l1]");if(drillL1){const id=drillL1.dataset.balanceDrillL1;balanceDrillExpandedL1=String(balanceDrillExpandedL1)===String(id)?null:id;balanceDrillCategoryId=null;balanceDrillDetail=null;balanceDrillCounterparty="";renderBalanceDrill();if(balanceDrillExpandedL1){const g=balanceDrillHierarchy().find(function(x){return String(x.id)===String(id)});if(g&&g.children.length)await loadBalanceDrillCategory(g.children[0].id)}return}
   const drillCat=e.target.closest("[data-balance-drill-category]");if(drillCat){await loadBalanceDrillCategory(drillCat.dataset.balanceDrillCategory);return}
   const drillCp=e.target.closest("[data-balance-drill-counterparty]");if(drillCp){balanceDrillCounterparty=drillCp.dataset.balanceDrillCounterparty||"";renderBalanceDrillBreakdown();return}
   if(e.target.closest("[data-balance-drill-clear-counterparty]")){balanceDrillCounterparty="";renderBalanceDrillBreakdown();return}
