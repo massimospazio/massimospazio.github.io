@@ -1074,6 +1074,42 @@ button,input,select{font:inherit}
 @media(max-width:980px){.balance-drill-grid{grid-template-columns:1fr}.balance-drill-counterparties{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:680px){.balance-drill-head{flex-direction:column}.balance-drill-head-actions{justify-content:flex-start}.balance-drill-counterparties{grid-template-columns:1fr 1fr}.balance-drill-table th:nth-child(2),.balance-drill-table td:nth-child(2){display:none}}
 
+
+/* V73.28.0 — gerarchia L1→L2 + split temporalità */
+.balance-drill-card{--drill-accent:#64748b;--drill-soft:#f8fafc;border-top:4px solid var(--drill-accent);background:linear-gradient(180deg,var(--drill-soft) 0,rgba(255,255,255,.98) 82px)}
+.balance-drill-card.nature-mandatory{--drill-accent:#ef5a5a;--drill-soft:#fff4f4}
+.balance-drill-card.nature-necessary{--drill-accent:#f4a61d;--drill-soft:#fff8e8}
+.balance-drill-card.nature-unclassified{--drill-accent:#64748b;--drill-soft:#f4f6f8}
+.balance-drill-card.nature-discretionary{--drill-accent:#8b5cf6;--drill-soft:#f7f2ff}
+.balance-drill-card.nature-unknown{--drill-accent:#94a3b8;--drill-soft:#f6f8fb}
+.balance-drill-card.nature-investment{--drill-accent:#06b6d4;--drill-soft:#edfbfe}
+.balance-drill-card.nature-all_expense{--drill-accent:#2563eb;--drill-soft:#eff6ff}
+.balance-drill-head{padding-bottom:8px;border-bottom:1px solid color-mix(in srgb,var(--drill-accent) 22%,#e5e7eb)}
+.balance-drill-head h3{display:flex;align-items:center;gap:8px}.balance-drill-head h3:before{content:"";width:11px;height:11px;border-radius:50%;background:var(--drill-accent);box-shadow:0 0 0 5px color-mix(in srgb,var(--drill-accent) 14%,transparent)}
+.balance-drill-total{color:var(--drill-accent)}
+.balance-drill-temporality{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
+.balance-drill-temporal-chip{display:inline-flex;align-items:center;gap:5px;padding:4px 7px;border:1px solid color-mix(in srgb,var(--drill-accent) 18%,#e5e7eb);border-radius:999px;background:rgba(255,255,255,.82);font-size:9.5px;color:#64748b}
+.balance-drill-temporal-chip b{font-size:10px;color:#263244}.balance-drill-temporal-chip i{width:7px;height:7px;border-radius:50%;background:var(--drill-accent)}
+.balance-drill-temporal-chip.p i{opacity:.62}.balance-drill-temporal-chip.x i{opacity:.32}.balance-drill-temporal-chip.u i{opacity:.16}.balance-drill-temporal-chip.e i{background:#111827;opacity:.85}
+.balance-drill-l1 td{background:color-mix(in srgb,var(--drill-accent) 7%,#fff);font-weight:800}
+.balance-drill-l1:hover td{background:color-mix(in srgb,var(--drill-accent) 11%,#fff)}
+.balance-drill-l1-btn{display:flex;align-items:center;gap:7px;width:100%;border:0;background:transparent;padding:0;color:#172033;cursor:pointer;text-align:left;font-weight:850}
+.balance-drill-l1-btn .chev{font-size:12px;color:var(--drill-accent);width:13px}.balance-drill-l1-btn .count{font-size:9px;color:#7a8799;font-weight:650}
+.balance-drill-l2 td{background:#fff}.balance-drill-l2 td:first-child{padding-left:28px}.balance-drill-l2 .balance-drill-cat-btn{font-weight:700}
+.balance-drill-l2 .balance-drill-cat-meta{display:none}
+.balance-drill-table tr.balance-drill-selected td{background:color-mix(in srgb,var(--drill-accent) 11%,#fff)!important}
+.balance-drill-table tr.balance-drill-selected td:first-child{box-shadow:inset 3px 0 var(--drill-accent)}
+.balance-drill-share i:after{background:var(--drill-accent)}
+.balance-erode-temporal-row{display:flex;height:8px;border-radius:999px;overflow:hidden;margin-top:3px;background:#eef2f6;gap:0}
+.balance-erode-temporal-cell{display:flex;height:100%;overflow:hidden;min-width:1px}
+.balance-erode-temporal-piece{height:100%;min-width:1px;background:currentColor}
+.balance-erode-temporal-piece.r{opacity:1}.balance-erode-temporal-piece.p{opacity:.62}.balance-erode-temporal-piece.x{opacity:.32}.balance-erode-temporal-piece.u{opacity:.14}.balance-erode-temporal-piece.e{opacity:.92;filter:saturate(.55) brightness(.62)}
+.balance-erode-temporal-cell.o{color:#ef5a5a}.balance-erode-temporal-cell.n{color:#f4b63e}.balance-erode-temporal-cell.nc{color:#64748b}.balance-erode-temporal-cell.d{color:#8b5cf6}.balance-erode-temporal-cell.other{color:#94a3b8}.balance-erode-temporal-cell.save{color:#06b6d4}.balance-erode-temporal-cell.free{color:#22a96b}
+.balance-erode-temporal-legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:7px;font-size:9.5px;color:#718096;align-items:center}
+.balance-erode-temporal-legend strong{color:#475569;margin-right:2px}.balance-erode-temporal-legend span{display:inline-flex;align-items:center;gap:4px}
+.balance-erode-temporal-legend i{width:8px;height:8px;border-radius:50%;background:#64748b}.balance-erode-temporal-legend .p i{opacity:.62}.balance-erode-temporal-legend .x i{opacity:.32}.balance-erode-temporal-legend .u i{opacity:.14}.balance-erode-temporal-legend .e i{background:#111827;opacity:.85}
+@media(max-width:680px){.balance-drill-l2 td:first-child{padding-left:20px}.balance-erode-temporal-legend{gap:8px}}
+
 /* V73.18.2 — Bilancio hub: Storico + Previsione */
 .balance-hub-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:12px;padding:2px 2px 0}
 .balance-hub-head h2{margin:2px 0 0;font-size:29px;color:#10204d}.balance-hub-head p{margin:5px 0 0;color:#62718b;font-size:13px}
@@ -1683,6 +1719,7 @@ let balanceDrillCategoryId=null;
 let balanceDrillDetail=null;
 let balanceDrillCounterparty="";
 let balanceDrillSort="AMOUNT";
+let balanceDrillExpandedL1=null;
 let balanceDrillLoadSeq=0;
 let analysisWorkspace=null;
 let analysisWorkspaceKey="";
