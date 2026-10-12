@@ -3593,7 +3593,9 @@ function historicalTotalsFor(mode){
   const ordinaryIncome=sum("incoming_ordinary");
   const cashOrdinaryOut=sum("outgoing_ordinary"),cashOrdinaryNet=sum("net_ordinary");
   const recurringInvestments=sum("investments_recurring_ordinary");
-  const plannedInvestments=sum("investments_planned_ordinary");
+  const currentSurplusInvestments=sum("investments_current_surplus_ordinary");
+  const priorWealthInvestments=sum("investments_prior_wealth_ordinary");
+  const plannedInvestments=currentSurplusInvestments+priorWealthInvestments;
   const ordinaryOut=rows.reduce(function(s,x){
     const v=x.outgoing_operating_ordinary;
     return s+(v!==undefined&&v!==null?num(v):Math.max(0,num(x.outgoing_ordinary)-num(x.investments_ordinary)));
@@ -3602,10 +3604,10 @@ function historicalTotalsFor(mode){
     const v=x.net_operating_ordinary;
     return s+(v!==undefined&&v!==null?num(v):num(x.incoming_ordinary)-Math.max(0,num(x.outgoing_ordinary)-num(x.investments_ordinary)));
   },0);
-  const availableAfterSavings=ordinaryNet-recurringInvestments;
+  const availableAfterSavings=ordinaryNet-recurringInvestments-currentSurplusInvestments;
   const totalIncome=sum("incoming"),totalOut=sum("outgoing"),totalNet=sum("net"),extraIncome=sum("incoming_extraordinary"),extraOut=sum("outgoing_extraordinary"),extraNet=extraIncome-extraOut;
   return {rows:rows,ordinaryIncome:ordinaryIncome,ordinaryOut:ordinaryOut,ordinaryNet:ordinaryNet,cashOrdinaryOut:cashOrdinaryOut,cashOrdinaryNet:cashOrdinaryNet,
-    recurringInvestments:recurringInvestments,plannedInvestments:plannedInvestments,availableAfterSavings:availableAfterSavings,
+    recurringInvestments:recurringInvestments,currentSurplusInvestments:currentSurplusInvestments,priorWealthInvestments:priorWealthInvestments,plannedInvestments:plannedInvestments,availableAfterSavings:availableAfterSavings,
     totalIncome:totalIncome,totalOut:totalOut,totalNet:totalNet,extraIncome:extraIncome,extraOut:extraOut,extraNet:extraNet,
     ordinaryPositive:rows.filter(function(x){const v=x.net_operating_ordinary;return (v!==undefined&&v!==null?num(v):num(x.net_ordinary)+num(x.investments_ordinary))>=0}).length,
     totalPositive:rows.filter(function(x){return num(x.net)>=0}).length};
@@ -3650,13 +3652,15 @@ function historicalMonthlyNature(mode,scope){
   return base;
 }
 function historicalInvestmentTotals(mode,scope){
-  const out={RECURRING:0,PLANNED_OCCASIONAL:0,OTHER:0};
+  const out={RECURRING:0,CURRENT_SURPLUS:0,PRIOR_WEALTH:0,OTHER:0};
   historicalCategoryRows(mode).forEach(function(x){
     if(String(x.direction)!=="INVESTMENT")return;
     const amount=historicalCategoryAmount(x,scope||"ORDINARY");
-    const k=String(x.investment_temporality||"");
-    if(k==="RECURRING")out.RECURRING+=amount;
-    else if(k==="PLANNED_OCCASIONAL")out.PLANNED_OCCASIONAL+=amount;
+    const temporal=String(x.investment_temporality||"");
+    const funding=String(x.investment_funding_source||"CURRENT_SURPLUS");
+    if(temporal==="RECURRING")out.RECURRING+=amount;
+    else if(temporal==="PLANNED_OCCASIONAL"&&funding==="PRIOR_WEALTH")out.PRIOR_WEALTH+=amount;
+    else if(temporal==="PLANNED_OCCASIONAL")out.CURRENT_SURPLUS+=amount;
     else out.OTHER+=amount;
   });
   return out;
@@ -3688,10 +3692,11 @@ function renderHistoricalKpis(){
   $("historicalBalanceKpis").innerHTML=
     '<div class="historical-kpi income"><div class="label">Entrate ordinarie '+historicalInfo("Entrate economiche ordinarie del periodo. Giroconti interni e movimenti eccezionali restano esclusi.")+'</div><div class="value positive">'+money(t.ordinaryIncome)+'</div><div class="sub">Ø '+money(t.ordinaryIncome/12)+'/mese</div></div>'+
     '<div class="historical-kpi expense"><div class="label">Uscite operative '+historicalInfo("Spese ordinarie escluse le allocazioni in investimenti. Misura il costo della gestione familiare senza confondere consumo e trasformazione di patrimonio.")+'</div><div class="value negative">'+money(t.ordinaryOut)+'</div><div class="sub">Ø '+money(t.ordinaryOut/12)+'/mese</div></div>'+
-    historicalKpiCard("Saldo operativo",t.ordinaryNet,'Ø '+historicalSigned(t.ordinaryNet/12)+'/mese',"balance","Entrate ordinarie meno uscite operative. Gli investimenti non lo riducono: vengono mostrati separatamente.")+
-    historicalKpiCard("Risparmio programmato",-t.recurringInvestments,'PAC / investimenti ricorrenti',"investment","Investimenti ricorrenti programmati. Non sono consumo, ma riducono la liquidità mensile disponibile dopo il piano di risparmio.")+
-    historicalKpiCard("Disponibile dopo risparmio",t.availableAfterSavings,'Saldo operativo − risparmio programmato',"margin","Quanto resta dopo gestione ordinaria e investimenti ricorrenti. Gli investimenti occasionali non riducono questo KPI.")+
-    '<div class="historical-kpi extra"><div class="label">Investimenti occasionali '+historicalInfo("Allocazioni patrimoniali programmate ma non ricorrenti. Restano visibili, ma non riducono il margine strutturale né il disponibile dopo risparmio.")+'</div><div class="value">'+money(t.plannedInvestments)+'</div><div class="sub">riallocazione patrimonio</div></div>'+
+    historicalKpiCard("Saldo operativo",t.ordinaryNet,'Ø '+historicalSigned(t.ordinaryNet/12)+'/mese',"balance","Entrate ordinarie meno uscite operative. Gli investimenti non modificano questo KPI: vengono letti come allocazione del surplus o del patrimonio.")+
+    historicalKpiCard("Risparmio programmato",-t.recurringInvestments,'PAC / investimenti ricorrenti',"investment","Investimenti ricorrenti programmati. Non sono consumo, ma assorbono liquidità disponibile prodotta dal reddito corrente.")+
+    historicalKpiCard("Investimenti da surplus",-t.currentSurplusInvestments,'Occasionali finanziati dalla liquidità corrente',"investment","Investimenti occasionali finanziati dal surplus corrente. Non riducono il margine strutturale, ma riducono quanto surplus rimane libero.")+
+    historicalKpiCard("Disponibile dopo risparmio",t.availableAfterSavings,'Saldo operativo − PAC − investimenti occasionali da surplus',"margin","Quanto rimane del surplus dopo investimenti ricorrenti e investimenti occasionali finanziati dalla liquidità corrente. Gli investimenti da patrimonio pregresso non lo riducono.")+
+    '<div class="historical-kpi extra"><div class="label">Investimenti da patrimonio '+historicalInfo("Investimenti occasionali finanziati da patrimonio pregresso o da un disinvestimento. Restano visibili ma non consumano il surplus prodotto nel periodo.")+'</div><div class="value">'+money(t.priorWealthInvestments)+'</div><div class="sub">riallocazione patrimoniale</div></div>'+
     '<div class="historical-kpi extra"><div class="label">Impatto eccezionali '+historicalInfo("Entrate eccezionali meno uscite eccezionali. È separato dalla struttura ordinaria.")+'</div><div class="value '+(t.extraNet>=0?"positive":"negative")+'">'+historicalSigned(t.extraNet)+'</div><div class="sub historical-extra-breakdown"><span>Entrate +'+money(t.extraIncome)+'</span><span>Uscite −'+money(t.extraOut)+'</span></div></div>'+
     historicalKpiCard("Flusso netto tracciato",t.totalNet,'Include investimenti · esclude giroconti interni',"total","Flusso dei movimenti economici tracciati nel periodo. Non è una variazione di patrimonio netto: gli investimenti trasformano liquidità in attività finanziarie e i giroconti interni sono esclusi.");
   if($("historicalBalanceStatus"))$("historicalBalanceStatus").innerHTML='<div class="historical-period-chip">'+esc(period)+'</div>';
@@ -3700,20 +3705,21 @@ function renderHistoricalStructural(){
   const t=historicalTotalsFor(historicalPeriodMode),n=historicalNatureTotals(historicalPeriodMode,"ORDINARY"),nc=historicalUnclassifiedBreakdown(historicalPeriodMode,"ORDINARY"),inv=historicalInvestmentTotals(historicalPeriodMode,"ORDINARY");
   const structuralCost=n.MANDATORY+n.NECESSARY+n.UNCLASSIFIED;
   const margin=t.ordinaryIncome-structuralCost,residualAfterD=margin-n.DISCRETIONARY;
-  const availableAfterSavings=residualAfterD-inv.RECURRING;
+  const availableAfterSavings=residualAfterD-inv.RECURRING-inv.CURRENT_SURPLUS;
   const otherOperating=Math.max(0,t.ordinaryOut-n.MANDATORY-n.NECESSARY-n.DISCRETIONARY-n.UNCLASSIFIED);
   function item(label,value,sub,cls,info){
     return '<div class="historical-structural-item '+(cls||"")+'"><span>'+esc(label)+(info?" "+historicalInfo(info):"")+'</span><strong class="'+(value>=0?"positive":"negative")+'">'+historicalSigned(value)+'</strong><small>'+esc(sub)+'</small></div>';
   }
   $("historicalStructuralStrip").innerHTML=
-    item("Margine strutturale",margin,"Entrate ordinarie − O − N − NC","margin","Margine prudenziale della gestione familiare. Non sottrae gli investimenti perché sono allocazioni di patrimonio, non consumo.")+
+    item("Margine strutturale",margin,"Entrate ordinarie − O − N − NC","margin","Capacità strutturale della gestione familiare. Gli investimenti non sono consumo e quindi non modificano questo indicatore.")+
     item("Obbligatorie",n.MANDATORY,"Ø "+money(n.MANDATORY/12)+"/mese","mandatory","Spese difficilmente comprimibili nel breve periodo.")+
     item("Necessarie",n.NECESSARY,"Ø "+money(n.NECESSARY/12)+"/mese","necessary","Spese necessarie ma potenzialmente ottimizzabili.")+
     item("NC · Non classificate",n.UNCLASSIFIED,"Cash "+money(nc.cash)+" · Da classificare "+money(nc.toClassify),"unclassified","Uscite già sostenute ma senza Natura O/N/D affidabile: vengono sottratte per non sovrastimare il margine.")+
     item("Discrezionali",n.DISCRETIONARY,"Ø "+money(n.DISCRETIONARY/12)+"/mese","discretionary","Spese rinunciabili o riducibili. Vengono sottratte dopo il Margine strutturale.")+
-    item("Risparmio programmato",-inv.RECURRING,"PAC / investimenti ricorrenti","other","Allocazione ricorrente di risparmio. Non è una spesa di consumo, ma riduce ciò che resta disponibile ogni mese.")+
-    item("Residuo dopo D + risparmio",availableAfterSavings,"Esclude investimenti occasionali","residual","Margine strutturale meno discrezionali e investimenti ricorrenti. Le allocazioni patrimoniali occasionali restano fuori da questo KPI.")+
-    item("Investimenti occasionali",inv.PLANNED_OCCASIONAL,"Visibili, non strutturali","other","Investimenti programmati occasionali: trasformano liquidità in patrimonio finanziario e non riducono il margine strutturale.")+
+    item("PAC / investimenti ricorrenti",-inv.RECURRING,"Risparmio programmato","other","Allocazione ricorrente del surplus: riduce il disponibile libero, non il margine strutturale.")+
+    item("Investimenti occasionali da surplus",-inv.CURRENT_SURPLUS,"Liquidità corrente","other","Scelte occasionali di investimento finanziate dal surplus corrente: riducono ciò che rimane disponibile nel periodo.")+
+    item("Residuo dopo D + risparmio",availableAfterSavings,"Surplus ancora libero","residual","Margine strutturale meno discrezionali, PAC e investimenti occasionali finanziati dal surplus corrente.")+
+    item("Investimenti da patrimonio",inv.PRIOR_WEALTH,"Non riducono il residuo","other","Riallocazioni finanziate con patrimonio già esistente o disinvestimenti: restano visibili ma non consumano il surplus prodotto nel periodo.")+
     (otherOperating>.5?item("Altre uscite operative",otherOperating,"Senza Natura O/N/D","other","Altre uscite ordinarie non attribuite a O/N/D e diverse dagli investimenti."):"");
 }
 function renderHistoricalNatureComposition(){
