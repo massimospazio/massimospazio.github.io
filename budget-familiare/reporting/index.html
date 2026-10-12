@@ -9,7 +9,7 @@
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
 <script src="../shared/supabase-client.js?v=73.24.0-20261012-1415"></script>
-<script src="../shared/app-config.js?v=73.26.0-20261012-1530"></script>
+<script src="../shared/app-config.js?v=73.26.1-20261012-1600"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 :root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#6b7280;--line:#e5e7eb;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 8px 24px rgba(15,23,42,.06)}
@@ -988,6 +988,46 @@ button,input,select{font:inherit}
 .balance-mode-badge{display:inline-flex;padding:5px 9px;border-radius:999px;background:#eef5ff;color:#315caa;font-size:11px;font-weight:750}
 @media(max-width:1050px){.balance-flow-grid{grid-template-columns:1fr}.balance-primary-kpis{grid-template-columns:repeat(2,1fr)}.balance-waterfall-chart{height:310px}}
 @media(max-width:650px){.balance-primary-kpis{grid-template-columns:1fr 1fr}.balance-waterfall-chart{height:350px}}
+
+
+/* V73.26.1 — visual polish waterfall */
+.balance-primary-kpis{gap:12px}
+.balance-primary-kpis .historical-kpi{min-height:100px;padding:14px 16px;border-radius:14px;box-shadow:0 7px 20px rgba(15,31,85,.045)}
+.balance-primary-kpis .historical-kpi .label{font-size:11px;letter-spacing:.01em}
+.balance-primary-kpis .historical-kpi .value{font-size:29px;line-height:1.05;margin-top:9px;letter-spacing:-.025em}
+.balance-primary-kpis .historical-kpi .sub{font-size:11px;margin-top:7px}
+.balance-waterfall-card{padding:16px 18px 14px;border-radius:15px;box-shadow:0 8px 25px rgba(15,31,85,.045)}
+.balance-waterfall-card .scenario-card-head h3{font-size:18px;color:#10204d}
+.balance-waterfall-card .scenario-card-head p{font-size:11.5px}
+.balance-waterfall-chart{height:365px;margin-top:3px}
+.balance-mode-badge{padding:6px 10px;font-size:10.5px;background:#edf4ff}
+.balance-side-stack{gap:10px;align-content:start}
+.balance-side-card{min-height:104px;border-radius:13px;padding:14px 15px;box-shadow:0 5px 16px rgba(15,31,85,.035);position:relative;overflow:hidden}
+.balance-side-card:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:#94a3b8}
+.balance-side-card.asset:before{background:#d69e2e}.balance-side-card.saving:before{background:#3b82f6}.balance-side-card.extra:before{background:#ef5a5a}
+.balance-side-card .k{font-size:11px;line-height:1.25}
+.balance-side-card .v{font-size:27px;line-height:1.05;margin-top:8px;letter-spacing:-.02em}
+.balance-side-card .s{font-size:11px;line-height:1.35;margin-top:7px}
+.balance-erode-wrap{margin-top:15px;padding:14px 15px 13px;border-radius:13px;background:#fbfdff}
+.balance-erode-head{margin-bottom:10px}
+.balance-erode-head strong{font-size:15px;color:#10204d}.balance-erode-head .muted{font-size:11px;margin-top:2px}
+.balance-erode-head b{font-size:24px;letter-spacing:-.02em}
+.balance-erode-bar{height:22px}
+.balance-erode-legend{display:grid;grid-template-columns:repeat(4,minmax(130px,1fr));gap:7px 8px;margin-top:11px;font-size:11px;color:#334155}
+.balance-erode-chip{display:grid!important;grid-template-columns:10px minmax(0,1fr) auto;gap:6px!important;align-items:center!important;padding:7px 8px;border:1px solid #e4eaf2;border-radius:9px;background:#fff;min-width:0}
+.balance-erode-chip i{width:9px!important;height:9px!important}
+.balance-erode-chip .name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700}
+.balance-erode-chip .fig{text-align:right;white-space:nowrap;font-weight:800;color:#172033}
+.balance-erode-chip .pct{grid-column:2/4;font-size:9.5px;color:#7a8799;margin-top:-3px}
+.balance-flow-note{font-size:11px;line-height:1.4;margin-top:9px}
+.historical-structural-card{border-radius:14px}
+.historical-structural-strip{gap:9px}
+.historical-structural-item{min-height:82px;padding:10px 11px;border-radius:10px}
+.historical-structural-item strong{font-size:19px}
+.historical-structural-item.margin,.historical-structural-item.residual{box-shadow:inset 0 0 0 1px rgba(37,99,235,.05)}
+@media(max-width:1200px){.balance-erode-legend{grid-template-columns:repeat(3,minmax(140px,1fr))}}
+@media(max-width:760px){.balance-erode-legend{grid-template-columns:repeat(2,minmax(120px,1fr))}.balance-waterfall-chart{height:385px}.balance-side-card{min-height:0}}
+@media(max-width:480px){.balance-erode-legend{grid-template-columns:1fr}.balance-primary-kpis .historical-kpi .value{font-size:25px}}
 
 /* V73.18.2 — Bilancio hub: Storico + Previsione */
 .balance-hub-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:12px;padding:2px 2px 0}
@@ -3871,41 +3911,77 @@ function renderBalanceErosion(){
   const t=balanceFlowModel(historicalPeriodMode);if(!t)return;
   const base=Math.max(1,t.income);
   const parts=[
-    ["o","O",t.mandatory],["n","N",t.necessary],["nc","NC",t.unclassified],["d","D",t.discretionary],
-    ["other","Altre",t.otherOperating],["save","Risparmio",t.savings],["free","Residuo",Math.max(0,t.available)]
+    ["o","Obbligatorie",t.mandatory],["n","Necessarie",t.necessary],["nc","NC",t.unclassified],["d","Discrezionali",t.discretionary],
+    ["other","Altre operative",t.otherOperating],["save","Risparmio",t.savings],["free","Residuo",Math.max(0,t.available)]
   ];
+  const visible=parts.filter(function(x){return x[2]>.5});
   $("balanceErosionWidget").innerHTML=
-    '<div class="balance-erode-head"><div><strong>Dove vanno le entrate?</strong><div class="muted small">Quota delle entrate assorbita dalle principali componenti</div></div><b>'+historicalSigned(t.available)+'</b></div>'+
-    '<div class="balance-erode-bar">'+parts.filter(function(x){return x[2]>.5}).map(function(x){return '<span class="balance-erode-seg '+x[0]+'" style="width:'+Math.max(.7,x[2]*100/base).toFixed(2)+'%" title="'+esc(x[1])+' · '+money(x[2])+'"></span>'}).join("")+'</div>'+
-    '<div class="balance-erode-legend">'+parts.filter(function(x){return x[2]>.5}).map(function(x){return '<span><i class="balance-erode-seg '+x[0]+'"></i>'+esc(x[1])+' '+money(x[2])+'</span>'}).join("")+'</div>';
+    '<div class="balance-erode-head"><div><strong>Dove vanno le entrate?</strong><div class="muted small">Composizione delle entrate del periodo</div></div><b>'+historicalSigned(t.available)+'</b></div>'+
+    '<div class="balance-erode-bar">'+visible.map(function(x){return '<span class="balance-erode-seg '+x[0]+'" style="width:'+Math.max(.7,x[2]*100/base).toFixed(2)+'%" title="'+esc(x[1])+' · '+money(x[2])+'"></span>'}).join("")+'</div>'+
+    '<div class="balance-erode-legend">'+visible.map(function(x){
+      const pct=x[2]*100/base;
+      return '<span class="balance-erode-chip"><i class="balance-erode-seg '+x[0]+'"></i><span class="name">'+esc(x[1])+'</span><span class="fig">'+money(x[2])+'</span><span class="pct">'+pct.toLocaleString("it-IT",{maximumFractionDigits:1})+'% delle entrate</span></span>';
+    }).join("")+'</div>';
 }
 function renderBalanceWaterfall(){
   const t=balanceFlowModel(historicalPeriodMode);if(!t)return;
   if(balanceWaterfallChart){balanceWaterfallChart.destroy();balanceWaterfallChart=null}
   const margin=t.income-t.mandatory-t.necessary-t.unclassified;
-  const afterD=margin-t.discretionary-t.otherOperating;
   const final=t.available+(historicalScope==="TOTAL"?t.extraNet:0);
   const labels=["Entrate","Obbligatorie","Necessarie","NC","Margine strutturale","Discrezionali"].concat(t.otherOperating>.5?["Altre operative"]:[]).concat(["Risparmio","Disponibile"]);
-  const data=[],colors=[];
+  const data=[],colors=[],displayValues=[];
   let cur=t.income;
-  data.push([0,t.income]);colors.push("rgba(14,168,122,.82)");
-  [["O",t.mandatory],["N",t.necessary],["NC",t.unclassified]].forEach(function(x){const next=cur-x[1];data.push([next,cur]);colors.push("rgba(239,91,115,.72)");cur=next});
-  data.push([0,margin]);colors.push("rgba(37,99,235,.76)");cur=margin;
-  cur-=t.discretionary;data.push([cur,cur+t.discretionary]);colors.push("rgba(139,92,246,.72)");
-  if(t.otherOperating>.5){cur-=t.otherOperating;data.push([cur,cur+t.otherOperating]);colors.push("rgba(148,163,184,.78)")}
-  cur-=t.savings;data.push([cur,cur+t.savings]);colors.push("rgba(6,182,212,.78)");
-  data.push([0,final]);colors.push(final>=0?"rgba(34,169,107,.84)":"rgba(185,28,28,.82)");
-  $("balanceWaterfallSubtitle").textContent=historicalScope==="TOTAL"?"Include nel risultato finale anche gli eventi E · Eccezionale.":"Lettura ordinaria: gli eventi E · Eccezionale restano fuori dal risultato.";
+  data.push([0,t.income]);colors.push("rgba(14,168,122,.88)");displayValues.push(t.income);
+  [["O",t.mandatory],["N",t.necessary],["NC",t.unclassified]].forEach(function(x){
+    const next=cur-x[1];data.push([next,cur]);colors.push("rgba(239,91,115,.72)");displayValues.push(-x[1]);cur=next;
+  });
+  data.push([0,margin]);colors.push("rgba(37,99,235,.86)");displayValues.push(margin);cur=margin;
+  cur-=t.discretionary;data.push([cur,cur+t.discretionary]);colors.push("rgba(139,92,246,.76)");displayValues.push(-t.discretionary);
+  if(t.otherOperating>.5){cur-=t.otherOperating;data.push([cur,cur+t.otherOperating]);colors.push("rgba(148,163,184,.78)");displayValues.push(-t.otherOperating)}
+  cur-=t.savings;data.push([cur,cur+t.savings]);colors.push("rgba(6,182,212,.82)");displayValues.push(-t.savings);
+  data.push([0,final]);colors.push(final>=0?"rgba(34,169,107,.90)":"rgba(185,28,28,.86)");displayValues.push(final);
+
+  $("balanceWaterfallSubtitle").textContent=historicalScope==="TOTAL"
+    ?"Totale incl. eventi E · Eccezionale."
+    :"Lettura ordinaria · eventi E esclusi.";
   $("balanceWaterfallMode").textContent=t.label;
   $("balanceWaterfallNote").textContent=t.priorWealthInvestments>.5
     ?"Gli investimenti da patrimonio ("+money(t.priorWealthInvestments)+") sono mostrati a lato e non erodono il disponibile prodotto nel periodo."
-    :"I giroconti interni e le riallocazioni patrimoniali non erodono il flusso economico.";
+    :"Giroconti interni e riallocazioni patrimoniali restano fuori dal flusso economico.";
+
+  const valuePlugin={
+    id:"balanceWaterfallValueLabels",
+    afterDatasetsDraw:function(chart){
+      const ctx=chart.ctx,meta=chart.getDatasetMeta(0);
+      ctx.save();
+      ctx.textAlign="center";ctx.textBaseline="bottom";
+      meta.data.forEach(function(el,i){
+        const v=displayValues[i],isTotal=(i===0||labels[i]==="Margine strutturale"||labels[i]==="Disponibile");
+        const props=el.getProps(["x","y","base"],true);
+        const top=Math.min(props.y,props.base);
+        ctx.font=(isTotal?"800 ":"700 ")+(isTotal?"13px":"11px")+' "Segoe UI",system-ui,sans-serif';
+        ctx.fillStyle=isTotal?"#10204d":(v<0?"#b42335":"#334155");
+        const txt=(v<0?"−":v>0&&labels[i]!=="Entrate"&&labels[i]!=="Margine strutturale"&&labels[i]!=="Disponibile"?"+":"")+money(Math.abs(v));
+        ctx.fillText(txt,props.x,Math.max(18,top-7));
+      });
+      ctx.restore();
+    }
+  };
+
   balanceWaterfallChart=new Chart($("balanceWaterfallChart"),{
     type:"bar",
-    data:{labels:labels,datasets:[{data:data,backgroundColor:colors,borderWidth:0,borderRadius:4,barPercentage:.72}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){
-      const v=ctx.raw||[0,0],delta=Math.abs(num(v[1])-num(v[0]));return money(delta);
-    }}}},scales:{x:{grid:{display:false},ticks:{font:{size:10},maxRotation:0,minRotation:0}},y:{beginAtZero:true,ticks:{callback:function(v){return money(v)},font:{size:10}},grid:{color:"rgba(148,163,184,.18)"}}}}
+    plugins:[valuePlugin],
+    data:{labels:labels,datasets:[{data:data,backgroundColor:colors,borderWidth:0,borderRadius:5,barPercentage:.66,categoryPercentage:.82}]},
+    options:{
+      responsive:true,maintainAspectRatio:false,layout:{padding:{top:24,left:4,right:4,bottom:0}},
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){
+        return (displayValues[ctx.dataIndex]<0?"−":"")+money(Math.abs(displayValues[ctx.dataIndex]));
+      }}}},
+      scales:{
+        x:{grid:{display:false},border:{display:false},ticks:{color:"#536176",font:{size:10.5,weight:"600"},maxRotation:0,minRotation:0,padding:6}},
+        y:{beginAtZero:true,border:{display:false},ticks:{color:"#8793a5",callback:function(v){return money(v)},font:{size:9.5},padding:5,maxTicksLimit:6},grid:{color:"rgba(148,163,184,.12)",drawTicks:false}}
+      }
+    }
   });
   renderBalanceErosion();renderBalanceFlowSide();
 }
