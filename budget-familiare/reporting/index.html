@@ -3831,39 +3831,83 @@ function historicalKpiCard(label,value,sub,tone,info){
   return '<div class="historical-kpi '+(tone||"")+'"><div class="label">'+esc(label)+(info?" "+historicalInfo(info):"")+'</div><div class="value '+(num(value)>=0?"positive":"negative")+'">'+historicalSigned(value)+'</div><div class="sub">'+sub+'</div></div>';
 }
 function renderHistoricalKpis(){
-  const t=historicalTotalsFor(historicalPeriodMode),period=historicalPeriodLabel(historicalPeriodMode);
+  const t=balanceFlowModel(historicalPeriodMode);if(!t)return;
+  const months=12;
   $("historicalBalanceKpis").innerHTML=
-    '<div class="historical-kpi income"><div class="label">Entrate ordinarie '+historicalInfo("Entrate economiche ordinarie del periodo. Giroconti interni e movimenti eccezionali restano esclusi.")+'</div><div class="value positive">'+money(t.ordinaryIncome)+'</div><div class="sub">Ø '+money(t.ordinaryIncome/12)+'/mese</div></div>'+
-    '<div class="historical-kpi expense"><div class="label">Uscite operative '+historicalInfo("Spese ordinarie escluse le allocazioni in investimenti. Misura il costo della gestione familiare senza confondere consumo e trasformazione di patrimonio.")+'</div><div class="value negative">'+money(t.ordinaryOut)+'</div><div class="sub">Ø '+money(t.ordinaryOut/12)+'/mese</div></div>'+
-    historicalKpiCard("Saldo operativo",t.ordinaryNet,'Ø '+historicalSigned(t.ordinaryNet/12)+'/mese',"balance","Entrate ordinarie meno uscite operative. Gli investimenti non modificano questo KPI: vengono letti come allocazione del surplus o del patrimonio.")+
-    historicalKpiCard("Risparmio programmato",-t.recurringInvestments,'PAC / investimenti ricorrenti',"investment","Investimenti ricorrenti programmati. Non sono consumo, ma assorbono liquidità disponibile prodotta dal reddito corrente.")+
-    historicalKpiCard("Investimenti da surplus",-t.currentSurplusInvestments,'Occasionali finanziati dalla liquidità corrente',"investment","Investimenti occasionali finanziati dal surplus corrente. Non riducono il margine strutturale, ma riducono quanto surplus rimane libero.")+
-    historicalKpiCard("Disponibile dopo risparmio",t.availableAfterSavings,'Saldo operativo − PAC − investimenti occasionali da surplus',"margin","Quanto rimane del surplus dopo investimenti ricorrenti e investimenti occasionali finanziati dalla liquidità corrente. Gli investimenti da patrimonio pregresso non lo riducono.")+
-    '<div class="historical-kpi extra"><div class="label">Investimenti da patrimonio '+historicalInfo("Investimenti occasionali finanziati da patrimonio pregresso o da un disinvestimento. Restano visibili ma non consumano il surplus prodotto nel periodo.")+'</div><div class="value">'+money(t.priorWealthInvestments)+'</div><div class="sub">riallocazione patrimoniale</div></div>'+
-    '<div class="historical-kpi extra"><div class="label">Impatto eccezionali '+historicalInfo("Entrate eccezionali meno uscite eccezionali. È separato dalla struttura ordinaria.")+'</div><div class="value '+(t.extraNet>=0?"positive":"negative")+'">'+historicalSigned(t.extraNet)+'</div><div class="sub historical-extra-breakdown"><span>Entrate +'+money(t.extraIncome)+'</span><span>Uscite −'+money(t.extraOut)+'</span></div></div>'+
-    historicalKpiCard("Flusso netto tracciato",t.totalNet,'Include investimenti · esclude giroconti interni',"total","Flusso dei movimenti economici tracciati nel periodo. Non è una variazione di patrimonio netto: gli investimenti trasformano liquidità in attività finanziarie e i giroconti interni sono esclusi.");
-  if($("historicalBalanceStatus"))$("historicalBalanceStatus").innerHTML='<div class="historical-period-chip">'+esc(period)+'</div>';
+    '<div class="historical-kpi income"><div class="label">Entrate '+historicalInfo("Entrate economiche del periodo selezionato. Giroconti interni esclusi.")+'</div><div class="value positive">'+money(t.income)+'</div><div class="sub">Ø '+money(t.income/months)+'/mese</div></div>'+
+    '<div class="historical-kpi expense"><div class="label">Uscite operative '+historicalInfo("Spese di gestione. Gli investimenti patrimoniali non sono consumo e restano fuori da questo KPI.")+'</div><div class="value negative">'+money(t.operatingOut)+'</div><div class="sub">Ø '+money(t.operatingOut/months)+'/mese</div></div>'+
+    historicalKpiCard("Margine strutturale",t.income-t.mandatory-t.necessary-t.unclassified,
+      "Entrate − O − N − NC","balance","Capacità di generare margine prima di discrezionali e risparmio.")+
+    historicalKpiCard("Disponibile finale",t.available,
+      "dopo spese e risparmio","margin","Quanto resta della gestione corrente dopo uscite operative e allocazioni di risparmio finanziate dal surplus.");
+  if($("historicalBalanceStatus"))$("historicalBalanceStatus").innerHTML='<div class="historical-period-chip">'+esc(t.label)+'</div>';
 }
 function renderHistoricalStructural(){
-  const t=historicalTotalsFor(historicalPeriodMode),n=historicalNatureTotals(historicalPeriodMode,"ORDINARY"),nc=historicalUnclassifiedBreakdown(historicalPeriodMode,"ORDINARY"),inv=historicalInvestmentTotals(historicalPeriodMode,"ORDINARY");
-  const structuralCost=n.MANDATORY+n.NECESSARY+n.UNCLASSIFIED;
-  const margin=t.ordinaryIncome-structuralCost,residualAfterD=margin-n.DISCRETIONARY;
-  const availableAfterSavings=residualAfterD-inv.RECURRING-inv.CURRENT_SURPLUS;
-  const otherOperating=Math.max(0,t.ordinaryOut-n.MANDATORY-n.NECESSARY-n.DISCRETIONARY-n.UNCLASSIFIED);
+  const t=balanceFlowModel(historicalPeriodMode);if(!t)return;
+  const margin=t.income-t.mandatory-t.necessary-t.unclassified;
   function item(label,value,sub,cls,info){
     return '<div class="historical-structural-item '+(cls||"")+'"><span>'+esc(label)+(info?" "+historicalInfo(info):"")+'</span><strong class="'+(value>=0?"positive":"negative")+'">'+historicalSigned(value)+'</strong><small>'+esc(sub)+'</small></div>';
   }
   $("historicalStructuralStrip").innerHTML=
-    item("Margine strutturale",margin,"Entrate ordinarie − O − N − NC","margin","Capacità strutturale della gestione familiare. Gli investimenti non sono consumo e quindi non modificano questo indicatore.")+
-    item("Obbligatorie",n.MANDATORY,"Ø "+money(n.MANDATORY/12)+"/mese","mandatory","Spese difficilmente comprimibili nel breve periodo.")+
-    item("Necessarie",n.NECESSARY,"Ø "+money(n.NECESSARY/12)+"/mese","necessary","Spese necessarie ma potenzialmente ottimizzabili.")+
-    item("NC · Non classificate",n.UNCLASSIFIED,"Cash "+money(nc.cash)+" · Da classificare "+money(nc.toClassify),"unclassified","Uscite già sostenute ma senza Natura O/N/D affidabile: vengono sottratte per non sovrastimare il margine.")+
-    item("Discrezionali",n.DISCRETIONARY,"Ø "+money(n.DISCRETIONARY/12)+"/mese","discretionary","Spese rinunciabili o riducibili. Vengono sottratte dopo il Margine strutturale.")+
-    item("PAC / investimenti ricorrenti",-inv.RECURRING,"Risparmio programmato","other","Allocazione ricorrente del surplus: riduce il disponibile libero, non il margine strutturale.")+
-    item("Investimenti occasionali da surplus",-inv.CURRENT_SURPLUS,"Liquidità corrente","other","Scelte occasionali di investimento finanziate dal surplus corrente: riducono ciò che rimane disponibile nel periodo.")+
-    item("Residuo dopo D + risparmio",availableAfterSavings,"Surplus ancora libero","residual","Margine strutturale meno discrezionali, PAC e investimenti occasionali finanziati dal surplus corrente.")+
-    item("Investimenti da patrimonio",inv.PRIOR_WEALTH,"Non riducono il residuo","other","Riallocazioni finanziate con patrimonio già esistente o disinvestimenti: restano visibili ma non consumano il surplus prodotto nel periodo.")+
-    (otherOperating>.5?item("Altre uscite operative",otherOperating,"Senza Natura O/N/D","other","Altre uscite ordinarie non attribuite a O/N/D e diverse dagli investimenti."):"");
+    item("Margine strutturale",margin,"Entrate − O − N − NC","margin","Prima di discrezionali e risparmio.")+
+    item("Obbligatorie",t.mandatory,"Spese rigide","mandatory")+
+    item("Necessarie",t.necessary,"Spese necessarie","necessary")+
+    item("NC · Non classificate",t.unclassified,"Da dettagliare","unclassified")+
+    item("Discrezionali",t.discretionary,"Spese comprimibili","discretionary")+
+    (t.otherOperating>.5?item("Altre uscite operative",t.otherOperating,"Senza Natura O/N/D","other"):"")+
+    item("Risparmio / investimenti da surplus",-t.savings,"Riduce il disponibile","other")+
+    item("Disponibile finale",t.available,"Surplus libero","residual");
+}
+function renderBalanceFlowSide(){
+  const t=balanceFlowModel(historicalPeriodMode);if(!t)return;
+  const forecastNote=t.historical?"":"Valori futuri basati sul piano di previsione corrente.";
+  $("balanceFlowSide").innerHTML=
+    '<div class="balance-side-card asset"><div class="k">Investimenti da patrimonio '+historicalInfo("Riallocazioni di patrimonio pregresso: visibili ma fuori dal flusso economico corrente.")+'</div><div class="v">'+money(t.priorWealthInvestments)+'</div><div class="s">non riducono il disponibile</div></div>'+
+    '<div class="balance-side-card saving"><div class="k">Risparmio / investimenti da surplus</div><div class="v">'+money(t.savings)+'</div><div class="s">PAC + investimenti finanziati dal surplus corrente</div></div>'+
+    '<div class="balance-side-card extra"><div class="k">Impatto eventi eccezionali</div><div class="v '+(t.extraNet>=0?"positive":"negative")+'">'+historicalSigned(t.extraNet)+'</div><div class="s">Entrate +'+money(t.extraIncome)+' · Uscite −'+money(t.extraOut)+'</div></div>'+
+    (forecastNote?'<div class="notice">'+esc(forecastNote)+'</div>':'');
+}
+function renderBalanceErosion(){
+  const t=balanceFlowModel(historicalPeriodMode);if(!t)return;
+  const base=Math.max(1,t.income);
+  const parts=[
+    ["o","O",t.mandatory],["n","N",t.necessary],["nc","NC",t.unclassified],["d","D",t.discretionary],
+    ["other","Altre",t.otherOperating],["save","Risparmio",t.savings],["free","Residuo",Math.max(0,t.available)]
+  ];
+  $("balanceErosionWidget").innerHTML=
+    '<div class="balance-erode-head"><div><strong>Dove vanno le entrate?</strong><div class="muted small">Quota delle entrate assorbita dalle principali componenti</div></div><b>'+historicalSigned(t.available)+'</b></div>'+
+    '<div class="balance-erode-bar">'+parts.filter(function(x){return x[2]>.5}).map(function(x){return '<span class="balance-erode-seg '+x[0]+'" style="width:'+Math.max(.7,x[2]*100/base).toFixed(2)+'%" title="'+esc(x[1])+' · '+money(x[2])+'"></span>'}).join("")+'</div>'+
+    '<div class="balance-erode-legend">'+parts.filter(function(x){return x[2]>.5}).map(function(x){return '<span><i class="balance-erode-seg '+x[0]+'"></i>'+esc(x[1])+' '+money(x[2])+'</span>'}).join("")+'</div>';
+}
+function renderBalanceWaterfall(){
+  const t=balanceFlowModel(historicalPeriodMode);if(!t)return;
+  if(balanceWaterfallChart){balanceWaterfallChart.destroy();balanceWaterfallChart=null}
+  const margin=t.income-t.mandatory-t.necessary-t.unclassified;
+  const afterD=margin-t.discretionary-t.otherOperating;
+  const final=t.available+(historicalScope==="TOTAL"?t.extraNet:0);
+  const labels=["Entrate","Obbligatorie","Necessarie","NC","Margine strutturale","Discrezionali"].concat(t.otherOperating>.5?["Altre operative"]:[]).concat(["Risparmio","Disponibile"]);
+  const data=[],colors=[];
+  let cur=t.income;
+  data.push([0,t.income]);colors.push("rgba(14,168,122,.82)");
+  [["O",t.mandatory],["N",t.necessary],["NC",t.unclassified]].forEach(function(x){const next=cur-x[1];data.push([next,cur]);colors.push("rgba(239,91,115,.72)");cur=next});
+  data.push([0,margin]);colors.push("rgba(37,99,235,.76)");cur=margin;
+  cur-=t.discretionary;data.push([cur,cur+t.discretionary]);colors.push("rgba(139,92,246,.72)");
+  if(t.otherOperating>.5){cur-=t.otherOperating;data.push([cur,cur+t.otherOperating]);colors.push("rgba(148,163,184,.78)")}
+  cur-=t.savings;data.push([cur,cur+t.savings]);colors.push("rgba(6,182,212,.78)");
+  data.push([0,final]);colors.push(final>=0?"rgba(34,169,107,.84)":"rgba(185,28,28,.82)");
+  $("balanceWaterfallSubtitle").textContent=historicalScope==="TOTAL"?"Include nel risultato finale anche gli eventi E · Eccezionale.":"Lettura ordinaria: gli eventi E · Eccezionale restano fuori dal risultato.";
+  $("balanceWaterfallMode").textContent=t.label;
+  $("balanceWaterfallNote").textContent=t.priorWealthInvestments>.5
+    ?"Gli investimenti da patrimonio ("+money(t.priorWealthInvestments)+") sono mostrati a lato e non erodono il disponibile prodotto nel periodo."
+    :"I giroconti interni e le riallocazioni patrimoniali non erodono il flusso economico.";
+  balanceWaterfallChart=new Chart($("balanceWaterfallChart"),{
+    type:"bar",
+    data:{labels:labels,datasets:[{data:data,backgroundColor:colors,borderWidth:0,borderRadius:4,barPercentage:.72}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){
+      const v=ctx.raw||[0,0],delta=Math.abs(num(v[1])-num(v[0]));return money(delta);
+    }}}},scales:{x:{grid:{display:false},ticks:{font:{size:10},maxRotation:0,minRotation:0}},y:{beginAtZero:true,ticks:{callback:function(v){return money(v)},font:{size:10}},grid:{color:"rgba(148,163,184,.18)"}}}}
+  });
+  renderBalanceErosion();renderBalanceFlowSide();
 }
 function renderHistoricalNatureComposition(){
   const n=historicalNatureTotals(historicalPeriodMode,"ORDINARY"),nc=historicalUnclassifiedBreakdown(historicalPeriodMode,"ORDINARY");
@@ -3879,9 +3923,13 @@ function renderHistoricalNatureComposition(){
   }).join("");
 }
 function renderHistoricalPeriodComparison(){
-  const modes=[["Ultimi 12 mesi","ROLLING_12"],["Ultimo anno solare","LAST_YEAR"]];
-  $("historicalPeriodComparison").innerHTML='<div class="historical-compare-table"><div class="row head"><span>Periodo</span><span>Saldo ordinario</span><span>Saldo totale</span><span>Ø totale/mese</span></div>'+
-    modes.map(function(x){const t=historicalTotalsFor(x[1]);return '<div class="row '+(x[1]===historicalPeriodMode?"active":"")+'"><span>'+esc(x[0])+'</span><strong class="'+(t.ordinaryNet>=0?"positive":"negative")+'">'+historicalSigned(t.ordinaryNet)+'</strong><strong class="'+(t.totalNet>=0?"positive":"negative")+'">'+historicalSigned(t.totalNet)+'</strong><span>'+historicalSigned(t.totalNet/12)+'</span></div>'}).join("")+'</div>';
+  const modes=[["Ultimi 12 mesi","ROLLING_12"]].concat(historicalAvailableYears().slice(0,3).map(function(y){return ["Anno "+y,"YEAR",y]}));
+  $("historicalPeriodComparison").innerHTML='<div class="historical-compare-table"><div class="row head"><span>Periodo</span><span>Saldo operativo</span><span>Risparmio</span><span>Disponibile</span></div>'+
+    modes.map(function(x){
+      const oldYear=historicalYearSelection;if(x[1]==="YEAR")historicalYearSelection=x[2];
+      const t=balanceFlowModel(x[1]);historicalYearSelection=oldYear;
+      return '<div class="row '+((x[1]===historicalPeriodMode&&(!x[2]||Number(x[2])===Number(historicalYearSelection)))?"active":"")+'"><span>'+esc(x[0])+'</span><strong class="'+(t.operatingNet>=0?"positive":"negative")+'">'+historicalSigned(t.operatingNet)+'</strong><span>−'+money(t.savings)+'</span><strong class="'+(t.available>=0?"positive":"negative")+'">'+historicalSigned(t.available)+'</strong></div>';
+    }).join("")+'</div>';
 }
 function historicalChartRows(){return historicalRowsFor(historicalPeriodMode)}
 function renderHistoricalChart(){
