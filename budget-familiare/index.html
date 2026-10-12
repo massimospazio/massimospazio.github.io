@@ -334,6 +334,14 @@
                   <select id="classTemporalityOverride" class="select"></select>
                   <div id="classTemporalityOverrideState" class="small muted">Caricamento…</div>
                 </div>
+                <div id="classInvestmentFundingSourceField" class="field hidden">
+                  <label>Origine fondi investimento <span class="help" data-tip="Per investimenti occasionali indica se stai usando il surplus prodotto dal reddito corrente oppure patrimonio già esistente. Il primo riduce il Disponibile dopo risparmio; il secondo no.">?</span></label>
+                  <select id="classInvestmentFundingSource" class="select">
+                    <option value="CURRENT_SURPLUS">Surplus / liquidità corrente</option>
+                    <option value="PRIOR_WEALTH">Patrimonio pregresso / disinvestimento</option>
+                  </select>
+                  <div id="classInvestmentFundingSourceState" class="small muted">Default prudenziale: surplus corrente.</div>
+                </div>
                 <div id="classLegacyExtraordinary" class="movement-legacy-warning hidden" style="grid-column:1/-1"></div>
                 <div class="field" style="grid-column:1/-1">
                   <label>Nota personale</label>
@@ -344,7 +352,7 @@
                   </div>
                 </div>
               </div>
-              <div class="note">Natura e Temporalità possono avere un override sul singolo movimento; in assenza di override valgono i default della categoria. E · Eccezionale sostituisce progressivamente il vecchio flag Straordinario. Se conosci la spesa reale, preferisci correggere la categoria invece di usare un override per compensare una categoria errata.</div>
+              <div class="note">Natura e Temporalità possono avere un override sul singolo movimento; in assenza di override valgono i default della categoria. Per un investimento P · Occasionale compare anche <strong>Origine fondi</strong>: surplus corrente oppure patrimonio pregresso/disinvestimento. E · Eccezionale sostituisce progressivamente il vecchio flag Straordinario.</div>
             </div>
 
             <div id="splitBox" class="split-box">
@@ -2199,6 +2207,7 @@ function resetClassificationPanel(close=true){
   document.querySelectorAll('[data-class-tag]').forEach(cb=>cb.checked=false);
   if($('classNatureOverride'))$('classNatureOverride').innerHTML='';if($('classNatureOverrideState'))$('classNatureOverrideState').textContent='';
   if($('classTemporalityOverride'))$('classTemporalityOverride').innerHTML='';if($('classTemporalityOverrideState'))$('classTemporalityOverrideState').textContent='';
+  if($('classInvestmentFundingSourceField'))$('classInvestmentFundingSourceField').classList.add('hidden');if($('classInvestmentFundingSource'))$('classInvestmentFundingSource').value='CURRENT_SURPLUS';if($('classInvestmentFundingSourceState'))$('classInvestmentFundingSourceState').textContent='';
   if($('classLegacyExtraordinary')){$('classLegacyExtraordinary').classList.add('hidden');$('classLegacyExtraordinary').innerHTML='';}
   $('classMode').value='all';$('quickCounterpartyBox').classList.add('hidden');$('transferTarget').value='EXPENSE';$('transferDecision').classList.add('hidden');$('transferDecisionHint').textContent='';msg($('classMsg'),'');
   if(close)$('classifyBox').classList.add('hidden');
@@ -2228,7 +2237,8 @@ function updateClassificationPipelineState(){
   if(ctxState){
     const project=$('classProject')?.value||'',tags=document.querySelectorAll('[data-class-tag]:checked').length,splits=Number(selectedRow?.split_count||0);
     const natureOverride=selectedRow?.nature_override,temporalityOverride=selectedRow?.temporality_override,legacy=!!selectedRow?.needs_temporality_review;
-    const parts=[project?'progetto':null,tags?tags+' tag':null,splits?splits+' quote':null,natureOverride?'natura '+movementNatureShort(natureOverride):null,temporalityOverride?'temporalità '+movementTemporalityShort(temporalityOverride):null,legacy?'⚠ E legacy':null].filter(Boolean);
+    const funding=selectedRow?.investment_funding_source;
+    const parts=[project?'progetto':null,tags?tags+' tag':null,splits?splits+' quote':null,natureOverride?'natura '+movementNatureShort(natureOverride):null,temporalityOverride?'temporalità '+movementTemporalityShort(temporalityOverride):null,funding==='PRIOR_WEALTH'?'fondi patrimonio':funding==='CURRENT_SURPLUS'?'fondi surplus':null,legacy?'⚠ E legacy':null].filter(Boolean);
     ctxState.textContent=parts.length?parts.join(' · '):'Facoltativo';
   }
 }
@@ -2291,6 +2301,8 @@ function movementApplyReportingAttributes(flag){
   selectedRow.effective_temporality=f.effective_temporality||null;
   selectedRow.nature_source=f.nature_source||"NONE";
   selectedRow.temporality_source=f.temporality_source||"NONE";
+  selectedRow.investment_funding_source=f.investment_funding_source||null;
+  selectedRow.effective_investment_funding_source=f.effective_investment_funding_source||null;
   selectedRow.needs_temporality_review=!!f.legacy_extraordinary;
   const local=(catData?.movements||[]).find(function(x){return String(x.id)===String(selectedRow.id)});
   if(local)Object.assign(local,{
@@ -2301,6 +2313,8 @@ function movementApplyReportingAttributes(flag){
     effective_temporality:selectedRow.effective_temporality,
     nature_source:selectedRow.nature_source,
     temporality_source:selectedRow.temporality_source,
+    investment_funding_source:selectedRow.investment_funding_source,
+    effective_investment_funding_source:selectedRow.effective_investment_funding_source,
     needs_temporality_review:selectedRow.needs_temporality_review
   });
   renderMovementAttributeControls();
@@ -2337,6 +2351,18 @@ function renderMovementAttributeControls(){
   if(tState)tState.innerHTML=effectiveT
     ?'<span class="movement-attribute-effective"><span class="movement-attribute-badge '+(tValue?"override ":"")+(effectiveT==="EXCEPTIONAL"?"exceptional":"")+'">'+movementTemporalityShort(effectiveT)+'</span>'+esc(movementTemporalityLabel(effectiveT))+' · '+(isLegacy&&!tValue?"legacy da verificare":tValue?"override movimento":"default categoria")+'</span>'
     :'<span class="muted">Temporalità non definita.</span>';
+  const fundingField=$("classInvestmentFundingSourceField"),fundingSel=$("classInvestmentFundingSource"),fundingState=$("classInvestmentFundingSourceState");
+  const investment=String(selectedRow.transaction_type||"")==="INVESTMENT";
+  const showFunding=investment&&effectiveT==="PLANNED_OCCASIONAL"&&!technical;
+  if(fundingField)fundingField.classList.toggle("hidden",!showFunding);
+  if(fundingSel){
+    const fundingValue=f.investment_funding_source||"CURRENT_SURPLUS";
+    fundingSel.value=fundingValue;
+    fundingSel.disabled=!showFunding;
+    if(fundingState)fundingState.textContent=fundingValue==="PRIOR_WEALTH"
+      ?"Patrimonio pregresso: resta visibile come investimento ma non riduce il Disponibile dopo risparmio."
+      :"Surplus corrente: l'investimento riduce il Disponibile dopo risparmio. È il default prudenziale.";
+  }
   if(legacy){
     legacy.classList.toggle("hidden",!isLegacy);
     legacy.innerHTML=isLegacy
@@ -2381,6 +2407,17 @@ async function saveMovementTemporalityOverride(){
     movementApplyReportingAttributes(flag||{});
     renderMovements();updateClassificationPipelineState();
   }catch(e){if(state)state.textContent=e.message||"Errore salvataggio Temporalità";renderMovementAttributeControls()}
+}
+async function saveInvestmentFundingSource(){
+  if(!selectedRow)return;
+  const sel=$("classInvestmentFundingSource"),state=$("classInvestmentFundingSourceState");
+  if(!sel||sel.disabled)return;
+  const value=sel.value||"CURRENT_SURPLUS";sel.disabled=true;if(state)state.textContent="Salvataggio…";
+  try{
+    const flag=await rpc('dashboard_reporting_set_investment_funding_source_v1',{p_transaction_id:selectedRow.id,p_funding_source:value});
+    movementApplyReportingAttributes(flag||{});
+    renderMovements();updateClassificationPipelineState();
+  }catch(e){if(state)state.textContent=e.message||"Errore salvataggio origine fondi";renderMovementAttributeControls()}
 }
 function openMovementFromUrl(){
   if(deepLinkHandled)return;
@@ -4398,6 +4435,7 @@ const cpc=e.target.closest('[data-close-counterparty-detail]');if(cpc){expandedC
 const cpmg=e.target.closest('[data-merge-counterparty]');if(cpmg){mergeSuggestedCounterparty(cpmg);return}const cm=e.target.closest('[data-toggle-category-movements]');if(cm){const k=cm.dataset.toggleCategoryMovements;expandedCategoryMovementDetails.has(k)?expandedCategoryMovementDetails.delete(k):expandedCategoryMovementDetails.add(k);renderCategoriesCatalog();return}const cpm=e.target.closest('[data-toggle-counterparty-movements]');if(cpm){const k=cpm.dataset.toggleCounterpartyMovements;if(expandedCounterpartyMovementDetails.has(k))expandedCounterpartyMovementDetails.delete(k);else{expandedCounterpartyMovementDetails.add(k);expandedCounterpartyAliasDetails.delete(k);expandedCounterpartyDetails.delete(k)}renderMerchantsCatalog();return}const cpa=e.target.closest('[data-toggle-counterparty-aliases]');if(cpa){const k=cpa.dataset.toggleCounterpartyAliases;if(expandedCounterpartyAliasDetails.has(k))expandedCounterpartyAliasDetails.delete(k);else{expandedCounterpartyAliasDetails.add(k);expandedCounterpartyMovementDetails.delete(k);expandedCounterpartyDetails.delete(k)}renderMerchantsCatalog();return}const cap=e.target.closest('[data-cancel-alias-panel]');if(cap){expandedCounterpartyAliasDetails.delete(cap.dataset.cancelAliasPanel);renderMerchantsCatalog();return}const emv=e.target.closest('[data-edit-movement]');if(emv){const row=(catData?.movements||[]).find(x=>x.id===emv.dataset.editMovement);if(row){activateMainTab('categorization');openClassify(row)}return}const aa=e.target.closest('[data-add-alias]');if(aa){addCounterpartyAlias(aa);return}const ma=e.target.closest('[data-move-alias]');if(ma){moveCounterpartyAlias(ma);return}const da=e.target.closest('[data-delete-alias]');if(da){deleteCounterpartyAlias(da);return}const cg=e.target.closest('[data-toggle-category-group]');if(cg){const k=cg.dataset.toggleCategoryGroup;expandedCategoryGroups.has(k)?expandedCategoryGroups.delete(k):expandedCategoryGroups.add(k);renderCategoriesCatalog();return}const mg=e.target.closest('[data-toggle-counterparty-group]');if(mg){const k=mg.dataset.toggleCounterpartyGroup;expandedCounterpartyGroups.has(k)?expandedCounterpartyGroups.delete(k):expandedCounterpartyGroups.add(k);renderMerchantsCatalog();return}const mm=e.target.closest('[data-toggle-mcc-movements]');if(mm){const row=mm.closest('[data-mcc-row]'),k=row?.dataset.mccRow;if(k){expandedMccMovementDetails.has(k)?expandedMccMovementDetails.delete(k):expandedMccMovementDetails.add(k);renderMccCatalog()}return}const em=e.target.closest('[data-edit-mcc]');if(em){editMccCategory(em);return}const cmc=e.target.closest('[data-cancel-mcc-edit]');if(cmc){cancelMccEdit(cmc);return}const sm=e.target.closest('[data-save-mcc]');if(sm){saveMccCategory(sm);return}const sh=e.target.closest('[data-catalog-sort]');if(sh){setCatalogSort(sh.dataset.catalogSort,sh.dataset.catalogKey);return}const del=e.target.closest('[data-delete-entity]');if(del){deleteCatalogEntity(del);return}const cc=e.target.closest('[data-edit-cat]');if(cc){editCategory(cc.dataset.editCat);return}const m=e.target.closest('[data-edit-merch]');if(m){editMerchant(m.dataset.editMerch);return}const p=e.target.closest('[data-edit-project]');if(p){editProject(p.dataset.editProject);return}const t=e.target.closest('[data-edit-tag]');if(t){editTag(t.dataset.editTag);return}const rr=e.target.closest('[data-edit-rule]');if(rr){editCompoundRule(rr.dataset.editRule);return}const pr=e.target.closest('[data-edit-parsing]');if(pr){editParsingRule(pr.dataset.editParsing);return}});
 $('classNatureOverride')?.addEventListener('change',saveMovementNatureOverride);
 $('classTemporalityOverride')?.addEventListener('change',saveMovementTemporalityOverride);
+$('classInvestmentFundingSource')?.addEventListener('change',saveInvestmentFundingSource);
 $('tab-catalogs').addEventListener('input',e=>{
   const s=e.target.closest('[data-category-cp-search]');
   if(s){
