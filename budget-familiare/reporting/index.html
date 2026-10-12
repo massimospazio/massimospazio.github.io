@@ -9,7 +9,7 @@
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
 <script src="../shared/supabase-client.js?v=73.24.0-20261012-1415"></script>
-<script src="../shared/app-config.js?v=73.28.0-20261012-2032"></script>
+<script src="../shared/app-config.js?v=73.29.0-20261012"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 :root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#6b7280;--line:#e5e7eb;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 8px 24px rgba(15,23,42,.06)}
@@ -1110,6 +1110,32 @@ button,input,select{font:inherit}
 .balance-erode-temporal-legend i{width:8px;height:8px;border-radius:50%;background:#64748b}.balance-erode-temporal-legend .p i{opacity:.62}.balance-erode-temporal-legend .x i{opacity:.32}.balance-erode-temporal-legend .u i{opacity:.14}.balance-erode-temporal-legend .e i{background:#111827;opacity:.85}
 @media(max-width:680px){.balance-drill-l2 td:first-child{padding-left:20px}.balance-erode-temporal-legend{gap:8px}}
 
+/* Bilancio: navigazione L1 → L2 → controparti, movimenti su richiesta. */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.balance-drill-grid{grid-template-columns:minmax(0,.95fr) minmax(0,1fr) minmax(0,1.15fr);gap:10px;align-items:stretch}
+.balance-drill-pane{min-width:0;background:#fff}
+.balance-drill-pane-head{align-items:flex-start;min-height:66px;background:color-mix(in srgb,var(--drill-accent) 5%,#fff);padding:10px}
+.balance-drill-pane-head>div{min-width:0}.balance-drill-pane-head strong{display:block;font-size:12px;line-height:1.4}.balance-drill-pane-head span{display:block;margin-top:3px;line-height:1.35;font-size:10px}
+.balance-drill-pane-head .select{font-size:10px;padding:5px;min-height:28px;max-width:105px}
+.balance-drill-scroll{max-height:355px;overflow:auto}
+.balance-drill-table{table-layout:fixed}.balance-drill-table th,.balance-drill-table td{font-size:12px;padding:9px 8px;font-variant-numeric:tabular-nums}.balance-drill-table th{font-size:9px}.balance-drill-table th:first-child{width:48%}.balance-drill-table th:nth-child(2){width:27%}.balance-drill-table th:nth-child(3){width:25%}
+.balance-drill-table td:nth-child(2){white-space:nowrap}.balance-drill-table tr[data-balance-drill-l1],.balance-drill-table tr[data-balance-drill-category],.balance-drill-table tr[data-balance-drill-counterparty]{cursor:pointer}
+.balance-drill-table tr:hover td{background:var(--drill-soft)}
+.balance-drill-cat-btn,.balance-drill-cp-btn,.balance-drill-l1-btn{font-size:12px;font-weight:650;overflow-wrap:anywhere;line-height:1.4}
+.balance-drill-l1-btn{display:block}.balance-drill-cat-meta{display:block;font-size:10px;margin-top:3px;color:#738198;font-weight:400}
+.balance-drill-row-icon{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;margin-right:6px;border-radius:7px;vertical-align:middle;background:var(--drill-soft);color:var(--drill-accent)}
+.balance-drill-row-icon svg{width:15px;height:15px}
+.balance-drill-share{flex-direction:column;align-items:flex-end;gap:4px}.balance-drill-share i{width:48px}.balance-drill-share span{font-size:11px}
+.balance-drill-navigation{display:flex;gap:9px;align-items:center;margin:0 0 10px;min-height:25px}.balance-drill-path{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:11px;color:#64748b}.balance-drill-path button{border:0;border-radius:6px;background:var(--drill-soft);padding:4px 7px;cursor:pointer;color:#172033;font:inherit;font-weight:650}.balance-drill-path .current{color:var(--drill-accent);font-weight:750}.balance-drill-back{display:none}
+.balance-drill-analysis-action{padding:9px;border-top:1px solid #e8edf4}.balance-drill-analysis-action:empty{display:none}.balance-drill-analysis-action .btn{font-size:11px;width:100%;text-align:left}
+.balance-drill-movement-panel{margin-top:12px;padding:12px;border:1px solid color-mix(in srgb,var(--drill-accent) 25%,#e2e8f0);border-radius:11px;background:#fff}
+.balance-drill-movement-panel .balance-drill-section-title strong{font-size:14px}.balance-drill-movement-panel .balance-drill-section-title span{font-size:11px}.balance-drill-movement-panel .balance-drill-section-title{flex-wrap:wrap;align-items:flex-start;gap:10px}
+.balance-drill-movement-actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap}.balance-drill-movement-actions .select{font-size:11px;min-height:30px;padding:5px 7px}
+.balance-drill-moves{max-height:330px}.balance-drill-moves table{min-width:610px}.balance-drill-moves th,.balance-drill-moves td{font-size:12px;padding:9px 10px}.balance-drill-moves th:first-child,.balance-drill-moves td:first-child{white-space:nowrap}.balance-drill-moves td:nth-child(2){width:42%}.balance-drill-moves td:nth-child(3){width:30%;color:#64748b}
+.balance-drill-note{font-size:11px;padding:0 10px 8px;line-height:1.45}.balance-drill-empty{font-size:12px;line-height:1.5}
+@media(max-width:1100px) and (min-width:761px){.balance-drill-pane-head{flex-wrap:wrap;min-height:90px}.balance-drill-table th:first-child{width:44%}.balance-drill-table th:nth-child(2){width:31%}.balance-drill-table th:nth-child(3){width:25%}.balance-drill-row-icon{display:none}.balance-drill-table td,.balance-drill-cat-btn,.balance-drill-cp-btn,.balance-drill-l1-btn{font-size:11px}}
+@media(max-width:760px){.balance-drill-grid{grid-template-columns:1fr}.balance-drill-grid[data-step="L1"] [data-balance-pane]:not([data-balance-pane="L1"]),.balance-drill-grid[data-step="L2"] [data-balance-pane]:not([data-balance-pane="L2"]),.balance-drill-grid[data-step="CP"] [data-balance-pane]:not([data-balance-pane="CP"]){display:none}.balance-drill-pane-head{min-height:62px}.balance-drill-back{display:inline-flex}.balance-drill-table th:nth-child(2),.balance-drill-table td:nth-child(2){display:table-cell}.balance-drill-movement-panel{padding:10px}.balance-drill-scroll{max-height:360px}}
+
 /* V73.18.2 — Bilancio hub: Storico + Previsione */
 .balance-hub-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:12px;padding:2px 2px 0}
 .balance-hub-head h2{margin:2px 0 0;font-size:29px;color:#10204d}.balance-hub-head p{margin:5px 0 0;color:#62718b;font-size:13px}
@@ -1525,20 +1551,26 @@ button,input,select{font:inherit}
             </div>
             <div class="balance-drill-head-actions">
               <span id="balanceDrillTotal" class="balance-drill-total">—</span>
-              <label class="small">Ordina <select id="balanceDrillSort" class="select" style="min-height:31px;padding:4px 7px"><option value="AMOUNT">Importo</option><option value="NAME">Categoria</option><option value="L1">Macro-categoria</option></select></label>
               <button class="btn ghost compact" type="button" data-balance-drill-close>Chiudi</button>
             </div>
           </div>
-          <div class="balance-drill-grid">
-            <div class="balance-drill-pane">
-              <div class="balance-drill-pane-head"><strong>Macro-categorie (L1) → sotto-categorie (L2)</strong><span id="balanceDrillCategoryHint"></span></div>
-              <div id="balanceDrillCategories"></div>
+          <div class="balance-drill-navigation"><button type="button" class="btn ghost compact balance-drill-back" data-balance-drill-back>← Indietro</button><div id="balanceDrillPath" class="balance-drill-path" aria-live="polite"></div></div>
+          <div id="balanceDrillGrid" class="balance-drill-grid" data-step="L1">
+            <div class="balance-drill-pane" data-balance-pane="L1">
+              <div class="balance-drill-pane-head"><div><strong>Macro-categorie (L1)</strong><span id="balanceDrillCategoryHint"></span></div><label><span class="sr-only">Ordina macro-categorie</span><select id="balanceDrillSort" class="select"><option value="AMOUNT">Importo ↓</option><option value="NAME">Nome A–Z</option></select></label></div>
+              <div id="balanceDrillCategories" class="balance-drill-scroll"></div>
             </div>
-            <div class="balance-drill-pane">
-              <div class="balance-drill-pane-head"><strong>Controparti e movimenti</strong><span id="balanceDrillDetailHint">Seleziona una categoria</span></div>
-              <div id="balanceDrillBreakdown" class="balance-drill-right"><div class="balance-drill-empty">Seleziona una categoria per vedere controparti e movimenti.</div></div>
+            <div class="balance-drill-pane" data-balance-pane="L2">
+              <div class="balance-drill-pane-head"><div><strong id="balanceDrillL2Title">Sotto-categorie (L2)</strong><span id="balanceDrillL2Hint"></span></div><label><span class="sr-only">Ordina sotto-categorie</span><select id="balanceDrillL2Sort" class="select"><option value="AMOUNT">Importo ↓</option><option value="NAME">Nome A–Z</option></select></label></div>
+              <div id="balanceDrillSubcategories" class="balance-drill-scroll"></div>
+            </div>
+            <div class="balance-drill-pane" data-balance-pane="CP">
+              <div class="balance-drill-pane-head"><div><strong id="balanceDrillCpTitle">Controparti</strong><span id="balanceDrillDetailHint">Seleziona una L2</span></div><label><span class="sr-only">Ordina controparti</span><select id="balanceDrillCpSort" class="select"><option value="AMOUNT">Importo ↓</option><option value="NAME">Nome A–Z</option><option value="COUNT">Movimenti ↓</option></select></label></div>
+              <div id="balanceDrillBreakdown" class="balance-drill-scroll" aria-live="polite"></div>
+              <div id="balanceDrillAnalysisAction" class="balance-drill-analysis-action"></div>
             </div>
           </div>
+          <div id="balanceDrillMovements" class="balance-drill-movement-panel hidden" aria-live="polite"></div>
         </section>
 
         <section id="historicalMonthlySection" class="scenario-card scenario-chart-card">
@@ -1720,7 +1752,11 @@ let balanceDrillCategoryId=null;
 let balanceDrillDetail=null;
 let balanceDrillCounterparty="";
 let balanceDrillSort="AMOUNT";
-let balanceDrillExpandedL1=null;
+let balanceDrillSelectedL1=null;
+let balanceDrillL2Sort="AMOUNT";
+let balanceDrillCpSort="AMOUNT";
+let balanceDrillMoveSort="DATE";
+let balanceDrillMobileStep="L1";
 let balanceDrillLoadSeq=0;
 let analysisWorkspace=null;
 let analysisWorkspaceKey="";
@@ -4068,11 +4104,55 @@ function balanceDrillRowsForSelection(){
   else out.sort(function(a,b){return b.total-a.total||a.name.localeCompare(b.name,"it")});
   return out;
 }
-function balanceDrillHierarchy(){const m=new Map(),grand=balanceDrillRows.reduce((s,x)=>s+x.total,0);balanceDrillRows.forEach(x=>{const k=x.l1Id||x.l1||x.id;if(!m.has(k))m.set(k,{id:k,name:x.l1||x.name,actual:0,forecast:0,total:0,children:[]});const g=m.get(k);g.actual+=x.actual;g.forecast+=x.forecast;g.total+=x.total;g.children.push(x)});const out=Array.from(m.values());out.forEach(g=>{g.share=grand?g.total*100/grand:0;g.children.sort((a,b)=>b.total-a.total)});out.sort((a,b)=>b.total-a.total);return out}
+function balanceDrillSorted(rows,sort){
+  return rows.slice().sort(function(a,b){
+    if(sort==="NAME")return a.name.localeCompare(b.name,"it")||b.total-a.total;
+    if(sort==="COUNT")return b.count-a.count||b.total-a.total||a.name.localeCompare(b.name,"it");
+    return b.total-a.total||a.name.localeCompare(b.name,"it");
+  });
+}
+function balanceDrillHierarchy(){
+  const map=new Map(),grand=balanceDrillRows.reduce(function(s,x){return s+x.total},0);
+  balanceDrillRows.forEach(function(x){
+    const key=x.l1Id||x.l1||x.id;
+    if(!map.has(key))map.set(key,{id:key,name:x.l1||x.name,actual:0,forecast:0,total:0,children:[]});
+    const group=map.get(key);group.actual+=x.actual;group.forecast+=x.forecast;group.total+=x.total;group.children.push(x);
+  });
+  return balanceDrillSorted(Array.from(map.values()).map(function(g){g.share=grand?g.total*100/grand:0;return g}),balanceDrillSort);
+}
 function balanceDrillPeriodLabel(){
   if(!balanceDrillSelection)return "";
   if(balanceDrillSelection.month)return monthLabel(balanceDrillSelection.month);
   return historicalPeriodLabel(balanceDrillSelection.mode||historicalPeriodMode);
+}
+function balanceDrillShareHtml(value){
+  const pct=Number.isFinite(value)?value:0;
+  return '<div class="balance-drill-share"><span>'+pct.toLocaleString("it-IT",{maximumFractionDigits:1})+'%</span><i style="--share:'+Math.max(0,Math.min(100,pct)).toFixed(1)+'%"></i></div>';
+}
+function balanceDrillTableHtml(rows,label,attr,selected,denominator,forecastOnly,mixed){
+  return '<table class="balance-drill-table"><thead><tr><th>'+esc(label)+'</th><th>'+(forecastOnly?"Previsto":"Importo")+'</th><th title="Quota sul livello precedente">%</th></tr></thead><tbody>'+rows.map(function(x){
+    const active=String(selected||"")===String(x.id),share=denominator?x.total*100/denominator:0;
+    const meta=mixed?money(x.actual)+' cons. · '+money(x.forecast)+' prev.':attr==="l1"?x.children.length+' L2':"";
+    return '<tr class="'+(active?'balance-drill-selected':'')+'" data-balance-drill-'+attr+'="'+esc(x.id)+'"><td><button class="'+(attr==="l1"?'balance-drill-l1-btn':'balance-drill-cat-btn')+'" type="button" aria-pressed="'+active+'">'+(attr==="l1"?'<span class="balance-drill-row-icon">'+analysisSvgIcon(x.name)+'</span>':'')+esc(x.name)+'</button>'+(meta?'<span class="balance-drill-cat-meta">'+meta+'</span>':'')+'</td><td><strong title="'+esc(mixed?meta:money(x.total))+'">'+money(x.total)+'</strong></td><td>'+balanceDrillShareHtml(share)+'</td></tr>';
+  }).join("")+'</tbody></table>';
+}
+function renderBalanceDrillPath(){
+  const row=balanceDrillRows.find(function(x){return String(x.id)===String(balanceDrillCategoryId)});
+  const group=balanceDrillHierarchy().find(function(g){return String(g.id)===String(balanceDrillSelectedL1)});
+  let path='<span>'+esc(balanceDrillNatureLabel(balanceDrillSelection&&balanceDrillSelection.nature))+'</span>';
+  if(group)path+=' <span aria-hidden="true">›</span> <button type="button" data-balance-drill-step="L2">'+esc(group.name)+'</button>';
+  if(row)path+=' <span aria-hidden="true">›</span> <button type="button" data-balance-drill-step="CP">'+esc(row.name)+'</button>';
+  if(balanceDrillCounterparty)path+=' <span aria-hidden="true">›</span> <span class="current">'+esc(balanceDrillCounterparty)+'</span>';
+  $("balanceDrillPath").innerHTML=path;
+  $("balanceDrillGrid").dataset.step=balanceDrillMobileStep;
+  const back=$("balanceNatureDetail").querySelector('[data-balance-drill-back]');
+  if(back){back.disabled=balanceDrillMobileStep==="L1";back.textContent=balanceDrillMobileStep==="CP"?"← Sotto-categorie":"← Macro-categorie"}
+}
+function resetBalanceDrillDetail(){
+  ++balanceDrillLoadSeq;balanceDrillCategoryId=null;balanceDrillDetail=null;balanceDrillCounterparty="";
+}
+function selectBalanceDrillL1(id){
+  balanceDrillSelectedL1=id;resetBalanceDrillDetail();balanceDrillMobileStep="L2";renderBalanceDrill();
 }
 function renderBalanceDrill(){
   const box=$("balanceNatureDetail");if(!box||!balanceDrillSelection)return;
@@ -4082,96 +4162,105 @@ function renderBalanceDrill(){
   ["mandatory","necessary","unclassified","discretionary","unknown","investment","all_expense"].forEach(function(k){box.classList.remove("nature-"+k)});
   box.classList.add("nature-"+String(balanceDrillSelection.nature||"").toLowerCase());
   $("balanceDrillTitle").textContent=balanceDrillNatureLabel(balanceDrillSelection.nature)+" · "+balanceDrillPeriodLabel();
-  $("balanceDrillSubtitle").textContent=mixed?"Consuntivo e previsione nello stesso dettaglio.":forecastOnly?"Previsione per categoria; il dettaglio movimenti usa la base storica.":"Macro-categorie L1, poi L2, controparti e movimenti.";
-  const temporal=balanceTemporalBreakdown(balanceDrillSelection.nature,balanceDrillSelection.mode,balanceDrillSelection.month,balanceDrillSelection.scope);
-  if($("balanceDrillTemporality"))$("balanceDrillTemporality").innerHTML=balanceTemporalChipsHtml(temporal);
+  $("balanceDrillSubtitle").textContent=mixed?"Consuntivo + previsione per categoria; controparti sul solo consuntivo.":forecastOnly?"Previsione per categoria; controparti e movimenti mostrano il contesto storico.":"L1 → L2 → controparti. Clicca una controparte per aprire i movimenti.";
+  $("balanceDrillTemporality").innerHTML=balanceTemporalChipsHtml(balanceTemporalBreakdown(balanceDrillSelection.nature,balanceDrillSelection.mode,balanceDrillSelection.month,balanceDrillSelection.scope));
   $("balanceDrillTotal").textContent=money(total);
-  $("balanceDrillCategoryHint").textContent=groups.length+" L1 · "+balanceDrillRows.length+" L2";
-  $("balanceDrillSort").value=balanceDrillSort;
-  if(!balanceDrillExpandedL1&&groups.length)balanceDrillExpandedL1=groups[0].id;
-  function share(x){return '<div class="balance-drill-share"><span>'+x.share.toLocaleString("it-IT",{maximumFractionDigits:1})+'%</span><i style="--share:'+Math.max(2,x.share).toFixed(1)+'%"></i></div>'}
-  function cells(x,strong){if(mixed)return '<td>'+money(x.actual)+'</td><td>'+money(x.forecast)+'</td><td>'+(strong?'<strong>':'')+money(x.total)+(strong?'</strong>':'')+'</td>';return forecastOnly?'<td>'+(strong?'<strong>':'')+money(x.forecast)+(strong?'</strong>':'')+'</td>':'<td>'+(strong?'<strong>':'')+money(x.actual)+(strong?'</strong>':'')+'</td>'}
-  if(!groups.length)$("balanceDrillCategories").innerHTML='<div class="balance-drill-empty">Nessun dato per questa selezione.</div>';
-  else{
-    const head=mixed?'<tr><th>Macro-categoria / voce</th><th>Cons.</th><th>Prev.</th><th>Totale</th><th>%</th></tr>':forecastOnly?'<tr><th>Macro-categoria / voce</th><th>Previsto</th><th>%</th></tr>':'<tr><th>Macro-categoria / voce</th><th>Importo</th><th>%</th></tr>';
-    let rows="";
-    groups.forEach(function(g){const open=String(balanceDrillExpandedL1)===String(g.id);rows+='<tr class="balance-drill-l1"><td><button class="balance-drill-l1-btn" type="button" data-balance-drill-l1="'+esc(g.id)+'"><span class="chev">'+(open?"▾":"▸")+'</span><span>'+esc(g.name)+'</span><span class="count">'+g.children.length+' L2</span></button></td>'+cells(g,true)+'<td>'+share(g)+'</td></tr>';if(open)g.children.forEach(function(x){const selected=String(balanceDrillCategoryId||"")===String(x.id);rows+='<tr class="balance-drill-l2 '+(selected?"balance-drill-selected":"")+'"><td><button class="balance-drill-cat-btn" type="button" data-balance-drill-category="'+esc(x.id)+'">'+esc(x.name)+'</button></td>'+cells(x,true)+'<td>'+share(x)+'</td></tr>'})});
-    $("balanceDrillCategories").innerHTML='<div style="max-height:410px;overflow:auto"><table class="balance-drill-table"><thead>'+head+'</thead><tbody>'+rows+'</tbody></table></div>';
-  }
-  box.classList.remove("hidden");
-  if(balanceDrillCategoryId&&!balanceDrillRows.some(function(x){return String(x.id)===String(balanceDrillCategoryId)})){balanceDrillCategoryId=null;balanceDrillDetail=null;balanceDrillCounterparty=""}
-  if(!balanceDrillCategoryId){$("balanceDrillDetailHint").textContent="Seleziona una L2";$("balanceDrillBreakdown").innerHTML='<div class="balance-drill-empty">Apri una macro-categoria L1 e seleziona una L2 per vedere controparti e movimenti.</div>'}else renderBalanceDrillBreakdown();
+  $("balanceDrillCategoryHint").textContent=groups.length+" categorie · % sul totale";
+  $("balanceDrillSort").value=balanceDrillSort;$("balanceDrillL2Sort").value=balanceDrillL2Sort;$("balanceDrillCpSort").value=balanceDrillCpSort;
+  let group=groups.find(function(g){return String(g.id)===String(balanceDrillSelectedL1)});
+  if(!group){resetBalanceDrillDetail();group=groups[0]||null;balanceDrillSelectedL1=group?group.id:null;balanceDrillMobileStep="L1"}
+  if(balanceDrillCategoryId&&(!group||!group.children.some(function(x){return String(x.id)===String(balanceDrillCategoryId)})))resetBalanceDrillDetail();
+  $("balanceDrillCategories").innerHTML=groups.length?balanceDrillTableHtml(groups,"Macro-categoria","l1",balanceDrillSelectedL1,total,forecastOnly,mixed):'<div class="balance-drill-empty">Nessun dato per questa selezione.</div>';
+  $("balanceDrillL2Title").textContent=group?"Sotto-categorie · "+group.name:"Sotto-categorie (L2)";
+  $("balanceDrillL2Hint").textContent=group?group.children.length+" voci · % sulla L1":"Seleziona una macro-categoria";
+  $("balanceDrillSubcategories").innerHTML=group?balanceDrillTableHtml(balanceDrillSorted(group.children,balanceDrillL2Sort),"Sotto-categoria","category",balanceDrillCategoryId,group.total,forecastOnly,mixed):'<div class="balance-drill-empty">Seleziona una macro-categoria L1.</div>';
+  box.classList.remove("hidden");renderBalanceDrillBreakdown();
 }
 function balanceDrillMovementRows(){
   const d=balanceDrillDetail||{},all=Array.isArray(d.movements)?d.movements:[],sets=balanceDrillMonthSets();
   if(sets.actual.length){
-    const set=new Set(sets.actual);
-    return all.filter(function(x){return set.has(String(x.month_start))});
+    const set=new Set(sets.actual),ordinary=(balanceDrillSelection.scope||"ORDINARY")==="ORDINARY";
+    return all.filter(function(x){
+      const exceptional=x.economic_exceptional===undefined?!!x.is_extraordinary&&!x.forecast_excluded:!!x.economic_exceptional;
+      return set.has(String(x.month_start))&&(!ordinary||!exceptional);
+    });
   }
-  return all;
+  return all.filter(function(x){return !x.is_extraordinary});
 }
 function renderBalanceDrillBreakdown(){
-  const box=$("balanceDrillBreakdown");if(!box)return;
+  const box=$("balanceDrillBreakdown"),movementBox=$("balanceDrillMovements");if(!box)return;
+  movementBox.classList.add("hidden");movementBox.innerHTML="";
   const row=balanceDrillRows.find(function(x){return String(x.id)===String(balanceDrillCategoryId)});
-  if(!row){box.innerHTML='<div class="balance-drill-empty">Seleziona una categoria.</div>';return}
+  $("balanceDrillCpTitle").textContent=row?"Controparti · "+row.name:"Controparti";
+  $("balanceDrillAnalysisAction").innerHTML=row&&String(row.id).indexOf("__")!==0?'<button class="btn ghost compact" type="button" data-balance-open-analysis="'+esc(row.id)+'">Apri questa categoria in Analisi →</button>':"";
+  renderBalanceDrillPath();
+  if(!row){$("balanceDrillDetailHint").textContent="Seleziona una L2";box.innerHTML='<div class="balance-drill-empty">Seleziona una sotto-categoria per vedere le controparti.</div>';return}
   if(!balanceDrillDetail){
-    if(String(row.id).indexOf("__")===0){
-      $("balanceDrillDetailHint").textContent="Previsione aggregata";
-      box.innerHTML='<div class="balance-drill-empty"><strong>'+esc(row.name)+'</strong><br>Questa previsione è gestita come allocazione aggregata e non ha movimenti futuri associati.</div>';
-    }else{
-      $("balanceDrillDetailHint").textContent="Caricamento…";
-      box.innerHTML='<div class="balance-drill-empty"><span class="spinner"></span>Carico controparti e movimenti…</div>';
-    }
+    const aggregate=String(row.id).indexOf("__")===0;
+    $("balanceDrillDetailHint").textContent=aggregate?"Previsione aggregata":"Caricamento…";
+    box.innerHTML=aggregate?'<div class="balance-drill-empty">Allocazione aggregata: nessuna controparte o movimento futuro associato.</div>':'<div class="balance-drill-empty"><span class="spinner"></span>Carico le controparti…</div>';
     return;
   }
+  if(balanceDrillDetail.error){
+    $("balanceDrillDetailHint").textContent="Dettaglio non disponibile";
+    box.innerHTML='<div class="msg error">'+esc(balanceDrillDetail.error)+'</div><div class="balance-drill-empty"><button class="btn ghost compact" type="button" data-balance-drill-category="'+esc(row.id)+'">Riprova</button></div>';return;
+  }
   let moves=balanceDrillMovementRows();
-  const forecastOnly=balanceDrillMonthSets().actual.length===0&&balanceDrillMonthSets().forecast.length>0;
-  const groups=new Map();
+  const sets=balanceDrillMonthSets(),forecastOnly=!sets.actual.length&&sets.forecast.length>0,groups=new Map();
   moves.forEach(function(x){
     const name=String(x.counterparty||"Senza controparte");
     if(!groups.has(name))groups.set(name,{name:name,total:0,count:0});
     const g=groups.get(name);g.total+=num(x.amount);g.count++;
   });
-  const cps=Array.from(groups.values()).sort(function(a,b){return b.total-a.total||a.name.localeCompare(b.name,"it")});
-  if(balanceDrillCounterparty)moves=moves.filter(function(x){return String(x.counterparty||"Senza controparte")===balanceDrillCounterparty});
-  moves=moves.slice().sort(function(a,b){return num(b.amount)-num(a.amount)||String(b.transaction_date).localeCompare(String(a.transaction_date))});
-  $("balanceDrillDetailHint").textContent=forecastOnly?"base storica":"dettaglio consuntivo";
-  const summary='<div class="balance-drill-section"><div class="balance-drill-section-title"><strong>'+esc(row.name)+'</strong><span>'+(row.actual?money(row.actual)+" cons. ":"")+(row.forecast?money(row.forecast)+" prev.":"")+'</span></div>'+
-    (forecastOnly?'<div class="balance-drill-note">La previsione non contiene movimenti futuri: qui sotto mostro le controparti e i movimenti storici usati come contesto della categoria.</div>':'')+'</div>';
-  const cpHtml='<div class="balance-drill-section"><div class="balance-drill-section-title"><strong>Controparti</strong><span>'+cps.length+' gruppi</span></div>'+
-    (cps.length?'<div class="balance-drill-counterparties">'+cps.slice(0,10).map(function(g){return '<div class="balance-drill-cp '+(balanceDrillCounterparty===g.name?"active":"")+'"><button class="balance-drill-cp-btn" type="button" data-balance-drill-counterparty="'+esc(g.name)+'">'+esc(g.name)+'</button><strong>'+money(g.total)+'</strong><small>'+g.count+' movimenti</small></div>'}).join("")+'</div>':'<div class="balance-drill-empty">Nessuna controparte nel periodo.</div>')+'</div>';
-  const clear=balanceDrillCounterparty?'<button class="btn ghost compact" type="button" data-balance-drill-clear-counterparty>Mostra tutte</button>':'';
-  const mvHtml='<div class="balance-drill-section"><div class="balance-drill-section-title"><strong>Movimenti</strong><span>'+clear+'</span></div>'+
-    (moves.length?'<div class="balance-drill-moves"><table><thead><tr><th>Data</th><th>Controparte / descrizione</th><th>Importo</th></tr></thead><tbody>'+moves.slice(0,25).map(function(x){return '<tr><td>'+dateLabel(x.transaction_date)+'</td><td><strong>'+esc(x.counterparty||"Senza controparte")+'</strong><div class="balance-drill-cat-meta">'+esc(x.user_note||x.description||"")+'</div></td><td><strong>'+money(x.amount)+'</strong></td></tr>'}).join("")+'</tbody></table></div>':'<div class="balance-drill-empty">Nessun movimento nel periodo selezionato.</div>')+'</div>';
-  const action=String(row.id).indexOf("__")===0?"":'<div style="margin-top:10px"><button class="btn ghost compact" type="button" data-balance-open-analysis="'+esc(row.id)+'">Apri questa categoria in Analisi →</button></div>';
-  box.innerHTML=summary+cpHtml+mvHtml+action;
+  const cps=balanceDrillSorted(Array.from(groups.values()),balanceDrillCpSort),cpTotal=cps.reduce(function(s,x){return s+x.total},0);
+  if(balanceDrillCounterparty&&!groups.has(balanceDrillCounterparty))balanceDrillCounterparty="";
+  $("balanceDrillDetailHint").textContent=cps.length+" controparti · "+(forecastOnly?"base storica 12m":"consuntivo")+" · % sulla L2";
+  const note=forecastOnly?'<p class="balance-drill-note">Importi storici ordinari: '+money(cpTotal)+'. Non sono quote della previsione di '+money(row.forecast)+'.</p>':sets.forecast.length?'<p class="balance-drill-note">Controparti sul consuntivo ('+money(cpTotal)+'). La previsione resta a livello di categoria.</p>':"";
+  box.innerHTML=(cps.length?'<table class="balance-drill-table"><thead><tr><th>Controparte</th><th>Importo</th><th>%</th></tr></thead><tbody>'+cps.map(function(g){
+    const active=balanceDrillCounterparty===g.name;
+    return '<tr class="'+(active?'balance-drill-selected':'')+'" data-balance-drill-counterparty="'+esc(g.name)+'"><td><button class="balance-drill-cp-btn" type="button" aria-pressed="'+active+'">'+esc(g.name)+'</button><span class="balance-drill-cat-meta">'+g.count+' movimenti</span></td><td><strong>'+money(g.total)+'</strong></td><td>'+balanceDrillShareHtml(cpTotal?g.total*100/cpTotal:0)+'</td></tr>';
+  }).join("")+'</tbody></table>':'<div class="balance-drill-empty">Nessuna controparte '+(forecastOnly?"nella base storica":"nel periodo selezionato")+'.</div>')+note;
+  renderBalanceDrillPath();
+  if(!balanceDrillCounterparty||balanceDrillMobileStep!=="CP")return;
+  moves=moves.filter(function(x){return String(x.counterparty||"Senza controparte")===balanceDrillCounterparty}).sort(function(a,b){
+    if(balanceDrillMoveSort==="AMOUNT")return num(b.amount)-num(a.amount)||String(b.transaction_date).localeCompare(String(a.transaction_date));
+    return String(b.transaction_date).localeCompare(String(a.transaction_date))||num(b.amount)-num(a.amount);
+  });
+  const selected=groups.get(balanceDrillCounterparty);
+  movementBox.classList.remove("hidden");
+  movementBox.innerHTML='<div class="balance-drill-section-title"><div><strong>Movimenti · '+esc(balanceDrillCounterparty)+'</strong><div class="small muted">'+moves.length+' movimenti · '+money(selected.total)+' · '+esc(forecastOnly?"Base storica ordinaria · ultimi 12 mesi completi":balanceDrillPeriodLabel())+'</div></div><div class="balance-drill-movement-actions"><label class="small">Ordina <select class="select" data-balance-drill-move-sort><option value="DATE"'+(balanceDrillMoveSort==="DATE"?' selected':'')+'>Più recenti</option><option value="AMOUNT"'+(balanceDrillMoveSort==="AMOUNT"?' selected':'')+'>Importo ↓</option></select></label><button class="btn ghost compact" type="button" data-balance-drill-clear-counterparty>Chiudi movimenti</button></div></div>'+
+    '<div class="balance-drill-moves"><table><thead><tr><th>Data</th><th>Descrizione</th><th>Nota</th><th>Importo</th></tr></thead><tbody>'+moves.map(function(x){
+      return '<tr><td>'+dateLabel(x.transaction_date)+'</td><td>'+esc(x.description||x.counterparty||"—")+'</td><td>'+esc(x.user_note||x.extraordinary_note||"—")+'</td><td><strong>'+money(x.amount)+'</strong></td></tr>';
+    }).join("")+'</tbody></table></div>';
 }
 async function loadBalanceDrillCategory(categoryId){
-  balanceDrillCategoryId=categoryId;balanceDrillDetail=null;balanceDrillCounterparty="";renderBalanceDrill();
+  resetBalanceDrillDetail();balanceDrillCategoryId=categoryId;balanceDrillMoveSort="DATE";balanceDrillMobileStep="CP";
+  const selected=balanceDrillRows.find(function(x){return String(x.id)===String(categoryId)});
+  if(selected)balanceDrillSelectedL1=selected.l1Id||selected.l1||selected.id;
+  renderBalanceDrill();
   const row=balanceDrillRows.find(function(x){return String(x.id)===String(categoryId)});
   if(!row||String(categoryId).indexOf("__")===0)return;
   const seq=++balanceDrillLoadSeq;
   try{
-    const forecastOnly=balanceDrillMonthSets().actual.length===0&&balanceDrillMonthSets().forecast.length>0;
+    const sets=balanceDrillMonthSets(),forecastOnly=!sets.actual.length&&sets.forecast.length>0;
     const data=await rpc("dashboard_reporting_analysis_detail_v2",{p_category_id:categoryId,p_direction:"EXPENSE",p_period_months:forecastOnly?12:0});
-    if(seq!==balanceDrillLoadSeq||String(balanceDrillCategoryId)!==String(categoryId))return;
+    if(seq!==balanceDrillLoadSeq||!balanceDrillSelection||String(balanceDrillCategoryId)!==String(categoryId))return;
     balanceDrillDetail=data||{};renderBalanceDrill();
   }catch(e){
-    if(seq!==balanceDrillLoadSeq)return;
-    balanceDrillDetail={movements:[]};
-    $("balanceDrillDetailHint").textContent="Dettaglio non disponibile";
-    $("balanceDrillBreakdown").innerHTML='<div class="msg error">'+esc(e.message||"Errore caricamento dettaglio")+'</div>';
+    if(seq!==balanceDrillLoadSeq||!balanceDrillSelection||String(balanceDrillCategoryId)!==String(categoryId))return;
+    balanceDrillDetail={error:e.message||"Errore caricamento dettaglio"};renderBalanceDrillBreakdown();
   }
 }
 function openBalanceNatureDrill(nature,month,origin){
   if(!nature)return;
+  resetBalanceDrillDetail();balanceDrillSelectedL1=null;balanceDrillMobileStep="L1";
+  balanceDrillSort="AMOUNT";balanceDrillL2Sort="AMOUNT";balanceDrillCpSort="AMOUNT";balanceDrillMoveSort="DATE";
   balanceDrillSelection={nature:nature,month:month||null,origin:origin||"CHART",mode:historicalPeriodMode,scope:historicalScope};
-  balanceDrillCategoryId=null;balanceDrillDetail=null;balanceDrillCounterparty="";balanceDrillSort="AMOUNT";balanceDrillExpandedL1=null;
   renderBalanceDrill();
   $("balanceNatureDetail")?.scrollIntoView({behavior:"smooth",block:"nearest"});
 }
 function closeBalanceNatureDrill(){
-  balanceDrillSelection=null;balanceDrillRows=[];balanceDrillCategoryId=null;balanceDrillDetail=null;balanceDrillCounterparty="";balanceDrillExpandedL1=null;
+  resetBalanceDrillDetail();balanceDrillSelection=null;balanceDrillRows=[];balanceDrillSelectedL1=null;balanceDrillMobileStep="L1";
   $("balanceNatureDetail")?.classList.add("hidden");
 }
 async function openBalanceDrillInAnalysis(categoryId){
@@ -5319,6 +5408,9 @@ $("planningNatureFilter").addEventListener("change",function(){planningBoardNatu
 $("planningForecastFilter").addEventListener("change",function(){planningBoardForecastFilter=this.value||"ALL";renderPlanningBoard()});
 $("planningNoteFilter").addEventListener("change",function(){planningBoardNoteFilter=this.value||"ALL";renderPlanningBoard()});
 $("balanceDrillSort")?.addEventListener("change",function(){balanceDrillSort=this.value||"AMOUNT";renderBalanceDrill()});
+$("balanceDrillL2Sort")?.addEventListener("change",function(){balanceDrillL2Sort=this.value||"AMOUNT";renderBalanceDrill()});
+$("balanceDrillCpSort")?.addEventListener("change",function(){balanceDrillCpSort=this.value||"AMOUNT";renderBalanceDrillBreakdown()});
+$("balanceDrillMovements")?.addEventListener("change",function(e){if(e.target.matches("[data-balance-drill-move-sort]")){balanceDrillMoveSort=e.target.value||"DATE";renderBalanceDrillBreakdown()}});
 $("historicalYearSelect")?.addEventListener("change",function(){
   historicalYearSelection=Number(this.value)||historicalYearSelection;
   balanceHubMode="HISTORY";historicalPeriodMode="YEAR";closeBalanceNatureDrill();renderBalanceHub();
@@ -5326,9 +5418,11 @@ $("historicalYearSelect")?.addEventListener("change",function(){
 $("scenarioView").addEventListener("click",async function(e){
   const closeDrill=e.target.closest("[data-balance-drill-close]");if(closeDrill){closeBalanceNatureDrill();return}
   const nature=e.target.closest("[data-balance-nature]");if(nature){openBalanceNatureDrill(nature.dataset.balanceNature,null,"EROSION");return}
-  const drillL1=e.target.closest("[data-balance-drill-l1]");if(drillL1){const id=drillL1.dataset.balanceDrillL1;balanceDrillExpandedL1=String(balanceDrillExpandedL1)===String(id)?null:id;balanceDrillCategoryId=null;balanceDrillDetail=null;balanceDrillCounterparty="";renderBalanceDrill();return}
+  const drillBack=e.target.closest("[data-balance-drill-back]");if(drillBack){balanceDrillMobileStep=balanceDrillMobileStep==="CP"?"L2":"L1";renderBalanceDrillBreakdown();return}
+  const drillStep=e.target.closest("[data-balance-drill-step]");if(drillStep){balanceDrillMobileStep=drillStep.dataset.balanceDrillStep||"L1";renderBalanceDrillBreakdown();return}
+  const drillL1=e.target.closest("[data-balance-drill-l1]");if(drillL1){selectBalanceDrillL1(drillL1.dataset.balanceDrillL1);return}
   const drillCat=e.target.closest("[data-balance-drill-category]");if(drillCat){await loadBalanceDrillCategory(drillCat.dataset.balanceDrillCategory);return}
-  const drillCp=e.target.closest("[data-balance-drill-counterparty]");if(drillCp){balanceDrillCounterparty=drillCp.dataset.balanceDrillCounterparty||"";renderBalanceDrillBreakdown();return}
+  const drillCp=e.target.closest("[data-balance-drill-counterparty]");if(drillCp){balanceDrillCounterparty=drillCp.dataset.balanceDrillCounterparty||"";balanceDrillMobileStep="CP";renderBalanceDrillBreakdown();$("balanceDrillMovements")?.scrollIntoView({behavior:"smooth",block:"nearest"});return}
   if(e.target.closest("[data-balance-drill-clear-counterparty]")){balanceDrillCounterparty="";renderBalanceDrillBreakdown();return}
   const openAnalysis=e.target.closest("[data-balance-open-analysis]");if(openAnalysis){await openBalanceDrillInAnalysis(openAnalysis.dataset.balanceOpenAnalysis);return}
   const hub=e.target.closest("[data-balance-hub]");
@@ -5539,3 +5633,4 @@ init();
 </script>
 </body>
 </html>
+
