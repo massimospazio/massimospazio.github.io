@@ -9,7 +9,7 @@
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
 <script src="../shared/supabase-client.js?v=73.24.0-20261012-1415"></script>
-<script src="../shared/app-config.js?v=73.29.0-20261012"></script>
+<script src="../shared/app-config.js?v=73.29.1-20261012"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 :root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#6b7280;--line:#e5e7eb;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 8px 24px rgba(15,23,42,.06)}
@@ -1118,14 +1118,17 @@ button,input,select{font:inherit}
 .balance-drill-pane-head>div{min-width:0}.balance-drill-pane-head strong{display:block;font-size:12px;line-height:1.4}.balance-drill-pane-head span{display:block;margin-top:3px;line-height:1.35;font-size:10px}
 .balance-drill-pane-head .select{font-size:10px;padding:5px;min-height:28px;max-width:105px}
 .balance-drill-scroll{max-height:355px;overflow:auto}
-.balance-drill-table{table-layout:fixed}.balance-drill-table th,.balance-drill-table td{font-size:12px;padding:9px 8px;font-variant-numeric:tabular-nums}.balance-drill-table th{font-size:9px}.balance-drill-table th:first-child{width:48%}.balance-drill-table th:nth-child(2){width:27%}.balance-drill-table th:nth-child(3){width:25%}
+.balance-drill-table{table-layout:fixed}.balance-drill-table th,.balance-drill-table td{font-size:12px;padding:5px 8px;font-variant-numeric:tabular-nums}.balance-drill-table th{font-size:9px}.balance-drill-table th:first-child{width:48%}.balance-drill-table th:nth-child(2){width:27%}.balance-drill-table th:nth-child(3){width:25%}
 .balance-drill-table td:nth-child(2){white-space:nowrap}.balance-drill-table tr[data-balance-drill-l1],.balance-drill-table tr[data-balance-drill-category],.balance-drill-table tr[data-balance-drill-counterparty]{cursor:pointer}
 .balance-drill-table tr:hover td{background:var(--drill-soft)}
-.balance-drill-cat-btn,.balance-drill-cp-btn,.balance-drill-l1-btn{font-size:12px;font-weight:650;overflow-wrap:anywhere;line-height:1.4}
-.balance-drill-l1-btn{display:block}.balance-drill-cat-meta{display:block;font-size:10px;margin-top:3px;color:#738198;font-weight:400}
-.balance-drill-row-icon{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;margin-right:6px;border-radius:7px;vertical-align:middle;background:var(--drill-soft);color:var(--drill-accent)}
+.balance-drill-cat-btn,.balance-drill-cp-btn,.balance-drill-l1-btn{font-size:12px;font-weight:650;line-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;min-width:0}
+.balance-drill-l1-btn{display:flex;align-items:center;gap:6px}.balance-drill-row-name{min-width:0;overflow:hidden;text-overflow:ellipsis}.balance-drill-cat-meta{font-size:10px;color:#738198;font-weight:400}
+.balance-drill-row-icon{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;flex:0 0 20px;border-radius:6px;vertical-align:middle;background:var(--drill-soft);color:var(--drill-accent)}
 .balance-drill-row-icon svg{width:15px;height:15px}
-.balance-drill-share{flex-direction:column;align-items:flex-end;gap:4px}.balance-drill-share i{width:48px}.balance-drill-share span{font-size:11px}
+.balance-drill-share{flex-direction:row;align-items:center;gap:5px;white-space:nowrap}.balance-drill-share i{width:28px;height:4px;flex:0 0 28px}.balance-drill-share span{font-size:11px}
+.balance-drill-cp-label{display:flex;align-items:center;gap:5px;min-width:0}.balance-drill-cp-count{flex:0 0 auto;padding:1px 4px;border-radius:5px;background:var(--drill-soft);color:#64748b;font-size:10px;line-height:16px;font-variant-numeric:tabular-nums}
+.balance-drill-cp-label .balance-drill-cp-btn{width:auto;max-width:100%}
+@media(min-width:761px) and (max-width:1100px),(max-width:400px){.balance-drill-share i{display:none}}
 .balance-drill-navigation{display:flex;gap:9px;align-items:center;margin:0 0 10px;min-height:25px}.balance-drill-path{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:11px;color:#64748b}.balance-drill-path button{border:0;border-radius:6px;background:var(--drill-soft);padding:4px 7px;cursor:pointer;color:#172033;font:inherit;font-weight:650}.balance-drill-path .current{color:var(--drill-accent);font-weight:750}.balance-drill-back{display:none}
 .balance-drill-analysis-action{padding:9px;border-top:1px solid #e8edf4}.balance-drill-analysis-action:empty{display:none}.balance-drill-analysis-action .btn{font-size:11px;width:100%;text-align:left}
 .balance-drill-movement-panel{margin-top:12px;padding:12px;border:1px solid color-mix(in srgb,var(--drill-accent) 25%,#e2e8f0);border-radius:11px;background:#fff}
@@ -4132,8 +4135,8 @@ function balanceDrillShareHtml(value){
 function balanceDrillTableHtml(rows,label,attr,selected,denominator,forecastOnly,mixed){
   return '<table class="balance-drill-table"><thead><tr><th>'+esc(label)+'</th><th>'+(forecastOnly?"Previsto":"Importo")+'</th><th title="Quota sul livello precedente">%</th></tr></thead><tbody>'+rows.map(function(x){
     const active=String(selected||"")===String(x.id),share=denominator?x.total*100/denominator:0;
-    const meta=mixed?money(x.actual)+' cons. · '+money(x.forecast)+' prev.':attr==="l1"?x.children.length+' L2':"";
-    return '<tr class="'+(active?'balance-drill-selected':'')+'" data-balance-drill-'+attr+'="'+esc(x.id)+'"><td><button class="'+(attr==="l1"?'balance-drill-l1-btn':'balance-drill-cat-btn')+'" type="button" aria-pressed="'+active+'">'+(attr==="l1"?'<span class="balance-drill-row-icon">'+analysisSvgIcon(x.name)+'</span>':'')+esc(x.name)+'</button>'+(meta?'<span class="balance-drill-cat-meta">'+meta+'</span>':'')+'</td><td><strong title="'+esc(mixed?meta:money(x.total))+'">'+money(x.total)+'</strong></td><td>'+balanceDrillShareHtml(share)+'</td></tr>';
+    const meta=mixed?money(x.actual)+' cons. · '+money(x.forecast)+' prev.':"";
+    return '<tr class="'+(active?'balance-drill-selected':'')+'" data-balance-drill-'+attr+'="'+esc(x.id)+'"><td><button class="'+(attr==="l1"?'balance-drill-l1-btn':'balance-drill-cat-btn')+'" type="button" aria-pressed="'+active+'">'+(attr==="l1"?'<span class="balance-drill-row-icon">'+analysisSvgIcon(x.name)+'</span>':'')+'<span class="balance-drill-row-name" title="'+esc(x.name)+'">'+esc(x.name)+'</span></button></td><td><strong title="'+esc(mixed?meta:money(x.total))+'">'+money(x.total)+'</strong></td><td>'+balanceDrillShareHtml(share)+'</td></tr>';
   }).join("")+'</tbody></table>';
 }
 function renderBalanceDrillPath(){
@@ -4218,7 +4221,7 @@ function renderBalanceDrillBreakdown(){
   const note=forecastOnly?'<p class="balance-drill-note">Importi storici ordinari: '+money(cpTotal)+'. Non sono quote della previsione di '+money(row.forecast)+'.</p>':sets.forecast.length?'<p class="balance-drill-note">Controparti sul consuntivo ('+money(cpTotal)+'). La previsione resta a livello di categoria.</p>':"";
   box.innerHTML=(cps.length?'<table class="balance-drill-table"><thead><tr><th>Controparte</th><th>Importo</th><th>%</th></tr></thead><tbody>'+cps.map(function(g){
     const active=balanceDrillCounterparty===g.name;
-    return '<tr class="'+(active?'balance-drill-selected':'')+'" data-balance-drill-counterparty="'+esc(g.name)+'"><td><button class="balance-drill-cp-btn" type="button" aria-pressed="'+active+'">'+esc(g.name)+'</button><span class="balance-drill-cat-meta">'+g.count+' movimenti</span></td><td><strong>'+money(g.total)+'</strong></td><td>'+balanceDrillShareHtml(cpTotal?g.total*100/cpTotal:0)+'</td></tr>';
+    return '<tr class="'+(active?'balance-drill-selected':'')+'" data-balance-drill-counterparty="'+esc(g.name)+'"><td><div class="balance-drill-cp-label"><button class="balance-drill-cp-btn" type="button" aria-pressed="'+active+'" title="'+esc(g.name)+'">'+esc(g.name)+'</button><span class="balance-drill-cp-count" title="'+g.count+' movimenti" aria-label="'+g.count+' movimenti">'+g.count+'</span></div></td><td><strong>'+money(g.total)+'</strong></td><td>'+balanceDrillShareHtml(cpTotal?g.total*100/cpTotal:0)+'</td></tr>';
   }).join("")+'</tbody></table>':'<div class="balance-drill-empty">Nessuna controparte '+(forecastOnly?"nella base storica":"nel periodo selezionato")+'.</div>')+note;
   renderBalanceDrillPath();
   if(!balanceDrillCounterparty||balanceDrillMobileStep!=="CP")return;

@@ -1,7 +1,7 @@
 // Canonical source: massimospazio/budget-familiare; public files are deployed automatically.
 (function(){
-  const APP_VERSION='V73.29.0';
-  const APP_RELEASE='Bilancio · L1 → L2 → controparti e movimenti su richiesta';
+  const APP_VERSION='V73.29.1';
+  const APP_RELEASE='Bilancio · righe compatte e conteggi in linea';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});
