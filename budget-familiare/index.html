@@ -261,6 +261,7 @@
                   <option value="TRANSFER">Trasferimento familiare / interno — non è una spesa</option>
                   <option value="EXPENSE">Spesa reale — pagamento a terzi</option>
                   <option value="INCOME">Entrata reale — denaro ricevuto</option>
+                  <option value="INVESTMENT">Investimento — acquisto / versamento finanziario</option>
                 </select>
                 <div id="transferDecisionHint" class="note"></div>
               </div>
@@ -2343,7 +2344,7 @@ function renderMovementAttributeControls(){
     ?'<span class="movement-attribute-effective"><span class="movement-attribute-badge '+(tValue?"override ":"")+(effectiveT==="EXCEPTIONAL"?"exceptional":"")+'">'+movementTemporalityShort(effectiveT)+'</span>'+esc(movementTemporalityLabel(effectiveT))+' · '+(tValue?"override movimento":"default categoria")+'</span>'
     :'<span class="muted">Temporalità non definita.</span>';
   const fundingField=$("classInvestmentFundingSourceField"),fundingSel=$("classInvestmentFundingSource"),fundingState=$("classInvestmentFundingSourceState");
-  const investment=String(selectedRow.transaction_type||"")==="INVESTMENT";
+  const investment=target==="INVESTMENT";
   const showFunding=investment&&effectiveT==="PLANNED_OCCASIONAL"&&!technical;
   if(fundingField)fundingField.classList.toggle("hidden",!showFunding);
   if(fundingSel){
