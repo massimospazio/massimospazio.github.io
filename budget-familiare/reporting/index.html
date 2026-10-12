@@ -4070,34 +4070,28 @@ function balanceDrillPeriodLabel(){
 function renderBalanceDrill(){
   const box=$("balanceNatureDetail");if(!box||!balanceDrillSelection)return;
   balanceDrillRows=balanceDrillRowsForSelection();
-  const sets=balanceDrillMonthSets(),total=balanceDrillRows.reduce(function(s,x){return s+x.total},0);
-  const actualOnly=sets.actual.length>0&&sets.forecast.length===0,forecastOnly=sets.forecast.length>0&&sets.actual.length===0,mixed=sets.actual.length>0&&sets.forecast.length>0;
+  const groups=balanceDrillHierarchy(),sets=balanceDrillMonthSets(),total=balanceDrillRows.reduce(function(s,x){return s+x.total},0);
+  const forecastOnly=sets.forecast.length>0&&sets.actual.length===0,mixed=sets.actual.length>0&&sets.forecast.length>0;
+  ["mandatory","necessary","unclassified","discretionary","unknown","investment","all_expense"].forEach(function(k){box.classList.remove("nature-"+k)});
+  box.classList.add("nature-"+String(balanceDrillSelection.nature||"").toLowerCase());
   $("balanceDrillTitle").textContent=balanceDrillNatureLabel(balanceDrillSelection.nature)+" · "+balanceDrillPeriodLabel();
-  $("balanceDrillSubtitle").textContent=mixed?"Consuntivo e previsione nello stesso dettaglio.":forecastOnly?"Previsione per categoria; i movimenti, quando apri una categoria, mostrano la base storica.":"Consuntivo raggruppato per categoria; apri una riga per controparti e movimenti.";
+  $("balanceDrillSubtitle").textContent=mixed?"Consuntivo e previsione nello stesso dettaglio.":forecastOnly?"Previsione per categoria; il dettaglio movimenti usa la base storica.":"Macro-categorie L1, poi L2, controparti e movimenti.";
   $("balanceDrillTotal").textContent=money(total);
-  $("balanceDrillCategoryHint").textContent=balanceDrillRows.length+" categorie · "+(mixed?"misto":forecastOnly?"previsto":"storico");
+  $("balanceDrillCategoryHint").textContent=groups.length+" L1 · "+balanceDrillRows.length+" L2";
   $("balanceDrillSort").value=balanceDrillSort;
-  if(!balanceDrillRows.length){
-    $("balanceDrillCategories").innerHTML='<div class="balance-drill-empty">Nessun dato per questa selezione.</div>';
-  }else{
-    const head=mixed?'<tr><th>Categoria</th><th>Cons.</th><th>Prev.</th><th>Totale</th><th>%</th></tr>':forecastOnly?'<tr><th>Categoria</th><th>Previsto</th><th>%</th></tr>':'<tr><th>Categoria</th><th>Importo</th><th>%</th></tr>';
-    $("balanceDrillCategories").innerHTML='<div style="max-height:390px;overflow:auto"><table class="balance-drill-table"><thead>'+head+'</thead><tbody>'+
-      balanceDrillRows.map(function(x){
-        const selected=String(balanceDrillCategoryId||"")===String(x.id);
-        const name='<button class="balance-drill-cat-btn" type="button" data-balance-drill-category="'+esc(x.id)+'">'+esc(x.name)+'</button><div class="balance-drill-cat-meta">'+esc(x.l1||"")+'</div>';
-        const share='<div class="balance-drill-share"><span>'+x.share.toLocaleString("it-IT",{maximumFractionDigits:1})+'%</span><i style="--share:'+Math.max(2,x.share).toFixed(1)+'%"></i></div>';
-        if(mixed)return '<tr class="'+(selected?"balance-drill-selected":"")+'"><td>'+name+'</td><td>'+money(x.actual)+'</td><td>'+money(x.forecast)+'</td><td><strong>'+money(x.total)+'</strong></td><td>'+share+'</td></tr>';
-        return '<tr class="'+(selected?"balance-drill-selected":"")+'"><td>'+name+'</td><td><strong>'+money(forecastOnly?x.forecast:x.actual)+'</strong></td><td>'+share+'</td></tr>';
-      }).join("")+'</tbody></table></div>';
+  if(!balanceDrillExpandedL1&&groups.length)balanceDrillExpandedL1=groups[0].id;
+  function share(x){return '<div class="balance-drill-share"><span>'+x.share.toLocaleString("it-IT",{maximumFractionDigits:1})+'%</span><i style="--share:'+Math.max(2,x.share).toFixed(1)+'%"></i></div>'}
+  function cells(x,strong){if(mixed)return '<td>'+money(x.actual)+'</td><td>'+money(x.forecast)+'</td><td>'+(strong?'<strong>':'')+money(x.total)+(strong?'</strong>':'')+'</td>';return forecastOnly?'<td>'+(strong?'<strong>':'')+money(x.forecast)+(strong?'</strong>':'')+'</td>':'<td>'+(strong?'<strong>':'')+money(x.actual)+(strong?'</strong>':'')+'</td>'}
+  if(!groups.length)$("balanceDrillCategories").innerHTML='<div class="balance-drill-empty">Nessun dato per questa selezione.</div>';
+  else{
+    const head=mixed?'<tr><th>Macro-categoria / voce</th><th>Cons.</th><th>Prev.</th><th>Totale</th><th>%</th></tr>':forecastOnly?'<tr><th>Macro-categoria / voce</th><th>Previsto</th><th>%</th></tr>':'<tr><th>Macro-categoria / voce</th><th>Importo</th><th>%</th></tr>';
+    let rows="";
+    groups.forEach(function(g){const open=String(balanceDrillExpandedL1)===String(g.id);rows+='<tr class="balance-drill-l1"><td><button class="balance-drill-l1-btn" type="button" data-balance-drill-l1="'+esc(g.id)+'"><span class="chev">'+(open?"▾":"▸")+'</span><span>'+esc(g.name)+'</span><span class="count">'+g.children.length+' L2</span></button></td>'+cells(g,true)+'<td>'+share(g)+'</td></tr>';if(open)g.children.forEach(function(x){const selected=String(balanceDrillCategoryId||"")===String(x.id);rows+='<tr class="balance-drill-l2 '+(selected?"balance-drill-selected":"")+'"><td><button class="balance-drill-cat-btn" type="button" data-balance-drill-category="'+esc(x.id)+'">'+esc(x.name)+'</button></td>'+cells(x,true)+'<td>'+share(x)+'</td></tr>'})});
+    $("balanceDrillCategories").innerHTML='<div style="max-height:410px;overflow:auto"><table class="balance-drill-table"><thead>'+head+'</thead><tbody>'+rows+'</tbody></table></div>';
   }
   box.classList.remove("hidden");
-  if(balanceDrillCategoryId&&!balanceDrillRows.some(function(x){return String(x.id)===String(balanceDrillCategoryId)})){
-    balanceDrillCategoryId=null;balanceDrillDetail=null;balanceDrillCounterparty="";
-  }
-  if(!balanceDrillCategoryId){
-    $("balanceDrillDetailHint").textContent="Seleziona una categoria";
-    $("balanceDrillBreakdown").innerHTML='<div class="balance-drill-empty">Seleziona una categoria per vedere controparti e movimenti.</div>';
-  }else renderBalanceDrillBreakdown();
+  if(balanceDrillCategoryId&&!balanceDrillRows.some(function(x){return String(x.id)===String(balanceDrillCategoryId)})){balanceDrillCategoryId=null;balanceDrillDetail=null;balanceDrillCounterparty=""}
+  if(!balanceDrillCategoryId){$("balanceDrillDetailHint").textContent="Seleziona una L2";$("balanceDrillBreakdown").innerHTML='<div class="balance-drill-empty">Apri una macro-categoria L1 e seleziona una L2 per vedere controparti e movimenti.</div>'}else renderBalanceDrillBreakdown();
 }
 function balanceDrillMovementRows(){
   const d=balanceDrillDetail||{},all=Array.isArray(d.movements)?d.movements:[],sets=balanceDrillMonthSets();
