@@ -4033,14 +4033,14 @@ function balanceDrillRowsForSelection(){
     if(!match)return;
     const id=String(x.l2_id||x.l1_id||"");
     if(!id)return;
-    if(!rows.has(id))rows.set(id,{id:id,name:x.l2_name||x.l1_name||"Senza categoria",l1:x.l1_name||"",actual:0,forecast:0});
+    if(!rows.has(id))rows.set(id,{id:id,name:x.l2_name||x.l1_name||"Senza categoria",l1:x.l1_name||"",l1Id:String(x.l1_id||id),level:x.l2_id?"L2":"L1",actual:0,forecast:0});
     rows.get(id).actual+=historicalCategoryAmount(x,scope);
   });
 
   if(sets.forecast.length){
     if(nature==="INVESTMENT"){
       const amount=sets.forecast.reduce(function(s,m){return s+num(scenarioForecastInvestment(m))},0);
-      if(amount>.005)rows.set("__INVESTMENT_FORECAST__",{id:"__INVESTMENT_FORECAST__",name:"Investimenti previsti",l1:"Debiti e Risparmio",actual:0,forecast:amount});
+      if(amount>.005)rows.set("__INVESTMENT_FORECAST__",{id:"__INVESTMENT_FORECAST__",name:"Investimenti previsti",l1:"Debiti e Risparmio",l1Id:"__INVESTMENT_L1__",level:"L2",actual:0,forecast:amount});
     }else{
       const data=projectionDataFor("EXPENSE"),fmap=balanceProjectionCategoryTotals(data,sets.forecast,"FORECAST");
       (data&&data.categories||[]).forEach(function(cat){
@@ -4048,7 +4048,7 @@ function balanceDrillRowsForSelection(){
         if(nature!=="ALL_EXPENSE"&&catNature!==nature)return;
         const amount=num(fmap.get(String(cat.category_id)));if(amount<=.005)return;
         const id=String(cat.category_id);
-        if(!rows.has(id))rows.set(id,{id:id,name:cat.l2_name||cat.category_name||cat.l1_name||"Senza categoria",l1:cat.l1_name||"",actual:0,forecast:0});
+        if(!rows.has(id))rows.set(id,{id:id,name:cat.l2_name||cat.category_name||cat.l1_name||"Senza categoria",l1:cat.l1_name||"",l1Id:String(cat.l1_id||cat.category_id||id),level:cat.l2_id||cat.l1_id?"L2":"L1",actual:0,forecast:0});
         rows.get(id).forecast+=amount;
       });
     }
