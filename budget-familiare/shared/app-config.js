@@ -1,7 +1,7 @@
 // Canonical source: massimospazio/budget-familiare; public files are deployed automatically.
 (function(){
-  const APP_VERSION='V73.23.0';
-  const APP_RELEASE='Margine strutturale · investimenti ricorrenti vs occasionali';
+  const APP_VERSION='V73.24.0';
+  const APP_RELEASE='Investimenti · origine fondi e surplus disponibile';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});
