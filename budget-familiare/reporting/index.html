@@ -4061,6 +4061,7 @@ function balanceDrillRowsForSelection(){
   else out.sort(function(a,b){return b.total-a.total||a.name.localeCompare(b.name,"it")});
   return out;
 }
+function balanceDrillHierarchy(){const m=new Map(),grand=balanceDrillRows.reduce((s,x)=>s+x.total,0);balanceDrillRows.forEach(x=>{const k=x.l1Id||x.l1||x.id;if(!m.has(k))m.set(k,{id:k,name:x.l1||x.name,actual:0,forecast:0,total:0,children:[]});const g=m.get(k);g.actual+=x.actual;g.forecast+=x.forecast;g.total+=x.total;g.children.push(x)});const out=Array.from(m.values());out.forEach(g=>{g.share=grand?g.total*100/grand:0;g.children.sort((a,b)=>b.total-a.total)});out.sort((a,b)=>b.total-a.total);return out}
 function balanceDrillPeriodLabel(){
   if(!balanceDrillSelection)return "";
   if(balanceDrillSelection.month)return monthLabel(balanceDrillSelection.month);
