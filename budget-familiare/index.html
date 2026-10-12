@@ -9,7 +9,7 @@
 <title>Budget Familiare — Dashboard gestione</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
 <script src="shared/supabase-client.js?v=73.24.0-20261012-1415"></script>
-<script src="shared/app-config.js?v=73.24.1-20261012-1435"></script>
+<script src="shared/app-config.js?v=73.25.0-20261012-1505"></script>
 <style>
 :root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#6b7280;--line:#e5e7eb;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 8px 24px rgba(15,23,42,.06)}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,input,select{font:inherit}.wrap{max-width:1500px;margin:0 auto;padding:22px}.top{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:18px}.brand h1{font-size:24px;margin:0}.brand small{color:var(--muted)}.userbar{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:13px}.tabs{display:flex;gap:8px;margin:0 0 18px;flex-wrap:wrap}.tab{border:1px solid var(--line);background:#fff;padding:9px 14px;border-radius:10px;cursor:pointer}.tab.active{background:var(--text);color:#fff;border-color:var(--text)}.tabs a.tab{text-decoration:none;color:inherit;display:inline-flex;align-items:center}.card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:16px}.grid{display:grid;gap:14px}.kpis{grid-template-columns:repeat(6,minmax(150px,1fr));margin-bottom:14px}.kpi .label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}.kpi .value{font-size:27px;font-weight:750;margin-top:6px}.kpi .sub{font-size:12px;color:var(--muted);margin-top:4px}.section-title{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:4px 0 12px}.section-title h2{font-size:18px;margin:0}.section-title p{margin:4px 0 0;color:var(--muted);font-size:13px}.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.input,.select{border:1px solid var(--line);border-radius:9px;padding:9px 10px;background:#fff;min-height:38px}.input{min-width:220px}.btn{border:0;border-radius:9px;padding:9px 12px;cursor:pointer;background:var(--accent);color:#fff;font-weight:650}.btn.secondary{background:#eef2ff;color:#3730a3}.btn.ghost{background:#fff;color:var(--text);border:1px solid var(--line)}.btn.danger{background:#fee2e2;color:#991b1b}
@@ -342,7 +342,6 @@
                   </select>
                   <div id="classInvestmentFundingSourceState" class="small muted">Default prudenziale: surplus corrente.</div>
                 </div>
-                <div id="classLegacyExtraordinary" class="movement-legacy-warning hidden" style="grid-column:1/-1"></div>
                 <div class="field" style="grid-column:1/-1">
                   <label>Nota personale</label>
                   <textarea id="classUserNote" class="input" rows="3" maxlength="4000" placeholder="Es. verificato: acquisto per scuola, pagamento visita, movimento corretto…"></textarea>
@@ -352,7 +351,7 @@
                   </div>
                 </div>
               </div>
-              <div class="note">Natura e Temporalità possono avere un override sul singolo movimento; in assenza di override valgono i default della categoria. Per un investimento P · Occasionale compare anche <strong>Origine fondi</strong>: surplus corrente oppure patrimonio pregresso/disinvestimento. E · Eccezionale sostituisce progressivamente il vecchio flag Straordinario.</div>
+              <div class="note">Natura e Temporalità possono avere un override sul singolo movimento; in assenza di override valgono i default della categoria. Per un investimento P · Occasionale compare anche <strong>Origine fondi</strong>: surplus corrente oppure patrimonio pregresso/disinvestimento. E · Eccezionale è la classificazione canonica del singolo movimento.</div>
             </div>
 
             <div id="splitBox" class="split-box">
@@ -400,7 +399,6 @@
           <select id="movementNote" class="select"><option value="">Tutte le note</option><option value="HAS">Con nota</option><option value="NONE">Senza nota</option></select>
           <select id="movementReporting" class="select">
             <option value="">Tutta la temporalità</option>
-            <option value="LEGACY">⚠ Straordinari legacy da verificare</option>
             <option value="EXCEPTIONAL">E · Eccezionali</option>
             <option value="OVERRIDE">Con override Natura/Temporalità</option>
           </select>
@@ -1407,8 +1405,7 @@ function movementContextHtml(x){
   const project=x?.project_name?`<div><strong>${esc(x.project_name)}</strong></div>`:'';
   const tags=(x?.tags||[]).map(t=>`<span class="pill">#${esc(t.name)}</span>`).join('');
   let reporting='';
-  if(x?.needs_temporality_review)reporting='<div class="movement-reporting-badges"><span class="pill legacy">⚠ E legacy</span></div>';
-  else if(x?.nature_override||x?.temporality_override){
+  if(x?.nature_override||x?.temporality_override){
     const bits=[x?.nature_override?movementNatureShort(x.nature_override):'',x?.temporality_override?movementTemporalityShort(x.temporality_override):''].filter(Boolean).join(' · ');
     reporting='<div class="movement-reporting-badges"><span class="pill override">Override '+esc(bits)+'</span></div>';
   }
@@ -1653,8 +1650,7 @@ function filteredMovements(){
     const hasNote=!!String(x.user_note||'').trim();
     if(noteFilter==='HAS'&&!hasNote)return false;
     if(noteFilter==='NONE'&&hasNote)return false;
-    if(reportingFilter==='LEGACY'&&!x.needs_temporality_review)return false;
-    if(reportingFilter==='EXCEPTIONAL'&&(x.effective_temporality!=='EXCEPTIONAL'||x.needs_temporality_review))return false;
+    if(reportingFilter==='EXCEPTIONAL'&&x.effective_temporality!=='EXCEPTIONAL')return false;
     if(reportingFilter==='OVERRIDE'&&!x.nature_override&&!x.temporality_override)return false;
     if(dir&&movementDirection(x).key!==dir)return false;
     if(cp==='__NONE__'&&x.counterparty_id)return false;
@@ -1681,7 +1677,7 @@ function filteredMovements(){
 }
 function sortMovements(rows){const mult=sortDir==='asc'?1:-1;return [...rows].sort((a,b)=>{let av=a[sortKey],bv=b[sortKey];if(sortKey==='amount'){av=Math.abs(Number(a.amount||0));bv=Math.abs(Number(b.amount||0))}if(sortKey==='has_note'){av=String(a.user_note||'').trim()?1:0;bv=String(b.user_note||'').trim()?1:0}if(sortKey==='counterparty_name'){av=a.counterparty_name||'';bv=b.counterparty_name||''}if(sortKey==='category_path'){av=a.category_path||'';bv=b.category_path||''}if(sortKey==='description'){av=a.description||'';bv=b.description||''}if(typeof av==='number'||typeof bv==='number')return (Number(av||0)-Number(bv||0))*mult;return String(av||'').localeCompare(String(bv||''),'it',{numeric:true,sensitivity:'base'})*mult})}
 function sortHeader(label,key){const arrow=sortKey===key?(sortDir==='asc'?' ↑':' ↓'):'';return `<button class="sortbtn" data-sort="${key}">${esc(label)}${arrow}</button>`}
-function renderMovements(){const rows=filteredMovements(),legacyCount=(catData?.movements||[]).filter(x=>x.needs_temporality_review).length;$('movementSummary').textContent=`${nfmt(rows.length)} movimenti visualizzati · volume ${euro(rows.reduce((s,x)=>s+Math.abs(Number(x.amount||0)),0))}${legacyCount?' · ⚠ '+nfmt(legacyCount)+' straordinari legacy da verificare':''}${movementCategoryScopeLabel?' · categoria '+movementCategoryScopeLabel:''}${fuzzySuggestionsError?' · suggerimenti fuzzy non disponibili':''}`;$('viewList').className=`btn ${viewMode==='list'?'secondary':'ghost'} compact`;$('viewGrouped').className=`btn ${viewMode==='grouped'?'secondary':'ghost'} compact`;if(viewMode==='grouped')renderGrouped(rows);else renderMovementList(rows);syncBulkSelectionUi()}
+function renderMovements(){const rows=filteredMovements();$('movementSummary').textContent=`${nfmt(rows.length)} movimenti visualizzati · volume ${euro(rows.reduce((s,x)=>s+Math.abs(Number(x.amount||0)),0))}${movementCategoryScopeLabel?' · categoria '+movementCategoryScopeLabel:''}${fuzzySuggestionsError?' · suggerimenti fuzzy non disponibili':''}`;$('viewList').className=`btn ${viewMode==='list'?'secondary':'ghost'} compact`;$('viewGrouped').className=`btn ${viewMode==='grouped'?'secondary':'ghost'} compact`;if(viewMode==='grouped')renderGrouped(rows);else renderMovementList(rows);syncBulkSelectionUi()}
 function syncBulkSelectionUi(){
   const count=selectedMovementIds.size,disabled=count===0;
   if($('bulkSelectedCount'))$('bulkSelectedCount').textContent=`${nfmt(count)} ${count===1?'selezionato':'selezionati'}`;
@@ -2208,7 +2204,6 @@ function resetClassificationPanel(close=true){
   if($('classNatureOverride'))$('classNatureOverride').innerHTML='';if($('classNatureOverrideState'))$('classNatureOverrideState').textContent='';
   if($('classTemporalityOverride'))$('classTemporalityOverride').innerHTML='';if($('classTemporalityOverrideState'))$('classTemporalityOverrideState').textContent='';
   if($('classInvestmentFundingSourceField'))$('classInvestmentFundingSourceField').classList.add('hidden');if($('classInvestmentFundingSource'))$('classInvestmentFundingSource').value='CURRENT_SURPLUS';if($('classInvestmentFundingSourceState'))$('classInvestmentFundingSourceState').textContent='';
-  if($('classLegacyExtraordinary')){$('classLegacyExtraordinary').classList.add('hidden');$('classLegacyExtraordinary').innerHTML='';}
   $('classMode').value='all';$('quickCounterpartyBox').classList.add('hidden');$('transferTarget').value='EXPENSE';$('transferDecision').classList.add('hidden');$('transferDecisionHint').textContent='';msg($('classMsg'),'');
   if(close)$('classifyBox').classList.add('hidden');
 }
@@ -2236,9 +2231,9 @@ function updateClassificationPipelineState(){
   if(catState)catState.textContent=categoryId?categoryNameById(categoryId):'Categoria mancante';
   if(ctxState){
     const project=$('classProject')?.value||'',tags=document.querySelectorAll('[data-class-tag]:checked').length,splits=Number(selectedRow?.split_count||0);
-    const natureOverride=selectedRow?.nature_override,temporalityOverride=selectedRow?.temporality_override,legacy=!!selectedRow?.needs_temporality_review;
+    const natureOverride=selectedRow?.nature_override,temporalityOverride=selectedRow?.temporality_override;
     const funding=selectedRow?.investment_funding_source;
-    const parts=[project?'progetto':null,tags?tags+' tag':null,splits?splits+' quote':null,natureOverride?'natura '+movementNatureShort(natureOverride):null,temporalityOverride?'temporalità '+movementTemporalityShort(temporalityOverride):null,funding==='PRIOR_WEALTH'?'fondi patrimonio':funding==='CURRENT_SURPLUS'?'fondi surplus':null,legacy?'⚠ E legacy':null].filter(Boolean);
+    const parts=[project?'progetto':null,tags?tags+' tag':null,splits?splits+' quote':null,natureOverride?'natura '+movementNatureShort(natureOverride):null,temporalityOverride?'temporalità '+movementTemporalityShort(temporalityOverride):null,funding==='PRIOR_WEALTH'?'fondi patrimonio':funding==='CURRENT_SURPLUS'?'fondi surplus':null].filter(Boolean);
     ctxState.textContent=parts.length?parts.join(' · '):'Facoltativo';
   }
 }
@@ -2303,7 +2298,6 @@ function movementApplyReportingAttributes(flag){
   selectedRow.temporality_source=f.temporality_source||"NONE";
   selectedRow.investment_funding_source=f.investment_funding_source||null;
   selectedRow.effective_investment_funding_source=f.effective_investment_funding_source||null;
-  selectedRow.needs_temporality_review=!!f.legacy_extraordinary;
   const local=(catData?.movements||[]).find(function(x){return String(x.id)===String(selectedRow.id)});
   if(local)Object.assign(local,{
     is_extraordinary:selectedRow.is_extraordinary,
@@ -2314,14 +2308,13 @@ function movementApplyReportingAttributes(flag){
     nature_source:selectedRow.nature_source,
     temporality_source:selectedRow.temporality_source,
     investment_funding_source:selectedRow.investment_funding_source,
-    effective_investment_funding_source:selectedRow.effective_investment_funding_source,
-    needs_temporality_review:selectedRow.needs_temporality_review
+    effective_investment_funding_source:selectedRow.effective_investment_funding_source
   });
   renderMovementAttributeControls();
 }
 function renderMovementAttributeControls(){
   if(!selectedRow)return;
-  const nSel=$("classNatureOverride"),tSel=$("classTemporalityOverride"),nState=$("classNatureOverrideState"),tState=$("classTemporalityOverrideState"),legacy=$("classLegacyExtraordinary");
+  const nSel=$("classNatureOverride"),tSel=$("classTemporalityOverride"),nState=$("classNatureOverrideState"),tState=$("classTemporalityOverrideState");
   if(!nSel||!tSel)return;
   const f=selectedRow.reporting_attributes||selectedRow,defaults=movementCategoryDefaults();
   const target=selectedRow.is_bank_transfer?($("transferTarget")?.value||selectedRow.transaction_type):selectedRow.transaction_type;
@@ -2342,14 +2335,12 @@ function renderMovementAttributeControls(){
       ?'<span class="movement-attribute-effective"><span class="movement-attribute-badge '+(nValue?"override":"")+'">'+movementNatureShort(effective)+'</span>'+esc(movementNatureLabel(effective))+' · '+(nValue?"override movimento":"default categoria")+'</span>'
       :'<span class="muted">Natura non definita.</span>';
   }
-  const isLegacy=!!f.legacy_extraordinary||String(f.temporality_source||"")==="LEGACY_EXTRAORDINARY";
   const tOpts=[["","Usa default categoria"],["RECURRING","R · Ricorrente"],["PLANNED_OCCASIONAL","P · Occasionale"],["EXCEPTIONAL","E · Eccezionale"],["NOT_APPLICABLE","X · Non applicabile"]];
-  if(isLegacy&&!tValue)tOpts.unshift(["__LEGACY__","⚠ E legacy · da verificare"]);
-  tSel.innerHTML=tOpts.map(function(o){const selected=(o[0]==="__LEGACY__"&&isLegacy&&!tValue)||(o[0]===tValue&&o[0]!=="__LEGACY__");return '<option value="'+o[0]+'" '+(selected?'selected':'')+' '+(o[0]==="__LEGACY__"?'disabled':'')+'>'+o[1]+'</option>'}).join("");
+  tSel.innerHTML=tOpts.map(function(o){return '<option value="'+o[0]+'" '+(o[0]===tValue?'selected':'')+'>'+o[1]+'</option>'}).join("");
   tSel.disabled=technical;
-  const effectiveT=tValue||(isLegacy?"EXCEPTIONAL":defaults.temporality||"");
+  const effectiveT=tValue||(defaults.temporality||"");
   if(tState)tState.innerHTML=effectiveT
-    ?'<span class="movement-attribute-effective"><span class="movement-attribute-badge '+(tValue?"override ":"")+(effectiveT==="EXCEPTIONAL"?"exceptional":"")+'">'+movementTemporalityShort(effectiveT)+'</span>'+esc(movementTemporalityLabel(effectiveT))+' · '+(isLegacy&&!tValue?"legacy da verificare":tValue?"override movimento":"default categoria")+'</span>'
+    ?'<span class="movement-attribute-effective"><span class="movement-attribute-badge '+(tValue?"override ":"")+(effectiveT==="EXCEPTIONAL"?"exceptional":"")+'">'+movementTemporalityShort(effectiveT)+'</span>'+esc(movementTemporalityLabel(effectiveT))+' · '+(tValue?"override movimento":"default categoria")+'</span>'
     :'<span class="muted">Temporalità non definita.</span>';
   const fundingField=$("classInvestmentFundingSourceField"),fundingSel=$("classInvestmentFundingSource"),fundingState=$("classInvestmentFundingSourceState");
   const investment=String(selectedRow.transaction_type||"")==="INVESTMENT";
@@ -2362,12 +2353,6 @@ function renderMovementAttributeControls(){
     if(fundingState)fundingState.textContent=fundingValue==="PRIOR_WEALTH"
       ?"Patrimonio pregresso: resta visibile come investimento ma non riduce il Disponibile dopo risparmio."
       :"Surplus corrente: l'investimento riduce il Disponibile dopo risparmio. È il default prudenziale.";
-  }
-  if(legacy){
-    legacy.classList.toggle("hidden",!isLegacy);
-    legacy.innerHTML=isLegacy
-      ?'<strong>⚠ Vecchio “Straordinario” da verificare.</strong> Oggi il Bilancio continua a trattarlo come straordinario per compatibilità. Scegli <strong>E</strong> per confermarlo oppure R/P/X (o il default categoria) per riclassificarlo e rimuovere il vecchio flag.'
-      :'';
   }
   if(technical){
     if(nState)nState.textContent="Giroconto interno: escluso dal reporting economico; Natura non utilizzata.";
@@ -2400,7 +2385,7 @@ async function saveMovementNatureOverride(){
 async function saveMovementTemporalityOverride(){
   if(!selectedRow)return;
   const sel=$("classTemporalityOverride"),state=$("classTemporalityOverrideState");
-  if(!sel||sel.disabled||sel.value==="__LEGACY__")return;
+  if(!sel||sel.disabled)return;
   const value=sel.value||null;sel.disabled=true;if(state)state.textContent="Salvataggio…";
   try{
     const flag=await rpc('dashboard_reporting_set_transaction_temporality_v1',{p_transaction_id:selectedRow.id,p_temporality_override:value});
