@@ -1,7 +1,7 @@
 // Canonical source: massimospazio/budget-familiare; public files are deployed automatically.
 (function(){
-  const APP_VERSION='V73.26.3';
-  const APP_RELEASE='Analisi · fix dettaglio temporalità';
+  const APP_VERSION='V73.27.0';
+  const APP_RELEASE='Bilancio · drilldown natura contestuale';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});
