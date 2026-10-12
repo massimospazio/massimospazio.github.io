@@ -9,7 +9,7 @@
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
 <script src="../shared/supabase-client.js?v=73.24.0-20261012-1415"></script>
-<script src="../shared/app-config.js?v=73.25.0-20261012-1505"></script>
+<script src="../shared/app-config.js?v=73.26.0-20261012-1530"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 :root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#6b7280;--line:#e5e7eb;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 8px 24px rgba(15,23,42,.06)}
@@ -967,6 +967,28 @@ button,input,select{font:inherit}
 @media(max-width:760px){.planning-board-shell .planning-insight-grid{grid-template-columns:1fr}.planning-sim-group .planning-sim-row{grid-template-columns:1fr 64px}.planning-sim-group .planning-sim-slider{grid-column:1/-1}}
 
 
+
+/* V73.26.0 — Bilancio a cascata e orizzonti unificati */
+.balance-period-modes{display:flex;gap:6px;flex-wrap:wrap}
+.balance-history-year{min-width:118px}
+.balance-primary-kpis{grid-template-columns:repeat(4,minmax(160px,1fr))}
+.balance-flow-grid{display:grid;grid-template-columns:minmax(0,2.7fr) minmax(250px,.85fr);gap:12px;align-items:stretch}
+.balance-waterfall-card{padding:14px}
+.balance-waterfall-chart{height:330px;position:relative}
+.balance-side-stack{display:grid;gap:9px}
+.balance-side-card{border:1px solid #e2e8f0;border-radius:11px;padding:11px 12px;background:#fbfcfe}
+.balance-side-card.asset{background:#fff9ed;border-color:#f0e1b9}.balance-side-card.saving{background:#eef6ff;border-color:#d6e5f6}.balance-side-card.extra{background:#fff3f3;border-color:#f0d5d5}
+.balance-side-card .k{font-size:10.5px;color:#61708a;font-weight:760}.balance-side-card .v{font-size:20px;font-weight:880;margin-top:4px}.balance-side-card .s{font-size:10.5px;color:#738096;margin-top:3px}
+.balance-erode-wrap{margin-top:12px;padding:12px 14px;border:1px solid #e2e8f0;border-radius:11px;background:#fff}
+.balance-erode-head{display:flex;justify-content:space-between;gap:12px;align-items:end;margin-bottom:8px}.balance-erode-head strong{font-size:14px}.balance-erode-head b{font-size:20px;color:#15803d}
+.balance-erode-bar{display:flex;height:18px;border-radius:999px;overflow:hidden;background:#edf1f6;box-shadow:inset 0 0 0 1px rgba(148,163,184,.16)}
+.balance-erode-seg{height:100%;min-width:2px}.balance-erode-seg.o{background:#ef5a5a}.balance-erode-seg.n{background:#f4b63e}.balance-erode-seg.nc{background:#64748b}.balance-erode-seg.d{background:#8b5cf6}.balance-erode-seg.other{background:#94a3b8}.balance-erode-seg.save{background:#06b6d4}.balance-erode-seg.free{background:#22a96b}
+.balance-erode-legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;font-size:10.5px;color:#64748b}.balance-erode-legend span{display:inline-flex;align-items:center;gap:5px}.balance-erode-legend i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.balance-flow-note{font-size:11px;color:#64748b;margin-top:7px}
+.balance-mode-badge{display:inline-flex;padding:5px 9px;border-radius:999px;background:#eef5ff;color:#315caa;font-size:11px;font-weight:750}
+@media(max-width:1050px){.balance-flow-grid{grid-template-columns:1fr}.balance-primary-kpis{grid-template-columns:repeat(2,1fr)}.balance-waterfall-chart{height:310px}}
+@media(max-width:650px){.balance-primary-kpis{grid-template-columns:1fr 1fr}.balance-waterfall-chart{height:350px}}
+
 /* V73.18.2 — Bilancio hub: Storico + Previsione */
 .balance-hub-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:12px;padding:2px 2px 0}
 .balance-hub-head h2{margin:2px 0 0;font-size:29px;color:#10204d}.balance-hub-head p{margin:5px 0 0;color:#62718b;font-size:13px}
@@ -1317,26 +1339,27 @@ button,input,select{font:inherit}
           <h2>Bilancio</h2>
           <p>Passato e futuro dello stesso cash flow: prima capisci come è andata, poi verifica se il piano è sostenibile.</p>
         </div>
-        <div class="mode-toggle balance-hub-toggle">
+        <div class="mode-toggle balance-hub-toggle balance-period-modes">
           <button class="btn compact" type="button" data-balance-hub="HISTORY">Storico</button>
-          <button class="btn ghost compact" type="button" data-balance-hub="FORECAST">Previsione</button>
+          <button class="btn ghost compact" type="button" data-balance-hub="CURRENT_YEAR">Anno corrente</button>
+          <button class="btn ghost compact" type="button" data-balance-hub="FORECAST_12">Previsione 12m</button>
         </div>
       </div>
 
       <div id="balanceHistoryView" class="balance-history-view">
         <div class="balance-history-toolbar">
-          <div>
+          <div id="historicalPeriodControls">
             <span class="scenario-control-label">Periodo storico</span>
             <div class="scenario-segment">
               <button class="active" type="button" data-history-period="ROLLING_12">Ultimi 12 mesi</button>
-              <button type="button" data-history-period="LAST_YEAR">Ultimo anno solare</button>
+              <select id="historicalYearSelect" class="select balance-history-year" aria-label="Anno solare storico"></select>
             </div>
           </div>
           <div>
-            <span class="scenario-control-label">Straordinarie nel grafico <span class="info-tip" tabindex="0" title="Questo selettore modifica solo il grafico. I KPI superiori mostrano sempre sia la lettura ordinaria sia quella totale, così il confronto resta visibile.">i</span></span>
+            <span class="scenario-control-label">Vista grafico <span class="info-tip" tabindex="0" title="Ordinario esclude gli eventi E · Eccezionale; Totale incl. eccezionali li include. I movimenti esclusi solo dal forecast non cambiano il consuntivo.">i</span></span>
             <div class="scenario-segment">
               <button class="active" type="button" data-history-scope="ORDINARY">Ordinario</button>
-              <button type="button" data-history-scope="TOTAL">Totale</button>
+              <button type="button" data-history-scope="TOTAL">Totale incl. eccezionali</button>
             </div>
           </div>
           <div>
@@ -1357,16 +1380,29 @@ button,input,select{font:inherit}
         </div>
 
         <div id="historicalBalanceStatus"></div>
-        <div id="historicalBalanceKpis" class="historical-kpis"></div>
+        <div id="historicalBalanceKpis" class="historical-kpis balance-primary-kpis"></div>
 
-        <section class="scenario-card historical-structural-card">
+        <div class="balance-flow-grid">
+          <section class="scenario-card balance-waterfall-card">
+            <div class="scenario-card-head">
+              <div><h3>Flusso economico</h3><p id="balanceWaterfallSubtitle">Come le entrate si trasformano nel disponibile finale.</p></div>
+              <span id="balanceWaterfallMode" class="balance-mode-badge">—</span>
+            </div>
+            <div class="balance-waterfall-chart"><canvas id="balanceWaterfallChart"></canvas></div>
+            <div id="balanceErosionWidget" class="balance-erode-wrap"></div>
+            <div id="balanceWaterfallNote" class="balance-flow-note"></div>
+          </section>
+          <aside id="balanceFlowSide" class="balance-side-stack"></aside>
+        </div>
+
+        <section id="historicalStructuralSection" class="scenario-card historical-structural-card">
           <div class="scenario-card-head">
             <div><h3>Quanto margine abbiamo davvero?</h3><p>Lo storico ordinario separa O/N/D e le uscite non classificate (NC), così il margine non considera disponibile denaro già uscito in contanti o in voci lasciate intenzionalmente da classificare.</p></div>
           </div>
           <div id="historicalStructuralStrip" class="historical-structural-strip"></div>
         </section>
 
-        <section class="scenario-card scenario-chart-card">
+        <section id="historicalMonthlySection" class="scenario-card scenario-chart-card">
           <div class="scenario-card-head">
             <div><h3 id="historicalChartTitle">Cash flow storico mese per mese</h3><p id="historicalChartSubtitle">Entrate, uscite, saldo mensile e saldo cumulato del periodo.</p></div>
             <div id="historicalChartLegend" class="scenario-legend-inline"></div>
@@ -1375,7 +1411,7 @@ button,input,select{font:inherit}
           <div id="historicalChartNote" class="legend-note"></div>
         </section>
 
-        <div class="historical-bottom-grid">
+        <div id="historicalBottomGrid" class="historical-bottom-grid">
           <section class="scenario-card">
             <div class="scenario-card-head"><div><h3>Composizione uscite ordinarie</h3><p>O/N/D, uscite non classificate (NC) e altre uscite sul periodo selezionato.</p></div></div>
             <div id="historicalNatureComposition" class="historical-nature-composition"></div>
@@ -1502,8 +1538,10 @@ let scenarioFlowChart=null;
 let scenarioExpenseChart=null;
 let scenarioCompareChart=null;
 let historicalBalanceChart=null;
+let balanceWaterfallChart=null;
 let balanceHubMode="HISTORY";
 let historicalPeriodMode="ROLLING_12";
+let historicalYearSelection=null;
 let historicalScope="ORDINARY";
 let historicalChartMode="CASHFLOW";
 let historicalNatureFocus="ALL";
