@@ -3967,6 +3967,191 @@ function renderHistoricalStructural(){
     item("Risparmio / investimenti da surplus",-t.savings,"Riduce il disponibile","other")+
     item("Disponibile finale",t.available,"Surplus libero","residual");
 }
+function balanceDrillNatureLabel(v){
+  return {MANDATORY:"Obbligatorie",NECESSARY:"Necessarie",UNCLASSIFIED:"NC · Non classificate",DISCRETIONARY:"Discrezionali",UNKNOWN:"Altre uscite operative",INVESTMENT:"Risparmio / investimenti",ALL_EXPENSE:"Tutte le uscite operative"}[v]||String(v||"Dettaglio");
+}
+function balanceDrillNatureForProjectionCat(cat){
+  const l1=String(cat&&cat.l1_name||""),l2=String(cat&&cat.l2_name||"");
+  if(l1==="Altro"&&(l2==="Prelievo contanti"||l2==="Da classificare"))return "UNCLASSIFIED";
+  return (historicalMetaMap().get(String(cat&&cat.category_id||""))||{}).expense_nature||"UNKNOWN";
+}
+function balanceDrillMonthSets(){
+  const sel=balanceDrillSelection||{},mode=sel.mode||historicalPeriodMode,current=historicalCurrentMonth();
+  const months=sel.month?[sel.month]:historicalMonthsFor(mode);
+  if(mode==="CURRENT_YEAR")return {all:months,actual:months.filter(function(m){return m<current}),forecast:months.filter(function(m){return m>=current})};
+  if(mode==="FORECAST_12")return {all:months,actual:[],forecast:months.slice()};
+  return {all:months,actual:months.slice(),forecast:[]};
+}
+function balanceDrillRowsForSelection(){
+  if(!balanceDrillSelection)return [];
+  const nature=balanceDrillSelection.nature,sets=balanceDrillMonthSets(),scope=balanceDrillSelection.scope||"ORDINARY",rows=new Map();
+  const actualSet=new Set(sets.actual);
+  (scenarioActualCategories||[]).forEach(function(x){
+    if(!actualSet.has(String(x.month_start)))return;
+    const dir=String(x.direction||"");
+    let match=false;
+    if(nature==="ALL_EXPENSE")match=dir==="EXPENSE";
+    else if(nature==="INVESTMENT"){
+      if(dir==="INVESTMENT"){
+        const temporal=String(x.investment_temporality||""),funding=String(x.investment_funding_source||"CURRENT_SURPLUS");
+        match=temporal==="RECURRING"||(temporal==="PLANNED_OCCASIONAL"&&funding!=="PRIOR_WEALTH");
+      }
+    }else match=dir==="EXPENSE"&&historicalNatureForCategory(x)===nature;
+    if(!match)return;
+    const id=String(x.l2_id||x.l1_id||"");
+    if(!id)return;
+    if(!rows.has(id))rows.set(id,{id:id,name:x.l2_name||x.l1_name||"Senza categoria",l1:x.l1_name||"",actual:0,forecast:0});
+    rows.get(id).actual+=historicalCategoryAmount(x,scope);
+  });
+
+  if(sets.forecast.length){
+    if(nature==="INVESTMENT"){
+      const amount=sets.forecast.reduce(function(s,m){return s+num(scenarioForecastInvestment(m))},0);
+      if(amount>.005)rows.set("__INVESTMENT_FORECAST__",{id:"__INVESTMENT_FORECAST__",name:"Investimenti previsti",l1:"Debiti e Risparmio",actual:0,forecast:amount});
+    }else{
+      const data=projectionDataFor("EXPENSE"),fmap=balanceProjectionCategoryTotals(data,sets.forecast,"FORECAST");
+      (data&&data.categories||[]).forEach(function(cat){
+        const catNature=balanceDrillNatureForProjectionCat(cat);
+        if(nature!=="ALL_EXPENSE"&&catNature!==nature)return;
+        const amount=num(fmap.get(String(cat.category_id)));if(amount<=.005)return;
+        const id=String(cat.category_id);
+        if(!rows.has(id))rows.set(id,{id:id,name:cat.l2_name||cat.category_name||cat.l1_name||"Senza categoria",l1:cat.l1_name||"",actual:0,forecast:0});
+        rows.get(id).forecast+=amount;
+      });
+    }
+  }
+  let out=Array.from(rows.values()).map(function(x){x.total=x.actual+x.forecast;return x}).filter(function(x){return x.total>.005});
+  const total=out.reduce(function(s,x){return s+x.total},0);
+  out.forEach(function(x){x.share=total?x.total*100/total:0});
+  if(balanceDrillSort==="NAME")out.sort(function(a,b){return a.name.localeCompare(b.name,"it")||b.total-a.total});
+  else if(balanceDrillSort==="L1")out.sort(function(a,b){return a.l1.localeCompare(b.l1,"it")||b.total-a.total});
+  else out.sort(function(a,b){return b.total-a.total||a.name.localeCompare(b.name,"it")});
+  return out;
+}
+function balanceDrillPeriodLabel(){
+  if(!balanceDrillSelection)return "";
+  if(balanceDrillSelection.month)return monthLabel(balanceDrillSelection.month);
+  return historicalPeriodLabel(balanceDrillSelection.mode||historicalPeriodMode);
+}
+function renderBalanceDrill(){
+  const box=$("balanceNatureDetail");if(!box||!balanceDrillSelection)return;
+  balanceDrillRows=balanceDrillRowsForSelection();
+  const sets=balanceDrillMonthSets(),total=balanceDrillRows.reduce(function(s,x){return s+x.total},0);
+  const actualOnly=sets.actual.length>0&&sets.forecast.length===0,forecastOnly=sets.forecast.length>0&&sets.actual.length===0,mixed=sets.actual.length>0&&sets.forecast.length>0;
+  $("balanceDrillTitle").textContent=balanceDrillNatureLabel(balanceDrillSelection.nature)+" · "+balanceDrillPeriodLabel();
+  $("balanceDrillSubtitle").textContent=mixed?"Consuntivo e previsione nello stesso dettaglio.":forecastOnly?"Previsione per categoria; i movimenti, quando apri una categoria, mostrano la base storica.":"Consuntivo raggruppato per categoria; apri una riga per controparti e movimenti.";
+  $("balanceDrillTotal").textContent=money(total);
+  $("balanceDrillCategoryHint").textContent=balanceDrillRows.length+" categorie · "+(mixed?"misto":forecastOnly?"previsto":"storico");
+  $("balanceDrillSort").value=balanceDrillSort;
+  if(!balanceDrillRows.length){
+    $("balanceDrillCategories").innerHTML='<div class="balance-drill-empty">Nessun dato per questa selezione.</div>';
+  }else{
+    const head=mixed?'<tr><th>Categoria</th><th>Cons.</th><th>Prev.</th><th>Totale</th><th>%</th></tr>':forecastOnly?'<tr><th>Categoria</th><th>Previsto</th><th>%</th></tr>':'<tr><th>Categoria</th><th>Importo</th><th>%</th></tr>';
+    $("balanceDrillCategories").innerHTML='<div style="max-height:390px;overflow:auto"><table class="balance-drill-table"><thead>'+head+'</thead><tbody>'+
+      balanceDrillRows.map(function(x){
+        const selected=String(balanceDrillCategoryId||"")===String(x.id);
+        const name='<button class="balance-drill-cat-btn" type="button" data-balance-drill-category="'+esc(x.id)+'">'+esc(x.name)+'</button><div class="balance-drill-cat-meta">'+esc(x.l1||"")+'</div>';
+        const share='<div class="balance-drill-share"><span>'+x.share.toLocaleString("it-IT",{maximumFractionDigits:1})+'%</span><i style="--share:'+Math.max(2,x.share).toFixed(1)+'%"></i></div>';
+        if(mixed)return '<tr class="'+(selected?"balance-drill-selected":"")+'"><td>'+name+'</td><td>'+money(x.actual)+'</td><td>'+money(x.forecast)+'</td><td><strong>'+money(x.total)+'</strong></td><td>'+share+'</td></tr>';
+        return '<tr class="'+(selected?"balance-drill-selected":"")+'"><td>'+name+'</td><td><strong>'+money(forecastOnly?x.forecast:x.actual)+'</strong></td><td>'+share+'</td></tr>';
+      }).join("")+'</tbody></table></div>';
+  }
+  box.classList.remove("hidden");
+  if(balanceDrillCategoryId&&!balanceDrillRows.some(function(x){return String(x.id)===String(balanceDrillCategoryId)})){
+    balanceDrillCategoryId=null;balanceDrillDetail=null;balanceDrillCounterparty="";
+  }
+  if(!balanceDrillCategoryId){
+    $("balanceDrillDetailHint").textContent="Seleziona una categoria";
+    $("balanceDrillBreakdown").innerHTML='<div class="balance-drill-empty">Seleziona una categoria per vedere controparti e movimenti.</div>';
+  }else renderBalanceDrillBreakdown();
+}
+function balanceDrillMovementRows(){
+  const d=balanceDrillDetail||{},all=Array.isArray(d.movements)?d.movements:[],sets=balanceDrillMonthSets();
+  if(sets.actual.length){
+    const set=new Set(sets.actual);
+    return all.filter(function(x){return set.has(String(x.month_start))});
+  }
+  return all;
+}
+function renderBalanceDrillBreakdown(){
+  const box=$("balanceDrillBreakdown");if(!box)return;
+  const row=balanceDrillRows.find(function(x){return String(x.id)===String(balanceDrillCategoryId)});
+  if(!row){box.innerHTML='<div class="balance-drill-empty">Seleziona una categoria.</div>';return}
+  if(!balanceDrillDetail){
+    if(String(row.id).indexOf("__")===0){
+      $("balanceDrillDetailHint").textContent="Previsione aggregata";
+      box.innerHTML='<div class="balance-drill-empty"><strong>'+esc(row.name)+'</strong><br>Questa previsione è gestita come allocazione aggregata e non ha movimenti futuri associati.</div>';
+    }else{
+      $("balanceDrillDetailHint").textContent="Caricamento…";
+      box.innerHTML='<div class="balance-drill-empty"><span class="spinner"></span>Carico controparti e movimenti…</div>';
+    }
+    return;
+  }
+  let moves=balanceDrillMovementRows();
+  const forecastOnly=balanceDrillMonthSets().actual.length===0&&balanceDrillMonthSets().forecast.length>0;
+  const groups=new Map();
+  moves.forEach(function(x){
+    const name=String(x.counterparty||"Senza controparte");
+    if(!groups.has(name))groups.set(name,{name:name,total:0,count:0});
+    const g=groups.get(name);g.total+=num(x.amount);g.count++;
+  });
+  const cps=Array.from(groups.values()).sort(function(a,b){return b.total-a.total||a.name.localeCompare(b.name,"it")});
+  if(balanceDrillCounterparty)moves=moves.filter(function(x){return String(x.counterparty||"Senza controparte")===balanceDrillCounterparty});
+  moves=moves.slice().sort(function(a,b){return num(b.amount)-num(a.amount)||String(b.transaction_date).localeCompare(String(a.transaction_date))});
+  $("balanceDrillDetailHint").textContent=forecastOnly?"base storica":"dettaglio consuntivo";
+  const summary='<div class="balance-drill-section"><div class="balance-drill-section-title"><strong>'+esc(row.name)+'</strong><span>'+(row.actual?money(row.actual)+" cons. ":"")+(row.forecast?money(row.forecast)+" prev.":"")+'</span></div>'+
+    (forecastOnly?'<div class="balance-drill-note">La previsione non contiene movimenti futuri: qui sotto mostro le controparti e i movimenti storici usati come contesto della categoria.</div>':'')+'</div>';
+  const cpHtml='<div class="balance-drill-section"><div class="balance-drill-section-title"><strong>Controparti</strong><span>'+cps.length+' gruppi</span></div>'+
+    (cps.length?'<div class="balance-drill-counterparties">'+cps.slice(0,10).map(function(g){return '<div class="balance-drill-cp '+(balanceDrillCounterparty===g.name?"active":"")+'"><button class="balance-drill-cp-btn" type="button" data-balance-drill-counterparty="'+esc(g.name)+'">'+esc(g.name)+'</button><strong>'+money(g.total)+'</strong><small>'+g.count+' movimenti</small></div>'}).join("")+'</div>':'<div class="balance-drill-empty">Nessuna controparte nel periodo.</div>')+'</div>';
+  const clear=balanceDrillCounterparty?'<button class="btn ghost compact" type="button" data-balance-drill-clear-counterparty>Mostra tutte</button>':'';
+  const mvHtml='<div class="balance-drill-section"><div class="balance-drill-section-title"><strong>Movimenti</strong><span>'+clear+'</span></div>'+
+    (moves.length?'<div class="balance-drill-moves"><table><thead><tr><th>Data</th><th>Controparte / descrizione</th><th>Importo</th></tr></thead><tbody>'+moves.slice(0,25).map(function(x){return '<tr><td>'+dateLabel(x.transaction_date)+'</td><td><strong>'+esc(x.counterparty||"Senza controparte")+'</strong><div class="balance-drill-cat-meta">'+esc(x.user_note||x.description||"")+'</div></td><td><strong>'+money(x.amount)+'</strong></td></tr>'}).join("")+'</tbody></table></div>':'<div class="balance-drill-empty">Nessun movimento nel periodo selezionato.</div>')+'</div>';
+  const action=String(row.id).indexOf("__")===0?"":'<div style="margin-top:10px"><button class="btn ghost compact" type="button" data-balance-open-analysis="'+esc(row.id)+'">Apri questa categoria in Analisi →</button></div>';
+  box.innerHTML=summary+cpHtml+mvHtml+action;
+}
+async function loadBalanceDrillCategory(categoryId){
+  balanceDrillCategoryId=categoryId;balanceDrillDetail=null;balanceDrillCounterparty="";renderBalanceDrill();
+  const row=balanceDrillRows.find(function(x){return String(x.id)===String(categoryId)});
+  if(!row||String(categoryId).indexOf("__")===0)return;
+  const seq=++balanceDrillLoadSeq;
+  try{
+    const forecastOnly=balanceDrillMonthSets().actual.length===0&&balanceDrillMonthSets().forecast.length>0;
+    const data=await rpc("dashboard_reporting_analysis_detail_v2",{p_category_id:categoryId,p_direction:"EXPENSE",p_period_months:forecastOnly?12:0});
+    if(seq!==balanceDrillLoadSeq||String(balanceDrillCategoryId)!==String(categoryId))return;
+    balanceDrillDetail=data||{};renderBalanceDrill();
+  }catch(e){
+    if(seq!==balanceDrillLoadSeq)return;
+    balanceDrillDetail={movements:[]};
+    $("balanceDrillDetailHint").textContent="Dettaglio non disponibile";
+    $("balanceDrillBreakdown").innerHTML='<div class="msg error">'+esc(e.message||"Errore caricamento dettaglio")+'</div>';
+  }
+}
+function openBalanceNatureDrill(nature,month,origin){
+  if(!nature)return;
+  balanceDrillSelection={nature:nature,month:month||null,origin:origin||"CHART",mode:historicalPeriodMode,scope:historicalScope};
+  balanceDrillCategoryId=null;balanceDrillDetail=null;balanceDrillCounterparty="";balanceDrillSort="AMOUNT";
+  renderBalanceDrill();
+  const first=balanceDrillRows.find(function(x){return String(x.id).indexOf("__")!==0});
+  if(first)loadBalanceDrillCategory(first.id);
+  $("balanceNatureDetail")?.scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+function closeBalanceNatureDrill(){
+  balanceDrillSelection=null;balanceDrillRows=[];balanceDrillCategoryId=null;balanceDrillDetail=null;balanceDrillCounterparty="";
+  $("balanceNatureDetail")?.classList.add("hidden");
+}
+async function openBalanceDrillInAnalysis(categoryId){
+  if(!categoryId||String(categoryId).indexOf("__")===0)return;
+  const sets=balanceDrillMonthSets(),forecast=sets.forecast.length>0&&(!sets.actual.length||(balanceDrillRows.find(function(x){return String(x.id)===String(categoryId)})||{}).forecast>0);
+  showStandardReportingView();
+  analysisViewMode="EXPENSE";analysisTimeMode=forecast?"PROJECTION":"HISTORY";
+  if(forecast)analysisProjectionView=(balanceDrillSelection&&balanceDrillSelection.mode==="FORECAST_12")?"ROLLING_12":"CALENDAR";
+  else if($("analysisPeriod"))$("analysisPeriod").value=balanceDrillSelection&&balanceDrillSelection.month?"12":(balanceDrillSelection&&balanceDrillSelection.mode==="ROLLING_12"?"12":"0");
+  analysisWorkspace=null;analysisWorkspaceKey="";
+  await loadAnalysisWorkspace(true);
+  await openAnalysisDetail(categoryId,"L2",(!forecast&&balanceDrillSelection)?balanceDrillSelection.month:null);
+  $("categoryDetail")?.scrollIntoView({behavior:"smooth",block:"start"});
+}
+
 function renderBalanceFlowSide(){
   const t=balanceFlowModel(historicalPeriodMode);if(!t)return;
   const forecastNote=t.historical?"":"Valori futuri basati sul piano di previsione corrente.";
