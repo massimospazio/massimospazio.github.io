@@ -9,7 +9,7 @@
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
 <script src="../shared/supabase-client.js?v=73.24.0-20261012-1415"></script>
-<script src="../shared/app-config.js?v=73.26.3-20261012-1845"></script>
+<script src="../shared/app-config.js?v=73.27.0-20261012-1905"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 :root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#6b7280;--line:#e5e7eb;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 8px 24px rgba(15,23,42,.06)}
@@ -1036,6 +1036,44 @@ button,input,select{font:inherit}
 .balance-erode-bar{height:24px}
 @media(max-width:760px){.balance-waterfall-chart{height:410px}}
 
+
+/* V73.27.0 — drill-down contestuale per Natura dal Bilancio */
+.balance-drill-card{padding:14px 16px;border-radius:14px;border-color:#d7e1ef;box-shadow:0 7px 22px rgba(15,31,85,.04)}
+.balance-drill-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;margin-bottom:10px}
+.balance-drill-head h3{margin:0;font-size:17px;color:#10204d}.balance-drill-head p{margin:4px 0 0;font-size:11px;color:#68768d}
+.balance-drill-head-actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.balance-drill-total{font-size:22px;font-weight:880;color:#10204d;white-space:nowrap}
+.balance-drill-grid{display:grid;grid-template-columns:minmax(360px,.9fr) minmax(430px,1.1fr);gap:12px;align-items:start}
+.balance-drill-pane{border:1px solid #e2e8f0;border-radius:11px;background:#fbfcfe;overflow:hidden}
+.balance-drill-pane-head{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:9px 10px;border-bottom:1px solid #e5eaf1;background:#f8fafc}
+.balance-drill-pane-head strong{font-size:12px}.balance-drill-pane-head span{font-size:10px;color:#7a8799}
+.balance-drill-table{width:100%;border-collapse:collapse}
+.balance-drill-table th,.balance-drill-table td{padding:7px 9px;border-bottom:1px solid #e8edf4;font-size:11px;text-align:right;vertical-align:middle}
+.balance-drill-table th{font-size:9.5px;text-transform:uppercase;letter-spacing:.03em;color:#7a8799;background:#fff;position:sticky;top:0}
+.balance-drill-table th:first-child,.balance-drill-table td:first-child{text-align:left}
+.balance-drill-table tr:last-child td{border-bottom:0}
+.balance-drill-cat-btn,.balance-drill-cp-btn{border:0;background:transparent;padding:0;color:#172033;cursor:pointer;text-align:left;font-weight:750}
+.balance-drill-cat-btn:hover,.balance-drill-cp-btn:hover{color:#2563eb;text-decoration:underline}
+.balance-drill-cat-meta{font-size:9.5px;color:#8190a5;font-weight:500;margin-top:2px}
+.balance-drill-share{display:flex;align-items:center;justify-content:flex-end;gap:6px}
+.balance-drill-share i{display:block;width:46px;height:5px;border-radius:99px;background:#e6ebf2;overflow:hidden}.balance-drill-share i:after{content:"";display:block;height:100%;width:var(--share);background:#7ba3e8;border-radius:99px}
+.balance-drill-selected td{background:#eef5ff}
+.balance-drill-right{padding:10px}
+.balance-drill-empty{padding:22px 14px;text-align:center;color:#7a8799;font-size:11px}
+.balance-drill-section{margin-top:10px}.balance-drill-section:first-child{margin-top:0}
+.balance-drill-section-title{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
+.balance-drill-section-title strong{font-size:11.5px}.balance-drill-section-title span{font-size:9.5px;color:#7a8799}
+.balance-drill-counterparties{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.balance-drill-cp{border:1px solid #e2e8f0;border-radius:8px;background:#fff;padding:7px 8px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px;align-items:center}
+.balance-drill-cp.active{border-color:#93c5fd;background:#eff6ff}.balance-drill-cp small{grid-column:1/-1;color:#7a8799;font-size:9px}
+.balance-drill-moves{max-height:275px;overflow:auto;border:1px solid #e2e8f0;border-radius:8px;background:#fff}
+.balance-drill-moves table{width:100%;border-collapse:collapse}.balance-drill-moves th,.balance-drill-moves td{padding:6px 7px;border-bottom:1px solid #edf1f5;font-size:10px;text-align:left;vertical-align:top}.balance-drill-moves th{color:#7a8799;background:#f8fafc;position:sticky;top:0}.balance-drill-moves td:last-child,.balance-drill-moves th:last-child{text-align:right;white-space:nowrap}
+.balance-drill-note{font-size:10px;color:#68768d;line-height:1.4;margin:7px 0 0}
+.balance-erode-chip{cursor:pointer;font:inherit;text-align:left}.balance-erode-chip:hover{border-color:#b8cdf0;background:#f6f9ff}
+.balance-waterfall-chart canvas,.historical-chart canvas{touch-action:manipulation}
+@media(max-width:980px){.balance-drill-grid{grid-template-columns:1fr}.balance-drill-counterparties{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:680px){.balance-drill-head{flex-direction:column}.balance-drill-head-actions{justify-content:flex-start}.balance-drill-counterparties{grid-template-columns:1fr 1fr}.balance-drill-table th:nth-child(2),.balance-drill-table td:nth-child(2){display:none}}
+
 /* V73.18.2 — Bilancio hub: Storico + Previsione */
 .balance-hub-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:12px;padding:2px 2px 0}
 .balance-hub-head h2{margin:2px 0 0;font-size:29px;color:#10204d}.balance-hub-head p{margin:5px 0 0;color:#62718b;font-size:13px}
@@ -1442,7 +1480,29 @@ button,input,select{font:inherit}
           <aside id="balanceFlowSide" class="balance-side-stack"></aside>
         </div>
 
-        
+        <section id="balanceNatureDetail" class="scenario-card balance-drill-card hidden">
+          <div class="balance-drill-head">
+            <div>
+              <h3 id="balanceDrillTitle">Dettaglio natura</h3>
+              <p id="balanceDrillSubtitle">Seleziona una componente del grafico per approfondire.</p>
+            </div>
+            <div class="balance-drill-head-actions">
+              <span id="balanceDrillTotal" class="balance-drill-total">—</span>
+              <label class="small">Ordina <select id="balanceDrillSort" class="select" style="min-height:31px;padding:4px 7px"><option value="AMOUNT">Importo</option><option value="NAME">Categoria</option><option value="L1">Macro-categoria</option></select></label>
+              <button class="btn ghost compact" type="button" data-balance-drill-close>Chiudi</button>
+            </div>
+          </div>
+          <div class="balance-drill-grid">
+            <div class="balance-drill-pane">
+              <div class="balance-drill-pane-head"><strong>Categorie</strong><span id="balanceDrillCategoryHint"></span></div>
+              <div id="balanceDrillCategories"></div>
+            </div>
+            <div class="balance-drill-pane">
+              <div class="balance-drill-pane-head"><strong>Controparti e movimenti</strong><span id="balanceDrillDetailHint">Seleziona una categoria</span></div>
+              <div id="balanceDrillBreakdown" class="balance-drill-right"><div class="balance-drill-empty">Seleziona una categoria per vedere controparti e movimenti.</div></div>
+            </div>
+          </div>
+        </section>
 
         <section id="historicalMonthlySection" class="scenario-card scenario-chart-card">
           <div class="scenario-card-head">
@@ -1617,6 +1677,13 @@ let scenarioExtraordinaryMovements=[];
 let scenarioForecastRationales=null;
 let scenarioSelectedMonth=null;
 let scenarioSelectedFlow=null;
+let balanceDrillSelection=null;
+let balanceDrillRows=[];
+let balanceDrillCategoryId=null;
+let balanceDrillDetail=null;
+let balanceDrillCounterparty="";
+let balanceDrillSort="AMOUNT";
+let balanceDrillLoadSeq=0;
 let analysisWorkspace=null;
 let analysisWorkspaceKey="";
 let analysisDetailData=null;
