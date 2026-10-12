@@ -3986,14 +3986,30 @@ function renderHistoricalChart(){
   });
 }
 function renderHistoricalBalance(){
-  if(!Array.isArray(scenarioActualRows)){msg($("historicalBalanceStatus"),"Carico lo storico…");return}
-  renderHistoricalKpis();renderHistoricalStructural();renderHistoricalChart();renderHistoricalNatureComposition();renderHistoricalPeriodComparison();
+  if(!Array.isArray(scenarioActualRows)){msg($("historicalBalanceStatus"),"Carico il bilancio…");return}
+  if(balanceHubMode==="CURRENT_YEAR")historicalPeriodMode="CURRENT_YEAR";
+  else if(balanceHubMode==="FORECAST_12")historicalPeriodMode="FORECAST_12";
+  else if(!["ROLLING_12","YEAR"].includes(historicalPeriodMode))historicalPeriodMode="ROLLING_12";
+  renderHistoricalYearOptions();
+  const pureHistory=balanceHubMode==="HISTORY";
+  if($("historicalPeriodControls"))$("historicalPeriodControls").classList.toggle("hidden",!pureHistory);
+  if($("historicalMonthlySection"))$("historicalMonthlySection").classList.toggle("hidden",!pureHistory);
+  if($("historicalBottomGrid"))$("historicalBottomGrid").classList.toggle("hidden",!pureHistory);
+  renderHistoricalKpis();
+  renderBalanceWaterfall();
+  renderHistoricalStructural();
+  if(pureHistory){
+    renderHistoricalChart();renderHistoricalNatureComposition();renderHistoricalPeriodComparison();
+  }
 }
 function renderBalanceHub(){
-  document.querySelectorAll("[data-balance-hub]").forEach(function(b){b.classList.toggle("ghost",b.dataset.balanceHub!==balanceHubMode)});
-  $("balanceHistoryView").classList.toggle("hidden",balanceHubMode!=="HISTORY");
-  $("balanceForecastView").classList.toggle("hidden",balanceHubMode!=="FORECAST");
-  if(balanceHubMode==="HISTORY")renderHistoricalBalance();else renderScenario();
+  document.querySelectorAll("[data-balance-hub]").forEach(function(b){
+    const active=b.dataset.balanceHub===balanceHubMode;
+    b.classList.toggle("ghost",!active);
+  });
+  $("balanceHistoryView").classList.remove("hidden");
+  $("balanceForecastView").classList.add("hidden");
+  renderHistoricalBalance();
 }
 function scenarioPlanData(){
   const exp=projectionDataFor("EXPENSE"),inc=projectionDataFor("INCOME");if(!exp||!inc)return null;
@@ -4909,13 +4925,23 @@ $("planningBoardSearch").addEventListener("input",function(){planningBoardSearch
 $("planningNatureFilter").addEventListener("change",function(){planningBoardNatureFilter=this.value||"ALL";renderPlanningBoard()});
 $("planningForecastFilter").addEventListener("change",function(){planningBoardForecastFilter=this.value||"ALL";renderPlanningBoard()});
 $("planningNoteFilter").addEventListener("change",function(){planningBoardNoteFilter=this.value||"ALL";renderPlanningBoard()});
+$("historicalYearSelect")?.addEventListener("change",function(){
+  historicalYearSelection=Number(this.value)||historicalYearSelection;
+  balanceHubMode="HISTORY";historicalPeriodMode="YEAR";renderBalanceHub();
+});
 $("scenarioView").addEventListener("click",async function(e){
   const hub=e.target.closest("[data-balance-hub]");
-  if(hub){balanceHubMode=hub.dataset.balanceHub||"HISTORY";renderBalanceHub();return}
+  if(hub){
+    balanceHubMode=hub.dataset.balanceHub||"HISTORY";
+    if(balanceHubMode==="CURRENT_YEAR")historicalPeriodMode="CURRENT_YEAR";
+    else if(balanceHubMode==="FORECAST_12")historicalPeriodMode="FORECAST_12";
+    else if(!["ROLLING_12","YEAR"].includes(historicalPeriodMode))historicalPeriodMode="ROLLING_12";
+    renderBalanceHub();return
+  }
   const hp=e.target.closest("[data-history-period]");
-  if(hp){historicalPeriodMode=hp.dataset.historyPeriod||"ROLLING_12";renderHistoricalBalance();return}
+  if(hp){balanceHubMode="HISTORY";historicalPeriodMode=hp.dataset.historyPeriod||"ROLLING_12";renderBalanceHub();return}
   const hs=e.target.closest("[data-history-scope]");
-  if(hs){historicalScope=hs.dataset.historyScope||"ORDINARY";renderHistoricalChart();return}
+  if(hs){historicalScope=hs.dataset.historyScope||"ORDINARY";renderBalanceWaterfall();if(balanceHubMode==="HISTORY")renderHistoricalChart();return}
   const hc=e.target.closest("[data-history-chart]");
   if(hc){historicalChartMode=hc.dataset.historyChart||"CASHFLOW";renderHistoricalChart();return}
   const hf=e.target.closest("[data-history-nature-focus]");
