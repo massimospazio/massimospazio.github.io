@@ -4165,8 +4165,8 @@ function renderBalanceErosion(){
   const t=balanceFlowModel(historicalPeriodMode);if(!t)return;
   const base=Math.max(1,t.income);
   const parts=[
-    ["o","Obbligatorie",t.mandatory],["n","Necessarie",t.necessary],["nc","NC",t.unclassified],["d","Discrezionali",t.discretionary],
-    ["other","Altre operative",t.otherOperating],["save","Risparmio",t.savings],["free","Residuo",Math.max(0,t.available)]
+    ["o","Obbligatorie",t.mandatory,"MANDATORY"],["n","Necessarie",t.necessary,"NECESSARY"],["nc","NC",t.unclassified,"UNCLASSIFIED"],["d","Discrezionali",t.discretionary,"DISCRETIONARY"],
+    ["other","Altre operative",t.otherOperating,"UNKNOWN"],["save","Risparmio",t.savings,"INVESTMENT"],["free","Residuo",Math.max(0,t.available),null]
   ];
   const visible=parts.filter(function(x){return x[2]>.5});
   $("balanceErosionWidget").innerHTML=
@@ -4174,7 +4174,9 @@ function renderBalanceErosion(){
     '<div class="balance-erode-bar">'+visible.map(function(x){return '<span class="balance-erode-seg '+x[0]+'" style="width:'+Math.max(.7,x[2]*100/base).toFixed(2)+'%" title="'+esc(x[1])+' · '+money(x[2])+'"></span>'}).join("")+'</div>'+
     '<div class="balance-erode-legend">'+visible.map(function(x){
       const pct=x[2]*100/base;
-      return '<span class="balance-erode-chip"><i class="balance-erode-seg '+x[0]+'"></i><span class="name">'+esc(x[1])+'</span><span class="fig">'+money(x[2])+'</span><span class="pct">'+pct.toLocaleString("it-IT",{maximumFractionDigits:1})+'% delle entrate</span></span>';
+      return x[3]
+        ?'<button type="button" class="balance-erode-chip" data-balance-nature="'+esc(x[3])+'"><i class="balance-erode-seg '+x[0]+'"></i><span class="name">'+esc(x[1])+'</span><span class="fig">'+money(x[2])+'</span><span class="pct">'+pct.toLocaleString("it-IT",{maximumFractionDigits:1})+'% delle entrate</span></button>'
+        :'<span class="balance-erode-chip"><i class="balance-erode-seg '+x[0]+'"></i><span class="name">'+esc(x[1])+'</span><span class="fig">'+money(x[2])+'</span><span class="pct">'+pct.toLocaleString("it-IT",{maximumFractionDigits:1})+'% delle entrate</span></span>';
     }).join("")+'</div>';
 }
 function renderBalanceWaterfall(){
@@ -4183,6 +4185,7 @@ function renderBalanceWaterfall(){
   const margin=t.income-t.mandatory-t.necessary-t.unclassified;
   const final=t.available+(historicalScope==="TOTAL"?t.extraNet:0);
   const labels=["Entrate","Obbligatorie","Necessarie","NC","Margine strutturale","Discrezionali"].concat(t.otherOperating>.5?["Altre operative"]:[]).concat(["Risparmio","Disponibile"]);
+  const drillKeys=[null,"MANDATORY","NECESSARY","UNCLASSIFIED",null,"DISCRETIONARY"].concat(t.otherOperating>.5?["UNKNOWN"]:[]).concat(["INVESTMENT",null]);
   const data=[],colors=[],displayValues=[];
   let cur=t.income;
   data.push([0,t.income]);colors.push("rgba(14,168,122,.88)");displayValues.push(t.income);
@@ -4230,6 +4233,8 @@ function renderBalanceWaterfall(){
     data:{labels:labels,datasets:[{data:data,backgroundColor:colors,borderWidth:0,borderRadius:5,barPercentage:.66,categoryPercentage:.82}]},
     options:{
       responsive:true,maintainAspectRatio:false,layout:{padding:{top:34,left:4,right:4,bottom:0}},
+      onHover:function(evt,els,chart){const hit=chart.getElementsAtEventForMode(evt,"nearest",{intersect:true},true);chart.canvas.style.cursor=hit.length&&drillKeys[hit[0].index]?"pointer":"default"},
+      onClick:function(evt,els,chart){const hit=chart.getElementsAtEventForMode(evt,"nearest",{intersect:true},true);if(!hit.length)return;const key=drillKeys[hit[0].index];if(key)openBalanceNatureDrill(key,null,"WATERFALL")},
       plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){
         return (displayValues[ctx.dataIndex]<0?"−":"")+money(Math.abs(displayValues[ctx.dataIndex]));
       }}}},
@@ -4287,7 +4292,7 @@ function renderHistoricalChart(){
       {type:"bar",label:"Saldo mese",data:net,backgroundColor:net.map(function(v){return v>=0?"rgba(34,197,94,.12)":"rgba(239,68,68,.12)"}),borderColor:net.map(function(v){return v>=0?"#15803d":"#b91c1c"}),borderWidth:1.7,borderRadius:3,yAxisID:"y"},
       {type:"line",label:"Cumulato periodo",data:cumulative,borderColor:"#334155",backgroundColor:"#334155",borderWidth:2.4,pointRadius:2.7,tension:.2,yAxisID:"y2"}
     ];
-    $("historicalChartNote").textContent="Il selettore Ordinario/Totale modifica solo questo grafico. I KPI sopra mantengono entrambe le letture. Il saldo cumulato parte da zero e non rappresenta la liquidità dei conti.";
+    $("historicalChartNote").textContent="Il selettore Ordinario/Totale modifica solo questo grafico. Il saldo cumulato parte da zero e non rappresenta la liquidità dei conti. Clicca la barra Uscite di un mese per vedere da quali categorie e movimenti deriva.";
   }else{
     const natureMap=historicalMonthlyNature(historicalPeriodMode,scope),get=function(key){return months.map(function(m){return num(natureMap.get(m)&&natureMap.get(m)[key])})};
     const O=get("MANDATORY"),N=get("NECESSARY"),D=get("DISCRETIONARY"),NC=get("UNCLASSIFIED"),other=months.map(function(m){const x=natureMap.get(m)||{};return num(x.INVESTMENT)+num(x.UNKNOWN)});
@@ -4305,11 +4310,24 @@ function renderHistoricalChart(){
       datasets.push({type:"line",label:"Margine strutturale",data:margin,borderColor:"#15803d",backgroundColor:"#15803d",borderDash:[6,4],borderWidth:2.2,pointRadius:2.3,tension:.2,yAxisID:"y"});
     }
     $("historicalChartLegend").innerHTML='<span><i class="scenario-bar income"></i> Natura / NC</span><span><i class="scenario-line solid"></i> Entrate</span>'+(on?'<span><i class="scenario-line solid"></i> Margine strutturale</span>':'');
-    $("historicalChartNote").textContent=on?"Margine strutturale = entrate del mese − obbligatorie − necessarie − NC. Le NC sono uscite reali senza Natura O/N/D e vengono sottratte in modo prudenziale.":"NC comprende Prelievo contanti non dettagliato e Da classificare; investimenti e altre voci senza natura restano separati.";
+    $("historicalChartNote").textContent=(on?"Margine strutturale = entrate del mese − obbligatorie − necessarie − NC. Le NC sono uscite reali senza Natura O/N/D e vengono sottratte in modo prudenziale.":"NC comprende Prelievo contanti non dettagliato e Da classificare; investimenti e altre voci senza natura restano separati.")+" Clicca una barra o un segmento per vedere categorie, controparti e movimenti.";
   }
   historicalBalanceChart=new Chart($("historicalBalanceChart"),{
     data:{labels:labels,datasets:datasets},
     options:{responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},
+      onHover:function(evt,els,chart){
+        const hit=chart.getElementsAtEventForMode(evt,"nearest",{intersect:true},true);
+        if(!hit.length){chart.canvas.style.cursor="default";return}
+        const label=chart.data.datasets[hit[0].datasetIndex]&&chart.data.datasets[hit[0].datasetIndex].label;
+        const clickable=historicalChartMode==="NATURE"?["Obbligatorie","Necessarie","NC · Non classificate","Discrezionali","Altre / investimenti"].includes(label):label==="Uscite";
+        chart.canvas.style.cursor=clickable?"pointer":"default";
+      },
+      onClick:function(evt,els,chart){
+        const hit=chart.getElementsAtEventForMode(evt,"nearest",{intersect:true},true);if(!hit.length)return;
+        const h=hit[0],ds=chart.data.datasets[h.datasetIndex],label=ds&&ds.label,month=months[h.index],map={"Obbligatorie":"MANDATORY","Necessarie":"NECESSARY","NC · Non classificate":"UNCLASSIFIED","Discrezionali":"DISCRETIONARY","Altre / investimenti":"UNKNOWN"};
+        if(historicalChartMode==="NATURE"&&map[label])openBalanceNatureDrill(map[label],month,"MONTH_NATURE");
+        else if(historicalChartMode==="CASHFLOW"&&label==="Uscite")openBalanceNatureDrill("ALL_EXPENSE",month,"MONTH_CASHFLOW");
+      },
       plugins:{legend:{display:true,position:"bottom",labels:{boxWidth:10,boxHeight:10,font:{size:11}}},tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+": "+money(ctx.raw)}}}},
       scales:{x:{stacked:historicalChartMode==="NATURE",grid:{display:false},ticks:{font:{size:11}}},
         y:{stacked:historicalChartMode==="NATURE",beginAtZero:false,ticks:{font:{size:11},callback:function(v){return money(v)}},grid:{color:"rgba(148,163,184,.18)"}},
@@ -5256,23 +5274,30 @@ $("planningBoardSearch").addEventListener("input",function(){planningBoardSearch
 $("planningNatureFilter").addEventListener("change",function(){planningBoardNatureFilter=this.value||"ALL";renderPlanningBoard()});
 $("planningForecastFilter").addEventListener("change",function(){planningBoardForecastFilter=this.value||"ALL";renderPlanningBoard()});
 $("planningNoteFilter").addEventListener("change",function(){planningBoardNoteFilter=this.value||"ALL";renderPlanningBoard()});
+$("balanceDrillSort")?.addEventListener("change",function(){balanceDrillSort=this.value||"AMOUNT";renderBalanceDrill()});
 $("historicalYearSelect")?.addEventListener("change",function(){
   historicalYearSelection=Number(this.value)||historicalYearSelection;
-  balanceHubMode="HISTORY";historicalPeriodMode="YEAR";renderBalanceHub();
+  balanceHubMode="HISTORY";historicalPeriodMode="YEAR";closeBalanceNatureDrill();renderBalanceHub();
 });
 $("scenarioView").addEventListener("click",async function(e){
+  const closeDrill=e.target.closest("[data-balance-drill-close]");if(closeDrill){closeBalanceNatureDrill();return}
+  const nature=e.target.closest("[data-balance-nature]");if(nature){openBalanceNatureDrill(nature.dataset.balanceNature,null,"EROSION");return}
+  const drillCat=e.target.closest("[data-balance-drill-category]");if(drillCat){await loadBalanceDrillCategory(drillCat.dataset.balanceDrillCategory);return}
+  const drillCp=e.target.closest("[data-balance-drill-counterparty]");if(drillCp){balanceDrillCounterparty=drillCp.dataset.balanceDrillCounterparty||"";renderBalanceDrillBreakdown();return}
+  if(e.target.closest("[data-balance-drill-clear-counterparty]")){balanceDrillCounterparty="";renderBalanceDrillBreakdown();return}
+  const openAnalysis=e.target.closest("[data-balance-open-analysis]");if(openAnalysis){await openBalanceDrillInAnalysis(openAnalysis.dataset.balanceOpenAnalysis);return}
   const hub=e.target.closest("[data-balance-hub]");
   if(hub){
     balanceHubMode=hub.dataset.balanceHub||"HISTORY";
     if(balanceHubMode==="CURRENT_YEAR")historicalPeriodMode="CURRENT_YEAR";
     else if(balanceHubMode==="FORECAST_12")historicalPeriodMode="FORECAST_12";
     else if(!["ROLLING_12","YEAR"].includes(historicalPeriodMode))historicalPeriodMode="ROLLING_12";
-    renderBalanceHub();return
+    closeBalanceNatureDrill();renderBalanceHub();return
   }
   const hp=e.target.closest("[data-history-period]");
-  if(hp){balanceHubMode="HISTORY";historicalPeriodMode=hp.dataset.historyPeriod||"ROLLING_12";renderBalanceHub();return}
+  if(hp){balanceHubMode="HISTORY";historicalPeriodMode=hp.dataset.historyPeriod||"ROLLING_12";closeBalanceNatureDrill();renderBalanceHub();return}
   const hs=e.target.closest("[data-history-scope]");
-  if(hs){historicalScope=hs.dataset.historyScope||"ORDINARY";renderBalanceWaterfall();if(balanceHubMode==="HISTORY")renderHistoricalChart();return}
+  if(hs){historicalScope=hs.dataset.historyScope||"ORDINARY";if(balanceDrillSelection){balanceDrillSelection.scope=historicalScope;renderBalanceDrill()}renderBalanceWaterfall();if(balanceHubMode==="HISTORY")renderHistoricalChart();return}
   const hc=e.target.closest("[data-history-chart]");
   if(hc){historicalChartMode=hc.dataset.historyChart||"CASHFLOW";renderHistoricalChart();return}
   const hf=e.target.closest("[data-history-nature-focus]");
