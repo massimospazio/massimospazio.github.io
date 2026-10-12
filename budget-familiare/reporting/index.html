@@ -9,7 +9,7 @@
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
 <script src="../shared/supabase-client.js?v=73.24.0-20261012-1415"></script>
-<script src="../shared/app-config.js?v=73.24.1-20261012-1435"></script>
+<script src="../shared/app-config.js?v=73.25.0-20261012-1505"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 :root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#6b7280;--line:#e5e7eb;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 8px 24px rgba(15,23,42,.06)}
@@ -3397,11 +3397,16 @@ function renderAnalysisMovements(){
       '<th>Descrizione</th><th>Nota</th>'+(canEdit?'<th>Previsione</th>':"")+'</tr></thead><tbody>'+
       rows.map(function(x){
         const excluded=!!x.is_extraordinary;
+        const economicExceptional=!!x.economic_exceptional;
+        const forecastExcluded=!!x.forecast_excluded;
         const action=canEdit
-          ?'<td class="analysis-movement-forecast-action">'+(excluded
-            ?'<span class="forecast-excluded-badge">Escluso</span> <button class="btn ghost compact" type="button" data-analysis-forecast-exclusion="'+esc(x.id)+'" data-analysis-forecast-exclusion-mode="include" title="Reincludi questo movimento nella base di previsione">Ripristina</button>'+
-              '<div class="analysis-forecast-note-edit"><input class="input" type="text" maxlength="180" value="'+esc(x.extraordinary_note||"")+'" placeholder="Motivo / contesto dello straordinario" data-analysis-extra-note="'+esc(x.id)+'" /><button class="btn ghost compact" type="button" data-analysis-extra-note-save="'+esc(x.id)+'">Salva nota</button></div>'
-            :'<button class="btn ghost compact" type="button" data-analysis-forecast-exclusion="'+esc(x.id)+'" data-analysis-forecast-exclusion-mode="exclude" title="La spesa resta nei consuntivi ma non influenzerà Analisi e forecast">Escludi</button>')+'</td>'
+          ?'<td class="analysis-movement-forecast-action">'+(economicExceptional
+            ?'<span class="forecast-excluded-badge">E · Eccezionale</span>'+
+              '<div class="analysis-forecast-note-edit"><input class="input" type="text" maxlength="180" value="'+esc(x.extraordinary_note||"")+'" placeholder="Motivo / contesto dell’evento eccezionale" data-analysis-extra-note="'+esc(x.id)+'" /><button class="btn ghost compact" type="button" data-analysis-extra-note-save="'+esc(x.id)+'">Salva nota</button></div>'
+            :forecastExcluded
+              ?'<span class="forecast-excluded-badge">Escluso forecast</span> <button class="btn ghost compact" type="button" data-analysis-forecast-exclusion="'+esc(x.id)+'" data-analysis-forecast-exclusion-mode="include" title="Reincludi questo movimento nella base di previsione">Ripristina</button>'+
+                '<div class="analysis-forecast-note-edit"><input class="input" type="text" maxlength="180" value="'+esc(x.extraordinary_note||"")+'" placeholder="Motivo dell’esclusione dal forecast" data-analysis-extra-note="'+esc(x.id)+'" /><button class="btn ghost compact" type="button" data-analysis-extra-note-save="'+esc(x.id)+'">Salva nota</button></div>'
+              :'<button class="btn ghost compact" type="button" data-analysis-forecast-exclusion="'+esc(x.id)+'" data-analysis-forecast-exclusion-mode="exclude" title="La spesa resta nei consuntivi ma non influenzerà Analisi e forecast">Escludi dal forecast</button>')+'</td>'
           :"";
         return '<tr'+(excluded?' class="forecast-excluded"':'')+'><td>'+dateLabel(x.transaction_date)+'</td><td><strong>'+esc(x.counterparty||"—")+'</strong></td><td>'+esc(x.category||"—")+'</td><td class="amount">'+money(x.amount)+'</td><td>'+esc(x.description||"")+'</td><td>'+movementNoteHtml(x.user_note)+'</td>'+action+'</tr>';
       }).join("")+
@@ -3414,10 +3419,9 @@ async function setAnalysisMovementForecastExclusion(transactionId,exclude,btn){
   const keep=captureAnalysisSelection(),month=analysisSelectedMonth;
   setBusy(btn,true,exclude?"Escludo":"Ripristino");
   try{
-    await rpc("dashboard_reporting_set_extraordinary_v1",{
+    await rpc("dashboard_reporting_set_forecast_exclusion_v1",{
       p_transaction_id:transactionId,
-      p_is_extraordinary:exclude,
-      p_note:null
+      p_exclude:exclude
     });
     const oldCash=report&&report.cashflow_monthly,oldLiquidity=report&&report.liquidity_history;
     const fresh=await rpc("dashboard_reporting_read_v5");
@@ -3440,10 +3444,10 @@ async function setAnalysisMovementForecastExclusion(transactionId,exclude,btn){
 }
 async function saveAnalysisExtraordinaryNote(transactionId,note,btn){
   const clean=String(note||"").trim();
-  if(!clean){msg($("analysisStatus"),"Inserisci una nota che spieghi lo straordinario.",true);return}
+  if(!clean){msg($("analysisStatus"),"Inserisci una nota che spieghi il contesto.",true);return}
   setBusy(btn,true,"Salvo");
   try{
-    await rpc("dashboard_reporting_set_extraordinary_v1",{p_transaction_id:transactionId,p_is_extraordinary:true,p_note:clean});
+    await rpc("dashboard_reporting_set_flag_note_v1",{p_transaction_id:transactionId,p_note:clean});
     const movement=analysisDetailData&&(analysisDetailData.movements||[]).find(function(x){return String(x.id)===String(transactionId)});
     if(movement)movement.extraordinary_note=clean;
     const rep=(report&&report.extraordinary_transactions||[]).find(function(x){return String(x.id)===String(transactionId)});
@@ -3473,7 +3477,9 @@ function renderExtraordinary(){
   $("extraordinaryContent").innerHTML='<div style="overflow:auto"><table class="extra-table"><thead><tr><th>Data</th><th>Movimento</th><th>Tipo</th><th>Importo</th><th></th></tr></thead><tbody>'+
     flagged.map(function(x){
       const label=x.counterparty||x.category||x.transaction_type||"Movimento";
-      return "<tr><td>"+dateLabel(x.transaction_date)+"</td><td>"+esc(label)+'<div class="plan-sub">'+esc(x.note||"Escluso dalla previsione")+"</div></td><td>"+esc(x.transaction_type)+'</td><td class="amount '+(num(x.amount)>=0?"positive":"negative")+'">'+money(x.amount)+'</td><td><button class="btn ghost compact" data-extra-id="'+esc(x.id)+'" data-extra-mode="remove">Reincludi</button></td></tr>';
+      const state=x.economic_exceptional?"E · Eccezionale":x.forecast_excluded?"Escluso dal forecast":"Escluso dalla previsione";
+      const action=x.forecast_excluded?'<button class="btn ghost compact" data-extra-id="'+esc(x.id)+'" data-extra-mode="remove">Reincludi nel forecast</button>':'<span class="muted small">Gestisci la temporalità dal movimento</span>';
+      return "<tr><td>"+dateLabel(x.transaction_date)+"</td><td>"+esc(label)+'<div class="plan-sub">'+esc(x.note||state)+"</div></td><td>"+esc(state)+'</td><td class="amount '+(num(x.amount)>=0?"positive":"negative")+'">'+money(x.amount)+'</td><td>'+action+'</td></tr>';
     }).join("")+"</tbody></table></div>";
 }
 
@@ -4165,10 +4171,10 @@ function scenarioExtraordinaryDetailHtml(month){
 }
 async function saveScenarioExtraordinaryNote(transactionId,note,btn){
   const clean=String(note||"").trim();
-  if(!clean){msg($("scenarioStatus"),"Inserisci una nota che spieghi lo straordinario.",true);return}
+  if(!clean){msg($("scenarioStatus"),"Inserisci una nota che spieghi il contesto.",true);return}
   setBusy(btn,true,"Salvo");
   try{
-    await rpc("dashboard_reporting_set_extraordinary_v1",{p_transaction_id:transactionId,p_is_extraordinary:true,p_note:clean});
+    await rpc("dashboard_reporting_set_flag_note_v1",{p_transaction_id:transactionId,p_note:clean});
     const sx=(scenarioExtraordinaryMovements||[]).find(function(x){return String(x.transaction_id)===String(transactionId)});if(sx)sx.note=clean;
     const rep=(report&&report.extraordinary_transactions||[]).find(function(x){return String(x.id)===String(transactionId)});if(rep)rep.note=clean;
     if(analysisDetailData){
@@ -4896,9 +4902,9 @@ $("balanceList").addEventListener("click",async function(e){
 
 $("extraordinaryContent").addEventListener("click",async function(e){
   const b=e.target.closest("[data-extra-id]");if(!b)return;
-  const add=b.dataset.extraMode==="add";setBusy(b,true,add?"Segno":"Rimuovo");
+  const add=b.dataset.extraMode==="add";setBusy(b,true,add?"Escludo":"Reincludo");
   try{
-    await rpc("dashboard_reporting_set_extraordinary_v1",{p_transaction_id:b.dataset.extraId,p_is_extraordinary:add,p_note:add?"Segnato manualmente dal reporting":null});
+    await rpc("dashboard_reporting_set_forecast_exclusion_v1",{p_transaction_id:b.dataset.extraId,p_exclude:add});
     await loadReport();
   }catch(err){msg($("extraordinaryMsg"),err.message||"Errore aggiornamento",true)}
   finally{setBusy(b,false)}
