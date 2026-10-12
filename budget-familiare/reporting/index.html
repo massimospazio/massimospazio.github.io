@@ -9,7 +9,7 @@
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
 <script src="../shared/supabase-client.js?v=73.24.0-20261012-1415"></script>
-<script src="../shared/app-config.js?v=73.26.1-20261012-1600"></script>
+<script src="../shared/app-config.js?v=73.26.2-20261012-1645"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 :root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#6b7280;--line:#e5e7eb;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 8px 24px rgba(15,23,42,.06)}
@@ -1029,6 +1029,13 @@ button,input,select{font:inherit}
 @media(max-width:760px){.balance-erode-legend{grid-template-columns:repeat(2,minmax(120px,1fr))}.balance-waterfall-chart{height:385px}.balance-side-card{min-height:0}}
 @media(max-width:480px){.balance-erode-legend{grid-template-columns:1fr}.balance-primary-kpis .historical-kpi .value{font-size:25px}}
 
+
+/* V73.26.2 — semantic colors + larger waterfall labels */
+.balance-waterfall-chart{height:390px}
+.balance-waterfall-card .scenario-card-head{margin-bottom:2px}
+.balance-erode-bar{height:24px}
+@media(max-width:760px){.balance-waterfall-chart{height:410px}}
+
 /* V73.18.2 — Bilancio hub: Storico + Previsione */
 .balance-hub-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:12px;padding:2px 2px 0}
 .balance-hub-head h2{margin:2px 0 0;font-size:29px;color:#10204d}.balance-hub-head p{margin:5px 0 0;color:#62718b;font-size:13px}
@@ -1435,12 +1442,7 @@ button,input,select{font:inherit}
           <aside id="balanceFlowSide" class="balance-side-stack"></aside>
         </div>
 
-        <section id="historicalStructuralSection" class="scenario-card historical-structural-card">
-          <div class="scenario-card-head">
-            <div><h3>Quanto margine abbiamo davvero?</h3><p>Lo storico ordinario separa O/N/D e le uscite non classificate (NC), così il margine non considera disponibile denaro già uscito in contanti o in voci lasciate intenzionalmente da classificare.</p></div>
-          </div>
-          <div id="historicalStructuralStrip" class="historical-structural-strip"></div>
-        </section>
+        
 
         <section id="historicalMonthlySection" class="scenario-card scenario-chart-card">
           <div class="scenario-card-head">
@@ -3932,13 +3934,13 @@ function renderBalanceWaterfall(){
   const data=[],colors=[],displayValues=[];
   let cur=t.income;
   data.push([0,t.income]);colors.push("rgba(14,168,122,.88)");displayValues.push(t.income);
-  [["O",t.mandatory],["N",t.necessary],["NC",t.unclassified]].forEach(function(x){
-    const next=cur-x[1];data.push([next,cur]);colors.push("rgba(239,91,115,.72)");displayValues.push(-x[1]);cur=next;
+  [["O",t.mandatory,"rgba(239,90,90,.82)"],["N",t.necessary,"rgba(244,182,62,.86)"],["NC",t.unclassified,"rgba(100,116,139,.82)"]].forEach(function(x){
+    const next=cur-x[1];data.push([next,cur]);colors.push(x[2]);displayValues.push(-x[1]);cur=next;
   });
   data.push([0,margin]);colors.push("rgba(37,99,235,.86)");displayValues.push(margin);cur=margin;
-  cur-=t.discretionary;data.push([cur,cur+t.discretionary]);colors.push("rgba(139,92,246,.76)");displayValues.push(-t.discretionary);
-  if(t.otherOperating>.5){cur-=t.otherOperating;data.push([cur,cur+t.otherOperating]);colors.push("rgba(148,163,184,.78)");displayValues.push(-t.otherOperating)}
-  cur-=t.savings;data.push([cur,cur+t.savings]);colors.push("rgba(6,182,212,.82)");displayValues.push(-t.savings);
+  cur-=t.discretionary;data.push([cur,cur+t.discretionary]);colors.push("rgba(139,92,246,.84)");displayValues.push(-t.discretionary);
+  if(t.otherOperating>.5){cur-=t.otherOperating;data.push([cur,cur+t.otherOperating]);colors.push("rgba(148,163,184,.86)");displayValues.push(-t.otherOperating)}
+  cur-=t.savings;data.push([cur,cur+t.savings]);colors.push("rgba(6,182,212,.90)");displayValues.push(-t.savings);
   data.push([0,final]);colors.push(final>=0?"rgba(34,169,107,.90)":"rgba(185,28,28,.86)");displayValues.push(final);
 
   $("balanceWaterfallSubtitle").textContent=historicalScope==="TOTAL"
@@ -3959,8 +3961,10 @@ function renderBalanceWaterfall(){
         const v=displayValues[i],isTotal=(i===0||labels[i]==="Margine strutturale"||labels[i]==="Disponibile");
         const props=el.getProps(["x","y","base"],true);
         const top=Math.min(props.y,props.base);
-        ctx.font=(isTotal?"800 ":"700 ")+(isTotal?"13px":"11px")+' "Segoe UI",system-ui,sans-serif';
-        ctx.fillStyle=isTotal?"#10204d":(v<0?"#b42335":"#334155");
+        ctx.font=(isTotal?"850 ":"800 ")+(isTotal?"16px":"14px")+' "Segoe UI",system-ui,sans-serif';
+        if(labels[i]==="Entrate"||labels[i]==="Disponibile")ctx.fillStyle="#047857";
+        else if(labels[i]==="Margine strutturale")ctx.fillStyle="#1d4ed8";
+        else ctx.fillStyle=v<0?"#c02636":"#334155";
         const txt=(v<0?"−":v>0&&labels[i]!=="Entrate"&&labels[i]!=="Margine strutturale"&&labels[i]!=="Disponibile"?"+":"")+money(Math.abs(v));
         ctx.fillText(txt,props.x,Math.max(18,top-7));
       });
@@ -3973,7 +3977,7 @@ function renderBalanceWaterfall(){
     plugins:[valuePlugin],
     data:{labels:labels,datasets:[{data:data,backgroundColor:colors,borderWidth:0,borderRadius:5,barPercentage:.66,categoryPercentage:.82}]},
     options:{
-      responsive:true,maintainAspectRatio:false,layout:{padding:{top:24,left:4,right:4,bottom:0}},
+      responsive:true,maintainAspectRatio:false,layout:{padding:{top:34,left:4,right:4,bottom:0}},
       plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){
         return (displayValues[ctx.dataIndex]<0?"−":"")+money(Math.abs(displayValues[ctx.dataIndex]));
       }}}},
@@ -4073,7 +4077,6 @@ function renderHistoricalBalance(){
   if($("historicalBottomGrid"))$("historicalBottomGrid").classList.toggle("hidden",!pureHistory);
   renderHistoricalKpis();
   renderBalanceWaterfall();
-  renderHistoricalStructural();
   if(pureHistory){
     renderHistoricalChart();renderHistoricalNatureComposition();renderHistoricalPeriodComparison();
   }
