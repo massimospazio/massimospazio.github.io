@@ -3617,9 +3617,26 @@ function historicalCurrentMonth(){
   const exp=projectionDataFor("EXPENSE");
   return exp&&exp.current_month?String(exp.current_month):localDateISO().slice(0,7)+"-01";
 }
+function historicalAvailableYears(){
+  const currentYear=Number(historicalCurrentMonth().slice(0,4));
+  const years=new Set();
+  (scenarioActualRows||[]).forEach(function(x){
+    const y=Number(String(x.month_start||"").slice(0,4));
+    if(y&&y<currentYear)years.add(y);
+  });
+  return Array.from(years).sort(function(a,b){return b-a});
+}
+function renderHistoricalYearOptions(){
+  const sel=$("historicalYearSelect");if(!sel)return;
+  const years=historicalAvailableYears();
+  if(!historicalYearSelection||!years.includes(Number(historicalYearSelection)))historicalYearSelection=years[0]||Number(historicalCurrentMonth().slice(0,4))-1;
+  sel.innerHTML=years.map(function(y){return '<option value="'+y+'" '+(Number(historicalYearSelection)===y?'selected':'')+'>Anno '+y+'</option>'}).join("");
+}
 function historicalMonthsFor(mode){
-  const current=historicalCurrentMonth(),year=Number(current.slice(0,4));
-  if((mode||historicalPeriodMode)==="LAST_YEAR")return monthSeries(String(year-1)+"-01-01",12);
+  const current=historicalCurrentMonth(),year=Number(current.slice(0,4)),m=mode||historicalPeriodMode;
+  if(m==="YEAR")return monthSeries(String(historicalYearSelection||year-1)+"-01-01",12);
+  if(m==="CURRENT_YEAR")return monthSeries(String(year)+"-01-01",12);
+  if(m==="FORECAST_12")return monthSeries(current,12);
   return monthSeries(addMonthsISO(current,-12),12);
 }
 function historicalMonthlyMap(){
@@ -3655,6 +3672,88 @@ function historicalTotalsFor(mode){
     totalIncome:totalIncome,totalOut:totalOut,totalNet:totalNet,extraIncome:extraIncome,extraOut:extraOut,extraNet:extraNet,
     ordinaryPositive:rows.filter(function(x){const v=x.net_operating_ordinary;return (v!==undefined&&v!==null?num(v):num(x.net_ordinary)+num(x.investments_ordinary))>=0}).length,
     totalPositive:rows.filter(function(x){return num(x.net)>=0}).length};
+}
+function balanceProjectionCategoryTotals(data,months,mode){
+  const set=new Set(months),map=new Map();
+  const source=mode==="ACTUAL"?(data&&data.actual_monthly||[]):(data&&data.forecast_monthly||[]);
+  source.forEach(function(x){
+    if(!set.has(String(x.month)))return;
+    const key=String(x.category_id),value=mode==="ACTUAL"?num(x.amount):num(x.effective_amount);
+    map.set(key,(map.get(key)||0)+value);
+  });
+  return map;
+}
+function balanceProjectedNature(expenseData,actualMonths,forecastMonths){
+  const out={MANDATORY:0,NECESSARY:0,DISCRETIONARY:0,UNCLASSIFIED:0,UNKNOWN:0};
+  const actual=balanceProjectionCategoryTotals(expenseData,actualMonths,"ACTUAL");
+  const forecast=balanceProjectionCategoryTotals(expenseData,forecastMonths,"FORECAST");
+  const meta=historicalMetaMap();
+  (expenseData&&expenseData.categories||[]).forEach(function(cat){
+    const amount=num(actual.get(String(cat.category_id)))+num(forecast.get(String(cat.category_id)));
+    if(!amount)return;
+    const l1=String(cat.l1_name||""),l2=String(cat.l2_name||"");
+    let nature;
+    if(l1==="Altro"&&(l2==="Prelievo contanti"||l2==="Da classificare"))nature="UNCLASSIFIED";
+    else nature=(meta.get(String(cat.category_id))||{}).expense_nature||"UNKNOWN";
+    out[nature]=(out[nature]||0)+amount;
+  });
+  return out;
+}
+function balanceProjectionDirectionTotal(data,actualMonths,forecastMonths){
+  const a=balanceProjectionCategoryTotals(data,actualMonths,"ACTUAL");
+  const f=balanceProjectionCategoryTotals(data,forecastMonths,"FORECAST");
+  let total=0;a.forEach(function(v){total+=num(v)});f.forEach(function(v){total+=num(v)});return total;
+}
+function balanceFlowModel(mode){
+  const m=mode||historicalPeriodMode;
+  if(m==="ROLLING_12"||m==="YEAR"){
+    const t=historicalTotalsFor(m),n=historicalNatureTotals(m,"ORDINARY"),inv=historicalInvestmentTotals(m,"ORDINARY");
+    const other=Math.max(0,t.ordinaryOut-n.MANDATORY-n.NECESSARY-n.DISCRETIONARY-n.UNCLASSIFIED);
+    return {mode:m,label:historicalPeriodLabel(m),historical:true,
+      income:t.ordinaryIncome,operatingOut:t.ordinaryOut,operatingNet:t.ordinaryNet,
+      mandatory:n.MANDATORY,necessary:n.NECESSARY,unclassified:n.UNCLASSIFIED,discretionary:n.DISCRETIONARY,otherOperating:other,
+      recurringInvestments:inv.RECURRING,currentSurplusInvestments:inv.CURRENT_SURPLUS,priorWealthInvestments:inv.PRIOR_WEALTH,
+      extraIncome:t.extraIncome,extraOut:t.extraOut,extraNet:t.extraNet,
+      available:t.availableAfterSavings,
+      savings:inv.RECURRING+inv.CURRENT_SURPLUS};
+  }
+  const exp=projectionDataFor("EXPENSE"),inc=projectionDataFor("INCOME");
+  if(!exp||!inc)return null;
+  const current=historicalCurrentMonth(),year=current.slice(0,4);
+  const months=m==="CURRENT_YEAR"?monthSeries(year+"-01-01",12):monthSeries(current,12);
+  const actualMonths=m==="CURRENT_YEAR"?months.filter(function(x){return x<current}):[];
+  const forecastMonths=m==="CURRENT_YEAR"?months.filter(function(x){return x>=current}):months.slice();
+  const income=balanceProjectionDirectionTotal(inc,actualMonths,forecastMonths);
+  const operatingOut=balanceProjectionDirectionTotal(exp,actualMonths,forecastMonths);
+  const nature=balanceProjectedNature(exp,actualMonths,forecastMonths);
+  const other=Math.max(0,operatingOut-nature.MANDATORY-nature.NECESSARY-nature.DISCRETIONARY-nature.UNCLASSIFIED);
+  let recurring=0,currentSurplus=0,priorWealth=0,extraIncome=0,extraOut=0;
+  if(actualMonths.length){
+    const actualMonthSet=new Set(actualMonths);
+    (scenarioActualRows||[]).forEach(function(x){
+      if(!actualMonthSet.has(String(x.month_start)))return;
+      recurring+=num(x.investments_recurring_ordinary);
+      currentSurplus+=num(x.investments_current_surplus_ordinary);
+      priorWealth+=num(x.investments_prior_wealth_ordinary);
+      extraIncome+=num(x.incoming_extraordinary);extraOut+=num(x.outgoing_extraordinary);
+    });
+  }
+  forecastMonths.forEach(function(month){recurring+=num(scenarioForecastInvestment(month))});
+  const operatingNet=income-operatingOut,available=operatingNet-recurring-currentSurplus;
+  return {mode:m,label:m==="CURRENT_YEAR"?"Anno "+year+" · consuntivo + previsione":"Prossimi 12 mesi",historical:false,
+    income:income,operatingOut:operatingOut,operatingNet:operatingNet,
+    mandatory:nature.MANDATORY,necessary:nature.NECESSARY,unclassified:nature.UNCLASSIFIED,discretionary:nature.DISCRETIONARY,otherOperating:other,
+    recurringInvestments:recurring,currentSurplusInvestments:currentSurplus,priorWealthInvestments:priorWealth,
+    extraIncome:extraIncome,extraOut:extraOut,extraNet:extraIncome-extraOut,
+    available:available,savings:recurring+currentSurplus,
+    actualMonths:actualMonths.length,forecastMonths:forecastMonths.length};
+}
+function historicalPeriodLabel(mode){
+  const m=mode||historicalPeriodMode,months=historicalMonthsFor(m),first=months[0],last=months[months.length-1];
+  if(m==="YEAR")return "Anno "+String(historicalYearSelection||first.slice(0,4));
+  if(m==="CURRENT_YEAR")return "Anno "+first.slice(0,4)+" · consuntivo + previsione";
+  if(m==="FORECAST_12")return "Prossimi 12 mesi";
+  return monthLabel(first)+" – "+monthLabel(last);
 }
 function historicalMetaMap(){
   const rows=scenarioPlanningMeta&&Array.isArray(scenarioPlanningMeta.rows)?scenarioPlanningMeta.rows:[];
