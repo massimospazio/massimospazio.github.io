@@ -1,7 +1,7 @@
 // Canonical source: massimospazio/budget-familiare; public files are deployed automatically.
 (function(){
-  const APP_VERSION='V73.30.1.1';
-  const APP_RELEASE='Fondazioni · Baseline solo in Analisi, affidabilità Certa/Stimata';
+  const APP_VERSION='V73.30.1.2';
+  const APP_RELEASE='Percorso · menu per fasi e sottomenu contestuali';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});
