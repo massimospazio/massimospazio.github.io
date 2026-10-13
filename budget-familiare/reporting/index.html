@@ -9,7 +9,7 @@
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
 <script src="../shared/supabase-client.js?v=73.24.0-20261012-1415"></script>
-<script src="../shared/app-config.js?v=73.30.1.11-20261013"></script>
+<script src="../shared/app-config.js?v=73.30.1.12-20261014"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 :root{--bg:#f4f6fa;--card:#fff;--text:#17263e;--muted:#58677d;--line:#dce4ee;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 4px 18px rgba(15,23,42,.045);--sc-blue:#2563eb;--sc-blue-soft:#eff6ff;--sc-green:#0ea87a;--sc-red:#ef5b73;--sc-purple:#7658e6;--sc-ink:#17263e}
@@ -1523,6 +1523,30 @@ body{font-size:16px;line-height:1.5}
 @media(max-width:1150px){.historical-compare-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:760px){.historical-comparison-workspace{padding:16px}.historical-compare-insight{grid-template-columns:1fr 1fr}.compare-summary-result{grid-column:1/-1}.historical-compare-table-rich{min-width:930px}.historical-compare-detail{overflow:auto}}
 @media(max-width:650px){.historical-compare-kpis{grid-template-columns:1fr}.historical-compare-insight{grid-template-columns:1fr}.historical-compare-toolbar-group{width:100%}.historical-compare-toolbar .scenario-segment button{flex:1 1 auto}.historical-compare-table-rich th:nth-child(5),.historical-compare-table-rich td:nth-child(5){display:table-cell}}
+/* V73.30.1.12 — Natura, ordinamento, segnalazioni e finanziamenti */
+.compare-nature-filter{display:grid;gap:5px;flex:0 0 auto;font-size:14px;color:#475a74;min-width:170px}
+.compare-nature-filter .select{font-size:16px;min-height:38px;background:#fff}
+.historical-compare-section-head{align-items:center;gap:16px}
+#comparisonFilterHint{color:#52677f;font-size:14px}
+.historical-compare-table-rich th:first-child{width:27%}.historical-compare-table-rich th:nth-child(2){width:10%}.historical-compare-table-rich th:nth-child(3),.historical-compare-table-rich th:nth-child(4){width:16%}.historical-compare-table-rich th:nth-child(5){width:17%}.historical-compare-table-rich th:last-child{width:14%}
+.compare-sort-button{display:flex;align-items:center;justify-content:flex-end;gap:6px;width:100%;padding:0;border:0;background:transparent;color:inherit;font:inherit;font-weight:600;white-space:nowrap;cursor:pointer;min-height:24px}
+.compare-sort-button span{font-size:14px;color:#52677f}.compare-sort-button:hover{color:#1d4ed8}.compare-sort-button:focus-visible{outline:2px solid #2563eb;outline-offset:3px;border-radius:4px}
+.historical-compare-table-rich th:first-child .compare-sort-button,.historical-compare-cp-table th:first-child .compare-sort-button,.historical-compare-moves .compare-sort-button{justify-content:flex-start}
+.compare-nature-badge{display:inline-flex;align-items:center;justify-content:center;min-width:28px;padding:3px 6px;border-radius:6px;font-size:14px;line-height:20px;font-weight:700;white-space:nowrap;background:#edf2f8;color:#52677f}
+.compare-nature-badge.mandatory{background:#ffe4e9;color:#a9233b}.compare-nature-badge.necessary{background:#fff1c7;color:#825a07}.compare-nature-badge.discretionary{background:#eee4ff;color:#6b37bf}
+.compare-nature-badge.fixed{background:#e3ecff;color:#1d4ed8}.compare-nature-badge.predictable,.compare-nature-badge.mixed{background:#eeeaff;color:#5b3eb9}.compare-nature-badge.variable{background:#ffead5;color:#9a4a11}
+.compare-signal{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;min-width:20px;height:20px;border-radius:6px;background:#fff0c2;border:1px solid #e2be66;color:#825a07;font-size:14px;font-weight:700;line-height:1}
+.compare-financing-note{padding:10px 12px;margin:-8px 0 16px;border:1px solid #c7daf6;border-radius:10px;background:#f0f6ff;color:#344d70;font-size:14px;line-height:1.5}.compare-financing-note.hidden{display:none}
+.compare-anomaly-summary{display:flex;align-items:center;gap:8px 14px;flex-wrap:wrap;padding:10px 12px;margin:0 0 8px;border:1px solid #e7cd8d;border-radius:10px;background:#fffbef;color:#825a07;font-size:14px}
+.compare-anomaly-summary strong{font-size:16px}.compare-anomaly-summary .btn{margin-left:auto}
+.compare-anomaly-method{margin:6px 0 12px;font-size:14px;color:#52677f}.compare-anomaly-method summary{cursor:pointer;font-weight:600;color:#4263a1}.compare-anomaly-method p{line-height:1.5;margin:6px 0;max-width:1000px}
+.compare-detail-scroll{max-width:100%;overflow:auto;border:1px solid #dce5ef;border-radius:10px}
+.historical-compare-cp-table{min-width:760px}.historical-compare-cp-table th:first-child{width:32%}
+.compare-movements-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:14px 0 6px;font-size:14px;color:#52677f}.compare-movements-head strong{font-size:16px;color:#193859}
+.historical-compare-moves table{min-width:920px}.historical-compare-moves td:nth-last-child(2),.historical-compare-moves th:nth-last-child(2){text-align:right;white-space:nowrap}.historical-compare-moves th:last-child,.historical-compare-moves td:last-child{text-align:left}
+.compare-flagged-movement td{background:#fffbef}.compare-movement-signal{display:inline-flex;padding:3px 6px;border:1px solid #e7cd8d;border-radius:6px;background:#fff0c2;color:#825a07;font-size:14px;font-weight:600;white-space:nowrap}
+.balance-outside-flow{display:block}.balance-outside-item{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center}.balance-outside-item+.balance-outside-item{margin-top:10px;padding-top:10px;border-top:1px solid #eadcba}
+@media(max-width:760px){.historical-compare-section-head{align-items:stretch;flex-direction:column}.compare-nature-filter{width:100%;min-width:0}.compare-anomaly-summary .btn{margin-left:0}}
 </style>
 </head>
 <body>
@@ -1991,7 +2015,8 @@ body{font-size:16px;line-height:1.5}
             <div id="historicalComparisonPeriodLabels" class="historical-compare-periods"></div>
             <div id="historicalComparisonKpis" class="historical-compare-kpis"></div>
             <div id="historicalComparisonInsight" class="historical-compare-insight"></div>
-            <div class="historical-compare-section-head"><div><h4 id="historicalComparisonContributorsTitle">Cosa ha mosso le uscite?</h4><p>Apri una L1 per vedere le L2; seleziona una L2 per arrivare a controparti e movimenti.</p></div></div>
+            <div id="comparisonFinancingNote" class="compare-financing-note hidden"></div>
+            <div class="historical-compare-section-head"><div><h4 id="historicalComparisonContributorsTitle">Cosa ha mosso le uscite?</h4><p>Apri una L1 per vedere le L2; seleziona una L2 per arrivare a controparti e movimenti.</p><p id="comparisonFilterHint">Natura filtra i contributori; KPI e sintesi restano sul totale del periodo.</p></div><label class="compare-nature-filter">Natura<select id="comparisonNatureFilter" class="select"><option value="ALL">Tutte le nature</option></select></label></div>
             <div id="historicalComparisonContributors"></div>
             <div id="historicalComparisonDetail" class="historical-compare-detail hidden"></div>
           </section>
@@ -2135,6 +2160,12 @@ let compareSelectedL2Name="";
 let compareDetailData=null;
 let compareDetailLoading=false;
 let compareSelectedCounterparty="";
+let compareNatureFilter="ALL";
+let compareSort={key:"DELTA_ABS",dir:"DESC"};
+let compareCpSort={key:"DELTA_ABS",dir:"DESC"};
+let compareMoveSort={key:"DATE",dir:"DESC"};
+let compareOnlyAnomalies=false;
+let compareDetailLoadSeq=0;
 let scenarioPlanningMeta=null;
 let scenarioHorizon="CALENDAR";
 let scenarioMode="SUMMARY";
@@ -4230,7 +4261,8 @@ function historicalRowsFor(mode){
 function historicalTotalsFor(mode){
   const rows=historicalRowsFor(mode);
   const sum=function(key){return rows.reduce(function(s,x){return s+num(x[key])},0)};
-  const ordinaryIncome=sum("incoming_ordinary");
+  const financing=historicalFinancingTotals(historicalMonthsFor(mode));
+  const ordinaryIncome=sum("incoming_ordinary")-financing.ordinary;
   const cashOrdinaryOut=sum("outgoing_ordinary"),cashOrdinaryNet=sum("net_ordinary");
   const recurringInvestments=sum("investments_recurring_ordinary");
   const currentSurplusInvestments=sum("investments_current_surplus_ordinary");
@@ -4243,9 +4275,9 @@ function historicalTotalsFor(mode){
   const ordinaryNet=rows.reduce(function(s,x){
     const v=x.net_operating_ordinary;
     return s+(v!==undefined&&v!==null?num(v):num(x.incoming_ordinary)-Math.max(0,num(x.outgoing_ordinary)-num(x.investments_ordinary)));
-  },0);
+  },0)-financing.ordinary;
   const availableAfterSavings=ordinaryNet-recurringInvestments-currentSurplusInvestments;
-  const totalIncome=sum("incoming"),totalOut=sum("outgoing"),totalNet=sum("net"),extraIncome=sum("incoming_extraordinary"),extraOut=sum("outgoing_extraordinary"),extraNet=extraIncome-extraOut;
+  const totalIncome=sum("incoming")-financing.total,totalOut=sum("outgoing"),totalNet=sum("net")-financing.total,extraIncome=sum("incoming_extraordinary")-financing.extraordinary,extraOut=sum("outgoing_extraordinary"),extraNet=extraIncome-extraOut;
   return {rows:rows,ordinaryIncome:ordinaryIncome,ordinaryOut:ordinaryOut,ordinaryNet:ordinaryNet,cashOrdinaryOut:cashOrdinaryOut,cashOrdinaryNet:cashOrdinaryNet,
     recurringInvestments:recurringInvestments,currentSurplusInvestments:currentSurplusInvestments,priorWealthInvestments:priorWealthInvestments,plannedInvestments:plannedInvestments,availableAfterSavings:availableAfterSavings,
     totalIncome:totalIncome,totalOut:totalOut,totalNet:totalNet,extraIncome:extraIncome,extraOut:extraOut,extraNet:extraNet,
@@ -4278,10 +4310,11 @@ function balanceProjectedNature(expenseData,actualMonths,forecastMonths){
   });
   return out;
 }
-function balanceProjectionDirectionTotal(data,actualMonths,forecastMonths){
+function balanceProjectionDirectionTotal(data,actualMonths,forecastMonths,excludeFinancing){
   const a=balanceProjectionCategoryTotals(data,actualMonths,"ACTUAL");
   const f=balanceProjectionCategoryTotals(data,forecastMonths,"FORECAST");
-  let total=0;a.forEach(function(v){total+=num(v)});f.forEach(function(v){total+=num(v)});return total;
+  const financingIds=new Set(excludeFinancing?(data&&data.categories||[]).filter(historicalIsFinancingCategory).map(function(x){return String(x.category_id)}):[]);
+  let total=0;a.forEach(function(v,k){if(!financingIds.has(k))total+=num(v)});f.forEach(function(v,k){if(!financingIds.has(k))total+=num(v)});return total;
 }
 function balanceFlowModel(mode){
   const m=mode||historicalPeriodMode;
@@ -4302,7 +4335,7 @@ function balanceFlowModel(mode){
   const months=m==="CURRENT_YEAR"?monthSeries(year+"-01-01",12):monthSeries(current,12);
   const actualMonths=m==="CURRENT_YEAR"?months.filter(function(x){return x<current}):[];
   const forecastMonths=m==="CURRENT_YEAR"?months.filter(function(x){return x>=current}):months.slice();
-  const income=balanceProjectionDirectionTotal(inc,actualMonths,forecastMonths);
+  const income=balanceProjectionDirectionTotal(inc,actualMonths,forecastMonths,true);
   const operatingOut=balanceProjectionDirectionTotal(exp,actualMonths,forecastMonths);
   const nature=balanceProjectedNature(exp,actualMonths,forecastMonths);
   const other=Math.max(0,operatingOut-nature.MANDATORY-nature.NECESSARY-nature.DISCRETIONARY-nature.UNCLASSIFIED);
@@ -4317,6 +4350,7 @@ function balanceFlowModel(mode){
       extraIncome+=num(x.incoming_extraordinary);extraOut+=num(x.outgoing_extraordinary);
     });
   }
+  extraIncome-=historicalFinancingTotals(actualMonths).extraordinary;
   forecastMonths.forEach(function(month){recurring+=num(scenarioForecastInvestment(month))});
   const operatingNet=income-operatingOut,available=operatingNet-recurring-currentSurplus;
   return {mode:m,label:m==="CURRENT_YEAR"?"Anno "+year+" · consuntivo + previsione":"Prossimi 12 mesi",historical:false,
@@ -4347,6 +4381,17 @@ function historicalCategoryRows(mode){
 }
 function historicalCategoryAmount(x,scope){
   return scope==="TOTAL"?num(x.total_amount):num(x.ordinary_amount);
+}
+function historicalIsFinancingCategory(x){
+  if(!x)return false;
+  if(x.economic_treatment==="FINANCING")return true;
+  const name=String(x.l2_name||x.category_name||x.l1_name||"").trim().toLowerCase();
+  return ["prestiti ricevuti","finanziamenti ricevuti"].includes(name);
+}
+function historicalFinancingTotals(months){
+  const set=new Set(months),out={ordinary:0,extraordinary:0,total:0};
+  (scenarioActualCategories||[]).forEach(function(x){if(x.direction!=="INCOME"||!set.has(String(x.month_start))||!historicalIsFinancingCategory(x))return;out.ordinary+=num(x.ordinary_amount);out.extraordinary+=num(x.extraordinary_amount);out.total+=num(x.total_amount)});
+  return out;
 }
 function historicalIsUnclassifiedCategory(x){
   if(String(x&&x.direction)!=="EXPENSE")return false;
@@ -4433,7 +4478,7 @@ function renderHistoricalKpis(){
       historicalKpiCard("Disponibile finale",final,balanceKpiShareHtml(final,income,"margin"),"margin","Quanto resta dopo spese operative, risparmio e, nel perimetro Totale, eventi eccezionali.");
   }else{
     $("historicalBalanceKpis").innerHTML=
-      '<div class="historical-kpi income"><div class="label">Entrate '+historicalInfo("Entrate economiche del periodo selezionato. Giroconti interni esclusi.")+'</div><div class="value positive">'+money(t.income)+'</div><div class="sub">Ø '+money(t.income/months)+'/mese</div></div>'+
+      '<div class="historical-kpi income"><div class="label">Entrate economiche '+historicalInfo("Entrate economiche del periodo selezionato. Giroconti interni e finanziamenti ricevuti esclusi.")+'</div><div class="value positive">'+money(t.income)+'</div><div class="sub">Ø '+money(t.income/months)+'/mese</div></div>'+
       '<div class="historical-kpi expense"><div class="label">Uscite operative '+historicalInfo("Spese di gestione. Gli investimenti patrimoniali non sono consumo.")+'</div><div class="value negative">'+money(t.operatingOut)+'</div><div class="sub">Ø '+money(t.operatingOut/months)+'/mese</div></div>'+
       historicalKpiCard("Saldo operativo",t.operatingNet,pct(t.operatingNet),"balance","Entrate meno uscite operative prima delle allocazioni di risparmio.")+
       historicalKpiCard("Disponibile finale",final,pct(final),"margin","Risultato della gestione corrente nel periodo.");
@@ -4500,7 +4545,7 @@ function balanceDrillRowsForSelection(){
     if(!actualSet.has(String(x.month_start)))return;
     const dir=String(x.direction||"");
     let match=false;
-    if(nature==="INCOME")match=dir==="INCOME";
+    if(nature==="INCOME")match=dir==="INCOME"&&(!historicalIsFinancingCategory(x)||balanceDrillSelection.origin==="MONTH_CASHFLOW");
     else if(nature==="ALL_EXPENSE")match=dir==="EXPENSE";
     else if(nature==="INVESTMENT"){
       if(dir==="INVESTMENT"){
@@ -4525,6 +4570,7 @@ function balanceDrillRowsForSelection(){
     }else{
       const data=projectionDataFor(balanceDrillDirection()),fmap=balanceProjectionCategoryTotals(data,sets.forecast,"FORECAST");
       (data&&data.categories||[]).forEach(function(cat){
+        if(nature==="INCOME"&&historicalIsFinancingCategory(cat))return;
         const catNature=balanceDrillNatureForProjectionCat(cat);
         if(nature!=="INCOME"&&nature!=="ALL_EXPENSE"&&catNature!==nature)return;
         const amount=num(fmap.get(String(cat.category_id)));if(amount<=.005)return;
@@ -4720,9 +4766,10 @@ async function openBalanceDrillInAnalysis(categoryId){
 
 function renderBalanceFlowSide(){
   const t=balanceFlowModel(historicalPeriodMode),box=$("balanceOutsideFlow");if(!t||!box)return;
-  if(t.priorWealthInvestments<=.5){box.classList.add("hidden");box.innerHTML="";return}
-  box.classList.remove("hidden");
-  box.innerHTML='<span class="icon" aria-hidden="true">◈</span><span class="copy"><strong>Fuori dal flusso corrente · investimenti da patrimonio pregresso</strong><span>Riallocazione patrimoniale: non riduce il disponibile prodotto dalla gestione del periodo.</span></span><span class="value">'+money(t.priorWealthInvestments)+'</span>';
+  const financing=historicalFinancingTotals(historicalMonthsFor(historicalPeriodMode)),items=[];
+  if(t.priorWealthInvestments>.5)items.push('<div class="balance-outside-item"><span class="icon" aria-hidden="true">◈</span><span class="copy"><strong>Fuori dal flusso corrente · investimenti da patrimonio pregresso</strong><span>Riallocazione patrimoniale: non riduce il disponibile prodotto dalla gestione del periodo.</span></span><span class="value">'+money(t.priorWealthInvestments)+'</span></div>');
+  if(financing.total>.5)items.push('<div class="balance-outside-item"><span class="icon" aria-hidden="true">↙</span><span class="copy"><strong>Finanziamenti ricevuti · fuori dalle entrate economiche</strong><span>Liquidità da restituire: resta nel Cash flow, senza aumentare margine o disponibile economico.</span></span><span class="value">'+money(financing.total)+'</span></div>');
+  box.classList.toggle("hidden",!items.length);box.innerHTML=items.join("");
 }
 function renderBalanceErosion(){
   const t=balanceFlowModel(historicalPeriodMode);if(!t)return;
@@ -4837,13 +4884,13 @@ function comparisonMonthSets(){
 function comparisonTotalsForMonths(months){
   const set=new Set(months),rows=(scenarioActualRows||[]).filter(function(x){return set.has(String(x.month_start))});
   const sum=function(key){return rows.reduce(function(s,x){return s+num(x[key])},0)};
-  const ordinaryIncome=sum("incoming_ordinary"),extraIncome=sum("incoming_extraordinary"),extraOut=sum("outgoing_extraordinary");
+  const financing=historicalFinancingTotals(months),ordinaryIncome=sum("incoming_ordinary")-financing.ordinary,extraIncome=sum("incoming_extraordinary")-financing.extraordinary,extraOut=sum("outgoing_extraordinary");
   const ordinaryOut=rows.reduce(function(s,x){
     const v=x.outgoing_operating_ordinary;return s+(v!==undefined&&v!==null?num(v):Math.max(0,num(x.outgoing_ordinary)-num(x.investments_ordinary)));
   },0);
   const ordinaryNet=rows.reduce(function(s,x){
     const v=x.net_operating_ordinary;return s+(v!==undefined&&v!==null?num(v):num(x.incoming_ordinary)-Math.max(0,num(x.outgoing_ordinary)-num(x.investments_ordinary)));
-  },0);
+  },0)-financing.ordinary;
   const recurring=sum("investments_recurring_ordinary"),currentSurplus=sum("investments_current_surplus_ordinary"),savings=recurring+currentSurplus;
   const scopeTotal=historicalScope==="TOTAL",income=ordinaryIncome+(scopeTotal?extraIncome:0),operatingOut=ordinaryOut+(scopeTotal?extraOut:0),operatingNet=ordinaryNet+(scopeTotal?(extraIncome-extraOut):0),available=operatingNet-savings;
   const nature={MANDATORY:0,NECESSARY:0,DISCRETIONARY:0,UNCLASSIFIED:0,UNKNOWN:0};
@@ -4853,20 +4900,78 @@ function comparisonTotalsForMonths(months){
     nature[k]=(nature[k]||0)+historicalCategoryAmount(x,historicalScope);
   });
   const structural=income-nature.MANDATORY-nature.NECESSARY-nature.UNCLASSIFIED;
-  return {income:income,operatingOut:operatingOut,operatingNet:operatingNet,savings:savings,available:available,structural:structural,discretionary:nature.DISCRETIONARY,months:months.length,covered:new Set(rows.map(function(x){return String(x.month_start)})).size};
+  return {income:income,operatingOut:operatingOut,operatingNet:operatingNet,savings:savings,available:available,structural:structural,discretionary:nature.DISCRETIONARY,financing:scopeTotal?financing.total:financing.ordinary,months:months.length,covered:new Set(rows.map(function(x){return String(x.month_start)})).size};
+}
+const COMPARISON_NATURES={MANDATORY:["O","Obbligatorie","mandatory"],NECESSARY:["N","Necessarie","necessary"],DISCRETIONARY:["D","Discrezionali","discretionary"],UNCLASSIFIED:["NC","Non classificate","unknown"],FIXED:["F","Fisse","fixed"],PREDICTABLE:["P","Prevedibili","predictable"],VARIABLE:["V","Variabili","variable"],UNKNOWN:["?","Natura non definita","unknown"],MIXED:["Mista","Nature diverse","mixed"]};
+function comparisonNatureForCategory(x){
+  if(x.direction==="EXPENSE")return historicalNatureForCategory(x)||"UNKNOWN";
+  return analysisNatureValueForCategory(x.l2_id||x.l1_id,"INCOME")||"UNKNOWN";
+}
+function comparisonNatureBadge(row){
+  const def=COMPARISON_NATURES[row.nature]||COMPARISON_NATURES.UNKNOWN;
+  const title=row.nature==="MIXED"?"Nature L2: "+Array.from(new Set(row.children.map(function(x){return (COMPARISON_NATURES[x.nature]||COMPARISON_NATURES.UNKNOWN)[1]}))).join(" · "):def[1];
+  return '<span class="compare-nature-badge '+def[2]+'" title="'+esc(title)+'" aria-label="'+esc(title)+'">'+esc(def[0])+'</span>';
+}
+function comparisonCategorySignal(row){
+  const values=Object.values(row.monthly||{}).filter(function(x){return x>0}),med=medianValue(values),mad=medianValue(values.map(function(x){return Math.abs(x-med)}));
+  const peaks=values.length>=6?Object.entries(row.monthly).filter(function(x){return x[1]>=Math.max(1000,3*med,med+6*mad)}):[];
+  if(peaks.length)return {title:"Picco mensile da verificare: "+peaks.map(function(x){return monthLabel(x[0])+" "+money(x[1])}).join(" · ")+". Approfondisci i movimenti; non implica temporalità E."};
+  const pct=comparisonPct(row.a,row.b);
+  if(Math.abs(row.b-row.a)>=500&&(pct===null||Math.abs(pct)>=50))return {title:"Variazione elevata (almeno 500 € e 50%, o voce nuova). Approfondisci controparti e movimenti per verificarne la causa."};
+  return null;
 }
 function comparisonCategoryRows(direction,sets){
   const aSet=new Set(sets.a),bSet=new Set(sets.b),l1=new Map();
   (scenarioActualCategories||[]).forEach(function(x){
-    if(String(x.direction)!==direction)return;
+    if(String(x.direction)!==direction||(direction==="INCOME"&&historicalIsFinancingCategory(x)))return;
     const month=String(x.month_start),inA=aSet.has(month),inB=bSet.has(month);if(!inA&&!inB)return;
     const l1id=String(x.l1_id||x.l1_name||"__"),l2id=String(x.l2_id||x.l2_name||"__"),amount=historicalCategoryAmount(x,historicalScope);
     if(!l1.has(l1id))l1.set(l1id,{id:l1id,name:x.l1_name||"Altro",a:0,b:0,children:new Map()});
     const g=l1.get(l1id);if(inA)g.a+=amount;if(inB)g.b+=amount;
-    if(!g.children.has(l2id))g.children.set(l2id,{id:l2id,name:x.l2_name||"Altro",a:0,b:0,l1Id:l1id,l1Name:g.name});
-    const ch=g.children.get(l2id);if(inA)ch.a+=amount;if(inB)ch.b+=amount;
+    if(!g.children.has(l2id))g.children.set(l2id,{id:l2id,name:x.l2_name||"Altro",a:0,b:0,l1Id:l1id,l1Name:g.name,nature:comparisonNatureForCategory(x),monthly:{}});
+    const ch=g.children.get(l2id);if(inA)ch.a+=amount;if(inB)ch.b+=amount;ch.monthly[month]=(ch.monthly[month]||0)+amount;
   });
-  return Array.from(l1.values()).map(function(g){g.children=Array.from(g.children.values()).sort(function(a,b){return Math.abs((b.b-b.a))-Math.abs((a.b-a.a))});return g}).sort(function(a,b){return Math.abs((b.b-b.a))-Math.abs((a.b-a.a))});
+  return Array.from(l1.values()).map(function(g){g.children=Array.from(g.children.values());g.children.forEach(function(ch){ch.signal=comparisonCategorySignal(ch)});const types=new Set(g.children.map(function(ch){return ch.nature}));g.nature=types.size===1?Array.from(types)[0]:"MIXED";g.signal=g.children.some(function(ch){return ch.signal})?{title:g.children.filter(function(ch){return ch.signal}).map(function(ch){return ch.name+": "+ch.signal.title}).join(" · ")}:null;return g});
+}
+function comparisonSortValue(row,key){
+  if(key==="NAME")return row.name||"";
+  if(key==="NATURE")return (COMPARISON_NATURES[row.nature]||COMPARISON_NATURES.UNKNOWN)[1];
+  if(key==="A")return num(row.a);if(key==="B")return num(row.b);
+  if(key==="DELTA")return num(row.b)-num(row.a);if(key==="DELTA_ABS")return Math.abs(num(row.b)-num(row.a));
+  if(key==="PCT")return comparisonPct(row.a,row.b);
+  if(key==="COUNT_A")return row.countA;if(key==="COUNT_B")return row.countB;
+  if(key==="PERIOD")return row.period;if(key==="DATE")return String(row.transaction_date||"");
+  if(key==="DESCRIPTION")return row.description||row.counterparty||"";if(key==="NOTE")return row.user_note||row.extraordinary_note||"";
+  if(key==="AMOUNT")return num(row.amount);if(key==="COUNTERPARTY")return row.counterparty||"Senza controparte";
+  if(key==="SIGNAL")return row.signalLabel||"";return 0;
+}
+function comparisonSorted(rows,sort){
+  return rows.slice().sort(function(a,b){const av=comparisonSortValue(a,sort.key),bv=comparisonSortValue(b,sort.key);if(av===null||av===undefined)return bv===null||bv===undefined?String(a.name||"").localeCompare(String(b.name||""),"it"):1;if(bv===null||bv===undefined)return -1;const diff=typeof av==="string"?av.localeCompare(String(bv),"it"):av-bv;return diff*(sort.dir==="ASC"?1:-1)||String(a.name||a.id||"").localeCompare(String(b.name||b.id||""),"it")});
+}
+function comparisonFilteredRows(groups){
+  return comparisonSorted(groups.map(function(g){const children=g.children.filter(function(ch){return compareNatureFilter==="ALL"||ch.nature===compareNatureFilter});if(!children.length)return null;const types=new Set(children.map(function(ch){return ch.nature}));return {...g,children:comparisonSorted(children,compareSort),a:children.reduce(function(s,ch){return s+ch.a},0),b:children.reduce(function(s,ch){return s+ch.b},0),nature:types.size===1?Array.from(types)[0]:"MIXED",signal:children.some(function(ch){return ch.signal})?{title:children.filter(function(ch){return ch.signal}).map(function(ch){return ch.name+": "+ch.signal.title}).join(" · ")}:null}}).filter(Boolean),compareSort);
+}
+function comparisonSortHeader(label,key,area){
+  const sort=area==="CP"?compareCpSort:area==="MOVES"?compareMoveSort:compareSort,active=sort.key===key,aria=active?(sort.dir==="ASC"?"ascending":"descending"):"none";
+  return '<th aria-sort="'+aria+'"><button type="button" class="compare-sort-button" data-compare-sort="'+key+'" data-compare-sort-area="'+area+'" title="Ordina per '+esc(label)+'">'+esc(label)+'<span aria-hidden="true">'+(active?(sort.dir==="ASC"?'↑':'↓'):'↕')+'</span></button></th>';
+}
+function comparisonChangeSort(key,area){
+  const sort=area==="CP"?compareCpSort:area==="MOVES"?compareMoveSort:compareSort;
+  sort.dir=sort.key===key?(sort.dir==="ASC"?"DESC":"ASC"):(["NAME","NATURE","DESCRIPTION","NOTE","COUNTERPARTY","SIGNAL"].includes(key)?"ASC":"DESC");sort.key=key;
+  if(area==="MAIN")renderHistoricalPeriodComparison();else renderHistoricalComparisonDetail();
+}
+function resetComparisonDetail(){++compareDetailLoadSeq;compareSelectedL2=null;compareDetailData=null;compareDetailLoading=false;compareSelectedCounterparty="";compareOnlyAnomalies=false}
+function comparisonMovementIsExceptional(x){return x.economic_exceptional===undefined?!!x.is_extraordinary&&!x.forecast_excluded:!!x.economic_exceptional}
+function comparisonMovementSignals(moves,sets){
+  const signals=new Map(),byCp=new Map(),aSet=new Set(sets.a),bSet=new Set(sets.b),totals={A:0,B:0};
+  moves.forEach(function(x){const cp=String(x.counterparty||"Senza controparte");if(!byCp.has(cp))byCp.set(cp,[]);if(!comparisonMovementIsExceptional(x))byCp.get(cp).push(num(x.amount));totals[aSet.has(String(x.month_start))?"A":"B"]+=num(x.amount)});
+  const all=moves.filter(function(x){return !comparisonMovementIsExceptional(x)}).map(function(x){return num(x.amount)}),stats=new Map();
+  byCp.forEach(function(values,key){const sample=values.length>=6?values:all,med=medianValue(sample),mad=medianValue(sample.map(function(x){return Math.abs(x-med)}));stats.set(key,{n:sample.length,med:med,threshold:Math.max(250,3*med,med+6*mad),basis:values.length>=6?"controparte":"categoria"})});
+  const delta=totals.B-totals.A,pct=comparisonPct(totals.A,totals.B),highChange=Math.abs(delta)>=500&&(pct===null||Math.abs(pct)>=50);
+  moves.forEach(function(x){if(comparisonMovementIsExceptional(x))return;const st=stats.get(String(x.counterparty||"Senza controparte")),amount=num(x.amount),period=bSet.has(String(x.month_start))?"B":"A";
+    if(st&&st.n>=6&&amount>=st.threshold)signals.set(x,{label:"Importo atipico",reason:money(amount)+" vs mediana "+money(st.med)+" della "+st.basis+"; "+st.n+" osservazioni. Soglia: max(250 €, 3×mediana, mediana+6×MAD)."});
+    else if(highChange&&amount>=500&&totals[period]>0&&amount/totals[period]>=.5)signals.set(x,{label:"Importo concentrato",reason:"Questo movimento pesa almeno il 50% del periodo "+period+" della L2, che varia di almeno 500 € e 50% (o è nuova). Può essere una spesa programmata; non implica un evento E."});
+  });return signals;
 }
 function comparisonTone(direction,delta){
   if(Math.abs(delta)<.5)return "neutral";
@@ -4892,53 +4997,43 @@ function comparisonTopInsight(groups,direction){
   return (good.length?'<div class="compare-insight-block good"><span class="compare-insight-label">Possibili buone pratiche</span><p>'+fmt(good)+'</p></div>':"")+
     (bad.length?'<div class="compare-insight-block bad"><span class="compare-insight-label">Da approfondire</span><p>'+fmt(bad)+'</p></div>':"");
 }
-function comparisonEffectHtml(effect,maximum){
-  const tone=Math.abs(effect)<.5?"neutral":effect>0?"good":"bad",width=Math.max(0,Math.min(100,Math.abs(effect)*100/Math.max(1,maximum)));
-  return '<span class="compare-effect-meter '+tone+'" title="'+esc('Effetto sul margine: '+comparisonSigned(effect))+'"><i style="width:'+width.toFixed(2)+'%" aria-hidden="true"></i><strong>'+comparisonSigned(effect)+'</strong></span>';
-}
-function comparisonContributorRow(row,level,maxEffect){
-  const d=row.b-row.a,p=comparisonPct(row.a,row.b),tone=comparisonTone(compareDirection,d),effect=compareDirection==="EXPENSE"?-d:d;
+function comparisonContributorRow(row,level){
+  const d=row.b-row.a,p=comparisonPct(row.a,row.b),tone=comparisonTone(compareDirection,d);
   const l1=level==="L1",open=l1&&compareExpandedL1.has(row.id),selected=!l1&&String(compareSelectedL2||"")===String(row.id);
   const action=l1?'data-compare-l1="'+esc(row.id)+'" aria-expanded="'+open+'"':'data-compare-l2="'+esc(row.id)+'" data-compare-l2-name="'+esc(row.name)+'" aria-pressed="'+selected+'"';
   const icon=l1?'<span class="historical-compare-caret" aria-hidden="true">'+(open?"▾":"▸")+'</span><span class="compare-category-icon" aria-hidden="true">'+analysisSvgIcon(row.name)+'</span>':'';
-  return '<tr class="historical-compare-'+(l1?'l1':'l2')+(selected?' selected':'')+'"><td><button type="button" class="historical-compare-row-btn" '+action+'>'+icon+'<span class="compare-category-name" title="'+esc(row.name)+'">'+esc(row.name)+'</span></button></td><td class="compare-amount-reference">'+money(row.a)+'</td><td class="compare-amount-current">'+money(row.b)+'</td><td class="historical-compare-delta '+tone+'">'+comparisonSigned(d)+'</td><td>'+(p===null?"—":((p>0?"+":"")+p.toLocaleString("it-IT",{maximumFractionDigits:1})+"%"))+'</td><td>'+comparisonEffectHtml(effect,maxEffect)+'</td></tr>';
+  const signal=row.signal?'<span class="compare-signal" role="img" title="'+esc(row.signal.title)+'" aria-label="'+esc(row.signal.title)+'">!</span>':'';
+  return '<tr class="historical-compare-'+(l1?'l1':'l2')+(selected?' selected':'')+'"><td><button type="button" class="historical-compare-row-btn" '+action+'>'+icon+'<span class="compare-category-name" title="'+esc(row.name)+'">'+esc(row.name)+'</span>'+signal+'</button></td><td>'+comparisonNatureBadge(row)+'</td><td class="compare-amount-reference">'+money(row.a)+'</td><td class="compare-amount-current">'+money(row.b)+'</td><td class="historical-compare-delta '+tone+'">'+comparisonSigned(d)+'</td><td>'+(p===null?"—":((p>0?"+":"")+p.toLocaleString("it-IT",{maximumFractionDigits:1})+"%"))+'</td></tr>';
 }
 function renderHistoricalComparisonDetail(){
   const box=$("historicalComparisonDetail");if(!box)return;
-  if(!compareSelectedL2){box.classList.add("hidden");box.innerHTML="";return}
-  box.classList.remove("hidden");
+  if(!compareSelectedL2){box.classList.add("hidden");box.innerHTML="";return}box.classList.remove("hidden");
   if(compareDetailLoading){box.innerHTML='<div class="analysis-loading"><span class="spinner"></span>Carico controparti e movimenti…</div>';return}
   if(!compareDetailData){box.innerHTML='<div class="muted small">Dettaglio non disponibile.</div>';return}
   if(compareDetailData.error){box.innerHTML='<div class="msg error">'+esc(compareDetailData.error)+'</div>';return}
   const sets=comparisonMonthSets(),aSet=new Set(sets.a),bSet=new Set(sets.b);
-  let moves=(compareDetailData.movements||[]).filter(function(x){
-    const inScope=historicalScope==="TOTAL"||!x.is_extraordinary;
-    return inScope&&(aSet.has(String(x.month_start))||bSet.has(String(x.month_start)));
-  });
-  const groups=new Map();
-  moves.forEach(function(x){
-    const name=String(x.counterparty||"Senza controparte");
-    if(!groups.has(name))groups.set(name,{name:name,a:0,b:0,countA:0,countB:0});
-    const g=groups.get(name);
-    if(aSet.has(String(x.month_start))){g.a+=num(x.amount);g.countA++}
-    if(bSet.has(String(x.month_start))){g.b+=num(x.amount);g.countB++}
-  });
-  const cps=Array.from(groups.values()).sort(function(a,b){return Math.abs((b.b-b.a))-Math.abs((a.b-a.a))});
+  const raw=(compareDetailData.movements||[]).filter(function(x){return (historicalScope==="TOTAL"||!comparisonMovementIsExceptional(x))&&(aSet.has(String(x.month_start))||bSet.has(String(x.month_start)))});
+  const signals=comparisonMovementSignals(raw,sets),moves=raw.map(function(x){const signal=signals.get(x)||null;return {...x,signal:signal,signalLabel:signal?signal.label:comparisonMovementIsExceptional(x)?"Evento E":"",period:bSet.has(String(x.month_start))?"B":"A"}}),groups=new Map();
+  moves.forEach(function(x){const name=String(x.counterparty||"Senza controparte");if(!groups.has(name))groups.set(name,{name:name,a:0,b:0,countA:0,countB:0,signals:0});const g=groups.get(name);if(x.period==="A"){g.a+=num(x.amount);g.countA++}else{g.b+=num(x.amount);g.countB++}if(x.signal)g.signals++});
+  const cps=comparisonSorted(Array.from(groups.values()),compareCpSort),flagged=moves.filter(function(x){return x.signal});
   if(compareSelectedCounterparty&&!groups.has(compareSelectedCounterparty))compareSelectedCounterparty="";
-  const dir=compareDirection;
-  box.innerHTML='<div class="historical-compare-detail-head"><div><h4>'+esc(compareSelectedL2Name)+'</h4><p>Controparti · '+esc(sets.labelA)+' vs '+esc(sets.labelB)+'</p></div><button class="btn ghost compact" type="button" data-compare-open-analysis="'+esc(compareSelectedL2)+'">Apri in Analisi & Baseline</button></div>'+
-    (cps.length?'<table class="historical-compare-cp-table"><thead><tr><th>Controparte</th><th>A</th><th>B</th><th>Δ</th><th>Mov.</th></tr></thead><tbody>'+cps.map(function(g){const d=g.b-g.a,tone=comparisonTone(dir,d),active=compareSelectedCounterparty===g.name;return '<tr class="selectable '+(active?"active":"")+'" data-compare-counterparty="'+esc(g.name)+'"><td>'+esc(g.name)+'</td><td>'+money(g.a)+'</td><td>'+money(g.b)+'</td><td class="historical-compare-delta '+tone+'">'+comparisonSigned(d)+'</td><td>'+g.countA+' → '+g.countB+'</td></tr>'}).join("")+'</tbody></table>':'<div class="muted small">Nessun movimento nei periodi confrontati.</div>')+
-    (compareSelectedCounterparty?renderHistoricalComparisonMovements(moves,sets):"");
+  const signalSummary=flagged.length?'<div class="compare-anomaly-summary"><strong>'+flagged.length+' movimenti da verificare</strong><span>A '+money(flagged.filter(function(x){return x.period==="A"}).reduce(function(v,x){return v+num(x.amount)},0))+' · B '+money(flagged.filter(function(x){return x.period==="B"}).reduce(function(v,x){return v+num(x.amount)},0))+' · importi dei movimenti segnalati, non del delta.</span><button type="button" class="btn ghost compact" data-compare-show-anomalies aria-pressed="'+compareOnlyAnomalies+'">'+(compareOnlyAnomalies?'Chiudi elenco segnalati':'Mostra i movimenti segnalati')+'</button></div>':"";
+  box.innerHTML='<div class="historical-compare-detail-head"><div><h4>'+esc(compareSelectedL2Name)+'</h4><p>Controparti · '+esc(sets.labelA)+' vs '+esc(sets.labelB)+'</p></div><button class="btn ghost compact" type="button" data-compare-open-analysis="'+esc(compareSelectedL2)+'">Apri in Analisi & Baseline</button></div>'+signalSummary+
+    '<details class="compare-anomaly-method"><summary>Criteri delle segnalazioni</summary><p>Importo atipico: almeno 6 movimenti comparabili della stessa controparte (o, se insufficienti, della L2), con soglia max(250 €, 3×mediana, mediana+6×scarto assoluto mediano). Importo concentrato: almeno 500 € e il 50% della L2 nel periodo, con variazione della L2 di almeno 500 € e 50% o voce nuova. Sono indizi da approfondire: una spesa P può essere prevista e corretta; E va scelto per il singolo evento. I dati non vengono modificati né esclusi automaticamente.</p></details>'+
+    (cps.length?'<div class="compare-detail-scroll"><table class="historical-compare-cp-table"><thead><tr>'+comparisonSortHeader("Controparte","NAME","CP")+comparisonSortHeader("Periodo A","A","CP")+comparisonSortHeader("Periodo B","B","CP")+comparisonSortHeader("Δ €","DELTA","CP")+comparisonSortHeader("Mov. A","COUNT_A","CP")+comparisonSortHeader("Mov. B","COUNT_B","CP")+'</tr></thead><tbody>'+cps.map(function(g){const d=g.b-g.a,tone=comparisonTone(compareDirection,d),active=compareSelectedCounterparty===g.name;return '<tr class="selectable '+(active?'active':'')+'" data-compare-counterparty="'+esc(g.name)+'"><td><button type="button" class="historical-compare-row-btn" aria-pressed="'+active+'" title="'+esc(g.name)+'"><span class="compare-category-name">'+esc(g.name)+'</span>'+(g.signals?'<span class="compare-signal" title="'+g.signals+' movimenti da verificare">'+g.signals+'</span>':'')+'</button></td><td>'+money(g.a)+'</td><td>'+money(g.b)+'</td><td class="historical-compare-delta '+tone+'">'+comparisonSigned(d)+'</td><td>'+g.countA+'</td><td>'+g.countB+'</td></tr>'}).join("")+'</tbody></table></div>':'<div class="muted small">Nessun movimento nei periodi confrontati.</div>')+
+    (compareSelectedCounterparty||compareOnlyAnomalies?renderHistoricalComparisonMovements(moves,sets):"");
 }
 function renderHistoricalComparisonMovements(moves,sets){
-  const rows=moves.filter(function(x){return String(x.counterparty||"Senza controparte")===compareSelectedCounterparty}).sort(function(a,b){return String(b.transaction_date).localeCompare(String(a.transaction_date))});
-  return '<div class="historical-compare-moves"><table><thead><tr><th>Periodo</th><th>Data</th><th>Descrizione</th><th>Nota</th><th>Importo</th></tr></thead><tbody>'+rows.map(function(x){const isB=new Set(sets.b).has(String(x.month_start));return '<tr><td><span class="historical-period-badge '+(isB?"b":"")+'">'+(isB?"B":"A")+'</span></td><td>'+dateLabel(x.transaction_date)+'</td><td>'+esc(x.description||x.counterparty||"—")+'</td><td>'+esc(x.user_note||x.extraordinary_note||"—")+'</td><td><strong>'+money(x.amount)+'</strong></td></tr>'}).join("")+'</tbody></table></div>';
+  const rows=comparisonSorted(moves.filter(function(x){return compareOnlyAnomalies?!!x.signal:String(x.counterparty||"Senza controparte")===compareSelectedCounterparty}),compareMoveSort);
+  return '<div class="compare-movements-head"><strong>'+esc(compareOnlyAnomalies?"Movimenti segnalati":compareSelectedCounterparty)+'</strong><span>'+rows.length+' movimenti</span></div><div class="historical-compare-moves"><table><thead><tr>'+comparisonSortHeader("Periodo","PERIOD","MOVES")+comparisonSortHeader("Data","DATE","MOVES")+(compareOnlyAnomalies?comparisonSortHeader("Controparte","COUNTERPARTY","MOVES"):"")+comparisonSortHeader("Descrizione","DESCRIPTION","MOVES")+comparisonSortHeader("Nota","NOTE","MOVES")+comparisonSortHeader("Importo","AMOUNT","MOVES")+comparisonSortHeader("Segnalazione","SIGNAL","MOVES")+'</tr></thead><tbody>'+rows.map(function(x){return '<tr class="'+(x.signal?'compare-flagged-movement':'')+'"><td><span class="historical-period-badge '+(x.period==="B"?'b':'')+'">'+x.period+'</span></td><td>'+dateLabel(x.transaction_date)+'</td>'+(compareOnlyAnomalies?'<td>'+esc(x.counterparty||"Senza controparte")+'</td>':'')+'<td>'+esc(x.description||x.counterparty||"—")+'</td><td>'+esc(x.user_note||x.extraordinary_note||"—")+'</td><td><strong>'+money(x.amount)+'</strong></td><td>'+(x.signal?'<span class="compare-movement-signal" tabindex="0" title="'+esc(x.signal.reason)+'">'+esc(x.signal.label)+'</span>':comparisonMovementIsExceptional(x)?'<span title="Evento E già classificato sul movimento">E</span>':'—')+'</td></tr>'}).join("")+'</tbody></table></div>';
 }
 async function loadHistoricalComparisonDetail(categoryId,name){
-  compareSelectedL2=categoryId;compareSelectedL2Name=name||"Categoria";compareSelectedCounterparty="";compareDetailData=null;compareDetailLoading=true;renderHistoricalComparisonDetail();
-  try{compareDetailData=await rpc("dashboard_reporting_analysis_detail_v2",{p_category_id:categoryId,p_direction:compareDirection,p_period_months:0})||{}}
-  catch(e){compareDetailData={movements:[],error:e.message||"Errore dettaglio"}}
-  finally{compareDetailLoading=false;renderHistoricalComparisonDetail()}
+  resetComparisonDetail();compareSelectedL2=categoryId;compareSelectedL2Name=name||"Categoria";compareDetailLoading=true;compareCpSort={key:"DELTA_ABS",dir:"DESC"};compareMoveSort={key:"DATE",dir:"DESC"};
+  const seq=++compareDetailLoadSeq,direction=compareDirection;renderHistoricalPeriodComparison();
+  if(seq!==compareDetailLoadSeq)return;
+  try{const data=await rpc("dashboard_reporting_analysis_detail_v2",{p_category_id:categoryId,p_direction:direction,p_period_months:0});if(seq!==compareDetailLoadSeq||compareSelectedL2!==categoryId||compareDirection!==direction)return;compareDetailData=data||{}}
+  catch(e){if(seq!==compareDetailLoadSeq)return;compareDetailData={movements:[],error:e.message||"Errore dettaglio"}}
+  finally{if(seq===compareDetailLoadSeq){compareDetailLoading=false;renderHistoricalComparisonDetail()}}
 }
 function renderHistoricalPeriodComparison(){
   const sets=comparisonMonthSets(),a=comparisonTotalsForMonths(sets.a),b=comparisonTotalsForMonths(sets.b),groups=comparisonCategoryRows(compareDirection,sets);
@@ -4948,7 +5043,7 @@ function renderHistoricalPeriodComparison(){
   document.querySelectorAll("[data-compare-direction]").forEach(function(x){const active=x.dataset.compareDirection===compareDirection;x.classList.toggle("active",active);x.setAttribute("aria-pressed",String(active))});
   $("historicalComparisonPeriodLabels").innerHTML='<div class="historical-compare-period reference"><span class="compare-period-code" aria-hidden="true">A</span><div><div class="k">Periodo A · riferimento</div><div class="v">'+esc(sets.labelA)+'</div></div></div><div class="historical-compare-arrow" aria-hidden="true">→</div><div class="historical-compare-period current"><span class="compare-period-code" aria-hidden="true">B</span><div><div class="k">Periodo B · confronto</div><div class="v">'+esc(sets.labelB)+'</div></div></div>';
   $("historicalComparisonKpis").innerHTML=
-    comparisonMetricCard("Entrate",a.income,b.income,"INCOME","income")+
+    comparisonMetricCard("Entrate economiche",a.income,b.income,"INCOME","income")+
     comparisonMetricCard("Uscite operative",a.operatingOut,b.operatingOut,"EXPENSE","expense")+
     comparisonMetricCard("Margine strutturale",a.structural,b.structural,"INCOME","structural")+
     comparisonMetricCard("Discrezionali",a.discretionary,b.discretionary,"EXPENSE","discretionary")+
@@ -4957,12 +5052,16 @@ function renderHistoricalPeriodComparison(){
   const availableDelta=b.available-a.available,availTone=Math.abs(availableDelta)<.5?"neutral":availableDelta>0?"good":"bad",availLabel=availTone==="neutral"?"Sostanzialmente stabile":availTone==="good"?"Migliora tra A e B":"Peggiora tra A e B";
   $("historicalComparisonInsight").innerHTML='<div class="compare-summary-result '+availTone+'"><span class="compare-insight-label">Disponibile finale</span><strong>'+comparisonSigned(availableDelta)+'</strong><span>'+availLabel+'</span></div>'+comparisonTopInsight(groups,compareDirection)+'<div class="compare-data-coverage">Copertura dati · A '+a.covered+'/'+a.months+' mesi · B '+b.covered+'/'+b.months+' mesi</div>';
   $("historicalComparisonContributorsTitle").textContent=compareDirection==="EXPENSE"?"Cosa ha mosso le uscite?":"Cosa ha mosso le entrate?";
-  const maxEffect=Math.max(1,...groups.flatMap(function(g){return [Math.abs(g.b-g.a)].concat(g.children.map(function(ch){return Math.abs(ch.b-ch.a)}))}));
-  let html='<div class="compare-contributors-scroll"><table class="historical-compare-table-rich"><thead><tr><th>Categoria</th><th>Periodo A</th><th>Periodo B</th><th>Δ €</th><th>Δ %</th><th title="Lunghezza relativa al maggior effetto assoluto tra L1 e L2">Effetto sul margine</th></tr></thead><tbody>';
-  groups.forEach(function(g){
-    html+=comparisonContributorRow(g,"L1",maxEffect);
-    if(compareExpandedL1.has(g.id))g.children.forEach(function(ch){html+=comparisonContributorRow(ch,"L2",maxEffect)});
-  });
+  const natureKeys=compareDirection==="EXPENSE"?["MANDATORY","NECESSARY","DISCRETIONARY","UNCLASSIFIED","UNKNOWN"]:["FIXED","PREDICTABLE","VARIABLE","UNKNOWN"];
+  const filter=$("comparisonNatureFilter");if(filter){filter.innerHTML='<option value="ALL">Tutte le nature</option>'+natureKeys.map(function(k){return '<option value="'+k+'">'+COMPARISON_NATURES[k][0]+' · '+COMPARISON_NATURES[k][1]+'</option>'}).join("");filter.value=compareNatureFilter}
+  const filtered=comparisonFilteredRows(groups);
+  if(compareSelectedL2&&!filtered.some(function(g){return g.children.some(function(ch){return ch.id===compareSelectedL2})}))resetComparisonDetail();
+  if($("comparisonFinancingNote")){const note=$("comparisonFinancingNote");note.classList.toggle("hidden",a.financing<=.005&&b.financing<=.005);note.innerHTML='Finanziamenti ricevuti · A '+money(a.financing)+' · B '+money(b.financing)+'. Esclusi dalle entrate e dal risultato economico; restano negli incassi del Cash flow.'}
+  const labels={DELTA_ABS:"variazione assoluta",NAME:"categoria",NATURE:"natura",A:"periodo A",B:"periodo B",DELTA:"Δ €",PCT:"Δ %"};
+  if($("comparisonFilterHint"))$("comparisonFilterHint").textContent="Natura filtra i contributori; KPI e sintesi restano sul totale. Ordine: "+labels[compareSort.key]+" "+(compareSort.dir==="ASC"?"↑":"↓")+". Il segno ! invita ad approfondire.";
+  let html='<div class="compare-contributors-scroll"><table class="historical-compare-table-rich"><thead><tr>'+comparisonSortHeader("Categoria","NAME","MAIN")+comparisonSortHeader("Natura","NATURE","MAIN")+comparisonSortHeader("Periodo A","A","MAIN")+comparisonSortHeader("Periodo B","B","MAIN")+comparisonSortHeader("Δ €","DELTA","MAIN")+comparisonSortHeader("Δ %","PCT","MAIN")+'</tr></thead><tbody>';
+  filtered.forEach(function(g){html+=comparisonContributorRow(g,"L1");if(compareExpandedL1.has(g.id))g.children.forEach(function(ch){html+=comparisonContributorRow(ch,"L2")})});
+  if(!filtered.length)html+='<tr><td colspan="6" class="balance-drill-empty">Nessuna categoria per questa natura e questi periodi.</td></tr>';
   html+='</tbody></table></div>';$("historicalComparisonContributors").innerHTML=html;
   renderHistoricalComparisonDetail();
 }
@@ -4990,7 +5089,7 @@ function renderHistoricalChart(){
       {type:"bar",label:"Saldo mese",data:net,backgroundColor:net.map(function(v){return v>=0?"rgba(34,197,94,.12)":"rgba(239,68,68,.12)"}),borderColor:net.map(function(v){return v>=0?"#15803d":"#b91c1c"}),borderWidth:1.7,borderRadius:3,yAxisID:"y"},
       {type:"line",label:"Cumulato periodo",data:cumulative,borderColor:"#334155",backgroundColor:"#334155",borderWidth:2.4,pointRadius:2.7,tension:.2,yAxisID:"y2"}
     ];
-    $("historicalChartNote").textContent="Il selettore Ordinario/Totale modifica solo questo grafico. Il saldo cumulato parte da zero e non rappresenta la liquidità dei conti. Clicca la barra Entrate o Uscite di un mese per vedere categorie, controparti e movimenti.";
+    $("historicalChartNote").textContent="Il grafico mostra gli incassi e i pagamenti, inclusi i finanziamenti ricevuti. I KPI economici escludono i prestiti. Il saldo cumulato parte da zero e non rappresenta la liquidità dei conti. Clicca la barra Entrate o Uscite di un mese per vedere categorie, controparti e movimenti.";
   }else{
     const natureMap=historicalMonthlyNature(historicalPeriodMode,scope),get=function(key){return months.map(function(m){return num(natureMap.get(m)&&natureMap.get(m)[key])})};
     const O=get("MANDATORY"),N=get("NECESSARY"),D=get("DISCRETIONARY"),NC=get("UNCLASSIFIED"),OTHER=get("UNKNOWN"),INV=get("INVESTMENT");
@@ -6106,16 +6205,18 @@ $("historicalYearSelect")?.addEventListener("change",function(){
   balanceHubMode="HISTORY";historicalPeriodMode="YEAR";closeBalanceNatureDrill();renderBalanceHub();
 });
 $("scenarioView").addEventListener("click",async function(e){
+  const cs=e.target.closest("[data-compare-sort]");if(cs){comparisonChangeSort(cs.dataset.compareSort,cs.dataset.compareSortArea||"MAIN");return}
+  if(e.target.closest("[data-compare-show-anomalies]")){compareOnlyAnomalies=!compareOnlyAnomalies;compareSelectedCounterparty="";renderHistoricalComparisonDetail();return}
   const cw=e.target.closest("[data-compare-window]");
-  if(cw){compareWindow=cw.dataset.compareWindow||"12";compareSelectedL2=null;compareDetailData=null;compareSelectedCounterparty="";renderHistoricalPeriodComparison();return}
+  if(cw){compareWindow=cw.dataset.compareWindow||"12";resetComparisonDetail();renderHistoricalPeriodComparison();return}
   const cd=e.target.closest("[data-compare-direction]");
-  if(cd){compareDirection=cd.dataset.compareDirection||"EXPENSE";compareExpandedL1.clear();compareSelectedL2=null;compareDetailData=null;compareSelectedCounterparty="";renderHistoricalPeriodComparison();return}
+  if(cd){compareDirection=cd.dataset.compareDirection||"EXPENSE";compareNatureFilter="ALL";compareExpandedL1.clear();resetComparisonDetail();renderHistoricalPeriodComparison();return}
   const cl1=e.target.closest("[data-compare-l1]");
   if(cl1){const id=cl1.dataset.compareL1;if(compareExpandedL1.has(id))compareExpandedL1.delete(id);else compareExpandedL1.add(id);renderHistoricalPeriodComparison();return}
   const cl2=e.target.closest("[data-compare-l2]");
   if(cl2){await loadHistoricalComparisonDetail(cl2.dataset.compareL2,cl2.dataset.compareL2Name||"Categoria");return}
   const ccp=e.target.closest("[data-compare-counterparty]");
-  if(ccp){compareSelectedCounterparty=ccp.dataset.compareCounterparty||"";renderHistoricalComparisonDetail();return}
+  if(ccp){compareSelectedCounterparty=ccp.dataset.compareCounterparty||"";compareOnlyAnomalies=false;renderHistoricalComparisonDetail();return}
   const ca=e.target.closest("[data-compare-open-analysis]");
   if(ca){showStandardReportingView();analysisViewMode=compareDirection;analysisTimeMode="HISTORY";$("analysisDirection").value=compareDirection;$("analysisPeriod").value=compareWindow==="6"?"12":compareWindow==="12"?"24":"0";analysisWorkspace=null;analysisWorkspaceKey="";syncWherePeriodUI();await loadAnalysisWorkspace(true);await openAnalysisDetail(ca.dataset.compareOpenAnalysis,"L2",null);return}
   const closeDrill=e.target.closest("[data-balance-drill-close]");if(closeDrill){closeBalanceNatureDrill();return}
@@ -6185,7 +6286,8 @@ $("balanceFlowGrid")?.addEventListener("keydown",function(e){
   const step=e.target.closest(".waterfall-step[data-balance-nature]");
   if(step&&(e.key==="Enter"||e.key===" ")){e.preventDefault();openBalanceNatureDrill(step.dataset.balanceNature,null,"WATERFALL")}
 });
-$("compareYearB")?.addEventListener("change",function(){compareYearB=Number(this.value)||compareYearB;compareSelectedL2=null;compareDetailData=null;compareSelectedCounterparty="";renderHistoricalPeriodComparison()});
+$("compareYearB")?.addEventListener("change",function(){compareYearB=Number(this.value)||compareYearB;resetComparisonDetail();renderHistoricalPeriodComparison()});
+$("comparisonNatureFilter")?.addEventListener("change",function(){compareNatureFilter=this.value||"ALL";resetComparisonDetail();renderHistoricalPeriodComparison()});
 $("analysisPeriod").onchange=function(){if(analysisTimeMode!=="HISTORY")return;historicalPeriodMode=historicalModeFromPeriodValue(this.value);syncWherePeriodUI();const keep=captureAnalysisSelection();analysisSelectedMonth=null;analysisWorkspace=null;analysisWorkspaceKey="";loadAnalysisWorkspace(true,keep)};
 $("analysisProjectionView").onchange=function(){analysisProjectionView=this.value||"CALENDAR";analysisSelectedMonth=null;renderAnalysis()};
 $("analysisControls").addEventListener("click",function(e){
