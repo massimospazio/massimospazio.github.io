@@ -1220,6 +1220,22 @@ button,input,select{font:inherit}
 @media(max-width:850px){.process-roadmap-grid{grid-template-columns:1fr}.process-roadmap-head{flex-direction:column}}
 @media(max-width:900px){.process-nav{grid-template-columns:repeat(7,132px)}.process-context{align-items:flex-start;flex-direction:column}.process-subnav{width:100%;justify-content:flex-start}}
 @media(max-width:650px){.process-shell{padding:8px}.process-overline span{display:none}.process-step{min-width:126px}.process-context-copy{display:grid;gap:2px}.process-subnav .tab{flex:1 1 auto;justify-content:center}}
+.where-period-bar{flex:1 0 100%;display:flex;align-items:center;gap:8px;padding-top:8px;border-top:1px dashed #e3e9f1}
+.where-period-bar.hidden{display:none}.where-period-bar>span{font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;color:#64748b}
+.where-period-buttons{display:flex;gap:4px;flex-wrap:wrap}.where-period-buttons button{border:1px solid #dbe4ef;background:#fff;color:#475569;border-radius:8px;padding:5px 9px;font-size:10px;font-weight:750;cursor:pointer}.where-period-buttons button.active{background:#eaf3ff;border-color:#78a8e8;color:#174f97}
+.balance-history-toolbar{justify-content:flex-end}.where-scope-control{margin-left:auto}.where-scope-control .scenario-control-label{display:inline-flex;align-items:center;gap:4px}
+.historical-comparison-workspace{padding:16px}.historical-compare-toolbar{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:10px 0 12px}.historical-compare-toolbar-group{display:grid;gap:5px}.historical-compare-toolbar-group>span{font-size:9px;font-weight:850;color:#64748b;text-transform:uppercase;letter-spacing:.04em}
+.historical-compare-periods{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin:8px 0 12px}.historical-compare-period{border:1px solid #dbe4ef;border-radius:10px;background:#f8fafc;padding:9px 11px}.historical-compare-period .k{font-size:9px;font-weight:850;text-transform:uppercase;color:#64748b}.historical-compare-period .v{font-size:13px;font-weight:850;margin-top:2px}.historical-compare-arrow{font-size:18px;color:#94a3b8}
+.historical-compare-kpis{display:grid;grid-template-columns:repeat(3,minmax(180px,1fr));gap:8px;margin:10px 0 12px}.historical-compare-kpi{border:1px solid #e0e7ef;border-radius:11px;background:#fff;padding:10px 11px}.historical-compare-kpi .label{font-size:9px;text-transform:uppercase;letter-spacing:.04em;color:#64748b;font-weight:850}.historical-compare-kpi .values{display:grid;grid-template-columns:1fr 1fr auto;gap:7px;align-items:end;margin-top:7px}.historical-compare-kpi .values span{display:grid;gap:1px;font-size:9px;color:#64748b}.historical-compare-kpi .values strong{font-size:13px;color:#172033}.historical-compare-kpi .delta{font-size:12px;font-weight:900;white-space:nowrap}.historical-compare-kpi .delta.good{color:#15803d}.historical-compare-kpi .delta.bad{color:#b91c1c}.historical-compare-kpi .delta.neutral{color:#64748b}
+.historical-compare-insight{margin:9px 0;padding:10px 12px;border:1px solid #dbeafe;border-radius:10px;background:#f8fbff;font-size:11px;color:#334155;line-height:1.45}.historical-compare-insight strong{color:#174f97}
+.historical-compare-section-head{display:flex;justify-content:space-between;gap:10px;align-items:end;margin:14px 0 7px}.historical-compare-section-head h4{margin:0;font-size:13px}.historical-compare-section-head p{margin:2px 0 0;font-size:10px;color:#64748b}
+.historical-compare-table-rich{width:100%;border-collapse:collapse}.historical-compare-table-rich th,.historical-compare-table-rich td{padding:8px 9px;border-bottom:1px solid #edf1f5;font-size:10.5px;text-align:right}.historical-compare-table-rich th{font-size:9px;text-transform:uppercase;letter-spacing:.03em;color:#64748b;background:#f8fafc;position:sticky;top:0}.historical-compare-table-rich th:first-child,.historical-compare-table-rich td:first-child{text-align:left}.historical-compare-l1 td{font-weight:800;background:#fbfcfe}.historical-compare-l2 td:first-child{padding-left:34px}.historical-compare-row-btn{border:0;background:transparent;padding:0;color:inherit;font:inherit;font-weight:inherit;cursor:pointer;text-align:left}.historical-compare-row-btn:hover{color:#1d4ed8}.historical-compare-caret{display:inline-block;width:17px;color:#64748b}
+.historical-compare-delta.good,.historical-compare-effect.good{color:#15803d;font-weight:850}.historical-compare-delta.bad,.historical-compare-effect.bad{color:#b91c1c;font-weight:850}.historical-compare-delta.neutral,.historical-compare-effect.neutral{color:#64748b}
+.historical-compare-detail{margin-top:12px;border:1px solid #bfdbfe;border-radius:12px;background:#f8fbff;padding:12px}.historical-compare-detail.hidden{display:none}.historical-compare-detail-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:8px}.historical-compare-detail-head h4{margin:0;font-size:13px}.historical-compare-detail-head p{margin:3px 0 0;color:#64748b;font-size:10px}.historical-compare-cp-table{width:100%;border-collapse:collapse;background:#fff;border-radius:9px;overflow:hidden}.historical-compare-cp-table th,.historical-compare-cp-table td{padding:7px 8px;border-bottom:1px solid #edf1f5;font-size:10px;text-align:right}.historical-compare-cp-table th:first-child,.historical-compare-cp-table td:first-child{text-align:left}.historical-compare-cp-table tr.selectable{cursor:pointer}.historical-compare-cp-table tr.selectable:hover,.historical-compare-cp-table tr.active{background:#eff6ff}
+.historical-compare-moves{margin-top:10px;background:#fff;border:1px solid #dbe4ef;border-radius:9px;overflow:auto;max-height:340px}.historical-compare-moves table{width:100%;border-collapse:collapse}.historical-compare-moves th,.historical-compare-moves td{padding:6px 8px;border-bottom:1px solid #edf1f5;font-size:9.5px;text-align:left}.historical-compare-moves td:last-child,.historical-compare-moves th:last-child{text-align:right}.historical-period-badge{display:inline-flex;min-width:20px;justify-content:center;padding:2px 5px;border-radius:999px;font-size:8px;font-weight:900;background:#eef2ff;color:#3730a3}.historical-period-badge.b{background:#ecfdf5;color:#166534}
+@media(max-width:900px){.historical-compare-kpis{grid-template-columns:1fr 1fr}.historical-compare-periods{grid-template-columns:1fr}.historical-compare-arrow{display:none}}
+@media(max-width:650px){.where-period-bar{align-items:flex-start;flex-direction:column}.historical-compare-kpis{grid-template-columns:1fr}.historical-compare-table-rich th:nth-child(5),.historical-compare-table-rich td:nth-child(5){display:none}}
+
 
 </style>
 </head>
@@ -1257,6 +1273,15 @@ button,input,select{font:inherit}
           <button id="cashflowViewTab" class="tab" type="button" data-where-view="cashflow">Cash flow</button>
           <button id="periodCompareTab" class="tab" type="button" data-where-view="compare">Confronto periodi</button>
           <button id="reportingViewTab" class="tab active" type="button" data-where-view="analysis">Analisi &amp; Baseline</button>
+        </div>
+        <div id="wherePeriodBar" class="where-period-bar">
+          <span>Periodo storico</span>
+          <div class="where-period-buttons">
+            <button type="button" data-where-period="6">6 mesi</button>
+            <button type="button" data-where-period="12" class="active">12 mesi</button>
+            <button type="button" data-where-period="24">24 mesi</button>
+            <button type="button" data-where-period="0">Tutto</button>
+          </div>
         </div>
       </div>
       <div id="processContextGoals" class="process-context hidden">
@@ -1345,15 +1370,13 @@ button,input,select{font:inherit}
               <button class="btn compact" type="button" data-analysis-time="HISTORY">Storico</button>
               <button class="btn ghost compact" type="button" data-analysis-time="PROJECTION">Proiezione</button>
             </div>
-            <label id="analysisPeriodWrap" class="small">Periodo <select id="analysisPeriod" class="select" style="min-height:30px;padding:5px 8px"><option value="6">6 mesi</option><option value="12" selected>12 mesi</option><option value="24">24 mesi</option><option value="0">Tutto</option></select></label>
+            <select id="analysisPeriod" class="hidden" aria-hidden="true"><option value="6">6 mesi</option><option value="12" selected>12 mesi</option><option value="24">24 mesi</option><option value="0">Tutto</option></select>
             <label id="analysisProjectionWrap" class="small hidden">Vista <select id="analysisProjectionView" class="select" style="min-height:30px;padding:5px 8px"><option value="CALENDAR">Anno solare</option><option value="ROLLING_12">12m → 12m</option></select></label>
           </div>
           <div class="analysis-v26-right">
-            <span id="analysisPeriodHint" class="small muted">Solo mesi completi.</span>
-            <button id="analysisExtraordinaryBtn" class="btn ghost compact analysis-extra-btn" type="button">Straordinarie escluse</button>
+            <span id="analysisPeriodHint" class="small muted">Solo mesi completi · eventi E esclusi dalla Baseline.</span>
           </div>
         </div>
-        <div id="analysisExtraordinaryInline" class="analysis-extra-inline hidden"></div>
         <div id="analysisSummary"></div><div id="analysisStatus"></div>
         <div id="analysisBalanceView" class="analysis-balance-view hidden">
           <div class="analysis-detail-head"><div><h3>Entrate, uscite, saldo e liquidità</h3><p>Barre mensili per entrate/uscite, saldo come indicatore ± e liquidità ricostruita come curva.</p></div></div>
@@ -1388,16 +1411,6 @@ button,input,select{font:inherit}
       </div>
     </section>
 
-    <div class="secondary-tools">
-      <details id="extraordinaryDetails" class="secondary-details">
-        <summary><span>Movimenti esclusi dalla previsione</span><span id="extraordinarySummary" class="muted"></span></summary>
-        <div class="secondary-detail-body">
-          <div class="small muted">Qui trovi i movimenti esclusi dalla base di previsione. Restano spese reali nei consuntivi, ma non influenzano Analisi e forecast.</div>
-          <div id="extraordinaryContent"></div>
-          <div id="extraordinaryMsg"></div>
-        </div>
-      </details>
-    </div>
     </div>
 
 
@@ -1598,42 +1611,16 @@ button,input,select{font:inherit}
           <h2 id="balanceHubTitle">Flusso economico</h2>
           <p id="balanceHubDescription">Come entrate e uscite si trasformano nel margine disponibile della famiglia.</p>
         </div>
-        <div class="mode-toggle balance-hub-toggle balance-period-modes">
-          <button class="btn compact" type="button" data-balance-hub="HISTORY">Storico</button>
-          <button class="btn ghost compact" type="button" data-balance-hub="CURRENT_YEAR">Anno corrente</button>
-          <button class="btn ghost compact" type="button" data-balance-hub="FORECAST_12">Previsione 12m</button>
-        </div>
+        <div></div>
       </div>
 
       <div id="balanceHistoryView" class="balance-history-view">
         <div class="balance-history-toolbar">
-          <div id="historicalPeriodControls">
-            <span class="scenario-control-label">Periodo storico</span>
-            <div class="scenario-segment">
-              <button class="active" type="button" data-history-period="ROLLING_12">Ultimi 12 mesi</button>
-              <select id="historicalYearSelect" class="select balance-history-year" aria-label="Anno solare storico"></select>
-            </div>
-          </div>
-          <div>
-            <span class="scenario-control-label">Vista grafico <span class="info-tip" tabindex="0" title="Ordinario esclude gli eventi E · Eccezionale; Totale incl. eccezionali li include. I movimenti esclusi solo dal forecast non cambiano il consuntivo.">i</span></span>
+          <div id="historicalScopeControls" class="where-scope-control">
+            <span class="scenario-control-label">Perimetro <span class="info-tip" tabindex="0" title="Ordinario esclude gli eventi E · Eccezionale. Totale li include nel consuntivo.">i</span></span>
             <div class="scenario-segment">
               <button class="active" type="button" data-history-scope="ORDINARY">Ordinario</button>
               <button type="button" data-history-scope="TOTAL">Totale incl. eccezionali</button>
-            </div>
-          </div>
-          <div>
-            <span class="scenario-control-label">Lettura grafico</span>
-            <div class="scenario-segment">
-              <button class="active" type="button" data-history-chart="CASHFLOW">Cash flow</button>
-              <button type="button" data-history-chart="NATURE">Natura O/N/D + NC</button>
-            </div>
-          </div>
-          <div id="historicalNatureFocusWrap" class="hidden">
-            <span class="scenario-control-label">Focus natura</span>
-            <div class="scenario-segment">
-              <button class="active" type="button" data-history-nature-focus="ALL">Tutte</button>
-              <button type="button" data-history-nature-focus="ON">Strutturale</button>
-              <button type="button" data-history-nature-focus="D">D</button>
             </div>
           </div>
         </div>
@@ -1699,9 +1686,33 @@ button,input,select{font:inherit}
             <div class="scenario-card-head"><div><h3>Composizione uscite ordinarie</h3><p>O/N/D, uscite non classificate (NC) e altre uscite sul periodo selezionato.</p></div></div>
             <div id="historicalNatureComposition" class="historical-nature-composition"></div>
           </section>
-          <section id="historicalComparisonSection" class="scenario-card">
-            <div class="scenario-card-head"><div><h3>Confronto periodi</h3><p>Saldo ordinario e totale sui due riferimenti storici principali.</p></div></div>
-            <div id="historicalPeriodComparison"></div>
+          <section id="historicalComparisonSection" class="scenario-card historical-comparison-workspace">
+            <div class="scenario-card-head"><div><h3>Confronto storico</h3><p>Non solo quanto è cambiato: individua quali categorie hanno prodotto il miglioramento o il peggioramento.</p></div></div>
+            <div class="historical-compare-toolbar">
+              <div class="historical-compare-toolbar-group">
+                <span>Finestra comparabile</span>
+                <div class="scenario-segment">
+                  <button type="button" data-compare-window="6">6m vs 6m prec.</button>
+                  <button class="active" type="button" data-compare-window="12">12m vs 12m prec.</button>
+                  <button type="button" data-compare-window="24">24m vs 24m prec.</button>
+                  <button type="button" data-compare-window="YEAR">Anno vs anno</button>
+                </div>
+              </div>
+              <label id="compareYearWrap" class="historical-compare-toolbar-group hidden"><span>Anno B</span><select id="compareYearB" class="select"></select></label>
+              <div class="historical-compare-toolbar-group">
+                <span>Contributori</span>
+                <div class="scenario-segment">
+                  <button class="active" type="button" data-compare-direction="EXPENSE">Uscite</button>
+                  <button type="button" data-compare-direction="INCOME">Entrate</button>
+                </div>
+              </div>
+            </div>
+            <div id="historicalComparisonPeriodLabels" class="historical-compare-periods"></div>
+            <div id="historicalComparisonKpis" class="historical-compare-kpis"></div>
+            <div id="historicalComparisonInsight" class="historical-compare-insight"></div>
+            <div class="historical-compare-section-head"><div><h4 id="historicalComparisonContributorsTitle">Cosa ha mosso le uscite?</h4><p>Apri una L1 per vedere le L2; seleziona una L2 per arrivare a controparti e movimenti.</p></div></div>
+            <div id="historicalComparisonContributors"></div>
+            <div id="historicalComparisonDetail" class="historical-compare-detail hidden"></div>
           </section>
         </div>
       </div>
