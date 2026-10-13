@@ -1,7 +1,7 @@
 // Canonical source: massimospazio/budget-familiare; public files are deployed automatically.
 (function(){
-  const APP_VERSION='V73.30.1.5';
-  const APP_RELEASE='Flusso economico · gerarchia definitiva e insight derivati';
+  const APP_VERSION='V73.30.1.6';
+  const APP_RELEASE='Reporting · navigazione ordinata e maggiore leggibilità';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});
@@ -11,4 +11,5 @@
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply);
   else apply();
 })();
+
 
