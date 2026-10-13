@@ -1840,6 +1840,15 @@ let historicalScope="ORDINARY";
 let historicalChartMode="CASHFLOW";
 let historicalNatureFocus="ALL";
 let balanceSubview="flow";
+let compareWindow="12";
+let compareYearB=null;
+let compareDirection="EXPENSE";
+let compareExpandedL1=new Set();
+let compareSelectedL2=null;
+let compareSelectedL2Name="";
+let compareDetailData=null;
+let compareDetailLoading=false;
+let compareSelectedCounterparty="";
 let scenarioPlanningMeta=null;
 let scenarioHorizon="CALENDAR";
 let scenarioMode="SUMMARY";
@@ -3950,6 +3959,12 @@ function historicalMonthsFor(mode){
   if(m==="YEAR")return monthSeries(String(historicalYearSelection||year-1)+"-01-01",12);
   if(m==="CURRENT_YEAR")return monthSeries(String(year)+"-01-01",12);
   if(m==="FORECAST_12")return monthSeries(current,12);
+  if(m==="ROLLING_6")return monthSeries(addMonthsISO(current,-6),6);
+  if(m==="ROLLING_24")return monthSeries(addMonthsISO(current,-24),24);
+  if(m==="ALL"){
+    const months=Array.from(new Set((scenarioActualRows||[]).map(function(x){return String(x.month_start||"")}).filter(function(x){return x&&x<current}))).sort();
+    return months.length?months:monthSeries(addMonthsISO(current,-12),12);
+  }
   return monthSeries(addMonthsISO(current,-12),12);
 }
 function historicalMonthlyMap(){
@@ -4066,7 +4081,10 @@ function historicalPeriodLabel(mode){
   if(m==="YEAR")return "Anno "+String(historicalYearSelection||first.slice(0,4));
   if(m==="CURRENT_YEAR")return "Anno "+first.slice(0,4)+" · consuntivo + previsione";
   if(m==="FORECAST_12")return "Prossimi 12 mesi";
-  return monthLabel(first)+" – "+monthLabel(last);
+  if(m==="ROLLING_6")return "Ultimi 6 mesi completi";
+  if(m==="ROLLING_24")return "Ultimi 24 mesi completi";
+  if(m==="ALL")return "Tutto lo storico";
+  return "Ultimi 12 mesi completi";
 }
 function historicalMetaMap(){
   const rows=scenarioPlanningMeta&&Array.isArray(scenarioPlanningMeta.rows)?scenarioPlanningMeta.rows:[];
@@ -4141,7 +4159,7 @@ function historicalKpiCard(label,value,sub,tone,info){
 }
 function renderHistoricalKpis(){
   const t=balanceFlowModel(historicalPeriodMode);if(!t)return;
-  const months=12;
+  const months=Math.max(1,historicalMonthsFor(historicalPeriodMode).length);
   $("historicalBalanceKpis").innerHTML=
     '<div class="historical-kpi income"><div class="label">Entrate '+historicalInfo("Entrate economiche del periodo selezionato. Giroconti interni esclusi.")+'</div><div class="value positive">'+money(t.income)+'</div><div class="sub">Ø '+money(t.income/months)+'/mese</div></div>'+
     '<div class="historical-kpi expense"><div class="label">Uscite operative '+historicalInfo("Spese di gestione. Gli investimenti patrimoniali non sono consumo e restano fuori da questo KPI.")+'</div><div class="value negative">'+money(t.operatingOut)+'</div><div class="sub">Ø '+money(t.operatingOut/months)+'/mese</div></div>'+
@@ -4521,21 +4539,139 @@ function renderHistoricalNatureComposition(){
     return '<div class="historical-composition-row"><div class="head"><span class="dot '+x[1].toLowerCase()+'"></span><span>'+esc(x[0])+'</span><strong>'+money(x[2])+'</strong><b>'+Math.round(pct)+'%</b></div>'+(x[3]?'<div class="historical-composition-sub">'+esc(x[3])+'</div>':'')+'<div class="bar"><i class="'+x[1].toLowerCase()+'" style="width:'+Math.max(1,pct).toFixed(1)+'%"></i></div></div>';
   }).join("");
 }
+function comparisonMonthSets(){
+  const current=historicalCurrentMonth();
+  if(compareWindow==="YEAR"){
+    const years=historicalAvailableYears();
+    if(!compareYearB||!years.includes(Number(compareYearB)))compareYearB=years[0]||Number(current.slice(0,4))-1;
+    const b=monthSeries(String(compareYearB)+"-01-01",12),a=monthSeries(String(Number(compareYearB)-1)+"-01-01",12);
+    return {a:a,b:b,labelA:"Anno "+(Number(compareYearB)-1),labelB:"Anno "+compareYearB};
+  }
+  const n=Math.max(1,Number(compareWindow)||12);
+  const b=monthSeries(addMonthsISO(current,-n),n),a=monthSeries(addMonthsISO(current,-2*n),n);
+  const rangeLabel=function(months){return monthLabel(months[0])+" → "+monthLabel(months[months.length-1])};
+  return {a:a,b:b,labelA:rangeLabel(a),labelB:rangeLabel(b)};
+}
+function comparisonTotalsForMonths(months){
+  const set=new Set(months),rows=(scenarioActualRows||[]).filter(function(x){return set.has(String(x.month_start))});
+  const sum=function(key){return rows.reduce(function(s,x){return s+num(x[key])},0)};
+  const ordinaryIncome=sum("incoming_ordinary"),extraIncome=sum("incoming_extraordinary"),extraOut=sum("outgoing_extraordinary");
+  const ordinaryOut=rows.reduce(function(s,x){
+    const v=x.outgoing_operating_ordinary;return s+(v!==undefined&&v!==null?num(v):Math.max(0,num(x.outgoing_ordinary)-num(x.investments_ordinary)));
+  },0);
+  const ordinaryNet=rows.reduce(function(s,x){
+    const v=x.net_operating_ordinary;return s+(v!==undefined&&v!==null?num(v):num(x.incoming_ordinary)-Math.max(0,num(x.outgoing_ordinary)-num(x.investments_ordinary)));
+  },0);
+  const recurring=sum("investments_recurring_ordinary"),currentSurplus=sum("investments_current_surplus_ordinary"),savings=recurring+currentSurplus;
+  const scopeTotal=historicalScope==="TOTAL",income=ordinaryIncome+(scopeTotal?extraIncome:0),operatingOut=ordinaryOut+(scopeTotal?extraOut:0),operatingNet=ordinaryNet+(scopeTotal?(extraIncome-extraOut):0),available=operatingNet-savings;
+  const nature={MANDATORY:0,NECESSARY:0,DISCRETIONARY:0,UNCLASSIFIED:0,UNKNOWN:0};
+  (scenarioActualCategories||[]).forEach(function(x){
+    if(!set.has(String(x.month_start))||String(x.direction)!=="EXPENSE")return;
+    const k=historicalNatureForCategory(x)||"UNKNOWN";if(k==="INVESTMENT")return;
+    nature[k]=(nature[k]||0)+historicalCategoryAmount(x,historicalScope);
+  });
+  const structural=income-nature.MANDATORY-nature.NECESSARY-nature.UNCLASSIFIED;
+  return {income:income,operatingOut:operatingOut,operatingNet:operatingNet,savings:savings,available:available,structural:structural,discretionary:nature.DISCRETIONARY,months:months.length,covered:new Set(rows.map(function(x){return String(x.month_start)})).size};
+}
+function comparisonCategoryRows(direction,sets){
+  const aSet=new Set(sets.a),bSet=new Set(sets.b),l1=new Map();
+  (scenarioActualCategories||[]).forEach(function(x){
+    if(String(x.direction)!==direction)return;
+    const month=String(x.month_start),inA=aSet.has(month),inB=bSet.has(month);if(!inA&&!inB)return;
+    const l1id=String(x.l1_id||x.l1_name||"__"),l2id=String(x.l2_id||x.l2_name||"__"),amount=historicalCategoryAmount(x,historicalScope);
+    if(!l1.has(l1id))l1.set(l1id,{id:l1id,name:x.l1_name||"Altro",a:0,b:0,children:new Map()});
+    const g=l1.get(l1id);if(inA)g.a+=amount;if(inB)g.b+=amount;
+    if(!g.children.has(l2id))g.children.set(l2id,{id:l2id,name:x.l2_name||"Altro",a:0,b:0,l1Id:l1id,l1Name:g.name});
+    const ch=g.children.get(l2id);if(inA)ch.a+=amount;if(inB)ch.b+=amount;
+  });
+  return Array.from(l1.values()).map(function(g){g.children=Array.from(g.children.values()).sort(function(a,b){return Math.abs((b.b-b.a))-Math.abs((a.b-a.a))});return g}).sort(function(a,b){return Math.abs((b.b-b.a))-Math.abs((a.b-a.a))});
+}
+function comparisonTone(direction,delta){
+  if(Math.abs(delta)<.5)return "neutral";
+  return direction==="EXPENSE"?(delta<0?"good":"bad"):(delta>0?"good":"bad");
+}
+function comparisonSigned(v){v=num(v);return (v>0?"+":v<0?"−":"")+money(Math.abs(v))}
+function comparisonPct(a,b){
+  if(Math.abs(a)<.5)return Math.abs(b)<.5?0:null;
+  return (b-a)*100/a;
+}
+function comparisonMetricCard(label,a,b,kind){
+  const d=b-a,p=comparisonPct(a,b),tone=kind==="EXPENSE"?comparisonTone("EXPENSE",d):(kind==="INCOME"?comparisonTone("INCOME",d):(Math.abs(d)<.5?"neutral":d>0?"good":"bad"));
+  return '<div class="historical-compare-kpi"><div class="label">'+esc(label)+'</div><div class="values"><span>Periodo A<strong>'+money(a)+'</strong></span><span>Periodo B<strong>'+money(b)+'</strong></span><b class="delta '+tone+'">'+comparisonSigned(d)+(p===null?"":' · '+(p>0?"+":"")+p.toLocaleString("it-IT",{maximumFractionDigits:1})+"%")+'</b></div></div>';
+}
+function comparisonTopInsight(groups,direction){
+  const changed=groups.filter(function(x){return Math.abs(x.b-x.a)>.5}).slice(0,3);
+  if(!changed.length)return "I due periodi sono sostanzialmente stabili sulle categorie "+(direction==="EXPENSE"?"di spesa":"di entrata")+".";
+  return changed.map(function(x){const d=x.b-x.a;return '<strong>'+esc(x.name)+'</strong> '+comparisonSigned(d)}).join(" · ");
+}
+function renderHistoricalComparisonDetail(){
+  const box=$("historicalComparisonDetail");if(!box)return;
+  if(!compareSelectedL2){box.classList.add("hidden");box.innerHTML="";return}
+  box.classList.remove("hidden");
+  if(compareDetailLoading){box.innerHTML='<div class="analysis-loading"><span class="spinner"></span>Carico controparti e movimenti…</div>';return}
+  if(!compareDetailData){box.innerHTML='<div class="muted small">Dettaglio non disponibile.</div>';return}
+  const sets=comparisonMonthSets(),aSet=new Set(sets.a),bSet=new Set(sets.b);
+  let moves=(compareDetailData.movements||[]).filter(function(x){
+    const inScope=historicalScope==="TOTAL"?!0:!x.is_extraordinary;
+    return inScope&&(aSet.has(String(x.month_start))||bSet.has(String(x.month_start)));
+  });
+  const groups=new Map();
+  moves.forEach(function(x){
+    const name=String(x.counterparty||"Senza controparte");
+    if(!groups.has(name))groups.set(name,{name:name,a:0,b:0,countA:0,countB:0});
+    const g=groups.get(name);
+    if(aSet.has(String(x.month_start))){g.a+=num(x.amount);g.countA++}
+    if(bSet.has(String(x.month_start))){g.b+=num(x.amount);g.countB++}
+  });
+  const cps=Array.from(groups.values()).sort(function(a,b){return Math.abs((b.b-b.a))-Math.abs((a.b-a.a))});
+  if(compareSelectedCounterparty&&!groups.has(compareSelectedCounterparty))compareSelectedCounterparty="";
+  const dir=compareDirection;
+  box.innerHTML='<div class="historical-compare-detail-head"><div><h4>'+esc(compareSelectedL2Name)+'</h4><p>Controparti · '+esc(sets.labelA)+' vs '+esc(sets.labelB)+'</p></div><button class="btn ghost compact" type="button" data-compare-open-analysis="'+esc(compareSelectedL2)+'">Apri in Analisi & Baseline</button></div>'+
+    (cps.length?'<table class="historical-compare-cp-table"><thead><tr><th>Controparte</th><th>A</th><th>B</th><th>Δ</th><th>Mov.</th></tr></thead><tbody>'+cps.map(function(g){const d=g.b-g.a,tone=comparisonTone(dir,d),active=compareSelectedCounterparty===g.name;return '<tr class="selectable '+(active?"active":"")+'" data-compare-counterparty="'+esc(g.name)+'"><td>'+esc(g.name)+'</td><td>'+money(g.a)+'</td><td>'+money(g.b)+'</td><td class="historical-compare-delta '+tone+'">'+comparisonSigned(d)+'</td><td>'+g.countA+' → '+g.countB+'</td></tr>'}).join("")+'</tbody></table>':'<div class="muted small">Nessun movimento nei periodi confrontati.</div>')+
+    (compareSelectedCounterparty?renderHistoricalComparisonMovements(moves,sets):"");
+}
+function renderHistoricalComparisonMovements(moves,sets){
+  const rows=moves.filter(function(x){return String(x.counterparty||"Senza controparte")===compareSelectedCounterparty}).sort(function(a,b){return String(b.transaction_date).localeCompare(String(a.transaction_date))});
+  return '<div class="historical-compare-moves"><table><thead><tr><th>Periodo</th><th>Data</th><th>Descrizione</th><th>Nota</th><th>Importo</th></tr></thead><tbody>'+rows.map(function(x){const isB=new Set(sets.b).has(String(x.month_start));return '<tr><td><span class="historical-period-badge '+(isB?"b":"")+'">'+(isB?"B":"A")+'</span></td><td>'+dateLabel(x.transaction_date)+'</td><td>'+esc(x.description||x.counterparty||"—")+'</td><td>'+esc(x.user_note||x.extraordinary_note||"—")+'</td><td><strong>'+money(x.amount)+'</strong></td></tr>'}).join("")+'</tbody></table></div>';
+}
+async function loadHistoricalComparisonDetail(categoryId,name){
+  compareSelectedL2=categoryId;compareSelectedL2Name=name||"Categoria";compareSelectedCounterparty="";compareDetailData=null;compareDetailLoading=true;renderHistoricalComparisonDetail();
+  try{compareDetailData=await rpc("dashboard_reporting_analysis_detail_v2",{p_category_id:categoryId,p_direction:compareDirection,p_period_months:0})||{}}
+  catch(e){compareDetailData={movements:[],error:e.message||"Errore dettaglio"}}
+  finally{compareDetailLoading=false;renderHistoricalComparisonDetail()}
+}
 function renderHistoricalPeriodComparison(){
-  const modes=[["Ultimi 12 mesi","ROLLING_12"]].concat(historicalAvailableYears().slice(0,3).map(function(y){return ["Anno "+y,"YEAR",y]}));
-  $("historicalPeriodComparison").innerHTML='<div class="historical-compare-table"><div class="row head"><span>Periodo</span><span>Saldo operativo</span><span>Risparmio</span><span>Disponibile</span></div>'+
-    modes.map(function(x){
-      const oldYear=historicalYearSelection;if(x[1]==="YEAR")historicalYearSelection=x[2];
-      const t=balanceFlowModel(x[1]);historicalYearSelection=oldYear;
-      return '<div class="row '+((x[1]===historicalPeriodMode&&(!x[2]||Number(x[2])===Number(historicalYearSelection)))?"active":"")+'"><span>'+esc(x[0])+'</span><strong class="'+(t.operatingNet>=0?"positive":"negative")+'">'+historicalSigned(t.operatingNet)+'</strong><span>−'+money(t.savings)+'</span><strong class="'+(t.available>=0?"positive":"negative")+'">'+historicalSigned(t.available)+'</strong></div>';
-    }).join("")+'</div>';
+  const sets=comparisonMonthSets(),a=comparisonTotalsForMonths(sets.a),b=comparisonTotalsForMonths(sets.b),groups=comparisonCategoryRows(compareDirection,sets);
+  const years=historicalAvailableYears(),yearSel=$("compareYearB");
+  if(yearSel){yearSel.innerHTML=years.map(function(y){return '<option value="'+y+'"'+(Number(compareYearB)===y?' selected':'')+'>'+y+'</option>'}).join("");$("compareYearWrap")?.classList.toggle("hidden",compareWindow!=="YEAR")}
+  document.querySelectorAll("[data-compare-window]").forEach(function(x){x.classList.toggle("active",x.dataset.compareWindow===String(compareWindow))});
+  document.querySelectorAll("[data-compare-direction]").forEach(function(x){x.classList.toggle("active",x.dataset.compareDirection===compareDirection)});
+  $("historicalComparisonPeriodLabels").innerHTML='<div class="historical-compare-period"><div class="k">Periodo A · riferimento</div><div class="v">'+esc(sets.labelA)+'</div></div><div class="historical-compare-arrow">→</div><div class="historical-compare-period"><div class="k">Periodo B · confronto</div><div class="v">'+esc(sets.labelB)+'</div></div>';
+  $("historicalComparisonKpis").innerHTML=
+    comparisonMetricCard("Entrate",a.income,b.income,"INCOME")+
+    comparisonMetricCard("Uscite operative",a.operatingOut,b.operatingOut,"EXPENSE")+
+    comparisonMetricCard("Margine strutturale",a.structural,b.structural,"INCOME")+
+    comparisonMetricCard("Discrezionali",a.discretionary,b.discretionary,"EXPENSE")+
+    comparisonMetricCard("Risparmio",a.savings,b.savings,"INCOME")+
+    comparisonMetricCard("Disponibile finale",a.available,b.available,"INCOME");
+  const availableDelta=b.available-a.available,availTone=availableDelta>=0?"migliora":"peggiora";
+  $("historicalComparisonInsight").innerHTML='<strong>Il disponibile '+availTone+' di '+comparisonSigned(availableDelta)+'.</strong> Principali variazioni '+(compareDirection==="EXPENSE"?"nelle uscite":"nelle entrate")+': '+comparisonTopInsight(groups,compareDirection)+' · Copertura dati A '+a.covered+'/'+a.months+' mesi, B '+b.covered+'/'+b.months+'.';
+  $("historicalComparisonContributorsTitle").textContent=compareDirection==="EXPENSE"?"Cosa ha mosso le uscite?":"Cosa ha mosso le entrate?";
+  let html='<div style="overflow:auto"><table class="historical-compare-table-rich"><thead><tr><th>Categoria</th><th>Periodo A</th><th>Periodo B</th><th>Δ €</th><th>Δ %</th><th>Effetto sul margine</th></tr></thead><tbody>';
+  groups.forEach(function(g){
+    const d=g.b-g.a,p=comparisonPct(g.a,g.b),tone=comparisonTone(compareDirection,d),effect=compareDirection==="EXPENSE"?-d:d,eTone=Math.abs(effect)<.5?"neutral":effect>0?"good":"bad",open=compareExpandedL1.has(g.id);
+    html+='<tr class="historical-compare-l1"><td><button type="button" class="historical-compare-row-btn" data-compare-l1="'+esc(g.id)+'"><span class="historical-compare-caret">'+(open?"▾":"▸")+'</span>'+esc(g.name)+'</button></td><td>'+money(g.a)+'</td><td>'+money(g.b)+'</td><td class="historical-compare-delta '+tone+'">'+comparisonSigned(d)+'</td><td>'+(p===null?"—":((p>0?"+":"")+p.toLocaleString("it-IT",{maximumFractionDigits:1})+"%"))+'</td><td class="historical-compare-effect '+eTone+'">'+comparisonSigned(effect)+'</td></tr>';
+    if(open)g.children.forEach(function(ch){const cd=ch.b-ch.a,cp=comparisonPct(ch.a,ch.b),ct=comparisonTone(compareDirection,cd),eff=compareDirection==="EXPENSE"?-cd:cd,et=Math.abs(eff)<.5?"neutral":eff>0?"good":"bad";html+='<tr class="historical-compare-l2"><td><button type="button" class="historical-compare-row-btn" data-compare-l2="'+esc(ch.id)+'" data-compare-l2-name="'+esc(ch.name)+'">'+esc(ch.name)+'</button></td><td>'+money(ch.a)+'</td><td>'+money(ch.b)+'</td><td class="historical-compare-delta '+ct+'">'+comparisonSigned(cd)+'</td><td>'+(cp===null?"—":((cp>0?"+":"")+cp.toLocaleString("it-IT",{maximumFractionDigits:1})+"%"))+'</td><td class="historical-compare-effect '+et+'">'+comparisonSigned(eff)+'</td></tr>'})});
+  });
+  html+='</tbody></table></div>';$("historicalComparisonContributors").innerHTML=html;
+  renderHistoricalComparisonDetail();
 }
 function historicalChartRows(){return historicalRowsFor(historicalPeriodMode)}
 function renderHistoricalChart(){
   if(historicalBalanceChart){historicalBalanceChart.destroy();historicalBalanceChart=null}
   const rows=historicalChartRows(),months=historicalMonthsFor(historicalPeriodMode),labels=months.map(monthLabel),scope=historicalScope;
   $("historicalNatureFocusWrap").classList.toggle("hidden",historicalChartMode!=="NATURE");
-  document.querySelectorAll("[data-history-period]").forEach(function(b){b.classList.toggle("active",b.dataset.historyPeriod===historicalPeriodMode)});
+  syncWherePeriodUI();
   document.querySelectorAll("[data-history-scope]").forEach(function(b){b.classList.toggle("active",b.dataset.historyScope===historicalScope)});
   document.querySelectorAll("[data-history-chart]").forEach(function(b){b.classList.toggle("active",b.dataset.historyChart===historicalChartMode)});
   document.querySelectorAll("[data-history-nature-focus]").forEach(function(b){b.classList.toggle("active",b.dataset.historyNatureFocus===historicalNatureFocus)});
@@ -4600,26 +4736,12 @@ function renderHistoricalChart(){
 }
 function renderHistoricalBalance(){
   if(!Array.isArray(scenarioActualRows)){msg($("historicalBalanceStatus"),"Carico il bilancio…");return}
-  if(balanceHubMode==="CURRENT_YEAR")historicalPeriodMode="CURRENT_YEAR";
-  else if(balanceHubMode==="FORECAST_12")historicalPeriodMode="FORECAST_12";
-  else if(!["ROLLING_12","YEAR"].includes(historicalPeriodMode))historicalPeriodMode="ROLLING_12";
-  renderHistoricalYearOptions();
-  const pureHistory=balanceHubMode==="HISTORY";
-  if($("historicalPeriodControls"))$("historicalPeriodControls").classList.toggle("hidden",!pureHistory);
-  if($("historicalMonthlySection"))$("historicalMonthlySection").classList.toggle("hidden",!pureHistory);
-  if($("historicalBottomGrid"))$("historicalBottomGrid").classList.toggle("hidden",!pureHistory);
-  renderHistoricalKpis();
-  renderBalanceWaterfall();
-  if(pureHistory){
-    renderHistoricalChart();renderHistoricalNatureComposition();renderHistoricalPeriodComparison();
-  }
-  applyBalanceSubview();
+  if(!["ROLLING_6","ROLLING_12","ROLLING_24","ALL","YEAR"].includes(historicalPeriodMode))historicalPeriodMode="ROLLING_12";
+  balanceHubMode="HISTORY";historicalChartMode="CASHFLOW";
+  renderHistoricalKpis();renderBalanceWaterfall();renderHistoricalChart();renderHistoricalNatureComposition();renderHistoricalPeriodComparison();applyBalanceSubview();syncWherePeriodUI();
 }
 function renderBalanceHub(){
-  document.querySelectorAll("[data-balance-hub]").forEach(function(b){
-    const active=b.dataset.balanceHub===balanceHubMode;
-    b.classList.toggle("ghost",!active);
-  });
+  balanceHubMode="HISTORY";
   $("balanceHistoryView").classList.remove("hidden");
   $("balanceForecastView").classList.add("hidden");
   renderHistoricalBalance();
