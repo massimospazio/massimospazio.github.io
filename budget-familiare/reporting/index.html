@@ -9,7 +9,7 @@
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
 <script src="../shared/supabase-client.js?v=73.24.0-20261012-1415"></script>
-<script src="../shared/app-config.js?v=73.30.1.7-20261013"></script>
+<script src="../shared/app-config.js?v=73.30.1.8-20261013"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 :root{--bg:#f4f6fa;--card:#fff;--text:#17263e;--muted:#58677d;--line:#dce4ee;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 4px 18px rgba(15,23,42,.045);--sc-blue:#2563eb;--sc-blue-soft:#eff6ff;--sc-green:#0ea87a;--sc-red:#ef5b73;--sc-purple:#7658e6;--sc-ink:#17263e}
@@ -1103,7 +1103,7 @@ button,input,select{font:inherit}
 .balance-erode-temporal-row{display:flex;height:8px;border-radius:999px;overflow:hidden;margin-top:3px;background:#eef2f6;gap:0}
 .balance-erode-temporal-cell{display:flex;height:100%;overflow:hidden;min-width:1px}
 .balance-erode-temporal-piece{height:100%;min-width:1px;background:currentColor}
-.balance-erode-temporal-piece.r{opacity:1}.balance-erode-temporal-piece.p{opacity:.62}.balance-erode-temporal-piece.x{opacity:.32}.balance-erode-temporal-piece.u{opacity:.14}.balance-erode-temporal-piece.e{opacity:.92;filter:saturate(.55) brightness(.62)}
+.balance-erode-temporal-piece.r,.balance-erode-temporal-piece.p,.balance-erode-temporal-piece.x,.balance-erode-temporal-piece.u,.balance-erode-temporal-piece.e{opacity:1;filter:none}
 .balance-erode-temporal-cell.o{color:#ef5a5a}.balance-erode-temporal-cell.n{color:#f4b63e}.balance-erode-temporal-cell.nc{color:#64748b}.balance-erode-temporal-cell.d{color:#8b5cf6}.balance-erode-temporal-cell.other{color:#94a3b8}.balance-erode-temporal-cell.save{color:#06b6d4}.balance-erode-temporal-cell.free{color:#22a96b}
 .balance-erode-temporal-legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:7px;font-size:14px;color:#718096;align-items:center}
 .balance-erode-temporal-legend strong{color:#475569;margin-right:2px}.balance-erode-temporal-legend span{display:inline-flex;align-items:center;gap:4px}
@@ -1389,6 +1389,38 @@ body{font-size:16px;line-height:1.5}
 @media(max-width:1100px){.process-nav{grid-template-columns:repeat(7,176px)}}
 @media(max-width:760px){.top{padding:16px}.brand{padding-left:56px}.brand h1{font-size:25px}.process-overline span{display:none}.process-subnav .tab,.process-subnav button.tab{font-size:16px;padding:9px 10px}.process-context-copy small{display:none}.where-period-buttons button,.scenario-segment button{font-size:16px;padding:7px 9px}.balance-hub-head h2{font-size:29px}.balance-hub-head p{font-size:16px}.balance-waterfall-card{padding:16px}.balance-waterfall-chart{height:auto;min-width:0}.balance-primary-kpis .historical-kpi .value{font-size:34px}.balance-erode-insight strong{font-size:18px}}
 @media(max-width:620px){.balance-primary-kpis{grid-template-columns:1fr}.balance-primary-kpis .historical-kpi{min-height:112px;padding:14px 16px}.brand small{font-size:14px}.userbar{width:100%}.userbar #userEmail{flex-basis:100%}}
+/* V73.30.1.8 — percentuali esplicite e temporalità a colori/trame */
+.balance-composition-bars{position:relative}
+.balance-erode-seg{display:flex;align-items:center;justify-content:center;flex-shrink:0;min-width:0;overflow:hidden;container-type:inline-size;container-name:amount-piece}
+.balance-erode-pct{display:none;font-size:14px;font-weight:700;color:#03060b;white-space:nowrap;line-height:1.2}
+.balance-erode-seg.nc .balance-erode-pct{color:#fff}
+@container amount-piece (min-width:64px){.balance-erode-pct{display:block}}
+.balance-component-key{gap:7px 16px}.component-share{font-size:14px;font-weight:700;color:#17263e;font-variant-numeric:tabular-nums;margin-left:2px}
+.balance-erode-temporal-row{height:28px;margin-top:5px;border-radius:7px;background:#fff}
+.balance-erode-temporal-cell{flex-shrink:0;min-width:0;height:100%;padding:0;border:0;border-right:2px solid #fff;border-radius:0;background:transparent;position:relative;overflow:hidden;font:inherit;cursor:pointer}
+.balance-erode-temporal-cell:last-child{border-right:0}.balance-erode-temporal-cell:focus-visible{outline-offset:-3px}
+.balance-erode-temporal-piece{display:flex;align-items:center;justify-content:center;flex:0 0 auto;min-width:0;container-type:inline-size;container-name:temporal-piece;background-color:var(--temporal-fill);background-image:var(--temporal-pattern,none);background-size:var(--temporal-pattern-size,auto)}
+.temporal-r{--temporal-fill:#2563eb;--temporal-pattern:none}
+.temporal-p{--temporal-fill:#f7cb69;--temporal-pattern:repeating-linear-gradient(135deg,transparent 0 5px,#9a6807 5px 7px,transparent 7px 12px)}
+.temporal-e{--temporal-fill:#cf3046;--temporal-pattern:repeating-linear-gradient(0deg,transparent 0 3px,#fff 3px 5px,transparent 5px 8px)}
+.temporal-x{--temporal-fill:#d9e2ee;--temporal-pattern:repeating-linear-gradient(90deg,transparent 0 5px,#7488a2 5px 7px,transparent 7px 12px)}
+.temporal-u{--temporal-fill:#e8eef6;--temporal-pattern:radial-gradient(circle,#52677f 1px,transparent 1.5px);--temporal-pattern-size:6px 6px}
+.temporal-code{display:none;align-items:center;justify-content:center;background:#fff;color:#17263e;border-radius:3px;padding:0 3px;min-width:16px;font-size:14px;font-weight:700;line-height:20px;white-space:nowrap}
+@container temporal-piece (min-width:22px){.temporal-code{display:inline-flex}}
+.temporal-na{display:flex;align-items:center;justify-content:center;background:#fff;cursor:default;container-type:inline-size;container-name:temporal-piece}
+.balance-erode-temporal-legend{margin-top:12px;gap:8px 14px}.balance-erode-temporal-legend strong{font-weight:600;color:#263b59}
+.balance-temporal-swatch,.balance-erode-temporal-legend i.balance-temporal-swatch,.balance-drill-temporal-chip i.balance-temporal-swatch{display:inline-block;flex-shrink:0;width:22px;height:16px;border-radius:3px;background-color:var(--temporal-fill);background-image:var(--temporal-pattern,none);background-size:var(--temporal-pattern-size,auto);opacity:1;filter:none}
+.balance-drill-temporal-chip{color:#475a74}.balance-drill-temporal-chip i.balance-temporal-swatch{width:18px;height:14px}
+.balance-temporal-detail{margin-top:12px;padding-top:10px;border-top:1px solid #dce5f2}
+.balance-temporal-detail summary{font-size:14px;font-weight:600;color:#1d4ed8;cursor:pointer}
+.balance-temporal-detail p{font-size:14px;color:#475a74;margin:8px 0;line-height:1.5}
+.balance-temporal-table-wrap{max-width:100%;overflow-x:auto}
+.balance-temporal-table{width:100%;min-width:460px;border-collapse:collapse;font-size:14px}
+.balance-temporal-table th,.balance-temporal-table td{padding:6px 8px;text-align:right;border-bottom:1px solid #e0e7f0;font-variant-numeric:tabular-nums}
+.balance-temporal-table th:first-child{text-align:left;font-weight:600}.balance-temporal-table thead th{color:#475a74;font-weight:600;background:#edf3fb}
+.temporal-table-label{display:inline-flex;align-items:center;gap:6px}
+.balance-income-marker{position:absolute;top:0;bottom:0;width:2px;background:#152642;pointer-events:none}
+.balance-composition-note{font-size:14px;color:#7f3417;margin:8px 0 0;line-height:1.5}
 </style>
 </head>
 <body>
@@ -4328,9 +4360,23 @@ function balanceDrillMonthSets(){
 function balanceModeMonthSets(mode,month){const current=historicalCurrentMonth(),months=month?[month]:historicalMonthsFor(mode||historicalPeriodMode),m=mode||historicalPeriodMode;if(m==="CURRENT_YEAR")return {all:months,actual:months.filter(function(x){return x<current}),forecast:months.filter(function(x){return x>=current})};if(m==="FORECAST_12")return {all:months,actual:[],forecast:months.slice()};return {all:months,actual:months.slice(),forecast:[]}}
 function balanceTemporalKey(v){const x=String(v||"").toUpperCase();return x==="RECURRING"?"R":x==="PLANNED_OCCASIONAL"?"P":x==="EXCEPTIONAL"?"E":x==="NOT_APPLICABLE"?"X":"U"}
 function balanceTemporalBreakdown(nature,mode,month,scope){const out={R:0,P:0,E:0,X:0,U:0},sets=balanceModeMonthSets(mode,month),actualSet=new Set(sets.actual),viewScope=scope||"ORDINARY",add=function(k,v){out[k]=(out[k]||0)+Math.max(0,num(v))};(scenarioActualCategories||[]).forEach(function(x){if(!actualSet.has(String(x.month_start)))return;const dir=String(x.direction||"");if(nature==="INVESTMENT"){if(dir!=="INVESTMENT")return;const temporal=String(x.investment_temporality||""),funding=String(x.investment_funding_source||"CURRENT_SURPLUS");if(!(temporal==="RECURRING"||(temporal==="PLANNED_OCCASIONAL"&&funding!=="PRIOR_WEALTH")))return;add(balanceTemporalKey(temporal),num(x.ordinary_amount));if(viewScope==="TOTAL")add("E",num(x.extraordinary_amount));return}if(dir!=="EXPENSE")return;const catNature=historicalNatureForCategory(x);if(nature!=="ALL_EXPENSE"&&catNature!==nature)return;const meta=historicalMetaMap().get(String(x.l2_id||""))||{};add(balanceTemporalKey(x.effective_temporality||meta.temporality),num(x.ordinary_amount));if(viewScope==="TOTAL")add("E",num(x.extraordinary_amount))});if(sets.forecast.length){if(nature==="INVESTMENT")add("R",sets.forecast.reduce(function(s,m){return s+num(scenarioForecastInvestment(m))},0));else{const data=projectionDataFor("EXPENSE"),fmap=balanceProjectionCategoryTotals(data,sets.forecast,"FORECAST"),meta=historicalMetaMap();(data&&data.categories||[]).forEach(function(cat){const cn=balanceDrillNatureForProjectionCat(cat);if(nature!=="ALL_EXPENSE"&&cn!==nature)return;const amount=num(fmap.get(String(cat.category_id)));if(amount<=.005)return;add(balanceTemporalKey((meta.get(String(cat.category_id))||{}).temporality),amount)})}}out.total=out.R+out.P+out.E+out.X+out.U;return out}
-function balanceTemporalTitle(b){if(!b||!b.total)return "Temporalità non disponibile";const p=function(v){return (v*100/b.total).toLocaleString("it-IT",{maximumFractionDigits:0})+"%"};return "R "+p(b.R)+" · P "+p(b.P)+" · E "+p(b.E)+" · X "+p(b.X)+(b.U>.5?" · n.d. "+p(b.U):"")}
-function balanceTemporalPiecesHtml(b){if(!b||!b.total)return '<span class="balance-erode-temporal-piece u" style="width:100%"></span>';return [["R","r"],["P","p"],["E","e"],["X","x"],["U","u"]].filter(function(k){return b[k[0]]>.005}).map(function(k){return '<span class="balance-erode-temporal-piece '+k[1]+'" style="width:'+(b[k[0]]*100/b.total).toFixed(2)+'%"></span>'}).join("")}
-function balanceTemporalChipsHtml(b){if(!b||!b.total)return "";const defs=[["R","r","R · Ricorrente"],["P","p","P · Occasionale / programmabile"],["E","e","E · Eccezionale"],["X","x","X · Non applicabile"],["U","u","? · Non definita"]];return defs.filter(function(d){return b[d[0]]>.5}).map(function(d){const pct=b[d[0]]*100/b.total;return '<span class="balance-drill-temporal-chip '+d[1]+'"><i></i><b>'+esc(d[2])+'</b><span>'+money(b[d[0]])+' · '+pct.toLocaleString("it-IT",{maximumFractionDigits:0})+'%</span></span>'}).join("")}
+function balanceTemporalTitle(b){if(!b||!b.total)return "Temporalità non disponibile";const p=function(v){return (v*100/b.total).toLocaleString("it-IT",{maximumFractionDigits:1})+"%"};return "R "+p(b.R)+" · P "+p(b.P)+" · E "+p(b.E)+" · X "+p(b.X)+(b.U>.5?" · n.d. "+p(b.U):"")}
+const BALANCE_TEMPORAL_DEFS=[["R","r","Ricorrente"],["P","p","Occasionale / programmabile"],["E","e","Eccezionale"],["X","x","Non applicabile"],["U","u","Non definita"]];
+function balanceTemporalPercent(value,total){return total>0?(value*100/total).toLocaleString("it-IT",{maximumFractionDigits:1})+"%":"—"}
+function balanceTemporalPiecesHtml(b){
+  if(!b||!b.total)return '<span class="balance-erode-temporal-piece temporal-u" style="width:100%"><span class="temporal-code">?</span></span>';
+  return BALANCE_TEMPORAL_DEFS.filter(function(d){return b[d[0]]>.005}).map(function(d){
+    const code=d[0]==="U"?"?":d[0],label=code+' · '+d[2]+' · '+balanceTemporalPercent(b[d[0]],b.total);
+    return '<span class="balance-erode-temporal-piece temporal-'+d[1]+'" style="width:'+(b[d[0]]*100/b.total).toFixed(4)+'%" title="'+esc(label)+'"><span class="temporal-code" aria-hidden="true">'+code+'</span></span>';
+  }).join("");
+}
+function balanceTemporalChipsHtml(b){
+  if(!b||!b.total)return "";
+  return BALANCE_TEMPORAL_DEFS.filter(function(d){return b[d[0]]>.5}).map(function(d){
+    const code=d[0]==="U"?"?":d[0];
+    return '<span class="balance-drill-temporal-chip '+d[1]+'"><i class="balance-temporal-swatch temporal-'+d[1]+'" aria-hidden="true"></i><b>'+esc(code+' · '+d[2])+'</b><span>'+money(b[d[0]])+' · '+balanceTemporalPercent(b[d[0]],b.total)+'</span></span>';
+  }).join("");
+}
 function balanceDrillRowsForSelection(){
   if(!balanceDrillSelection)return [];
   const nature=balanceDrillSelection.nature,sets=balanceDrillMonthSets(),scope=balanceDrillSelection.scope||"ORDINARY",rows=new Map();
@@ -4557,43 +4603,54 @@ function renderBalanceFlowSide(){
 }
 function renderBalanceErosion(){
   const t=balanceFlowModel(historicalPeriodMode);if(!t)return;
-  const base=Math.max(1,t.income),margin=t.income-t.mandatory-t.necessary-t.unclassified,final=t.available+(historicalScope==="TOTAL"?t.extraNet:0);
+  const income=Math.max(0,num(t.income)),margin=t.income-t.mandatory-t.necessary-t.unclassified,final=t.available+(historicalScope==="TOTAL"?t.extraNet:0);
   const parts=[
     ["o","Obbligatorie",t.mandatory,"MANDATORY"],["n","Necessarie",t.necessary,"NECESSARY"],["nc","NC",t.unclassified,"UNCLASSIFIED"],["d","Discrezionali",t.discretionary,"DISCRETIONARY"],
     ["other","Altre operative",t.otherOperating,"UNKNOWN"],["save","Risparmio",t.savings,"INVESTMENT"],["free","Disponibile",Math.max(0,t.available),null]
   ];
-  const visible=parts.filter(function(x){return x[2]>.5});
+  const visible=parts.filter(function(x){return x[2]>.5}),shownTotal=visible.reduce(function(s,x){return s+x[2]},0),scale=Math.max(1,income,shownTotal);
+  const quota=function(amount){return income>0?balanceTemporalPercent(amount,income):"—"};
+  const width=function(amount){return (amount*100/scale).toFixed(4)};
+  const temporalRows=visible.filter(function(x){return !!x[3]}).map(function(x){
+    const b=balanceTemporalBreakdown(x[3],historicalPeriodMode,null,"ORDINARY");
+    b.U+=Math.max(0,x[2]-b.total);b.total=b.R+b.P+b.E+b.X+b.U;
+    return {part:x,breakdown:b};
+  });
+  const temporalMap=new Map(temporalRows.map(function(r){return [r.part[0],r.breakdown]}));
   const temporalCells=visible.map(function(x){
-    const width=Math.max(.7,x[2]*100/base).toFixed(2);
-    if(!x[3])return '<span class="balance-erode-temporal-cell '+x[0]+'" style="width:'+width+'%"></span>';
-    const tb=balanceTemporalBreakdown(x[3],historicalPeriodMode,null,historicalScope);
-    return '<span class="balance-erode-temporal-cell '+x[0]+'" style="width:'+width+'%" title="'+esc(x[1]+' · '+balanceTemporalTitle(tb))+'">'+balanceTemporalPiecesHtml(tb)+'</span>';
+    if(!x[3])return '<span class="balance-erode-temporal-cell temporal-na" style="width:'+width(x[2])+'%" title="Disponibile: non è una uscita e non ha temporalità."><span class="temporal-code">—</span></span>';
+    const b=temporalMap.get(x[0]),tip=x[1]+' · quote sulla componente · '+balanceTemporalTitle(b);
+    return '<button type="button" class="balance-erode-temporal-cell" style="width:'+width(x[2])+'%" data-balance-nature="'+esc(x[3])+'" title="'+esc(tip)+'" aria-label="'+esc(tip)+'">'+balanceTemporalPiecesHtml(b)+'</button>';
   }).join("");
-  const temporal='<div class="balance-erode-temporal-row">'+temporalCells+'</div><div class="balance-erode-temporal-legend"><strong>Temporalità per segmento</strong><span><i></i>R ricorrente</span><span class="p"><i></i>P occasionale / programmabile</span><span class="e"><i></i>E eccezionale</span><span class="x"><i></i>X non applicabile</span><span class="u"><i></i>? n.d.</span></div>';
-  const essential=t.mandatory+t.necessary,essentialPct=essential*100/base,ratio=t.mandatory>0?t.necessary/t.mandatory:null;
-  const discretionaryOnMargin=margin>0?t.discretionary*100/margin:null,unclassifiedPct=t.unclassified*100/base;
-  const savingPct=t.savings*100/base,finalPct=final*100/base;
+  const temporalLegend='<div class="balance-erode-temporal-legend"><strong>Temporalità per componente</strong>'+BALANCE_TEMPORAL_DEFS.map(function(d){
+    const code=d[0]==="U"?"?":d[0];
+    return '<span><i class="balance-temporal-swatch temporal-'+d[1]+'" aria-hidden="true"></i>'+esc(code+' · '+d[2])+'</span>';
+  }).join('')+'</div>';
+  const temporalDetail=temporalRows.length?'<details class="balance-temporal-detail"><summary>Dettaglio delle percentuali di temporalità</summary><p>Le percentuali di ogni riga sono riferite alla componente, non alle entrate. Gestione ordinaria; gli eventi E inclusi nel Totale restano nel waterfall.</p><div class="balance-temporal-table-wrap"><table class="balance-temporal-table"><thead><tr><th>Componente</th>'+BALANCE_TEMPORAL_DEFS.map(function(d){return '<th><span class="temporal-table-label"><i class="balance-temporal-swatch temporal-'+d[1]+'" aria-hidden="true"></i>'+esc(d[0]==="U"?'?':d[0])+'</span></th>'}).join('')+'</tr></thead><tbody>'+temporalRows.map(function(r){return '<tr><th scope="row">'+esc(r.part[1])+'</th>'+BALANCE_TEMPORAL_DEFS.map(function(d){return '<td title="'+esc(d[2]+' · '+money(r.breakdown[d[0]]))+'">'+balanceTemporalPercent(r.breakdown[d[0]],r.breakdown.total)+'</td>'}).join('')+'</tr>'}).join('')+'</tbody></table></div></details>':'';
   const segmentHtml=visible.map(function(x){
-    const width=Math.max(.7,x[2]*100/base).toFixed(2),title=esc(x[1]+' · '+money(x[2])+' · '+(x[2]*100/base).toLocaleString("it-IT",{maximumFractionDigits:1})+'% delle entrate');
-    return x[3]
-      ?'<button type="button" class="balance-erode-seg '+x[0]+'" data-balance-nature="'+esc(x[3])+'" style="width:'+width+'%" title="'+title+'" aria-label="'+title+'"></button>'
-      :'<span class="balance-erode-seg '+x[0]+'" style="width:'+width+'%" title="'+title+'"></span>';
+    const title=esc(x[1]+' · '+money(x[2])+' · '+quota(x[2])+' delle entrate ordinarie'),content=income>0?'<span class="balance-erode-pct" aria-hidden="true">'+quota(x[2])+'</span>':'';
+    const common=' class="balance-erode-seg '+x[0]+'" style="width:'+width(x[2])+'%" title="'+title+'"';
+    return x[3]?'<button type="button"'+common+' data-balance-nature="'+esc(x[3])+'" aria-label="'+title+'">'+content+'</button>':'<span'+common+'>'+content+'</span>';
   }).join("");
   const componentColors={o:"#ef5a5a",n:"#f4b63e",nc:"#64748b",d:"#8b5cf6",other:"#94a3b8",save:"#06b6d4",free:"#22a96b"};
-  const componentKey='<div class="balance-component-key" aria-label="Legenda delle componenti">'+visible.map(function(x){
-    const name=x[0]==="nc"?"NC · Da chiarire":x[1],swatch='<i style="--component-color:'+componentColors[x[0]]+'" aria-hidden="true"></i>';
-    return x[3]?'<button type="button" data-balance-nature="'+esc(x[3])+'" aria-label="Approfondisci '+esc(name)+'">'+swatch+esc(name)+'</button>':'<span>'+swatch+esc(name)+'</span>';
+  const componentKey='<div class="balance-component-key" aria-label="Componenti e percentuali sulle entrate ordinarie">'+visible.map(function(x){
+    const name=x[0]==="nc"?"NC · Da chiarire":x[1],swatch='<i style="--component-color:'+componentColors[x[0]]+'" aria-hidden="true"></i>',content=swatch+'<span>'+esc(name)+'</span><strong class="component-share">'+quota(x[2])+'</strong>';
+    return x[3]?'<button type="button" data-balance-nature="'+esc(x[3])+'" aria-label="Approfondisci '+esc(name+' · '+quota(x[2]))+'">'+content+'</button>':'<span>'+content+'</span>';
   }).join("")+'</div>';
+  const exceeds=income>0&&shownTotal>income+.5;
+  const scaleNote=!income?'<div class="balance-composition-note">Entrate assenti: percentuali sulle entrate non calcolabili.</div>':exceeds?'<div class="balance-composition-note">Le uscite assorbono il '+quota(shownTotal)+' delle entrate. Il segno sulla barra indica il 100%.</div>':'';
+  const marker=exceeds?'<span class="balance-income-marker" style="left:'+(income*100/scale).toFixed(4)+'%" title="100% delle entrate ordinarie" aria-label="100% delle entrate ordinarie"></span>':'';
+  const ratio=t.mandatory>0?t.necessary/t.mandatory:null,discretionaryOnMargin=margin>0?t.discretionary*100/margin:null;
   $("balanceErosionWidget").innerHTML=
-    '<div class="balance-erode-head"><div><strong>Dove vanno le entrate?</strong><div class="muted small">'+(historicalScope==="TOTAL"?"Struttura ordinaria; l’impatto degli eventi E è mostrato nel waterfall.":"Quota delle entrate assorbita dalle componenti della gestione ordinaria.")+'</div></div></div>'+
-    '<div class="balance-erode-bar">'+segmentHtml+'</div>'+componentKey+temporal+
+    '<div class="balance-erode-head"><div><strong>Dove vanno le entrate?</strong><div class="muted small">Percentuali sulle entrate ordinarie.'+(historicalScope==="TOTAL"?' L’impatto degli eventi E è nel waterfall.':'')+'</div></div></div>'+
+    '<div class="balance-composition-bars"><div class="balance-erode-bar">'+segmentHtml+'</div><div class="balance-erode-temporal-row" aria-label="Temporalità delle quote ordinarie">'+temporalCells+'</div>'+marker+'</div>'+scaleNote+componentKey+temporalLegend+temporalDetail+
     '<div class="balance-erode-insights">'+
-      '<div class="balance-erode-insight structural"><span class="k">Struttura essenziale</span><strong>O + N = '+essentialPct.toLocaleString("it-IT",{maximumFractionDigits:1})+'% delle entrate</strong><small>'+(ratio===null?"Rapporto O/N non disponibile.":"Le Necessarie valgono "+ratio.toLocaleString("it-IT",{maximumFractionDigits:1})+"× le Obbligatorie.")+'</small></div>'+
-      '<div class="balance-erode-insight margin"><span class="k">Uso del margine</span><strong>'+(discretionaryOnMargin===null?"Margine strutturale non positivo":"D = "+discretionaryOnMargin.toLocaleString("it-IT",{maximumFractionDigits:1})+"% del margine strutturale")+'</strong><small>'+(t.unclassified>.5?"NC ancora pari al "+unclassifiedPct.toLocaleString("it-IT",{maximumFractionDigits:1})+"% delle entrate.":"Nessuna quota NC significativa nel periodo.")+'</small></div>'+
-      '<div class="balance-erode-insight outcome"><span class="k">Esito del periodo</span><strong>Risparmio '+savingPct.toLocaleString("it-IT",{maximumFractionDigits:1})+'% · disponibile '+finalPct.toLocaleString("it-IT",{maximumFractionDigits:1})+'%</strong><small>'+(historicalScope==="TOTAL"&&Math.abs(t.extraNet)>.5?"Eventi E: "+historicalSigned(t.extraNet)+" sul risultato finale.":"Percentuali calcolate sulle entrate del periodo.")+'</small></div>'+
-    '</div>'+
-    '<div class="balance-erode-drill-note">Clicca un segmento della barra o una voce del waterfall per approfondire L1 → L2 → controparti → movimenti.</div>';
+      '<div class="balance-erode-insight structural"><span class="k">Struttura essenziale</span><strong>'+(income>0?'O + N = '+quota(t.mandatory+t.necessary)+' delle entrate':'O + N · quota non calcolabile')+'</strong><small>'+(ratio===null?'Rapporto O/N non disponibile.':'Le Necessarie valgono '+ratio.toLocaleString('it-IT',{maximumFractionDigits:1})+'× le Obbligatorie.')+'</small></div>'+
+      '<div class="balance-erode-insight margin"><span class="k">Uso del margine</span><strong>'+(discretionaryOnMargin===null?'Margine strutturale non positivo':'D = '+discretionaryOnMargin.toLocaleString('it-IT',{maximumFractionDigits:1})+'% del margine strutturale')+'</strong><small>'+(t.unclassified>.5?(income>0?'NC ancora pari al '+quota(t.unclassified)+' delle entrate.':'NC da chiarire: '+money(t.unclassified)+'.'):'Nessuna quota NC significativa nel periodo.')+'</small></div>'+
+      '<div class="balance-erode-insight outcome"><span class="k">Esito del periodo</span><strong>Risparmio '+(income>0?quota(t.savings):money(t.savings))+' · disponibile '+(income>0?quota(final):money(final))+'</strong><small>'+(historicalScope==='TOTAL'&&Math.abs(t.extraNet)>.5?'Eventi E: '+historicalSigned(t.extraNet)+' sul risultato finale.':'Percentuali calcolate sulle entrate del periodo.')+'</small></div>'+
+    '</div><div class="balance-erode-drill-note">Clicca una componente o un segmento della temporalità per approfondire L1 → L2 → controparti → movimenti.</div>';
 }
+
 function renderBalanceWaterfall(){
   const t=balanceFlowModel(historicalPeriodMode);if(!t)return;
   const margin=t.income-t.mandatory-t.necessary-t.unclassified;
