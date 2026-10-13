@@ -9,7 +9,7 @@
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
 <script src="../shared/supabase-client.js?v=73.24.0-20261012-1415"></script>
-<script src="../shared/app-config.js?v=73.29.1-20261012"></script>
+<script src="../shared/app-config.js?v=73.30.1-20261013"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 :root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#6b7280;--line:#e5e7eb;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 8px 24px rgba(15,23,42,.06)}
@@ -492,13 +492,16 @@ button,input,select{font:inherit}
 @media(max-width:700px){.analysis-calibration-pair{flex-wrap:wrap}.analysis-calibration-year{white-space:normal}}
 
 /* V73.9 — Semantica del piano e razionali nello Scenario */
-.forecast-semantics{grid-column:1/-1;display:grid;grid-template-columns:minmax(170px,.55fr) minmax(0,1.45fr);gap:8px;padding:9px;border:1px solid #dbe4ef;border-radius:10px;background:#fff}
+.forecast-semantics{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:9px;border:1px solid #dbe4ef;border-radius:10px;background:#fff}
 .forecast-plan-type-note{font-size:9px;color:#64748b;margin-top:4px;line-height:1.35}
 .forecast-semantics.target{border:2px solid #fb7185;background:#fff7f8;box-shadow:0 0 0 3px rgba(244,63,94,.06)}
 .forecast-semantics.target label{color:#9f1239}.forecast-semantics.target .forecast-plan-type-note{color:#9f1239;font-weight:700}
-.forecast-semantics.commitment{border-color:#93c5fd;background:#f8fbff}
+.forecast-rationale{grid-column:1/-1}
+.forecast-axes-note{grid-column:1/-1;padding:7px 8px;border-radius:8px;background:#f8fafc;border:1px dashed #cbd5e1;color:#64748b;font-size:9px;line-height:1.45}
+.forecast-certainty-badge{display:inline-flex;align-items:center;gap:3px;margin-left:5px;padding:2px 5px;border-radius:999px;border:1px solid #cbd5e1;background:#fff;color:#475569;font-size:8.5px;font-weight:800}
+.forecast-certainty-badge.confirmed{border-color:#86efac;background:#f0fdf4;color:#166534}
+.forecast-certainty-badge.contractual{border-color:#93c5fd;background:#eff6ff;color:#1d4ed8}
 .analysis-detail-forecast-chip.target{background:#fff1f2;border-color:#fda4af;color:#be123c;font-weight:850}
-.analysis-detail-forecast-chip.commitment{background:#eff6ff;border-color:#93c5fd;color:#1d4ed8;font-weight:850}
 .analysis-detail-forecast-chip.forecast{background:#f8fafc;border-color:#cbd5e1;color:#475569}
 .scenario-rationale-wrap{margin-top:10px;padding-top:10px;border-top:1px solid #e2e8f0}
 .scenario-rationale-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:7px}
@@ -515,8 +518,10 @@ button,input,select{font:inherit}
 .scenario-rationale-card .amount{font-weight:850}.scenario-rationale-card .reason{display:block;margin-top:2px;color:#64748b}
 .scenario-rationale-card.target{background:#fff1f2;border:2px solid #fb7185;color:#9f1239;box-shadow:0 2px 6px rgba(190,18,60,.08)}
 .scenario-rationale-card.target .kind,.scenario-rationale-card.target .name,.scenario-rationale-card.target .reason{color:#9f1239}
-.scenario-rationale-card.commitment{background:#eff6ff;border-color:#93c5fd;color:#1d4ed8}.scenario-rationale-card.commitment .kind,.scenario-rationale-card.commitment .name{color:#1d4ed8}
 .scenario-rationale-card.forecast{background:#f8fafc;border-color:#cbd5e1}
+.scenario-rationale-card .certainty{display:inline-flex;margin:2px 0 0;padding:1px 4px;border-radius:999px;border:1px solid #cbd5e1;background:#fff;color:#64748b;font-size:7.5px;font-weight:850}
+.scenario-rationale-card .certainty.confirmed{border-color:#86efac;background:#f0fdf4;color:#166534}
+.scenario-rationale-card .certainty.contractual{border-color:#93c5fd;background:#eff6ff;color:#1d4ed8}
 .scenario-rationale-empty{font-size:8px;text-align:center;color:#cbd5e1;padding:7px 1px}
 @media(max-width:700px){.forecast-semantics{grid-template-columns:1fr}.scenario-rationale-head{display:block}.scenario-rationale-legend{margin-top:5px}}
 
@@ -2900,7 +2905,7 @@ async function openAnalysisDetail(categoryId,level,selectedMonth){
     const calibrationPromise=detailPeriod===24
       ?detailPromise
       :rpc("dashboard_reporting_analysis_detail_v2",{p_category_id:categoryId,p_direction:direction,p_period_months:24}).catch(function(){return null});
-    const editorPromise=level==="L2"?rpc("dashboard_reporting_forecast_editor_v1",{p_category_id:categoryId,p_direction:direction,p_horizon_months:12}):Promise.resolve(null);
+    const editorPromise=level==="L2"?rpc("dashboard_reporting_forecast_editor_v2",{p_category_id:categoryId,p_direction:direction,p_horizon_months:12}):Promise.resolve(null);
     const projectionPromise=!projectionDataFor(direction)
       ?rpc("dashboard_reporting_analysis_projection_v1",{p_direction:direction}).catch(function(){return null})
       :Promise.resolve(null);
@@ -2919,8 +2924,8 @@ function analysisDetailForecastChipHtml(){
   if(scope==="COUNTERPARTIES"&&!analysisSelectedComponent)return '<span class="analysis-detail-forecast-chip forecast">Forecast · Somma controparti</span>';
   const target=currentForecastTarget();
   if(!target)return "";
-  const meta=forecastPlanTypeMeta(target.plan_type);
-  return '<span class="analysis-detail-forecast-chip '+meta.cls+'">'+meta.icon+' '+esc(meta.label)+' · '+esc(forecastSummaryLabel(target))+'</span>';
+  const meta=forecastPlanTypeMeta(target.plan_type),certainty=forecastCertaintyMeta(target.certainty_level);
+  return '<span class="analysis-detail-forecast-chip '+meta.cls+'">'+meta.icon+' '+esc(meta.label)+' <span class="forecast-certainty-badge '+certainty.cls+'">'+certainty.icon+' '+esc(certainty.label)+'</span> · '+esc(forecastSummaryLabel(target))+'</span>';
 }
 function analysisDetailPeriodMetricsHtml(stats,periodMonths){
   if(!stats)return "";
@@ -3239,7 +3244,8 @@ function draftFromTarget(target){
     range_min:t.range_min!==undefined&&t.range_min!==null?num(t.range_min):null,
     range_max:t.range_max!==undefined&&t.range_max!==null?num(t.range_max):null,
     rationale_note:t.rationale_note||"",
-    plan_type:t.plan_type||"FORECAST"
+    plan_type:t.plan_type==="TARGET"?"TARGET":"FORECAST",
+    certainty_level:t.plan_type==="COMMITMENT"?"CONTRACTUAL":(t.certainty_level||"ESTIMATED")
   };
 }
 function ensureForecastDraft(){
@@ -3419,23 +3425,35 @@ function savedPlanIsManual(){
 }
 function forecastPlanTypeMeta(type){
   type=String(type||"FORECAST").toUpperCase();
-  if(type==="TARGET")return {type:"TARGET",label:"Obiettivo",icon:"🎯",cls:"target"};
-  if(type==="COMMITMENT")return {type:"COMMITMENT",label:"Impegno",icon:"🔒",cls:"commitment"};
-  return {type:"FORECAST",label:"Previsione",icon:"👁",cls:"forecast"};
+  if(type==="TARGET")return {type:"TARGET",label:"Target",icon:"🎯",cls:"target"};
+  return {type:"FORECAST",label:"Baseline",icon:"📍",cls:"forecast"};
+}
+function forecastCertaintyMeta(level){
+  level=String(level||"ESTIMATED").toUpperCase();
+  if(level==="CONTRACTUAL")return {level:"CONTRACTUAL",label:"Contrattuale",icon:"🔒",cls:"contractual"};
+  if(level==="CONFIRMED")return {level:"CONFIRMED",label:"Confermata",icon:"✓",cls:"confirmed"};
+  return {level:"ESTIMATED",label:"Stimata",icon:"≈",cls:"estimated"};
 }
 function forecastRationaleHtml(d){
-  const meta=forecastPlanTypeMeta(d&&d.plan_type),required=meta.type==="TARGET";
+  const meta=forecastPlanTypeMeta(d&&d.plan_type),certainty=forecastCertaintyMeta(d&&d.certainty_level),required=meta.type==="TARGET";
   return '<div class="forecast-semantics '+meta.cls+'">'+
-    '<div class="forecast-field"><label>Tipo di piano</label><select id="forecastPlanType" class="select">'+
-      '<option value="FORECAST"'+(meta.type==="FORECAST"?" selected":"")+'>👁 Previsione</option>'+
-      '<option value="TARGET"'+(meta.type==="TARGET"?" selected":"")+'>🎯 Obiettivo</option>'+
-      '<option value="COMMITMENT"'+(meta.type==="COMMITMENT"?" selected":"")+'>🔒 Impegno</option>'+
+    '<div class="forecast-field"><label>Ruolo del valore</label><select id="forecastPlanType" class="select">'+
+      '<option value="FORECAST"'+(meta.type==="FORECAST"?" selected":"")+'>📍 Baseline / previsione realistica</option>'+
+      '<option value="TARGET"'+(meta.type==="TARGET"?" selected":"")+'>🎯 Target / scelta</option>'+
     '</select><div class="forecast-plan-type-note">'+
-      (meta.type==="TARGET"?"Obiettivo comportamentale: resterà evidenziato nello Scenario per ricordare il limite da rispettare.":meta.type==="COMMITMENT"?"Importo o vincolo sostanzialmente certo: rata, debito, abbonamento o impegno noto.":"Stima realistica di ciò che probabilmente accadrà.")+
+      (meta.type==="TARGET"?"Decisione comportamentale: ciò che vuoi ottenere. Diventerà il riferimento del Plan quando verrà finalizzato.":"Baseline tecnica: ciò che realisticamente prevedi accada senza una nuova decisione di riduzione o aumento.")+
     '</div></div>'+
-    '<div class="forecast-field forecast-rationale"><label>Motivazione'+(required?' <strong>· obbligatoria per gli obiettivi</strong>':' <span class="muted">(opzionale)</span>')+'</label>'+
-      '<textarea id="forecastRationale" class="input" maxlength="1000" placeholder="'+(required?"Perché vuoi rispettare questo obiettivo? Es. dimezzare i ristoranti per aumentare il risparmio.":"Perché hai scelto questo piano? Es. aumento tariffe, importo contrattuale noto, previsione prudente…")+'">'+esc(d&&d.rationale_note||"")+'</textarea>'+
-      '<div class="forecast-rationale-note">La motivazione accompagna il piano nello Scenario mese per mese.</div></div>'+
+    '<div class="forecast-field"><label>Certezza</label><select id="forecastCertaintyLevel" class="select">'+
+      '<option value="ESTIMATED"'+(certainty.level==="ESTIMATED"?" selected":"")+'>≈ Stimata</option>'+
+      '<option value="CONFIRMED"'+(certainty.level==="CONFIRMED"?" selected":"")+'>✓ Confermata</option>'+
+      '<option value="CONTRACTUAL"'+(certainty.level==="CONTRACTUAL"?" selected":"")+'>🔒 Contrattuale</option>'+
+    '</select><div class="forecast-plan-type-note">'+
+      (certainty.level==="CONTRACTUAL"?"Importo/vincolo sostanzialmente determinato da contratto, rata o impegno noto.":certainty.level==="CONFIRMED"?"Informazione già confermata, ma non necessariamente contrattuale.":"Importo ancora stimato dal comportamento, dallo storico o da un'ipotesi.")+
+    '</div></div>'+
+    '<div class="forecast-field forecast-rationale"><label>Motivazione'+(required?' <strong>· obbligatoria per i target</strong>':' <span class="muted">(opzionale)</span>')+'</label>'+
+      '<textarea id="forecastRationale" class="input" maxlength="1000" placeholder="'+(required?"Perché vuoi rispettare questo target? Es. ridurre i ristoranti per finanziare un obiettivo.":"Perché questa previsione è diversa dallo storico? Es. aumento tariffe, evento confermato, importo contrattuale…")+'">'+esc(d&&d.rationale_note||"")+'</textarea>'+
+      '<div class="forecast-rationale-note">La motivazione accompagna il valore nelle viste di pianificazione.</div></div>'+
+    '<div class="forecast-axes-note"><strong>Quattro assi separati:</strong> Natura O/N/D = che tipo di spesa è · Temporalità R/P/X/E = quando accade · Baseline/Target = cosa rappresenta il valore · Certezza = quanto è determinato.</div>'+
     '</div>';
 }
 function planInputValue(v){
@@ -3483,7 +3501,7 @@ async function saveIntegratedMonthlyOverride(month,amount,input){
   try{
     await rpc(rpcName,{p_month:month,p_category_id:analysisSelectedCategory,p_amount:amount});
     updateCellLocal(direction==="INCOME"?"income":"expense",analysisSelectedCategory,month,amount);
-    analysisForecastEditor=await rpc("dashboard_reporting_forecast_editor_v1",{p_category_id:analysisSelectedCategory,p_direction:direction,p_horizon_months:12});
+    analysisForecastEditor=await rpc("dashboard_reporting_forecast_editor_v2",{p_category_id:analysisSelectedCategory,p_direction:direction,p_horizon_months:12});
     invalidateAnalysisProjection(direction);
     renderForecastEditor();renderPlan();renderProjection();
     if(analysisTimeMode==="PROJECTION")await loadAnalysisProjection(true);
@@ -3516,7 +3534,7 @@ function canonicalSavedSetting(s,scope){
 }
 async function refreshForecastAfterSave(){
   const direction=analysisCurrentDirection(),oldCash=report.cashflow_monthly,oldLiquidity=report.liquidity_history,fresh=await rpc("dashboard_reporting_read_v5");report=fresh||{};report.cashflow_monthly=oldCash||report.cashflow_monthly||[];report.liquidity_history=oldLiquidity||{available:false,rows:[]};
-  if(analysisSelectedLevel==="L2"&&analysisSelectedCategory)analysisForecastEditor=await rpc("dashboard_reporting_forecast_editor_v1",{p_category_id:analysisSelectedCategory,p_direction:direction,p_horizon_months:12});
+  if(analysisSelectedLevel==="L2"&&analysisSelectedCategory)analysisForecastEditor=await rpc("dashboard_reporting_forecast_editor_v2",{p_category_id:analysisSelectedCategory,p_direction:direction,p_horizon_months:12});
   analysisForecastDraft=null;analysisForecastDraftKey="";invalidateAnalysisProjection(direction);
   if(analysisTimeMode==="PROJECTION")await loadAnalysisProjection(true);else{renderAnalysisMaster();renderAnalysisDetail()}
   renderProjection();
@@ -3534,14 +3552,14 @@ async function saveForecastRule(btn){
   if(method==="FIXED"&&(fixed===null||fixed===""||!Number.isFinite(Number(fixed)))){msg($("analysisStatus"),"Inserisci l'importo previsto.",true);return}
   if(method==="RANGE"&&(!Number.isFinite(Number(rmin))||!Number.isFinite(Number(rmax))||Number(rmin)>Number(rmax))){msg($("analysisStatus"),"Inserisci un intervallo valido.",true);return}
   if(d.frequency==="MONTHS"&&method!=="SAME_MONTH_LAST_YEAR"&&method!=="ZERO"&&!pattern){msg($("analysisStatus"),"Seleziona almeno un mese previsto.",true);return}
-  if((d.plan_type||"FORECAST")==="TARGET"&&!String(d.rationale_note||"").trim()){msg($("analysisStatus"),"Per un obiettivo inserisci una motivazione: deve restare chiaro perché vuoi rispettarlo.",true);return}
+  if((d.plan_type||"FORECAST")==="TARGET"&&!String(d.rationale_note||"").trim()){msg($("analysisStatus"),"Per un target inserisci una motivazione: deve restare chiaro perché vuoi rispettarlo.",true);return}
   analysisForecastSaving=true;setBusy(btn,true,"Salvo");
   try{
     const merchantId=entity==="COUNTERPARTY"?(cp.component_merchant_id||null):null;
     await rpc("dashboard_reporting_save_forecast_setting_v1",{p_category_id:analysisSelectedCategory,p_direction:analysisCurrentDirection(),p_entity_type:entity,p_merchant_id:merchantId,p_forecast_scope:scope,p_forecast_source:source,p_forecast_method:method,p_adjustment_pct:adj,p_amount_model:model,p_fixed_amount:fixed===null?null:Number(fixed),p_range_min:rmin===null?null:Number(rmin),p_range_max:rmax===null?null:Number(rmax),p_recurrence_pattern:pattern});
-    await rpc("dashboard_reporting_save_forecast_semantics_v1",{p_category_id:analysisSelectedCategory,p_entity_type:entity,p_merchant_id:merchantId,p_plan_type:d.plan_type||"FORECAST",p_note:d.rationale_note||null});
+    await rpc("dashboard_reporting_save_forecast_semantics_v2",{p_category_id:analysisSelectedCategory,p_entity_type:entity,p_merchant_id:merchantId,p_plan_type:d.plan_type||"FORECAST",p_certainty_level:d.certainty_level||"ESTIMATED",p_note:d.rationale_note||null});
     scenarioForecastRationales=null;
-    await refreshForecastAfterSave();msg($("analysisStatus"),analysisForecastEditor&&analysisForecastEditor.tracking_enabled?"Piano aggiornato e tracciato.":"Piano aggiornato in modalità test: nessuna cronologia ufficiale registrata.");
+    await refreshForecastAfterSave();msg($("analysisStatus"),analysisForecastEditor&&analysisForecastEditor.tracking_enabled?"Previsione/target aggiornato e tracciato.":"Previsione/target aggiornato in modalità test: nessuna cronologia ufficiale registrata.");
   }catch(e){msg($("analysisStatus"),e.message||"Errore salvataggio forecast",true)}finally{analysisForecastSaving=false;setBusy(btn,false)}
 }
 function renderAnalysisComponents(){
@@ -4674,17 +4692,17 @@ function scenarioRationalesForMonth(month){
 function renderScenarioRationaleTimeline(plan){
   const box=$("scenarioRationaleTimeline");if(!box||!plan)return;
   const months=plan.display||[];
-  box.innerHTML='<div class="scenario-rationale-head"><div><h4>Decisioni e motivazioni del piano</h4><p>Sotto ogni mese trovi gli obiettivi, gli impegni e le previsioni che hanno una motivazione esplicita.</p></div>'+
-    '<div class="scenario-rationale-legend"><span>🎯 Obiettivo</span><span>🔒 Impegno</span><span>👁 Previsione motivata</span></div></div>'+
+  box.innerHTML='<div class="scenario-rationale-head"><div><h4>Assunzioni e target</h4><p>Sotto ogni mese trovi target, previsioni motivate e valori con certezza confermata o contrattuale.</p></div>'+
+    '<div class="scenario-rationale-legend"><span>🎯 Target</span><span>📍 Baseline</span><span>✓ Confermata</span><span>🔒 Contrattuale</span></div></div>'+
     '<div class="scenario-rationale-grid" style="grid-template-columns:repeat('+Math.max(months.length,1)+',minmax(88px,1fr))">'+months.map(function(m){
       const rows=m.isForecast?scenarioRationalesForMonth(m.month):[];
       const cards=rows.map(function(r){
-        const meta=scenarioPlanTypeMeta(r.plan_type),amount=scenarioRationaleAmount(r),name=r.l2_name||r.l1_name||"Voce",merchant=r.entity_type==="COUNTERPARTY"&&r.merchant_name?" · "+r.merchant_name:"";
+        const meta=scenarioPlanTypeMeta(r.plan_type),certainty=forecastCertaintyMeta(r.certainty_level),amount=scenarioRationaleAmount(r),name=r.l2_name||r.l1_name||"Voce",merchant=r.entity_type==="COUNTERPARTY"&&r.merchant_name?" · "+r.merchant_name:"";
         const autoReason=!r.rationale_note&&Math.abs(num(r.adjustment_pct))>.0001?("Variazione "+(num(r.adjustment_pct)>0?"+":"")+num(r.adjustment_pct).toLocaleString("it-IT",{maximumFractionDigits:1})+"%"):"";
         const reason=String(r.rationale_note||autoReason||"").trim();
-        return '<div class="scenario-rationale-card '+meta.cls+'" title="'+esc(meta.label+" · "+name+merchant+(reason?" · "+reason:""))+'">'+
+        return '<div class="scenario-rationale-card '+meta.cls+'" title="'+esc(meta.label+" · "+certainty.label+" · "+name+merchant+(reason?" · "+reason:""))+'">'+
           '<span class="kind">'+meta.icon+' '+esc(meta.label)+'</span><span class="name">'+esc(name+merchant)+'</span>'+
-          '<span class="amount">'+money(amount)+'</span>'+(reason?'<span class="reason">'+esc(reason)+'</span>':"")+'</div>';
+          '<span class="certainty '+certainty.cls+'">'+certainty.icon+' '+esc(certainty.label)+'</span><span class="amount">'+money(amount)+'</span>'+(reason?'<span class="reason">'+esc(reason)+'</span>':"")+'</div>';
       }).join("");
       return '<div class="scenario-rationale-month '+(m.isForecast?"forecast":"past")+'"><div class="scenario-rationale-month-title">'+esc(monthLabel(m.month))+'</div>'+(cards||'<div class="scenario-rationale-empty">—</div>')+'</div>';
     }).join("")+'</div>';
@@ -5558,6 +5576,9 @@ $("analysisForecastPanel").addEventListener("change",async function(e){
   const d=ensureForecastDraft();if(!d)return;
   if(e.target.id==="forecastPlanType"){
     d.plan_type=e.target.value||"FORECAST";renderForecastEditor();return;
+  }
+  if(e.target.id==="forecastCertaintyLevel"){
+    d.certainty_level=e.target.value||"ESTIMATED";renderForecastEditor();return;
   }
   if(e.target.id==="forecastMethod"){
     d.method=e.target.value;d.source=forecastSourceForMethod(d.method);
