@@ -4661,7 +4661,7 @@ function renderHistoricalPeriodComparison(){
   groups.forEach(function(g){
     const d=g.b-g.a,p=comparisonPct(g.a,g.b),tone=comparisonTone(compareDirection,d),effect=compareDirection==="EXPENSE"?-d:d,eTone=Math.abs(effect)<.5?"neutral":effect>0?"good":"bad",open=compareExpandedL1.has(g.id);
     html+='<tr class="historical-compare-l1"><td><button type="button" class="historical-compare-row-btn" data-compare-l1="'+esc(g.id)+'"><span class="historical-compare-caret">'+(open?"▾":"▸")+'</span>'+esc(g.name)+'</button></td><td>'+money(g.a)+'</td><td>'+money(g.b)+'</td><td class="historical-compare-delta '+tone+'">'+comparisonSigned(d)+'</td><td>'+(p===null?"—":((p>0?"+":"")+p.toLocaleString("it-IT",{maximumFractionDigits:1})+"%"))+'</td><td class="historical-compare-effect '+eTone+'">'+comparisonSigned(effect)+'</td></tr>';
-    if(open)g.children.forEach(function(ch){const cd=ch.b-ch.a,cp=comparisonPct(ch.a,ch.b),ct=comparisonTone(compareDirection,cd),eff=compareDirection==="EXPENSE"?-cd:cd,et=Math.abs(eff)<.5?"neutral":eff>0?"good":"bad";html+='<tr class="historical-compare-l2"><td><button type="button" class="historical-compare-row-btn" data-compare-l2="'+esc(ch.id)+'" data-compare-l2-name="'+esc(ch.name)+'">'+esc(ch.name)+'</button></td><td>'+money(ch.a)+'</td><td>'+money(ch.b)+'</td><td class="historical-compare-delta '+ct+'">'+comparisonSigned(cd)+'</td><td>'+(cp===null?"—":((cp>0?"+":"")+cp.toLocaleString("it-IT",{maximumFractionDigits:1})+"%"))+'</td><td class="historical-compare-effect '+et+'">'+comparisonSigned(eff)+'</td></tr>'})});
+    if(open)g.children.forEach(function(ch){const cd=ch.b-ch.a,cp=comparisonPct(ch.a,ch.b),ct=comparisonTone(compareDirection,cd),eff=compareDirection==="EXPENSE"?-cd:cd,et=Math.abs(eff)<.5?"neutral":eff>0?"good":"bad";html+='<tr class="historical-compare-l2"><td><button type="button" class="historical-compare-row-btn" data-compare-l2="'+esc(ch.id)+'" data-compare-l2-name="'+esc(ch.name)+'">'+esc(ch.name)+'</button></td><td>'+money(ch.a)+'</td><td>'+money(ch.b)+'</td><td class="historical-compare-delta '+ct+'">'+comparisonSigned(cd)+'</td><td>'+(cp===null?"—":((cp>0?"+":"")+cp.toLocaleString("it-IT",{maximumFractionDigits:1})+"%"))+'</td><td class="historical-compare-effect '+et+'">'+comparisonSigned(eff)+'</td></tr>';});
   });
   html+='</tbody></table></div>';$("historicalComparisonContributors").innerHTML=html;
   renderHistoricalComparisonDetail();
@@ -4670,7 +4670,7 @@ function historicalChartRows(){return historicalRowsFor(historicalPeriodMode)}
 function renderHistoricalChart(){
   if(historicalBalanceChart){historicalBalanceChart.destroy();historicalBalanceChart=null}
   const rows=historicalChartRows(),months=historicalMonthsFor(historicalPeriodMode),labels=months.map(monthLabel),scope=historicalScope;
-  $("historicalNatureFocusWrap").classList.toggle("hidden",historicalChartMode!=="NATURE");
+  $("historicalNatureFocusWrap")?.classList.toggle("hidden",historicalChartMode!=="NATURE");
   syncWherePeriodUI();
   document.querySelectorAll("[data-history-scope]").forEach(function(b){b.classList.toggle("active",b.dataset.historyScope===historicalScope)});
   document.querySelectorAll("[data-history-chart]").forEach(function(b){b.classList.toggle("active",b.dataset.historyChart===historicalChartMode)});
