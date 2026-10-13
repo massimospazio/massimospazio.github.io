@@ -1190,6 +1190,26 @@ button,input,select{font:inherit}
 
 
 /* V73.20.0 — NC nel margine strutturale */
+
+/* V73.30.1.2 — navigazione provvisoria per fasi del processo */
+.process-shell{margin:0 0 18px;padding:10px;border:1px solid #dbe4ef;border-radius:14px;background:#fff;box-shadow:0 4px 14px rgba(15,23,42,.035)}
+.process-overline{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 2px 8px;font-size:11px;color:#64748b}
+.process-overline strong{color:#172033;font-size:12px}.process-overline span{font-size:10px}
+.process-nav{display:grid;grid-template-columns:repeat(7,minmax(118px,1fr));gap:6px;overflow-x:auto;padding-bottom:2px}
+.process-step{min-width:118px;min-height:48px;border:1px solid #dfe6ef;border-radius:10px;background:#f8fafc;color:#475569;padding:6px 8px;text-decoration:none;display:flex;align-items:center;gap:7px;text-align:left;font:inherit;cursor:pointer}
+.process-step:hover:not(.future){border-color:#9bb9e8;background:#f2f7ff}
+.process-step .process-no{flex:0 0 auto;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:#e8eef6;color:#53657c;font-size:10px;font-weight:900}
+.process-step .process-copy{min-width:0;display:grid;gap:1px}.process-step .process-copy strong{font-size:10.5px;line-height:1.15;color:inherit;white-space:nowrap}.process-step .process-copy small{font-size:8px;color:#8793a4;white-space:nowrap}
+.process-step.active{background:#eaf3ff;border-color:#78a8e8;color:#174f97;box-shadow:inset 0 0 0 1px #b8d3f5}
+.process-step.active .process-no{background:#2563eb;color:#fff}
+.process-step.partial .process-copy small{color:#a16207}.process-step.future{opacity:.52;cursor:default;background:#f8fafc}
+.process-context{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:9px;padding:8px 9px 0;border-top:1px solid #edf1f5}
+.process-context.hidden{display:none}
+.process-context-copy{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap;min-width:0}.process-context-copy span{font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;color:#2563eb}.process-context-copy strong{font-size:12px;color:#172033}.process-context-copy small{font-size:10px;color:#64748b}
+.process-subnav{margin:0!important;gap:6px!important;justify-content:flex-end}.process-subnav .tab{padding:7px 10px;font-size:11px;border-radius:8px}
+@media(max-width:900px){.process-nav{grid-template-columns:repeat(7,132px)}.process-context{align-items:flex-start;flex-direction:column}.process-subnav{width:100%;justify-content:flex-start}}
+@media(max-width:650px){.process-shell{padding:8px}.process-overline span{display:none}.process-step{min-width:126px}.process-context-copy{display:grid;gap:2px}.process-subnav .tab{flex:1 1 auto;justify-content:center}}
+
 </style>
 </head>
 <body>
@@ -1205,15 +1225,35 @@ button,input,select{font:inherit}
 
   <div id="appView" class="hidden">
     <div class="top">
-      <div class="brand"><h1>MiaFinanza</h1><small>Budget per la Vita · Analisi</small><div class="rpc-version-line"><button id="rpcDiagnosticsOpen" class="version-diagnostics" type="button" title="Apri diagnostica tecnica"><span data-app-version>—</span></button><button id="rpcPerformanceAlert" class="rpc-performance-alert hidden" type="button" aria-label="Prestazioni RPC da verificare" title="Prestazioni RPC da verificare"></button></div></div>
+      <div class="brand"><h1>MiaFinanza</h1><small>Budget per la Vita · percorso di pianificazione</small><div class="rpc-version-line"><button id="rpcDiagnosticsOpen" class="version-diagnostics" type="button" title="Apri diagnostica tecnica"><span data-app-version>—</span></button><button id="rpcPerformanceAlert" class="rpc-performance-alert hidden" type="button" aria-label="Prestazioni RPC da verificare" title="Prestazioni RPC da verificare"></button></div></div>
       <div class="userbar"><span id="userEmail"></span><button id="refreshBtn" class="btn ghost">Aggiorna</button><button id="logoutBtn" class="btn ghost">Esci</button></div>
     </div>
-    <div class="tabs">
-      <a class="tab" href="../">Dashboard</a>
-      <button id="reportingViewTab" class="tab active" type="button">Analisi</button>
-      <button id="planningBoardTab" class="tab" type="button">Tabellone</button>
-      <button id="planningSimulatorTab" class="tab" type="button">Simulatore</button>
-      <button id="scenarioViewTab" class="tab" type="button">Bilancio</button>
+    <div class="process-shell" aria-label="Percorso di gestione del budget">
+      <div class="process-overline"><strong>Percorso budget</strong><span>Le fasi future sono visibili ma non cliccabili; le aree parziali riusano le schermate attuali.</span></div>
+      <div class="process-nav">
+        <a class="process-step" href="../?tab=overview"><span class="process-no">1</span><span class="process-copy"><strong>Dati affidabili</strong><small>operativa</small></span></a>
+        <button class="process-step active" type="button" data-process-phase="where" data-process-route="balance"><span class="process-no">2</span><span class="process-copy"><strong>Dove siamo</strong><small>operativa</small></span></button>
+        <span class="process-step future"><span class="process-no">3</span><span class="process-copy"><strong>Obiettivi</strong><small>futura · V73.31</small></span></span>
+        <button class="process-step partial" type="button" data-process-phase="strategy" data-process-route="simulator"><span class="process-no">4</span><span class="process-copy"><strong>Strategia</strong><small>parziale</small></span></button>
+        <button class="process-step partial" type="button" data-process-phase="plan" data-process-route="board"><span class="process-no">5</span><span class="process-copy"><strong>Piano</strong><small>transitorio</small></span></button>
+        <span class="process-step future"><span class="process-no">6</span><span class="process-copy"><strong>Controllo</strong><small>futuro · V74</small></span></span>
+        <span class="process-step future"><span class="process-no">7</span><span class="process-copy"><strong>Apprendimento</strong><small>futuro · V74.3</small></span></span>
+      </div>
+      <div id="processContextWhere" class="process-context">
+        <div class="process-context-copy"><span>Fase 2</span><strong>Dove siamo</strong><small>Capire situazione, trend e Baseline senza introdurre Target.</small></div>
+        <div class="tabs process-subnav">
+          <button id="scenarioViewTab" class="tab" type="button">Bilancio</button>
+          <button id="reportingViewTab" class="tab active" type="button">Analisi &amp; Baseline</button>
+        </div>
+      </div>
+      <div id="processContextStrategy" class="process-context hidden">
+        <div class="process-context-copy"><span>Fase 4</span><strong>Strategia</strong><small>Simulare leve e scenari. I Target candidati arriveranno con la Strategia 2.0.</small></div>
+        <div class="tabs process-subnav"><button id="planningSimulatorTab" class="tab" type="button">Simulatore attuale</button></div>
+      </div>
+      <div id="processContextPlan" class="process-context hidden">
+        <div class="process-context-copy"><span>Fase 5</span><strong>Piano</strong><small>Vista transitoria: il Plan annuale congelato/versionato arriva nelle prossime release.</small></div>
+        <div class="tabs process-subnav"><button id="planningBoardTab" class="tab" type="button">Tabellone attuale</button></div>
+      </div>
     </div>
     <div id="reportReturnBar" class="report-return-bar hidden"></div>
 
@@ -4995,10 +5035,17 @@ async function loadScenarioData(force){
     msg($("scenarioStatus"),e.message||"Errore nel caricamento dello scenario",true);
   }finally{scenarioLoading=false}
 }
+function syncReportingProcessNavigation(phase){
+  const key=phase||"where";
+  document.querySelectorAll("[data-process-phase]").forEach(function(el){el.classList.toggle("active",el.dataset.processPhase===key)});
+  const contexts={where:"processContextWhere",strategy:"processContextStrategy",plan:"processContextPlan"};
+  Object.keys(contexts).forEach(function(k){const el=$(contexts[k]);if(el)el.classList.toggle("hidden",k!==key)});
+}
 function showScenarioView(){
   scenarioVisible=true;planningBoardVisible=false;planningSimulatorVisible=false;
   $("standardReportingView").classList.add("hidden");$("planningBoardView").classList.add("hidden");$("planningSimulatorView").classList.add("hidden");$("scenarioView").classList.remove("hidden");
   $("reportingViewTab").classList.remove("active");$("planningBoardTab").classList.remove("active");$("planningSimulatorTab").classList.remove("active");$("scenarioViewTab").classList.add("active");
+  syncReportingProcessNavigation("where");
   const u=new URL(window.location.href);u.searchParams.set("view","balance");history.replaceState(null,"",u);
   loadScenarioData(false);
 }
@@ -5006,6 +5053,7 @@ function showStandardReportingView(){
   scenarioVisible=false;planningBoardVisible=false;planningSimulatorVisible=false;
   $("scenarioView").classList.add("hidden");$("planningBoardView").classList.add("hidden");$("planningSimulatorView").classList.add("hidden");$("standardReportingView").classList.remove("hidden");
   $("scenarioViewTab").classList.remove("active");$("planningBoardTab").classList.remove("active");$("planningSimulatorTab").classList.remove("active");$("reportingViewTab").classList.add("active");
+  syncReportingProcessNavigation("where");
   const u=new URL(window.location.href);u.searchParams.delete("view");history.replaceState(null,"",u);
 }
 
@@ -5290,6 +5338,7 @@ function showPlanningBoardView(){
   planningBoardVisible=true;planningSimulatorVisible=false;scenarioVisible=false;
   $("standardReportingView").classList.add("hidden");$("scenarioView").classList.add("hidden");$("planningSimulatorView").classList.add("hidden");$("planningBoardView").classList.remove("hidden");
   $("reportingViewTab").classList.remove("active");$("scenarioViewTab").classList.remove("active");$("planningSimulatorTab").classList.remove("active");$("planningBoardTab").classList.add("active");
+  syncReportingProcessNavigation("plan");
   const u=new URL(window.location.href);u.searchParams.set("view","board");history.replaceState(null,"",u);
   loadPlanningBoard(false);
 }
@@ -5297,6 +5346,7 @@ function showPlanningSimulatorView(){
   planningBoardVisible=false;planningSimulatorVisible=true;scenarioVisible=false;
   $("standardReportingView").classList.add("hidden");$("scenarioView").classList.add("hidden");$("planningBoardView").classList.add("hidden");$("planningSimulatorView").classList.remove("hidden");
   $("reportingViewTab").classList.remove("active");$("scenarioViewTab").classList.remove("active");$("planningBoardTab").classList.remove("active");$("planningSimulatorTab").classList.add("active");
+  syncReportingProcessNavigation("strategy");
   const u=new URL(window.location.href);u.searchParams.set("view","simulator");history.replaceState(null,"",u);
   loadPlanningBoard(false);
 }
@@ -5385,6 +5435,14 @@ $("reportingViewTab").onclick=function(){showStandardReportingView()};
 $("planningBoardTab").onclick=function(){showPlanningBoardView()};
 $("planningSimulatorTab").onclick=function(){showPlanningSimulatorView()};
 $("scenarioViewTab").onclick=function(){showScenarioView()};
+document.querySelectorAll("[data-process-route]").forEach(function(b){
+  b.onclick=function(){
+    const route=b.dataset.processRoute;
+    if(route==="simulator")showPlanningSimulatorView();
+    else if(route==="board")showPlanningBoardView();
+    else showScenarioView();
+  };
+});
 $("planningBoardRefresh").onclick=function(){planningBoardData=null;loadPlanningBoard(true)};
 $("planningBoardView").addEventListener("click",function(e){
   const horizon=e.target.closest("[data-planning-horizon]");
