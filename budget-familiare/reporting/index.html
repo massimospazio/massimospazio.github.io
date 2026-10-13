@@ -267,10 +267,6 @@ button,input,select{font:inherit}
 .analysis-v26-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:8px}
 .analysis-v26-left,.analysis-v26-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .analysis-scope-toggle .btn{min-width:72px}
-.analysis-extra-btn{border-color:#bfdbfe!important;background:#eff6ff!important;color:#1d4ed8!important}
-.analysis-extra-inline{margin:8px 0 10px;border:1px solid #bfdbfe;border-radius:9px;background:#f8fbff;padding:9px 10px}
-.analysis-extra-inline.hidden{display:none}
-.analysis-extra-inline table{width:100%;border-collapse:collapse}.analysis-extra-inline th,.analysis-extra-inline td{padding:6px 7px;border-bottom:1px solid #e5e7eb;font-size:11px;text-align:left}.analysis-extra-inline td.amount{text-align:right;font-weight:750}
 .analysis-balance-view{border:1px solid var(--line);border-radius:10px;padding:10px;background:#fff}.analysis-balance-view.hidden{display:none}
 .analysis-balance-chart{height:360px;position:relative}
 .analysis-workspace-grid{grid-template-columns:minmax(520px,1.08fr) minmax(520px,.92fr)}
@@ -2796,21 +2792,6 @@ function renderAnalysisSummary(){
   const incoming=rows.reduce(function(s,x){return s+num(x.incoming)},0),outgoing=rows.reduce(function(s,x){return s+num(x.outgoing)},0);
   const net=rows.reduce(function(s,x){return s+num(x.net!==undefined?x.net:num(x.incoming)-num(x.outgoing))},0),avg=rows.length?net/rows.length:0;
   box.innerHTML='<div class="analysis-period-summary"><div class="analysis-period-kpi"><div class="k">Entrate · '+esc(analysisPeriodLabel())+'</div><div class="v positive">'+money(incoming)+'</div></div><div class="analysis-period-kpi"><div class="k">Uscite · '+esc(analysisPeriodLabel())+'</div><div class="v negative">'+money(outgoing)+'</div></div><div class="analysis-period-kpi"><div class="k">Saldo periodo</div><div class="v '+(net>=0?"positive":"negative")+'">'+money(net)+'</div></div><div class="analysis-period-kpi"><div class="k">Saldo medio mensile</div><div class="v '+(avg>=0?"positive":"negative")+'">'+money(avg)+'</div></div></div>';
-}
-function renderAnalysisExtraordinary(){
-  const isBalance=analysisViewMode==="BALANCE";
-  const directional=analysisWorkspace&&analysisWorkspace.extraordinary||{count:0,total_abs:0,movements:[]};
-  const balance=analysisWorkspace&&analysisWorkspace.extraordinary_balance||{count:0,expense_count:0,income_count:0,expense_total:0,income_total:0,net_total:0,movements:[]};
-  const x=isBalance?balance:directional,b=$("analysisExtraordinaryBtn"),box=$("analysisExtraordinaryInline");
-  if(b){
-    if(isBalance)b.textContent="Straordinarie escluse · U "+money(balance.expense_total)+" · E "+money(balance.income_total);
-    else b.textContent="Straordinarie escluse: "+num(x.count)+" · "+money(x.total_abs);
-  }
-  if(!box)return;
-  const rows=x.movements||[];
-  const summary=isBalance?'<div class="extra-summary-inline"><span class="extra-summary-chip extra-expense">Uscite '+money(balance.expense_total)+' · '+num(balance.expense_count)+' mov.</span><span class="extra-summary-chip extra-income">Entrate '+money(balance.income_total)+' · '+num(balance.income_count)+' mov.</span><span class="extra-summary-chip extra-net">Netto '+money(balance.net_total)+'</span></div>':"";
-  box.innerHTML='<div class="analysis-component-head"><h4 style="margin:0">Movimenti straordinari esclusi · '+esc(analysisPeriodLabel())+'</h4><button class="btn ghost compact" type="button" data-close-analysis-extra>Chiudi</button></div>'+summary+
-    (rows.length?'<div style="overflow:auto"><table><thead><tr><th>Data</th><th>Tipo</th><th>Controparte</th><th>Categoria</th><th>Nota</th><th style="text-align:right">Importo</th><th></th></tr></thead><tbody>'+rows.map(function(r){const income=num(r.amount)>0;return '<tr><td>'+dateLabel(r.transaction_date)+'</td><td><strong class="'+(income?"positive":"negative")+'">'+(income?"Entrata":"Uscita")+'</strong></td><td>'+esc(r.counterparty||"—")+'</td><td>'+esc(r.category||"—")+'</td><td>'+esc(r.note||r.description||"")+'</td><td class="amount '+(income?"positive":"negative")+'">'+money(r.amount)+'</td><td><a class="btn ghost compact" href="../?movement='+encodeURIComponent(r.id)+'">Apri</a></td></tr>'}).join("")+'</tbody></table></div>':'<div class="muted small">Nessun movimento straordinario nel periodo.</div>');
 }
 function analysisGuideBoundaries(months){
   const p=analysisPeriodMonths(),n=(months||[]).length,out=[];
