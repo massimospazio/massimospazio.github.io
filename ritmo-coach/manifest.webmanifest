@@ -1,0 +1,25 @@
+{
+  "name": "Ritmo Coach - Allenamento guidato",
+  "short_name": "Ritmo Coach",
+  "description": "Schede di esercizi, metronomo e comandi vocali in italiano.",
+  "id": "./index.html",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#090f1a",
+  "theme_color": "#0b1220",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
