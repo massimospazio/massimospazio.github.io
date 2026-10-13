@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b1220">
+<meta name="description" content="Coach vocale per schede di esercizi: metronomo, countdown, recuperi e comandi vocali.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<title>Ritmo · Coach esercizi</title>
+<style>
+:root { color-scheme:dark; --bg:#090f1a;--panel:#131e2f;--panel2:#19263a;--line:#28394f;--text:#f4f8ff;--sub:#b0bdd0;--muted:#7e91a8;--teal:#51e1c2;--blue:#8ab9ff;--amber:#ffcf83;--red:#ff8793;--shadow:0 22px 70px rgba(0,0,0,.24); }
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(circle at 75% -25%,#183a48 0,transparent 44%),radial-gradient(circle at -20% 50%,#132a40 0,transparent 37%),var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100svh;-webkit-tap-highlight-color:transparent}
+button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allowed;opacity:.38}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid #96d7f2;outline-offset:2px}
+.shell{max-width:1300px;margin:auto;padding:24px 28px 46px}.topbar{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:29px;flex-wrap:wrap}.brand{display:flex;gap:12px;align-items:center}.brandmark{width:42px;height:42px;border-radius:15px;display:grid;place-items:center;background:linear-gradient(135deg,#5de6c2,#5797ff);color:#08223a;font-weight:900;font-size:22px;box-shadow:0 8px 25px #33a8b52c}.brandname{font-size:20px;letter-spacing:-.6px;font-weight:780}.brandsub{font-size:12px;color:var(--muted);font-weight:500;letter-spacing:.7px;text-transform:uppercase;margin-top:1px}.topright{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pill{border:1px solid var(--line);background:#122031;color:var(--sub);border-radius:40px;padding:9px 13px;display:flex;align-items:center;gap:8px;font-weight:650;font-size:12px}.led{width:8px;height:8px;border-radius:50%;background:#64768a;box-shadow:0 0 0 3px #64768a1c}.led.on{background:var(--teal);box-shadow:0 0 0 4px #51e1c226}.ghost{border:1px solid #35445c;color:var(--text);background:#1a2940;padding:10px 15px;border-radius:13px;font-weight:670;transition:background .15s,transform .15s}.ghost:hover{background:#243954}.ghost:active,.primary:active{transform:scale(.98)}.ghost.on{border-color:#53cbb6;color:var(--teal)}.iconbtn{display:inline-flex;gap:8px;align-items:center;justify-content:center}
+.tabs{display:flex;align-items:center;gap:8px;margin-bottom:20px}.tab{font-weight:700;border:1px solid transparent;background:transparent;color:#9eafc2;border-radius:11px;padding:11px 18px}.tab.active{background:#1b3042;border-color:#34516a;color:#effbff}
+.view{display:none}.view.active{display:block}.layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:stretch}
+.panel{border:1px solid var(--line);border-radius:24px;background:linear-gradient(145deg,#182539e6,#111d2de9);box-shadow:var(--shadow)}.mainpanel{padding:28px 32px 25px;min-height:620px}.sidepanel{padding:23px 20px}.sectiontop{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.eyebrow{text-transform:uppercase;letter-spacing:2px;font-size:11px;font-weight:800;color:var(--teal)}.sectiontop .mutetext{font-size:13px;color:var(--sub)}.headline{font-weight:850;letter-spacing:-1.45px;font-size:clamp(30px,3.7vw,46px);line-height:1.08;margin:23px 0 10px;max-width:700px}.microdesc{font-size:15px;color:var(--sub);line-height:1.55;margin:0;min-height:23px}.badges{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 9px}.badge{border:1px solid #3a4d62;background:#1d3046;border-radius:9px;font-size:12px;font-weight:760;color:#dceeff;padding:7px 10px}.badge.focus{background:#163e42;color:#71e8c9;border-color:#397c75}
+.timerzone{display:flex;align-items:center;gap:35px;margin:19px 0 24px;flex-wrap:wrap}.ring{width:min(290px,60vw);aspect-ratio:1;position:relative;display:grid;place-items:center;border-radius:50%;background:conic-gradient(var(--teal) 0deg,var(--teal) 0deg,#263e51 0deg 360deg);padding:12px;flex:0 0 auto;box-shadow:0 0 0 8px #0a18262a}.ringinside{width:100%;height:100%;border-radius:50%;background:#101b2a;border:1px solid #2f4657;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:17px;text-align:center}.timervalue{font-size:clamp(53px,6vw,79px);line-height:1.05;font-weight:820;letter-spacing:-4px;font-variant-numeric:tabular-nums;white-space:nowrap}.timerlabel{font-size:12px;font-weight:720;letter-spacing:1.1px;color:var(--sub);text-transform:uppercase;margin-top:8px}.bigcue{color:var(--teal);font-size:clamp(18px,2.2vw,24px);font-weight:740;line-height:1.35;letter-spacing:-.35px;max-width:250px}.subcue{color:var(--sub);font-size:14px;line-height:1.65;margin-top:10px;max-width:240px}.miniprogress{width:min(200px,45vw);height:5px;border-radius:20px;background:#304357;overflow:hidden;margin-top:19px}.miniprogress div{height:100%;background:linear-gradient(90deg,#5addbf,#74baff);width:0%}
+.clockstrip{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin:-1px 0 21px}.clocktile{border:1px solid #345067;border-radius:15px;padding:14px 17px;background:#102337}.clocktile.activeclock{border-color:#2d756c;background:#113330}.clocktile .clocklabel{display:block;font-size:11px;font-weight:730;letter-spacing:.45px;color:#a6c0db;text-transform:uppercase}.clocktile.activeclock .clocklabel{color:#9ce9d5}.clocktile strong{display:block;font-size:clamp(25px,3.1vw,35px);letter-spacing:-1.2px;font-variant-numeric:tabular-nums;margin-top:3px}.clocktile .clockhint{font-size:11px;color:#a2b1c4}.actionbar{display:flex;gap:10px;flex-wrap:wrap;padding-top:16px;border-top:1px solid #2b3a4e}.primary{background:linear-gradient(130deg,#66f0ce,#64bcee);color:#06283b;border:0;padding:15px 22px;border-radius:13px;font-weight:850;font-size:15px;min-width:157px;box-shadow:0 10px 25px #37cdb523}.danger{background:#3c2736;border:1px solid #6b3d50;color:#ffb7c2}.danger:hover{background:#553044}.shortinfo{font-size:12px;color:var(--muted);margin-top:14px;line-height:1.6}
+.sidepanel h2{font-size:17px;margin:1px 0 17px;letter-spacing:-.35px}.statblock{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:19px}.stat{background:#142339;border:1px solid #2b3e53;padding:13px 14px;border-radius:13px}.stat strong{font-size:24px;letter-spacing:-.6px;font-weight:790;display:block}.stat span{font-size:11px;color:var(--muted)}.bigbar{height:7px;background:#263a4b;border-radius:10px;overflow:hidden}.bigbar div{height:100%;background:linear-gradient(90deg,#64dfbb,#5b9fff);width:0%;transition:width .2s}.progresscaption{font-size:12px;color:var(--muted);display:flex;justify-content:space-between;gap:8px;margin:9px 0 23px}.nextlist{display:flex;flex-direction:column;gap:9px}.nextrow{display:flex;align-items:center;gap:12px;padding:11px 9px;border-radius:12px;background:#152337;border:1px solid #283950}.nextindex{display:grid;place-items:center;width:31px;height:31px;flex:0 0 31px;border-radius:10px;background:#243d4b;color:#9cefd3;font-size:12px;font-weight:820}.nextrow strong{display:block;font-size:12px;line-height:1.35}.nextrow p{font-size:11px;color:#92a6bc;line-height:1.3;margin:4px 0 0}.emptyhint{color:var(--muted);font-size:13px;line-height:1.6}.commandbox{margin-top:23px;border-top:1px solid #2b3c4e;padding-top:18px}.commandbox h3{font-size:13px;margin:0 0 12px;color:#d3e2f0}.commands{display:flex;gap:6px;flex-wrap:wrap}.command{font-size:11px;font-weight:790;color:#c7e3ec;border:1px solid #3b5668;background:#1d3447;padding:6px 10px;border-radius:7px}
+.editorgrid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(310px,.8fr);gap:20px}.editpanel{padding:23px}.editpanel h2{font-size:19px;letter-spacing:-.5px;margin:0 0 8px}.helper{font-size:13px;line-height:1.55;color:#adbed0;margin:0 0 14px}.source{width:100%;min-height:294px;resize:vertical;background:#0e1928;color:#dbeafa;border:1px solid #36506b;border-radius:14px;padding:16px;font-size:13px;line-height:1.72}.rowbuttons{display:flex;flex-wrap:wrap;gap:9px;margin-top:13px}.smallprimary{font-weight:820;background:#67e4c4;color:#082c32;border:0;border-radius:11px;padding:11px 15px}.tablewrap{overflow-x:auto;margin-top:17px;border-radius:12px;border:1px solid #30445a}.ex-table{width:100%;border-collapse:collapse;min-width:620px}.ex-table th{text-align:left;padding:11px 10px;background:#192b42;color:#a9bdd2;font-size:11px;text-transform:uppercase;letter-spacing:.7px}.ex-table td{padding:8px 9px;border-top:1px solid #2c4055;font-size:12px;vertical-align:middle}.ex-table input[type=text]{width:100%;min-width:165px}.ex-table input[type=number]{width:70px}.ex-table input,.ex-table select{background:#0e1c2c;color:var(--text);border:1px solid #35516b;border-radius:7px;padding:7px;font-size:12px}.ex-table input[type=checkbox]{width:17px;height:17px;accent-color:#66dcbf}.remove{background:#382535;border:1px solid #72455b;color:#ffacb9;border-radius:8px;padding:7px 10px;font-weight:800}.settinggrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.field{display:flex;flex-direction:column;gap:7px}.field label{font-size:12px;color:#c7d7e5;font-weight:650}.field input{width:100%;background:#0d1a2a;color:white;border-radius:10px;padding:11px 12px;border:1px solid #3b536c;min-width:0}.toggle{display:flex;align-items:center;gap:10px;border:1px solid #31465c;border-radius:11px;padding:12px;background:#14253a;color:#e1eaf3;font-size:13px}.toggle input{width:18px;height:18px;accent-color:#68dfc1}.togglewide{grid-column:1/-1}.divider{border-top:1px solid #314157;margin:20px 0}.note{font-size:12px;color:#99aec3;line-height:1.65}.toast{position:fixed;right:22px;bottom:22px;background:#203d4a;border:1px solid #66adad;color:#ebfbff;box-shadow:0 20px 40px #0008;padding:12px 16px;border-radius:13px;max-width:360px;font-size:13px;z-index:30;opacity:0;transform:translateY(10px);pointer-events:none;transition:.2s}.toast.show{opacity:1;transform:translateY(0)}.helpfooter{display:flex;gap:15px;flex-wrap:wrap;margin:20px 4px;color:#8093a9;font-size:12px;line-height:1.65}.helpfooter span{max-width:520px}.restmode .ring{background:conic-gradient(var(--amber) 0deg,var(--amber) var(--ring-pct,0deg),#3a3d40 var(--ring-pct,0deg) 360deg)}.restmode .bigcue{color:var(--amber)}.pausedmode .ring{filter:saturate(.33)}.hidden{display:none!important}
+@media(max-width:1000px){.layout{grid-template-columns:minmax(0,1fr)}.editorgrid{grid-template-columns:1fr}.sidepanel{min-height:auto}.mainpanel{min-height:auto}.nextlist{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}.shell{padding:18px}.ring{width:250px}.timerzone{gap:25px}}@media(max-width:560px){.shell{padding:13px}.topbar{margin-bottom:15px}.brandname{font-size:18px}.brandmark{width:36px;height:36px;border-radius:12px}.mainpanel{padding:22px 17px 20px}.sidepanel{padding:20px 16px}.headline{font-size:32px;margin-top:22px}.timerzone{justify-content:center;text-align:center;gap:14px}.ring{width:min(245px,75vw)}.bigcue,.subcue{max-width:none}.miniprogress{margin-left:auto;margin-right:auto}.actionbar .primary{width:100%}.actionbar .ghost{flex:1}.editorgrid{gap:13px}.editpanel{padding:20px 15px}.settinggrid{gap:10px}.topright .pill{font-size:11px}.tabs{margin-top:6px}.tab{padding:10px 13px;font-size:13px}.statblock{margin-bottom:13px}.clockstrip{gap:8px}.clocktile{padding:12px 13px}.clocktile strong{font-size:27px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<div class="shell">
+<header class="topbar">
+ <div class="brand"><div class="brandmark" aria-hidden="true">◉</div><div><div class="brandname">Ritmo <span style="color:#6de7c7">/</span> Coach</div><div class="brandsub">Il tuo allenamento, passo dopo passo</div></div></div>
+ <div class="topright"><div class="pill" id="statusPill"><span class="led" id="statusLed"></span><span id="statusText">Pronto a iniziare</span></div><button class="ghost iconbtn" id="soundButton" type="button" aria-pressed="true">♪ Audio attivo</button><button class="ghost iconbtn" id="micButton" type="button" aria-pressed="false">♩ Attiva microfono</button></div>
+</header>
+<nav class="tabs" aria-label="Sezioni dell'app"><button class="tab active" data-tab="workout">▶ Allenamento</button><button class="tab" data-tab="editor">☷ Scheda e impostazioni</button></nav>
+<section class="view active" id="view-workout">
+ <div class="layout">
+  <main class="panel mainpanel" id="mainpanel">
+   <div class="sectiontop"><div class="eyebrow" id="phaseLabel">Il tuo prossimo allenamento</div><div class="mutetext" id="roundLabel">2 giri · 6 esercizi</div></div>
+   <h1 class="headline" id="exerciseTitle">Stabilità del bacino</h1><p class="microdesc" id="exerciseNote">Allenamento a piedi nudi, ritmo controllato e recuperi guidati.</p>
+   <div class="badges"><span class="badge focus" id="phaseBadge">Pronto</span><span class="badge" id="sideBadge">Scheda caricata</span><span class="badge" id="paceBadge">4 s / ripetizione</span></div>
+   <div class="timerzone"><div class="ring" id="timerRing" role="img" aria-label="Indicatore del tempo"><div class="ringinside"><div class="timervalue" id="timerValue">00:00</div><div class="timerlabel" id="timerUnit">Durata stimata</div></div></div><div class="timercopy"><div class="bigcue" id="bigCue">La voce ti guiderà negli esercizi, nel cambio lato e nei recuperi.</div><div class="subcue" id="subCue">Avvia l'allenamento e attiva il microfono se vuoi usare i comandi vocali.</div><div class="miniprogress"><div id="miniBar"></div></div></div></div>
+   <div class="clockstrip" aria-label="Tempi della sessione"><div class="clocktile"><span class="clocklabel">◷ Tempo totale trascorso</span><strong id="elapsedTotal">00:00</strong><span class="clockhint">Include recuperi e pause</span></div><div class="clocktile activeclock"><span class="clocklabel">◉ Tempo attivo di esercizio</span><strong id="elapsedActive">00:00</strong><span class="clockhint">Esclude recuperi e pause</span></div></div>
+   <div class="actionbar"><button class="primary" id="startButton">▶ Avvia allenamento</button><button class="ghost" id="pauseButton" disabled>Ⅱ Pausa</button><button class="ghost" id="stopButton" disabled>■ Fine serie / stop</button><button class="ghost" id="skipButton" disabled>⇥ Salta</button><button class="ghost danger" id="resetButton">↺ Ricomincia</button></div>
+   <div class="shortinfo" id="message">Il comando vocale <b>«stop»</b> conclude la serie e avvia il recupero. <b>«pausa»</b> ferma il cronometro.</div>
+  </main>
+  <aside class="panel sidepanel"><h2>Il tuo percorso</h2><div class="statblock"><div class="stat"><strong id="statRound">1 / 2</strong><span>Giro attuale</span></div><div class="stat"><strong id="statCompleted">0 / 22</strong><span>Serie completate</span></div></div><div class="bigbar"><div id="globalBar"></div></div><div class="progresscaption"><span>Progresso allenamento</span><span id="globalPercent">0%</span></div><h2>Prossime fasi</h2><div class="nextlist" id="nextList"></div><div class="commandbox"><h3>Comandi a voce</h3><div class="commands"><span class="command">“Stop”</span><span class="command">“Pausa”</span><span class="command">“Riprendi”</span><span class="command">“Avanti”</span></div><p class="note" id="micHelper">Per ascoltare i comandi, premi «Attiva microfono» e consenti l'accesso.</p></div></aside>
+ </div>
+</section>
+<section class="view" id="view-editor">
+ <div class="editorgrid">
+ <div class="panel editpanel"><h2>1. Incolla la tua scheda</h2><p class="helper">Riconosco giri, esercizi a tempo o ripetizioni, lavoro per lato e defaticamento. Puoi correggere tutto nella tabella sotto.</p><textarea class="source" id="sourceInput" spellcheck="false" aria-label="Testo della scheda"></textarea><div class="rowbuttons"><button class="smallprimary" id="parseButton">↳ Leggi e organizza la scheda</button><button class="ghost" id="exampleButton">Ripristina esempio</button></div><div class="divider"></div><div class="sectiontop"><h2 style="margin:0">2. Controlla gli esercizi</h2><button class="ghost" id="addExercise">＋ Aggiungi</button></div><p class="helper" style="margin-top:10px">Le ripetizioni indicate come intervallo (es. 10–12) partono dal minimo: puoi cambiarle qui.</p><div class="tablewrap"><table class="ex-table"><thead><tr><th>Esercizio</th><th>Tipo</th><th>Quantità</th><th>Per lato</th><th></th></tr></thead><tbody id="exerciseRows"></tbody></table></div><div class="rowbuttons"><button class="smallprimary" id="goWorkout">✓ Usa questa scheda</button></div></div>
+ <div class="panel editpanel"><h2>3. Personalizza la guida</h2><p class="helper">I tempi si applicano al prossimo allenamento, senza cambiare una sessione già iniziata.</p><div class="settinggrid">
+ <div class="field"><label for="setting-rounds">Giri completi</label><input id="setting-rounds" data-setting="rounds" type="number" min="1" max="12" step="1"></div>
+ <div class="field"><label for="setting-pace">Secondi per ripetizione</label><input id="setting-pace" data-setting="pace" type="number" min="1" max="15" step="0.5"></div>
+ <div class="field"><label for="setting-rest">Recupero tra esercizi (s)</label><input id="setting-rest" data-setting="rest" type="number" min="0" max="600" step="5"></div>
+ <div class="field"><label for="setting-roundRest">Recupero tra giri (s)</label><input id="setting-roundRest" data-setting="roundRest" type="number" min="0" max="900" step="5"></div>
+ <div class="field"><label for="setting-switchSide">Cambio lato (s)</label><input id="setting-switchSide" data-setting="switchSide" type="number" min="0" max="90" step="1"></div>
+ <div class="field"><label for="setting-prepare">Preparazione / countdown (s)</label><input id="setting-prepare" data-setting="prepare" type="number" min="3" max="20" step="1"></div>
+ <label class="toggle togglewide"><input id="setting-countReps" data-setting="countReps" type="checkbox"> Conta automaticamente le ripetizioni e passa all’esercizio successivo</label>
+ <p class="note togglewide" style="margin:0">Disattiva per non contare le ripetizioni: il timer sale senza limite e l’esercizio termina solo quando dici «stop» o premi «Fine serie / stop». Gli esercizi a tempo mantengono la durata prevista.</p>
+ <label class="toggle togglewide"><input id="setting-cooldown" data-setting="cooldown" type="checkbox"> Esegui il defaticamento finale</label>
+ <label class="toggle togglewide"><input id="setting-metronome" data-setting="metronome" type="checkbox"> Suono del metronomo ogni secondo</label>
+ <label class="toggle togglewide"><input id="setting-voice" data-setting="voice" type="checkbox"> Annunci parlati in italiano</label>
+ </div><div class="divider"></div><h2>Come funziona</h2><p class="note">Con il conteggio attivo, il metronomo batte ogni secondo e segnala l’inizio di una nuova ripetizione, avanzando automaticamente. Con il conteggio disattivato, mantiene solo il battito sonoro, non annuncia i numeri e attende il tuo <b>«stop»</b>.</p><p class="note">Il riconoscimento vocale dipende dal browser e dall'autorizzazione al microfono. È consigliato Chrome/Edge su una pagina HTTPS; i pulsanti restano sempre utilizzabili. Tieni lo schermo acceso durante la sessione.</p><p class="note" id="saveNote">Le modifiche vengono salvate sul dispositivo.</p></div>
+ </div>
+</section>
+<footer class="helpfooter"><span>Ritmo Coach · Funziona anche senza account. Il testo della scheda e le impostazioni restano nel browser; il microfono non viene registrato dall'app.</span><span>Il riconoscimento vocale può utilizzare il servizio del produttore del browser, con conseguente elaborazione audio esterna.</span></footer>
+</div>
+<div class="toast" id="toast" aria-live="polite"></div>
+<script>
+'use strict';
+const EXAMPLE=`Scheda a piedi nudi per la stabilità del bacino (2 GIRI COMPLETI).
+Esercizi (2 Giri - 30-45s rec / 1m30s tra giri):
+
+1. Plank Frontale con Retroversione: 2 x 45s
+2. Bird-Dog Controllato: 2 x 10-12 per lato
+3. Single-Leg Glute Bridge: 2 x 12 per lato
+4. Split Squat: 2 x 10 per lato
+5. Step-Up Lento su Gradino (Piede fisso): 2 x 10 per lato
+6. Side Plank: 2 x 30s per lato
+
+Defaticamento: Child's Pose + Allungamento Psoas`;
+const DEFAULT_EXERCISES=[
+ {name:'Plank Frontale con Retroversione',mode:'time',count:45,perSide:false},
+ {name:'Bird-Dog Controllato',mode:'reps',count:10,perSide:true},
+ {name:'Single-Leg Glute Bridge',mode:'reps',count:12,perSide:true},
+ {name:'Split Squat',mode:'reps',count:10,perSide:true},
+ {name:'Step-Up Lento su Gradino (Piede fisso)',mode:'reps',count:10,perSide:true},
+ {name:'Side Plank',mode:'time',count:30,perSide:true}
+];
+const DEFAULT_SETTINGS={rounds:2,pace:4,rest:40,roundRest:90,switchSide:6,prepare:6,countReps:true,cooldown:true,metronome:true,voice:true};
+const $=id=>document.getElementById(id);
+function getSaved(key,fallback){try{const raw=localStorage.getItem(key);return raw===null?fallback:JSON.parse(raw)}catch{return fallback}}
+function save(key,value){try{localStorage.setItem(key,JSON.stringify(value))}catch{}}
+const safeText=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clamp=(n,min,max)=>Math.max(min,Math.min(max,Number(n)||min));
+const normalizeEx=x=>({name:String(x?.name||'Esercizio').slice(0,90),mode:x?.mode==='reps'?'reps':'time',count:clamp(x?.count,1,1000),perSide:!!x?.perSide});
+let exercises=(getSaved('ritmoEx',DEFAULT_EXERCISES)||DEFAULT_EXERCISES).slice(0,80).map(normalizeEx);
+let settings={...DEFAULT_SETTINGS,...getSaved('ritmoSettings',{})};
+let source=getSaved('ritmoSource',EXAMPLE);
+let planTitle=getSaved('ritmoTitle','Stabilità del bacino');
+let voiceWanted=false,recognition=null,recognitionActive=false,recognitionRestart=null,lastCommandAt=0,lastCommand='';
+let audioEnabled=true,audioCtx=null,wakeLock=null;
+function freshRunner(){return {steps:[],idx:-1,active:false,paused:false,finished:false,remaining:0,duration:0,clock:0,lastSec:null,lastRep:0,startedAt:null,endedAt:null,workMs:0,stepWorkMs:0}}
+let runner=freshRunner();
+let toastTimeout=null;
+function showToast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimeout);toastTimeout=setTimeout(()=>t.classList.remove('show'),3700)}
+function persist(){save('ritmoEx',exercises);save('ritmoSettings',settings);save('ritmoSource',$('sourceInput').value);save('ritmoTitle',planTitle)}
+function parsePlan(text){
+ const lines=text.split(/\r?\n/),parsed=[];
+ const heading=lines.find(l=>l.trim()&&!/^\s*(?:esercizi|defaticamento|\d+\s*[.)-]|[-•*]\s*)/i.test(l));
+ const title=(heading||'Allenamento personalizzato').replace(/\s*\([^)]*giri[^)]*\)/ig,'').replace(/^scheda\s+(?:a\s+piedi\s+nudi\s+)?per\s+la\s+/i,'').replace(/[.\s]+$/,'').trim().slice(0,95)||'Allenamento personalizzato';
+ for(const line of lines){
+   const m=line.match(/^\s*(?:\d+\s*[.)-]|[-•*])\s*(.+?)\s*:\s*(.+)\s*$/);
+   if(!m)continue;
+   const name=m[1].trim(),raw=m[2].trim();
+   const times=raw.match(/(?:\d+\s*[x×]\s*)?(\d+)(?:\s*[-–]\s*(\d+))?\s*(s(?:ec(?:ondi)?)?|secondi|rip(?:etizioni)?)?\b/i);
+   if(!times)continue;
+   const count=Number(times[1]);const mode=/\b\d+\s*(?:s|sec|secondi)\b/i.test(raw)?'time':'reps';
+   if(name)parsed.push({name,mode,count,perSide:/per\s+lato|ogni\s+lato|per\s+gamba|dx\s*[\/]\s*sx/i.test(raw)});
+ }
+ if(!parsed.length)throw new Error('Nessun esercizio numerato riconosciuto. Usa il formato: 1. Nome esercizio: 2 x 45s oppure 2 x 10 per lato.');
+ const r=text.match(/(\d+)\s*giri?\b/i);if(r)settings.rounds=clamp(r[1],1,12);
+ const rec=text.match(/(\d+)\s*(?:[-–]\s*(\d+))?\s*s(?:ec(?:ondi)?)?\s*(?:di\s*)?rec/i);
+ if(rec)settings.rest=Math.round(((Number(rec[1])+(rec[2]?Number(rec[2]):Number(rec[1])))/2)/5)*5;
+ const roundRest=text.match(/(\d+)\s*m\s*(?:(\d+)\s*s?)?\s*tra\s*(?:i\s*)?giri/i);
+ if(roundRest)settings.roundRest=Number(roundRest[1])*60+Number(roundRest[2]||0);
+ const cd=text.match(/defaticamento\s*:\s*([^\n]+)/i);
+ const cooldown=cd?cd[1].split(/\s*\+\s*|\s*;\s*/).map(n=>n.trim()).filter(Boolean):[];
+ return {exercises:parsed,cooldown,title};
+}
+const DEFAULT_COOLDOWN=[{name:"Child's Pose",mode:'time',count:45,perSide:false},{name:'Allungamento Psoas',mode:'time',count:45,perSide:true}];
+let cooldownNames=getSaved('ritmoCooldown',DEFAULT_COOLDOWN);
+function makeCooldown(parsed){return parsed.map(name=>({name,mode:'time',count:45,perSide:/psoas|anca|quadricipite|polpaccio/i.test(name)}));}
+function setTab(tab){document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===tab));document.querySelectorAll('.view').forEach(x=>x.classList.toggle('active',x.id==='view-'+tab));}
+function renderExercises(){
+ $('exerciseRows').innerHTML=exercises.map((ex,i)=>`<tr data-i="${i}"><td><input type="text" data-field="name" value="${safeText(ex.name)}" aria-label="Nome esercizio ${i+1}"></td><td><select data-field="mode" aria-label="Tipo esercizio ${i+1}"><option value="time" ${ex.mode==='time'?'selected':''}>Secondi</option><option value="reps" ${ex.mode==='reps'?'selected':''}>Ripetizioni</option></select></td><td><input type="number" min="1" max="1000" step="1" data-field="count" value="${ex.count}" aria-label="Quantità ${i+1}"></td><td><input type="checkbox" data-field="perSide" ${ex.perSide?'checked':''} aria-label="Per lato ${i+1}"></td><td><button type="button" class="remove" data-remove="${i}" aria-label="Rimuovi esercizio ${i+1}">✕</button></td></tr>`).join('')||'<tr><td colspan="5">Aggiungi almeno un esercizio.</td></tr>';
+}
+function renderSettings(){document.querySelectorAll('[data-setting]').forEach(el=>{const val=settings[el.dataset.setting];if(el.type==='checkbox')el.checked=!!val;else el.value=val;});}
+function formatTime(total){const n=Math.max(0,Math.ceil(total));return `${String(Math.floor(n/60)).padStart(2,'0')}:${String(n%60).padStart(2,'0')}`;}
+function formatElapsed(ms){const sec=Math.floor(Math.max(0,ms)/1000);const m=Math.floor(sec/60),s=sec%60;return m>=60?`${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}:${String(s).padStart(2,'0')}`:`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;}
+function updateSessionClocks(){const now=runner.endedAt??performance.now();const total=runner.startedAt===null?0:now-runner.startedAt;$('elapsedTotal').textContent=formatElapsed(total);$('elapsedActive').textContent=formatElapsed(runner.workMs);}
+function syncClock(now=performance.now()){if(!runner.active||runner.paused)return;const delta=Math.max(0,now-runner.clock);runner.clock=now;const current=runner.steps[runner.idx];if(!current)return;const used=current.openEnded?delta:Math.min(delta,runner.remaining);if(current.kind==='work'){runner.workMs+=used;runner.stepWorkMs+=used;}if(!current.openEnded)runner.remaining=Math.max(0,runner.remaining-delta);}
+function buildSteps(){
+ const s=[];const appendWork=(ex,round,side,cooldown=false)=>{
+  const item={kind:'work',name:ex.name,round,side,mode:ex.mode,count:ex.count,cooldown,pace:settings.pace,openEnded:ex.mode==='reps'&&!settings.countReps,duration:ex.mode==='reps'?ex.count*settings.pace:ex.count};
+  s.push({...item,kind:'prepare',duration:settings.prepare});s.push(item);
+ };
+ for(let r=1;r<=settings.rounds;r++){
+  exercises.forEach((ex,i)=>{
+   const sides=ex.perSide?['Sinistro','Destro']:[null];
+   sides.forEach((side,j)=>{appendWork(ex,r,side);if(j<sides.length-1 && settings.switchSide>0)s.push({kind:'switch',duration:settings.switchSide,round:r,name:ex.name,side:'Destro'});});
+   if(i<exercises.length-1 && settings.rest>0)s.push({kind:'rest',duration:settings.rest,round:r});
+  });
+  if(r<settings.rounds && settings.roundRest>0)s.push({kind:'roundRest',duration:settings.roundRest,round:r});
+ }
+ if(settings.cooldown && cooldownNames.length){s.push({kind:'transition',duration:8,name:'Defaticamento'});cooldownNames.forEach((ex,i)=>{const sides=ex.perSide?['Sinistro','Destro']:[null];sides.forEach((side,j)=>{appendWork(ex,settings.rounds,side,true);if(j<sides.length-1)s.push({kind:'switch',duration:settings.switchSide||3,name:ex.name,side:'Destro',round:settings.rounds});});});}
+ return s;
+}
+const isWork=s=>s&&s.kind==='work';
+function metrics(){const steps=runner.steps.length?runner.steps:buildSteps();const total=steps.filter(isWork).length;const completed=runner.finished?total:steps.slice(0,Math.max(0,runner.idx)).filter(isWork).length;const duration=Math.round(steps.reduce((sum,x)=>sum+x.duration,0));return{steps,total,completed,duration};}
+function playTone(f=630,loud=false){if(!audioEnabled)return;try{const AudioC=window.AudioContext||window.webkitAudioContext;if(!AudioC)return;if(!audioCtx)audioCtx=new AudioC();if(audioCtx.state==='suspended')audioCtx.resume();const osc=audioCtx.createOscillator(),gain=audioCtx.createGain(),now=audioCtx.currentTime;osc.type=loud?'triangle':'sine';osc.frequency.setValueAtTime(f,now);gain.gain.setValueAtTime(.0001,now);gain.gain.exponentialRampToValueAtTime(loud?.16:.065,now+.01);gain.gain.exponentialRampToValueAtTime(.0001,now+.095);osc.connect(gain);gain.connect(audioCtx.destination);osc.start(now);osc.stop(now+.105)}catch{}}
+function speak(words,interrupt=true){if(!settings.voice||!audioEnabled||!('speechSynthesis' in window))return;try{if(interrupt)window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(String(words));u.lang='it-IT';u.rate=1.13;u.pitch=1.02;u.volume=.98;const voices=window.speechSynthesis.getVoices();const italian=voices.find(v=>v.lang?.toLowerCase()==='it-it')||voices.find(v=>v.lang?.toLowerCase().startsWith('it'));if(italian)u.voice=italian;window.speechSynthesis.speak(u)}catch{}}
+function pronounceStep(s){if(s.kind==='prepare'){speak('Preparati. '+s.name+(s.side?', lato '+s.side.toLowerCase():'')+'. '+(s.openEnded?'Ripetizioni libere. Muoviti al tuo ritmo.':s.mode==='reps'?s.count+' ripetizioni.':s.count+' secondi.'));return}
+ if(s.kind==='work'){speak(s.openEnded?'Via. Prosegui al tuo ritmo.':s.mode==='reps'?'Uno':'Via');playTone(880,true);runner.lastRep=s.openEnded?0:1;return}
+ if(s.kind==='rest'){speak('Recupero. '+s.duration+' secondi.');return}
+ if(s.kind==='roundRest'){speak('Giro '+s.round+' completato. Recupero di '+s.duration+' secondi.');return}
+ if(s.kind==='switch'){speak('Cambia lato.');return}
+ if(s.kind==='transition'){speak('Ottimo. Iniziamo il defaticamento.');return}
+}
+function acquireWake(){try{if('wakeLock' in navigator){navigator.wakeLock.request('screen').then(lock=>{wakeLock=lock}).catch(()=>{})}}catch{}}
+function releaseWake(){if(wakeLock){wakeLock.release().catch(()=>{});wakeLock=null}}
+function enterStep(idx){
+ runner.idx=idx;runner.lastSec=null;runner.lastRep=0;runner.stepWorkMs=0;
+ if(idx>=runner.steps.length){runner.active=false;runner.paused=false;runner.finished=true;runner.endedAt=performance.now();releaseWake();speak('Allenamento completato. Complimenti!');playTone(1000,true);render();showToast('Allenamento completato!');return}
+ const s=runner.steps[idx];runner.remaining=s.duration*1000;runner.duration=runner.remaining;runner.clock=performance.now();pronounceStep(s);render();
+}
+function start(){if(!exercises.length){showToast('Aggiungi almeno un esercizio alla scheda.');setTab('editor');return}
+ if(runner.active){if(runner.paused)resume();return}
+ if(runner.finished)runner.finished=false;
+ runner.steps=buildSteps();runner.active=true;runner.paused=false;runner.startedAt=performance.now();runner.endedAt=null;runner.workMs=0;runner.stepWorkMs=0;
+ if(audioEnabled){playTone(600)}acquireWake();enterStep(0);
+}
+function pause(){if(!runner.active||runner.paused)return;syncClock();runner.paused=true;try{window.speechSynthesis.cancel()}catch{};releaseWake();render();showToast('Allenamento in pausa')}
+function resume(){if(!runner.active||!runner.paused)return;runner.paused=false;runner.clock=performance.now();acquireWake();speak('Riprendi');render()}
+function finishSeries(){if(!runner.active)return;if(!runner.paused)syncClock();if(runner.paused){runner.paused=false;runner.clock=performance.now()}
+ const s=runner.steps[runner.idx];if(s.kind==='prepare'){enterStep(Math.min(runner.idx+2,runner.steps.length));return}enterStep(runner.idx+1);
+}
+function skipPhase(){if(!runner.active)return;if(!runner.paused)syncClock();if(runner.paused){runner.paused=false;runner.clock=performance.now()}enterStep(runner.idx+1)}
+function reset(ask=true){if(ask&&runner.active&&!confirm('Ricominciare l’allenamento da zero?'))return;runner=freshRunner();releaseWake();try{speechSynthesis.cancel()}catch{};render()}
+function onWholeSecond(s,left){if(s.kind==='prepare'||s.kind==='rest'||s.kind==='roundRest'||s.kind==='switch'||s.kind==='transition'){
+   if(left<=3&&left>=1){playTone(left===1?920:670,left===1);speak(String(left))}else if(s.kind==='prepare' && left===5){playTone(540)}
+ }else if(s.kind==='work'){
+  if(s.openEnded){if(settings.metronome)playTone(540);return;}
+  if(s.mode==='reps'){
+   const elapsed=runner.duration-runner.remaining,pace=s.pace*1000,rep=Math.min(s.count,Math.floor(Math.max(0,elapsed)/pace)+1);
+   if(rep!==runner.lastRep){runner.lastRep=rep;playTone(930,true);speak(String(rep))}else if(settings.metronome)playTone(540);
+  }else{
+   if(settings.metronome)playTone(550);
+   if(left<=5&&left>=1){playTone(left===1?880:720,left===1);speak(String(left))}
+   else if((left===10||left===20)&&s.duration>left+4)speak('Mancano '+left+' secondi');
+  }
+ }
+}
+function tick(){if(!runner.active)return;
+ if(runner.paused){updateSessionClocks();return}
+ syncClock();const s=runner.steps[runner.idx];if(!s)return;
+ const left=s.openEnded?Math.floor(runner.stepWorkMs/1000):Math.ceil(runner.remaining/1000);
+ if(left!==runner.lastSec){runner.lastSec=left;if(s.openEnded?left>0:left>0)onWholeSecond(s,left)}
+ if(!s.openEnded&&runner.remaining<=0){enterStep(runner.idx+1);return}
+ updateTimer();updateSessionClocks();
+}
+function upcoming(steps,idx){return steps.slice(Math.max(0,idx+1)).filter(s=>s.kind!=='prepare').slice(0,5)}
+function describe(s){if(!s)return '';if(s.kind==='work')return (s.side?'Lato '+s.side.toLowerCase()+' · ':'')+(s.openEnded?'Fino a «stop»':s.mode==='reps'?s.count+' ripetizioni':s.count+' secondi')+(s.cooldown?' · defaticamento':'');if(s.kind==='rest')return s.duration+'s di recupero';if(s.kind==='roundRest')return s.duration+'s tra i giri';if(s.kind==='switch')return s.duration+'s · cambio lato';if(s.kind==='transition')return s.duration+'s · preparazione';return ''}
+function updateTimer(){
+ const s=runner.steps[runner.idx];if(!s)return;
+ const pct=s.openEnded?0:runner.duration>0?Math.max(0,Math.min(1,1-runner.remaining/runner.duration)):1;
+ $('timerRing').style.background=s.openEnded?'conic-gradient(#62e4c4 0deg 70deg,#293d50 70deg 360deg)':`conic-gradient(${['rest','roundRest','switch','transition'].includes(s.kind)?'#ffcd80':'#62e4c4'} ${pct*360}deg,#293d50 ${pct*360}deg 360deg)`;
+ $('miniBar').parentElement.classList.toggle('hidden',!!s.openEnded);
+ $('miniBar').style.width=(pct*100).toFixed(1)+'%';
+ if(s.openEnded){
+  $('timerValue').textContent=formatElapsed(runner.stepWorkMs);$('timerUnit').textContent='Tempo in esercizio';
+  $('bigCue').textContent=runner.paused?'In pausa':'Ripetizioni libere';
+  $('subCue').textContent=runner.paused?'Dì «riprendi» per continuare.':'Nessun conteggio e nessuna scadenza: dì «stop» o premi Fine serie per passare alla fase successiva.';
+ }else if(s.kind==='work'&&s.mode==='reps'){
+  const pace=s.pace*1000,completed=Math.min(s.count,Math.floor((runner.duration-runner.remaining)/pace)),active=Math.min(s.count,completed+1);
+  $('timerValue').textContent=active+' / '+s.count;$('timerUnit').textContent='Ripetizioni · '+s.pace+'s / rip';
+  $('bigCue').textContent=runner.paused?'In pausa':`Ripetizione ${active} di ${s.count}`;
+  $('subCue').textContent=runner.paused?'Dì «riprendi» per continuare.':'Mantieni un movimento lento e controllato. Il suono alto indica una nuova ripetizione.';
+ }else{
+  $('timerValue').textContent=formatTime(runner.remaining/1000);$('timerUnit').textContent=s.kind==='work'?'Secondi di lavoro':s.kind==='prepare'?'Preparazione':s.kind==='switch'?'Cambio lato':s.kind==='roundRest'?'Recupero tra giri':s.kind==='transition'?'Defaticamento':'Recupero';
+  $('bigCue').textContent=runner.paused?'In pausa':s.kind==='prepare'?'Preparati a partire':s.kind==='rest'?'Respira, recupera':s.kind==='roundRest'?'Giro completato':s.kind==='switch'?'Cambia lato':s.kind==='transition'?'Fase finale':s.cooldown?'Rilassa e respira':'Controllo e stabilità';
+  $('subCue').textContent=runner.paused?'Dì «riprendi» per continuare.':s.kind==='prepare'?'Countdown finale: 3, 2, 1, via.':s.kind==='work'?'Tieni la posizione con respirazione regolare. Dì «stop» per finire la serie.':s.kind==='rest'?'Il prossimo esercizio partirà automaticamente.':s.kind==='roundRest'?'Il giro successivo partirà automaticamente.':s.kind==='switch'?'Assumi la posizione per l’altro lato.':s.kind==='transition'?'Prepara lo spazio per gli allungamenti.':'Muoviti senza forzare l’allungamento.';
+ }
+ $('mainpanel').classList.toggle('restmode',['rest','roundRest','switch','transition'].includes(s.kind));$('mainpanel').classList.toggle('pausedmode',runner.paused);
+}
+function render(){
+ const m=metrics(),running=runner.active,s=running?runner.steps[runner.idx]:null;
+ $('statusText').textContent=runner.finished?'Completato':runner.paused?'In pausa':running?'Allenamento in corso':'Pronto a iniziare';$('statusLed').classList.toggle('on',running&&!runner.paused);
+ $('roundLabel').textContent=settings.rounds+' giri · '+exercises.length+' esercizi';
+ $('statRound').textContent=s?`${s.round||settings.rounds} / ${settings.rounds}`:`1 / ${settings.rounds}`;
+ $('statCompleted').textContent=`${m.completed} / ${m.total}`;
+ const globalPct=m.total?Math.round(m.completed/m.total*100):0;$('globalBar').style.width=globalPct+'%';$('globalPercent').textContent=globalPct+'%';
+ $('startButton').textContent=runner.finished?'↺ Ripeti allenamento':runner.paused?'▶ Riprendi':running?'▶ In corso':'▶ Avvia allenamento';$('startButton').disabled=running&&!runner.paused;
+ $('pauseButton').disabled=!running;$('pauseButton').textContent=runner.paused?'▶ Riprendi':'Ⅱ Pausa';$('stopButton').disabled=!running;$('skipButton').disabled=!running;
+ $('paceBadge').textContent=((running?runner.steps.some(x=>x.openEnded):!settings.countReps)?'Ripetizioni libere · stop manuale':settings.pace+' s / ripetizione');
+ updateSessionClocks();
+ if(!s){
+ $('phaseLabel').textContent=runner.finished?'Sessione completata':'Il tuo prossimo allenamento';$('exerciseTitle').textContent=runner.finished?'Ben fatto!':planTitle;$('exerciseNote').textContent=runner.finished?'Hai completato il percorso, incluso il defaticamento previsto.':'Allenamento a piedi nudi, ritmo controllato e recuperi guidati.';
+ $('phaseBadge').textContent=runner.finished?'Completato':'Pronto';$('sideBadge').textContent=exercises.length+' esercizi · '+settings.rounds+' giri';$('timerValue').textContent=runner.finished?formatElapsed((runner.endedAt??performance.now())-runner.startedAt):settings.countReps?formatTime(m.duration):'LIBERA';$('timerUnit').textContent=runner.finished?'Durata effettiva':settings.countReps?'Durata stimata':'Durata variabile';$('bigCue').textContent=runner.finished?'Allenamento terminato.':'La voce ti guiderà negli esercizi, nel cambio lato e nei recuperi.';$('subCue').textContent=runner.finished?'Puoi ripetere la scheda oppure modificarla.':'Avvia l’allenamento e attiva il microfono se vuoi usare i comandi vocali.';$('miniBar').style.width=runner.finished?'100%':'0%';$('timerRing').style.background=`conic-gradient(#62e4c4 ${runner.finished?360:0}deg,#293d50 ${runner.finished?360:0}deg 360deg)`;$('mainpanel').classList.remove('restmode','pausedmode');$('miniBar').parentElement.classList.remove('hidden');
+ }else{
+ $('phaseLabel').textContent=s.cooldown?'DEFATICAMENTO':s.kind==='prepare'?'TRA POCO':s.kind==='work'?'ORA IN ESECUZIONE':s.kind==='roundRest'?'RECUPERO TRA GIRI':s.kind==='rest'?'RECUPERO':s.kind==='switch'?'CAMBIO LATO':'TRANSIZIONE';
+ $('exerciseTitle').textContent=s.kind==='rest'?'Recupero':s.kind==='roundRest'?'Recupero tra giri':s.kind==='switch'?'Cambio lato':s.kind==='transition'?'Defaticamento':s.name;
+ $('exerciseNote').textContent=s.kind==='prepare'?'Assumi la posizione: inizia al termine del countdown.':s.kind==='work'?(s.openEnded?'Procedi con il tuo ritmo e termina la serie dicendo stop.':'Segui i segnali sonori e la guida vocale.'):s.kind==='roundRest'?'Hai terminato un giro completo.':s.kind==='rest'?'Recupera prima di riprendere.':s.kind==='switch'?'Prepara il lato opposto.':'Passiamo agli allungamenti.';
+ $('phaseBadge').textContent=runner.paused?'In pausa':s.kind==='work'?(s.cooldown?'Allungamento':'In esecuzione'):s.kind==='prepare'?'Countdown':s.kind==='rest'?'Recupero':s.kind==='roundRest'?'Cambio giro':s.kind==='switch'?'Cambio lato':'Defaticamento';
+ $('sideBadge').textContent=s.side?'Lato '+s.side.toLowerCase():s.kind==='work'||s.kind==='prepare'?'Entrambi i lati / frontale':'Giro '+(s.round||settings.rounds);
+ updateTimer();
+ }
+ $('nextList').innerHTML=upcoming(m.steps,running?runner.idx:-1).map((step,i)=>`<div class="nextrow"><div class="nextindex">${String(i+1).padStart(2,'0')}</div><div><strong>${safeText(step.name||({rest:'Recupero',roundRest:'Recupero tra giri',switch:'Cambio lato',transition:'Defaticamento'}[step.kind]||'Fase'))}</strong><p>${safeText(describe(step))}</p></div></div>`).join('')||'<p class="emptyhint">Nessuna fase successiva.</p>';
+ $('message').innerHTML=runner.finished?'La sessione è terminata. Personalizza la scheda e riparti quando vuoi.':'Il comando vocale <b>«stop»</b> conclude la serie e avvia il recupero. <b>«pausa»</b> ferma il cronometro.';
+}
+function executeCommand(raw){const t=raw.toLowerCase().replace(/[^a-zàèéìòù\s]/g,' ').trim();const has=w=>new RegExp('(?:^|\\s)'+w+'(?:$|\\s)','i').test(t);const now=Date.now();const command=has('pausa')||has('pausare')||has('ferma')?'pausa':has('riprendi')||has('continua')||has('riparti')?'riprendi':has('stop')||has('fine')||has('finito')?'stop':has('avanti')||has('salta')?'avanti':null;if(!command||(command===lastCommand&&now-lastCommandAt<1100))return;
+ let label=null;
+ if(has('pausa')||has('pausare')||has('ferma')){if(runner.active&&!runner.paused){pause();label='pausa'}}
+ else if(has('riprendi')||has('continua')||has('riparti')){if(runner.active&&runner.paused){resume();label='riprendi'}}
+ else if(has('stop')||has('fine')||has('finito')){if(runner.active){finishSeries();label='stop'}}
+ else if(has('avanti')||has('salta')){if(runner.active){skipPhase();label='avanti'}}
+ if(label){lastCommandAt=now;lastCommand=label;showToast('Comando vocale: «'+label+'»')}
+}
+function micStatus(){const on=voiceWanted;const btn=$('micButton');btn.textContent=on?'● Microfono attivo':'♩ Attiva microfono';btn.classList.toggle('on',on);btn.setAttribute('aria-pressed',String(on));$('micHelper').textContent=on?'Microfono attivo: puoi dire stop, pausa, riprendi o avanti.':"Premi «Attiva microfono» e autorizza l'accesso per usare i comandi vocali.";}
+function stopRecognition(){voiceWanted=false;clearTimeout(recognitionRestart);try{recognition?.stop()}catch{};recognitionActive=false;micStatus()}
+function toggleRecognition(){if(voiceWanted){stopRecognition();return}const SpeechRec=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SpeechRec){showToast('Riconoscimento vocale non disponibile: prova Chrome o Edge con HTTPS.');return}
+ try{recognition=new SpeechRec();recognition.lang='it-IT';recognition.continuous=true;recognition.interimResults=false;recognition.maxAlternatives=1;voiceWanted=true;recognition.onstart=()=>{recognitionActive=true;micStatus()};recognition.onresult=event=>{for(let i=event.resultIndex;i<event.results.length;i++){if(event.results[i].isFinal){executeCommand(event.results[i][0].transcript)}}};recognition.onerror=e=>{if(['not-allowed','service-not-allowed','audio-capture'].includes(e.error)){stopRecognition();showToast('Microfono non autorizzato o non disponibile. Controlla i permessi del browser.')}else if(e.error==='network'){showToast('Riconoscimento vocale non raggiungibile: usa i pulsanti.')}};recognition.onend=()=>{recognitionActive=false;if(voiceWanted){clearTimeout(recognitionRestart);recognitionRestart=setTimeout(()=>{if(voiceWanted){try{recognition.start()}catch{}}},500)}else micStatus()};recognition.start();micStatus();showToast('Consenti l’uso del microfono nel browser.');}catch{voiceWanted=false;micStatus();showToast('Impossibile attivare il riconoscimento vocale nel browser.')}}
+function init(){
+ $('sourceInput').value=source;renderExercises();renderSettings();render();
+ document.querySelectorAll('.tab').forEach(btn=>btn.addEventListener('click',()=>setTab(btn.dataset.tab)));
+ $('parseButton').addEventListener('click',()=>{try{const out=parsePlan($('sourceInput').value);exercises=out.exercises;planTitle=out.title;if(out.cooldown.length)cooldownNames=makeCooldown(out.cooldown);save('ritmoCooldown',cooldownNames);persist();renderExercises();renderSettings();if(!runner.active)render();showToast('Scheda letta: '+exercises.length+' esercizi, '+settings.rounds+' giri.')}catch(e){showToast(e.message)}});
+ $('exampleButton').addEventListener('click',()=>{$('sourceInput').value=EXAMPLE;const out=parsePlan(EXAMPLE);exercises=out.exercises;planTitle='Stabilità del bacino';cooldownNames=DEFAULT_COOLDOWN.map(x=>({...x}));settings={...DEFAULT_SETTINGS};persist();save('ritmoCooldown',cooldownNames);renderExercises();renderSettings();if(!runner.active)render();showToast('Scheda di esempio ripristinata.');});
+ $('exerciseRows').addEventListener('change',e=>{const row=e.target.closest('tr[data-i]');if(!row)return;const i=Number(row.dataset.i),field=e.target.dataset.field;if(!field)return;exercises[i][field]=field==='perSide'?e.target.checked:field==='count'?clamp(e.target.value,1,1000):e.target.value;if(field==='count')e.target.value=exercises[i][field];persist();if(!runner.active)render();});
+ $('exerciseRows').addEventListener('input',e=>{if(e.target.dataset.field==='name'){const i=Number(e.target.closest('tr').dataset.i);exercises[i].name=e.target.value;persist()}});
+ $('exerciseRows').addEventListener('click',e=>{const button=e.target.closest('[data-remove]');if(!button)return;exercises.splice(Number(button.dataset.remove),1);persist();renderExercises();if(!runner.active)render();});
+ $('addExercise').addEventListener('click',()=>{exercises.push({name:'Nuovo esercizio',mode:'reps',count:10,perSide:false});renderExercises();persist();if(!runner.active)render();});
+ document.querySelectorAll('[data-setting]').forEach(el=>el.addEventListener('change',()=>{const field=el.dataset.setting;if(el.type==='checkbox')settings[field]=el.checked;else{const min=Number(el.min),max=Number(el.max);settings[field]=clamp(el.value,min,max);el.value=settings[field]}persist();if(!runner.active)render();else showToast('La modifica sarà applicata al prossimo avvio.');}));
+ $('sourceInput').addEventListener('change',persist);
+ $('goWorkout').addEventListener('click',()=>{if(!exercises.length){showToast('Aggiungi almeno un esercizio.');return}persist();setTab('workout');if(!runner.active)render();showToast('Scheda pronta. Premi Avvia.');window.scrollTo({top:0,behavior:'smooth'})});
+ $('startButton').addEventListener('click',()=>runner.paused?resume():start());$('pauseButton').addEventListener('click',()=>runner.paused?resume():pause());$('stopButton').addEventListener('click',finishSeries);$('skipButton').addEventListener('click',skipPhase);$('resetButton').addEventListener('click',()=>reset(true));
+ $('soundButton').addEventListener('click',()=>{audioEnabled=!audioEnabled;$('soundButton').textContent=audioEnabled?'♪ Audio attivo':'♪ Audio disattivato';$('soundButton').setAttribute('aria-pressed',String(audioEnabled));if(!audioEnabled){try{speechSynthesis.cancel()}catch{}}else playTone(690,true)});
+ $('micButton').addEventListener('click',toggleRecognition);
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&runner.active&&!runner.paused)acquireWake()});
+ window.addEventListener('beforeunload',()=>{releaseWake();stopRecognition()});
+ setInterval(tick,100);
+ if('serviceWorker' in navigator && (location.protocol==='https:' || location.hostname==='localhost'))navigator.serviceWorker.register('./service-worker.js').catch(()=>{});
+}
+init();
+</script>
+</body>
+</html>
