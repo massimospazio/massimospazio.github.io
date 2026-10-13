@@ -1839,7 +1839,7 @@ let historicalYearSelection=null;
 let historicalScope="ORDINARY";
 let historicalChartMode="CASHFLOW";
 let historicalNatureFocus="ALL";
-let balanceSubview="flow";
+let balanceSubview="analysis";
 let compareWindow="12";
 let compareYearB=null;
 let compareDirection="EXPENSE";
@@ -2930,7 +2930,7 @@ async function loadAnalysisWorkspace(force,preserveSelection){
 function renderAnalysis(){
   renderAnalysisModeButtons();if(!analysisWorkspace||analysisWorkspaceKey!==analysisWorkspaceCacheKey()){loadAnalysisWorkspace(false);return}
   if(analysisTimeMode==="PROJECTION"&&analysisViewMode!=="BALANCE"&&!projectionDataFor(analysisCurrentDirection())){loadAnalysisProjection(false);return}
-  renderAnalysisSummary();renderAnalysisExtraordinary();
+  renderAnalysisSummary();
   if(analysisTimeMode==="PROJECTION"&&analysisViewMode!=="BALANCE"){
     const data=projectionDataFor(analysisCurrentDirection()),def=projectionDefinition(data);
     if(analysisProjectionView==="ROLLING_12"){
@@ -5292,20 +5292,44 @@ function showProcessRoadmap(phase,featureKey){
   document.querySelectorAll("[data-process-feature]").forEach(function(b){b.classList.toggle("active",b.dataset.featurePhase===phase&&b.dataset.processFeature===selected.key)});
   const u=new URL(window.location.href);u.searchParams.delete("view");u.searchParams.set("phase",phase);u.searchParams.set("feature",selected.key);history.replaceState(null,"",u);
 }
+function wherePeriodValue(){
+  if(balanceSubview==="analysis")return String(analysisPeriodMonths());
+  return historicalPeriodMode==="ROLLING_6"?"6":historicalPeriodMode==="ROLLING_24"?"24":historicalPeriodMode==="ALL"?"0":"12";
+}
+function syncWherePeriodUI(){
+  const bar=$("wherePeriodBar");if(!bar)return;
+  const hide=balanceSubview==="compare"||(balanceSubview==="analysis"&&analysisTimeMode==="PROJECTION");
+  bar.classList.toggle("hidden",hide);
+  const value=wherePeriodValue();
+  document.querySelectorAll("[data-where-period]").forEach(function(b){b.classList.toggle("active",b.dataset.wherePeriod===value)});
+}
+function historicalModeFromPeriodValue(value){
+  return String(value)==="6"?"ROLLING_6":String(value)==="24"?"ROLLING_24":String(value)==="0"?"ALL":"ROLLING_12";
+}
+async function setWherePeriod(value){
+  const v=["0","6","12","24"].includes(String(value))?String(value):"12";
+  if(balanceSubview==="analysis"){
+    if(analysisTimeMode!=="HISTORY")return;
+    const keep=captureAnalysisSelection();$("analysisPeriod").value=v;analysisSelectedMonth=null;analysisWorkspace=null;analysisWorkspaceKey="";syncWherePeriodUI();await loadAnalysisWorkspace(true,keep);return;
+  }
+  historicalPeriodMode=historicalModeFromPeriodValue(v);balanceHubMode="HISTORY";closeBalanceNatureDrill();renderBalanceHub();syncWherePeriodUI();
+}
 function applyBalanceSubview(){
-  const pureHistory=balanceHubMode==="HISTORY";
   const flow=balanceSubview==="flow",cash=balanceSubview==="cashflow",compare=balanceSubview==="compare";
   $("balanceHubTitle").textContent=flow?"Flusso economico":(cash?"Cash flow":"Confronto periodi");
-  $("balanceHubDescription").textContent=flow?"Come entrate e uscite si trasformano nel margine disponibile della famiglia.":(cash?"Evoluzione mensile di entrate, uscite, saldo e cumulato.":"Confronta periodi per capire cosa ha realmente fatto migliorare o peggiorare il risultato.");
+  $("balanceHubDescription").textContent=flow?"Come entrate e uscite si trasformano nel margine disponibile della famiglia.":(cash?"Evoluzione mensile di entrate, uscite, saldo e cumulato.":"Confronta periodi realmente omogenei e individua i contributori alle differenze.");
   $("balanceFlowGrid")?.classList.toggle("balance-section-hidden",!flow);
   if($("balanceNatureDetail")&&!flow)$("balanceNatureDetail").classList.add("hidden");
-  $("historicalMonthlySection")?.classList.toggle("balance-section-hidden",!cash||!pureHistory);
-  $("historicalBottomGrid")?.classList.toggle("balance-section-hidden",!(compare||flow)||!pureHistory);
-  $("historicalBottomGrid")?.classList.toggle("single-view",compare||flow);
-  $("historicalCompositionSection")?.classList.toggle("balance-section-hidden",!flow||!pureHistory);
-  $("historicalComparisonSection")?.classList.toggle("balance-section-hidden",!compare||!pureHistory);
-  document.querySelector(".balance-hub-toggle")?.classList.toggle("hidden",!flow);
+  $("historicalMonthlySection")?.classList.toggle("balance-section-hidden",!cash);
+  $("historicalBottomGrid")?.classList.toggle("balance-section-hidden",!(compare||flow));
+  $("historicalBottomGrid")?.classList.toggle("single-view",true);
+  $("historicalCompositionSection")?.classList.toggle("balance-section-hidden",!flow);
+  $("historicalComparisonSection")?.classList.toggle("balance-section-hidden",!compare);
+  $("historicalBalanceStatus")?.classList.toggle("hidden",compare);
+  $("historicalBalanceKpis")?.classList.toggle("hidden",compare);
+  $("historicalScopeControls")?.classList.toggle("hidden",false);
   document.querySelectorAll("[data-where-view]").forEach(function(b){b.classList.toggle("active",b.dataset.whereView===balanceSubview)});
+  syncWherePeriodUI();
 }
 function showBalanceSubview(kind){
   balanceSubview=["flow","cashflow","compare"].includes(kind)?kind:"flow";
@@ -5326,7 +5350,7 @@ function showStandardReportingView(){
   $("scenarioView").classList.add("hidden");$("planningBoardView").classList.add("hidden");$("planningSimulatorView").classList.add("hidden");$("standardReportingView").classList.remove("hidden");
   $("scenarioViewTab").classList.remove("active");$("planningBoardTab").classList.remove("active");$("planningSimulatorTab").classList.remove("active");$("reportingViewTab").classList.add("active");
   syncReportingProcessNavigation("where");
-  balanceSubview="analysis";document.querySelectorAll("[data-where-view]").forEach(function(b){b.classList.toggle("active",b.dataset.whereView==="analysis")});
+  balanceSubview="analysis";document.querySelectorAll("[data-where-view]").forEach(function(b){b.classList.toggle("active",b.dataset.whereView==="analysis")});syncWherePeriodUI();
   const u=new URL(window.location.href);u.searchParams.delete("view");u.searchParams.delete("phase");u.searchParams.delete("feature");history.replaceState(null,"",u);
 }
 
@@ -5768,6 +5792,18 @@ $("historicalYearSelect")?.addEventListener("change",function(){
   balanceHubMode="HISTORY";historicalPeriodMode="YEAR";closeBalanceNatureDrill();renderBalanceHub();
 });
 $("scenarioView").addEventListener("click",async function(e){
+  const cw=e.target.closest("[data-compare-window]");
+  if(cw){compareWindow=cw.dataset.compareWindow||"12";compareSelectedL2=null;compareDetailData=null;compareSelectedCounterparty="";renderHistoricalPeriodComparison();return}
+  const cd=e.target.closest("[data-compare-direction]");
+  if(cd){compareDirection=cd.dataset.compareDirection||"EXPENSE";compareExpandedL1.clear();compareSelectedL2=null;compareDetailData=null;compareSelectedCounterparty="";renderHistoricalPeriodComparison();return}
+  const cl1=e.target.closest("[data-compare-l1]");
+  if(cl1){const id=cl1.dataset.compareL1;if(compareExpandedL1.has(id))compareExpandedL1.delete(id);else compareExpandedL1.add(id);renderHistoricalPeriodComparison();return}
+  const cl2=e.target.closest("[data-compare-l2]");
+  if(cl2){await loadHistoricalComparisonDetail(cl2.dataset.compareL2,cl2.dataset.compareL2Name||"Categoria");return}
+  const ccp=e.target.closest("[data-compare-counterparty]");
+  if(ccp){compareSelectedCounterparty=ccp.dataset.compareCounterparty||"";renderHistoricalComparisonDetail();return}
+  const ca=e.target.closest("[data-compare-open-analysis]");
+  if(ca){showStandardReportingView();analysisViewMode=compareDirection;analysisTimeMode="HISTORY";$("analysisDirection").value=compareDirection;$("analysisPeriod").value=compareWindow==="6"?"12":compareWindow==="12"?"24":"0";analysisWorkspace=null;analysisWorkspaceKey="";syncWherePeriodUI();await loadAnalysisWorkspace(true);await openAnalysisDetail(ca.dataset.compareOpenAnalysis,"L2",null);return}
   const closeDrill=e.target.closest("[data-balance-drill-close]");if(closeDrill){closeBalanceNatureDrill();return}
   const nature=e.target.closest("[data-balance-nature]");if(nature){openBalanceNatureDrill(nature.dataset.balanceNature,null,"EROSION");return}
   const drillBack=e.target.closest("[data-balance-drill-back]");if(drillBack){balanceDrillMobileStep=balanceDrillMobileStep==="CP"?"L2":"L1";renderBalanceDrillBreakdown();return}
@@ -5777,22 +5813,8 @@ $("scenarioView").addEventListener("click",async function(e){
   const drillCp=e.target.closest("[data-balance-drill-counterparty]");if(drillCp){balanceDrillCounterparty=drillCp.dataset.balanceDrillCounterparty||"";balanceDrillMobileStep="CP";renderBalanceDrillBreakdown();$("balanceDrillMovements")?.scrollIntoView({behavior:"smooth",block:"nearest"});return}
   if(e.target.closest("[data-balance-drill-clear-counterparty]")){balanceDrillCounterparty="";renderBalanceDrillBreakdown();return}
   const openAnalysis=e.target.closest("[data-balance-open-analysis]");if(openAnalysis){await openBalanceDrillInAnalysis(openAnalysis.dataset.balanceOpenAnalysis);return}
-  const hub=e.target.closest("[data-balance-hub]");
-  if(hub){
-    balanceHubMode=hub.dataset.balanceHub||"HISTORY";
-    if(balanceHubMode==="CURRENT_YEAR")historicalPeriodMode="CURRENT_YEAR";
-    else if(balanceHubMode==="FORECAST_12")historicalPeriodMode="FORECAST_12";
-    else if(!["ROLLING_12","YEAR"].includes(historicalPeriodMode))historicalPeriodMode="ROLLING_12";
-    closeBalanceNatureDrill();renderBalanceHub();return
-  }
-  const hp=e.target.closest("[data-history-period]");
-  if(hp){balanceHubMode="HISTORY";historicalPeriodMode=hp.dataset.historyPeriod||"ROLLING_12";closeBalanceNatureDrill();renderBalanceHub();return}
   const hs=e.target.closest("[data-history-scope]");
-  if(hs){historicalScope=hs.dataset.historyScope||"ORDINARY";if(balanceDrillSelection){balanceDrillSelection.scope=historicalScope;renderBalanceDrill()}renderBalanceWaterfall();if(balanceHubMode==="HISTORY")renderHistoricalChart();return}
-  const hc=e.target.closest("[data-history-chart]");
-  if(hc){historicalChartMode=hc.dataset.historyChart||"CASHFLOW";renderHistoricalChart();return}
-  const hf=e.target.closest("[data-history-nature-focus]");
-  if(hf){historicalNatureFocus=hf.dataset.historyNatureFocus||"ALL";renderHistoricalChart();return}
+  if(hs){historicalScope=hs.dataset.historyScope||"ORDINARY";if(balanceDrillSelection){balanceDrillSelection.scope=historicalScope;renderBalanceDrill()}renderHistoricalBalance();return}
   const noteSave=e.target.closest("[data-scenario-extra-note-save]");
   if(noteSave){
     const id=noteSave.dataset.scenarioExtraNoteSave,input=$("scenarioView").querySelector('[data-scenario-extra-note="'+CSS.escape(id)+'"]');
@@ -5841,24 +5863,24 @@ $("scenarioView").addEventListener("click",async function(e){
     loadAnalysisWorkspace(true).then(function(){openAnalysisDetail(id,"L1",null)});
   }
 });
-$("analysisPeriod").onchange=function(){if(analysisTimeMode!=="HISTORY")return;const keep=captureAnalysisSelection();analysisSelectedMonth=null;analysisWorkspace=null;analysisWorkspaceKey="";loadAnalysisWorkspace(true,keep)};
+$("processContextWhere")?.addEventListener("click",function(e){const p=e.target.closest("[data-where-period]");if(p)setWherePeriod(p.dataset.wherePeriod)});
+$("compareYearB")?.addEventListener("change",function(){compareYearB=Number(this.value)||compareYearB;compareSelectedL2=null;compareDetailData=null;compareSelectedCounterparty="";renderHistoricalPeriodComparison()});
+$("analysisPeriod").onchange=function(){if(analysisTimeMode!=="HISTORY")return;syncWherePeriodUI();const keep=captureAnalysisSelection();analysisSelectedMonth=null;analysisWorkspace=null;analysisWorkspaceKey="";loadAnalysisWorkspace(true,keep)};
 $("analysisProjectionView").onchange=function(){analysisProjectionView=this.value||"CALENDAR";analysisSelectedMonth=null;renderAnalysis()};
 $("analysisControls").addEventListener("click",function(e){
   const time=e.target.closest("[data-analysis-time]");
   if(time){
     const next=time.dataset.analysisTime;if(next===analysisTimeMode||analysisViewMode==="BALANCE"&&next==="PROJECTION")return;
     analysisTimeMode=next;analysisSelectedMonth=null;
-    if(next==="PROJECTION")loadAnalysisProjection(false);else renderAnalysis();
+    if(next==="PROJECTION")loadAnalysisProjection(false);else renderAnalysis();syncWherePeriodUI();
     return;
   }
   const view=e.target.closest("[data-analysis-view]");
   if(view){
     const next=view.dataset.analysisView;if(next===analysisViewMode)return;
     analysisViewMode=next;if(next==="BALANCE")analysisTimeMode="HISTORY";
-    $("analysisDirection").value=analysisCurrentDirection();resetAnalysisSelection();analysisWorkspace=null;analysisWorkspaceKey="";loadAnalysisWorkspace(true);return;
+    $("analysisDirection").value=analysisCurrentDirection();resetAnalysisSelection();analysisWorkspace=null;analysisWorkspaceKey="";syncWherePeriodUI();loadAnalysisWorkspace(true);return;
   }
-  if(e.target.closest("#analysisExtraordinaryBtn")){$("analysisExtraordinaryInline").classList.toggle("hidden");return}
-  if(e.target.closest("[data-close-analysis-extra]")){$("analysisExtraordinaryInline").classList.add("hidden");return}
 });
 $("collapseAll").onclick=function(){
   if(analysisWorkspace){const prefix=analysisCurrentDirection()==="INCOME"?"AI:":"AE:",rows=analysisTimeMode==="PROJECTION"&&projectionDataFor(analysisCurrentDirection())?projectionHierarchyRows(projectionDataFor(analysisCurrentDirection())):(analysisWorkspace.rows||[]);rows.filter(function(r){return r.level==="L1"}).forEach(function(r){collapsedL1.add(prefix+r.category_id)});renderAnalysisMaster()}
@@ -5958,7 +5980,7 @@ $("balanceList").addEventListener("click",async function(e){
   finally{setBusy(b,false)}
 });
 
-$("extraordinaryContent").addEventListener("click",async function(e){
+$("extraordinaryContent")?.addEventListener("click",async function(e){
   const b=e.target.closest("[data-extra-id]");if(!b)return;
   const add=b.dataset.extraMode==="add";setBusy(b,true,add?"Escludo":"Reincludo");
   try{
