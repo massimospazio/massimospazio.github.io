@@ -4034,7 +4034,7 @@ function balanceProjectionDirectionTotal(data,actualMonths,forecastMonths){
 }
 function balanceFlowModel(mode){
   const m=mode||historicalPeriodMode;
-  if(m==="ROLLING_12"||m==="YEAR"){
+  if(["ROLLING_6","ROLLING_12","ROLLING_24","ALL","YEAR"].includes(m)){
     const t=historicalTotalsFor(m),n=historicalNatureTotals(m,"ORDINARY"),inv=historicalInvestmentTotals(m,"ORDINARY");
     const other=Math.max(0,t.ordinaryOut-n.MANDATORY-n.NECESSARY-n.DISCRETIONARY-n.UNCLASSIFIED);
     return {mode:m,label:historicalPeriodLabel(m),historical:true,
@@ -4600,9 +4600,15 @@ function comparisonMetricCard(label,a,b,kind){
   return '<div class="historical-compare-kpi"><div class="label">'+esc(label)+'</div><div class="values"><span>Periodo A<strong>'+money(a)+'</strong></span><span>Periodo B<strong>'+money(b)+'</strong></span><b class="delta '+tone+'">'+comparisonSigned(d)+(p===null?"":' · '+(p>0?"+":"")+p.toLocaleString("it-IT",{maximumFractionDigits:1})+"%")+'</b></div></div>';
 }
 function comparisonTopInsight(groups,direction){
-  const changed=groups.filter(function(x){return Math.abs(x.b-x.a)>.5}).slice(0,3);
-  if(!changed.length)return "I due periodi sono sostanzialmente stabili sulle categorie "+(direction==="EXPENSE"?"di spesa":"di entrata")+".";
-  return changed.map(function(x){const d=x.b-x.a;return '<strong>'+esc(x.name)+'</strong> '+comparisonSigned(d)}).join(" · ");
+  const changed=groups.filter(function(x){return Math.abs(x.b-x.a)>.5});
+  if(!changed.length)return "Categorie sostanzialmente stabili.";
+  const effect=function(x){const d=x.b-x.a;return direction==="EXPENSE"?-d:d};
+  const good=changed.filter(function(x){return effect(x)>0}).sort(function(a,b){return effect(b)-effect(a)}).slice(0,2);
+  const bad=changed.filter(function(x){return effect(x)<0}).sort(function(a,b){return effect(a)-effect(b)}).slice(0,2);
+  const fmt=function(rows){return rows.map(function(x){return '<strong>'+esc(x.name)+'</strong> '+comparisonSigned(x.b-x.a)}).join(" · ")};
+  return (good.length?'<span class="positive">Possibili buone pratiche: '+fmt(good)+'</span>':"")+
+    (good.length&&bad.length?" · ":"")+
+    (bad.length?'<span class="negative">Da capire: '+fmt(bad)+'</span>':"");
 }
 function renderHistoricalComparisonDetail(){
   const box=$("historicalComparisonDetail");if(!box)return;
@@ -4610,9 +4616,10 @@ function renderHistoricalComparisonDetail(){
   box.classList.remove("hidden");
   if(compareDetailLoading){box.innerHTML='<div class="analysis-loading"><span class="spinner"></span>Carico controparti e movimenti…</div>';return}
   if(!compareDetailData){box.innerHTML='<div class="muted small">Dettaglio non disponibile.</div>';return}
+  if(compareDetailData.error){box.innerHTML='<div class="msg error">'+esc(compareDetailData.error)+'</div>';return}
   const sets=comparisonMonthSets(),aSet=new Set(sets.a),bSet=new Set(sets.b);
   let moves=(compareDetailData.movements||[]).filter(function(x){
-    const inScope=historicalScope==="TOTAL"?!0:!x.is_extraordinary;
+    const inScope=historicalScope==="TOTAL"||!x.is_extraordinary;
     return inScope&&(aSet.has(String(x.month_start))||bSet.has(String(x.month_start)));
   });
   const groups=new Map();
@@ -4655,7 +4662,7 @@ function renderHistoricalPeriodComparison(){
     comparisonMetricCard("Risparmio",a.savings,b.savings,"INCOME")+
     comparisonMetricCard("Disponibile finale",a.available,b.available,"INCOME");
   const availableDelta=b.available-a.available,availTone=availableDelta>=0?"migliora":"peggiora";
-  $("historicalComparisonInsight").innerHTML='<strong>Il disponibile '+availTone+' di '+comparisonSigned(availableDelta)+'.</strong> Principali variazioni '+(compareDirection==="EXPENSE"?"nelle uscite":"nelle entrate")+': '+comparisonTopInsight(groups,compareDirection)+' · Copertura dati A '+a.covered+'/'+a.months+' mesi, B '+b.covered+'/'+b.months+'.';
+  $("historicalComparisonInsight").innerHTML='<strong>Il disponibile '+availTone+' di '+comparisonSigned(availableDelta)+'.</strong> '+comparisonTopInsight(groups,compareDirection)+' · <span class="muted">Copertura dati A '+a.covered+'/'+a.months+' mesi, B '+b.covered+'/'+b.months+'.</span>';
   $("historicalComparisonContributorsTitle").textContent=compareDirection==="EXPENSE"?"Cosa ha mosso le uscite?":"Cosa ha mosso le entrate?";
   let html='<div style="overflow:auto"><table class="historical-compare-table-rich"><thead><tr><th>Categoria</th><th>Periodo A</th><th>Periodo B</th><th>Δ €</th><th>Δ %</th><th>Effetto sul margine</th></tr></thead><tbody>';
   groups.forEach(function(g){
@@ -5308,11 +5315,13 @@ function historicalModeFromPeriodValue(value){
 }
 async function setWherePeriod(value){
   const v=["0","6","12","24"].includes(String(value))?String(value):"12";
+  historicalPeriodMode=historicalModeFromPeriodValue(v);
+  if($("analysisPeriod"))$("analysisPeriod").value=v;
   if(balanceSubview==="analysis"){
     if(analysisTimeMode!=="HISTORY")return;
-    const keep=captureAnalysisSelection();$("analysisPeriod").value=v;analysisSelectedMonth=null;analysisWorkspace=null;analysisWorkspaceKey="";syncWherePeriodUI();await loadAnalysisWorkspace(true,keep);return;
+    const keep=captureAnalysisSelection();analysisSelectedMonth=null;analysisWorkspace=null;analysisWorkspaceKey="";syncWherePeriodUI();await loadAnalysisWorkspace(true,keep);return;
   }
-  historicalPeriodMode=historicalModeFromPeriodValue(v);balanceHubMode="HISTORY";closeBalanceNatureDrill();renderBalanceHub();syncWherePeriodUI();
+  balanceHubMode="HISTORY";closeBalanceNatureDrill();renderBalanceHub();syncWherePeriodUI();
 }
 function applyBalanceSubview(){
   const flow=balanceSubview==="flow",cash=balanceSubview==="cashflow",compare=balanceSubview==="compare";
@@ -5865,7 +5874,7 @@ $("scenarioView").addEventListener("click",async function(e){
 });
 $("processContextWhere")?.addEventListener("click",function(e){const p=e.target.closest("[data-where-period]");if(p)setWherePeriod(p.dataset.wherePeriod)});
 $("compareYearB")?.addEventListener("change",function(){compareYearB=Number(this.value)||compareYearB;compareSelectedL2=null;compareDetailData=null;compareSelectedCounterparty="";renderHistoricalPeriodComparison()});
-$("analysisPeriod").onchange=function(){if(analysisTimeMode!=="HISTORY")return;syncWherePeriodUI();const keep=captureAnalysisSelection();analysisSelectedMonth=null;analysisWorkspace=null;analysisWorkspaceKey="";loadAnalysisWorkspace(true,keep)};
+$("analysisPeriod").onchange=function(){if(analysisTimeMode!=="HISTORY")return;historicalPeriodMode=historicalModeFromPeriodValue(this.value);syncWherePeriodUI();const keep=captureAnalysisSelection();analysisSelectedMonth=null;analysisWorkspace=null;analysisWorkspaceKey="";loadAnalysisWorkspace(true,keep)};
 $("analysisProjectionView").onchange=function(){analysisProjectionView=this.value||"CALENDAR";analysisSelectedMonth=null;renderAnalysis()};
 $("analysisControls").addEventListener("click",function(e){
   const time=e.target.closest("[data-analysis-time]");
