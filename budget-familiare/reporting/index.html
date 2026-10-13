@@ -1362,7 +1362,6 @@ button,input,select{font:inherit}
         <div class="analysis-v26-toolbar">
           <div class="analysis-v26-left">
             <div class="mode-toggle analysis-scope-toggle">
-              <button class="btn ghost compact" type="button" data-analysis-view="BALANCE">Bilancio</button>
               <button class="btn compact" type="button" data-analysis-view="EXPENSE">Spese</button>
               <button class="btn ghost compact" type="button" data-analysis-view="INCOME">Entrate</button>
             </div>
@@ -3793,7 +3792,7 @@ async function setAnalysisMovementForecastExclusion(transactionId,exclude,btn){
     analysisWorkspace=null;analysisWorkspaceKey="";
     await loadAnalysisWorkspace(true,keep);
     if(month){analysisSelectedMonth=month;renderAnalysisMovements()}
-    renderProjection();renderExtraordinary();
+    renderProjection();
     msg($("analysisStatus"),exclude
       ?"Movimento escluso dalla base di previsione. Resta incluso nei consuntivi reali."
       :"Movimento reincluso nella base di previsione.");
@@ -3814,7 +3813,7 @@ async function saveAnalysisExtraordinaryNote(transactionId,note,btn){
     if(rep)rep.note=clean;
     const sx=(scenarioExtraordinaryMovements||[]).find(function(x){return String(x.transaction_id)===String(transactionId)});
     if(sx)sx.note=clean;
-    renderAnalysisMovements();renderExtraordinary();
+    renderAnalysisMovements();
     msg($("analysisStatus"),"Nota dello straordinario salvata.");
   }catch(err){
     msg($("analysisStatus"),err.message||"Errore salvataggio nota",true);
@@ -3822,26 +3821,6 @@ async function saveAnalysisExtraordinaryNote(transactionId,note,btn){
   }
 }
 function openCategoryDetail(categoryId,direction,selectedMonth){planMode="ANALYSIS";analysisViewMode=direction==="INCOME"?"INCOME":"EXPENSE";$("analysisDirection").value=analysisCurrentDirection();renderMode();if(!analysisWorkspace||analysisWorkspaceKey!==analysisWorkspaceCacheKey())loadAnalysisWorkspace(true).then(function(){openAnalysisDetail(categoryId,"L2",selectedMonth||null)});else openAnalysisDetail(categoryId,"L2",selectedMonth||null)}
-
-function renderExtraordinary(){
-  const flagged=report.extraordinary_transactions||[];
-  const volume=flagged.reduce(function(sum,x){return sum+Math.abs(num(x.amount))},0);
-  if($("extraordinarySummary"))$("extraordinarySummary").textContent=flagged.length
-    ?"· "+flagged.length+" "+(flagged.length===1?"movimento":"movimenti")+" · "+money(volume)
-    :"· nessun movimento";
-  if(!$("extraordinaryContent"))return;
-  if(!flagged.length){
-    $("extraordinaryContent").innerHTML='<div class="muted small" style="margin-top:8px">Nessun movimento escluso dalla previsione.</div>';
-    return;
-  }
-  $("extraordinaryContent").innerHTML='<div style="overflow:auto"><table class="extra-table"><thead><tr><th>Data</th><th>Movimento</th><th>Tipo</th><th>Importo</th><th></th></tr></thead><tbody>'+
-    flagged.map(function(x){
-      const label=x.counterparty||x.category||x.transaction_type||"Movimento";
-      const state=x.economic_exceptional?"E · Eccezionale":x.forecast_excluded?"Escluso dal forecast":"Escluso dalla previsione";
-      const action=x.forecast_excluded?'<button class="btn ghost compact" data-extra-id="'+esc(x.id)+'" data-extra-mode="remove">Reincludi nel forecast</button>':'<span class="muted small">Gestisci la temporalità dal movimento</span>';
-      return "<tr><td>"+dateLabel(x.transaction_date)+"</td><td>"+esc(label)+'<div class="plan-sub">'+esc(x.note||state)+"</div></td><td>"+esc(state)+'</td><td class="amount '+(num(x.amount)>=0?"positive":"negative")+'">'+money(x.amount)+'</td><td>'+action+'</td></tr>';
-    }).join("")+"</tbody></table></div>";
-}
 
 function scenarioDefinition(data){
   if(!data)return null;
@@ -5123,7 +5102,7 @@ async function saveScenarioExtraordinaryNote(transactionId,note,btn){
     if(analysisDetailData){
       const movement=(analysisDetailData.movements||[]).find(function(x){return String(x.id)===String(transactionId)});if(movement)movement.extraordinary_note=clean;
     }
-    renderScenario();renderExtraordinary();
+    renderScenario();
     msg($("scenarioStatus"),"Nota dello straordinario salvata.");
   }catch(err){
     msg($("scenarioStatus"),err.message||"Errore salvataggio nota",true);
@@ -5683,7 +5662,7 @@ function renderProjection(){
 
 function renderMode(){renderAnalysis()}
 function renderAll(){
-  renderBalances();renderAnalysis();renderExtraordinary();
+  renderBalances();renderAnalysis();
   if(scenarioVisible)loadScenarioData(false);
   if(planningBoardVisible||planningSimulatorVisible)loadPlanningBoard(false);
 }
@@ -5986,16 +5965,6 @@ $("balanceList").addEventListener("click",async function(e){
     renderBalances();if(scenarioVisible)renderScenario();
     msg($("balanceMsg"),"Saldo aggiornato. Lo Scenario usa subito il nuovo valore.");
   }catch(err){msg($("balanceMsg"),err.message||"Errore salvataggio",true)}
-  finally{setBusy(b,false)}
-});
-
-$("extraordinaryContent")?.addEventListener("click",async function(e){
-  const b=e.target.closest("[data-extra-id]");if(!b)return;
-  const add=b.dataset.extraMode==="add";setBusy(b,true,add?"Escludo":"Reincludo");
-  try{
-    await rpc("dashboard_reporting_set_forecast_exclusion_v1",{p_transaction_id:b.dataset.extraId,p_exclude:add});
-    await loadReport();
-  }catch(err){msg($("extraordinaryMsg"),err.message||"Errore aggiornamento",true)}
   finally{setBusy(b,false)}
 });
 
