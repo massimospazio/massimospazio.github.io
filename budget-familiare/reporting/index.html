@@ -4135,14 +4135,21 @@ function historicalKpiCard(label,value,sub,tone,info){
 }
 function renderHistoricalKpis(){
   const t=balanceFlowModel(historicalPeriodMode);if(!t)return;
-  const months=Math.max(1,historicalMonthsFor(historicalPeriodMode).length);
-  $("historicalBalanceKpis").innerHTML=
-    '<div class="historical-kpi income"><div class="label">Entrate '+historicalInfo("Entrate economiche del periodo selezionato. Giroconti interni esclusi.")+'</div><div class="value positive">'+money(t.income)+'</div><div class="sub">Ø '+money(t.income/months)+'/mese</div></div>'+
-    '<div class="historical-kpi expense"><div class="label">Uscite operative '+historicalInfo("Spese di gestione. Gli investimenti patrimoniali non sono consumo e restano fuori da questo KPI.")+'</div><div class="value negative">'+money(t.operatingOut)+'</div><div class="sub">Ø '+money(t.operatingOut/months)+'/mese</div></div>'+
-    historicalKpiCard("Margine strutturale",t.income-t.mandatory-t.necessary-t.unclassified,
-      "Entrate − O − N − NC","balance","Capacità di generare margine prima di discrezionali e risparmio.")+
-    historicalKpiCard("Disponibile finale",t.available,
-      "dopo spese e risparmio","margin","Quanto resta della gestione corrente dopo uscite operative e allocazioni di risparmio finanziate dal surplus.");
+  const months=Math.max(1,historicalMonthsFor(historicalPeriodMode).length),income=Math.max(0,num(t.income));
+  const pct=function(v){return income>0?(num(v)*100/income).toLocaleString("it-IT",{maximumFractionDigits:1})+"% delle entrate":"—"};
+  const margin=t.income-t.mandatory-t.necessary-t.unclassified;
+  const final=t.available+(historicalScope==="TOTAL"?t.extraNet:0);
+  if(balanceSubview==="flow"){
+    $("historicalBalanceKpis").innerHTML=
+      historicalKpiCard("Margine strutturale",margin,pct(margin),"balance","Quanto resta dopo Obbligatorie, Necessarie e NC, prima delle Discrezionali e del risparmio.")+
+      historicalKpiCard("Disponibile finale",final,pct(final),"margin","Quanto resta dopo spese operative, risparmio e, nel perimetro Totale, eventi eccezionali.");
+  }else{
+    $("historicalBalanceKpis").innerHTML=
+      '<div class="historical-kpi income"><div class="label">Entrate '+historicalInfo("Entrate economiche del periodo selezionato. Giroconti interni esclusi.")+'</div><div class="value positive">'+money(t.income)+'</div><div class="sub">Ø '+money(t.income/months)+'/mese</div></div>'+
+      '<div class="historical-kpi expense"><div class="label">Uscite operative '+historicalInfo("Spese di gestione. Gli investimenti patrimoniali non sono consumo.")+'</div><div class="value negative">'+money(t.operatingOut)+'</div><div class="sub">Ø '+money(t.operatingOut/months)+'/mese</div></div>'+
+      historicalKpiCard("Saldo operativo",t.operatingNet,pct(t.operatingNet),"balance","Entrate meno uscite operative prima delle allocazioni di risparmio.")+
+      historicalKpiCard("Disponibile finale",final,pct(final),"margin","Risultato della gestione corrente nel periodo.");
+  }
   if($("historicalBalanceStatus"))$("historicalBalanceStatus").innerHTML='<div class="historical-period-chip">'+esc(t.label)+'</div>';
 }
 function renderHistoricalStructural(){
@@ -4401,20 +4408,17 @@ async function openBalanceDrillInAnalysis(categoryId){
 }
 
 function renderBalanceFlowSide(){
-  const t=balanceFlowModel(historicalPeriodMode);if(!t)return;
-  const forecastNote=t.historical?"":"Valori futuri basati sul piano di previsione corrente.";
-  $("balanceFlowSide").innerHTML=
-    '<div class="balance-side-card asset"><div class="k">Investimenti da patrimonio '+historicalInfo("Riallocazioni di patrimonio pregresso: visibili ma fuori dal flusso economico corrente.")+'</div><div class="v">'+money(t.priorWealthInvestments)+'</div><div class="s">non riducono il disponibile</div></div>'+
-    '<div class="balance-side-card saving"><div class="k">Risparmio / investimenti da surplus</div><div class="v">'+money(t.savings)+'</div><div class="s">PAC + investimenti finanziati dal surplus corrente</div></div>'+
-    '<div class="balance-side-card extra"><div class="k">Impatto eventi eccezionali</div><div class="v '+(t.extraNet>=0?"positive":"negative")+'">'+historicalSigned(t.extraNet)+'</div><div class="s">Entrate +'+money(t.extraIncome)+' · Uscite −'+money(t.extraOut)+'</div></div>'+
-    (forecastNote?'<div class="notice">'+esc(forecastNote)+'</div>':'');
+  const t=balanceFlowModel(historicalPeriodMode),box=$("balanceOutsideFlow");if(!t||!box)return;
+  if(t.priorWealthInvestments<=.5){box.classList.add("hidden");box.innerHTML="";return}
+  box.classList.remove("hidden");
+  box.innerHTML='<span class="icon" aria-hidden="true">◈</span><span class="copy"><strong>Fuori dal flusso corrente · investimenti da patrimonio pregresso</strong><span>Riallocazione patrimoniale: non riduce il disponibile prodotto dalla gestione del periodo.</span></span><span class="value">'+money(t.priorWealthInvestments)+'</span>';
 }
 function renderBalanceErosion(){
   const t=balanceFlowModel(historicalPeriodMode);if(!t)return;
-  const base=Math.max(1,t.income);
+  const base=Math.max(1,t.income),margin=t.income-t.mandatory-t.necessary-t.unclassified,final=t.available+(historicalScope==="TOTAL"?t.extraNet:0);
   const parts=[
     ["o","Obbligatorie",t.mandatory,"MANDATORY"],["n","Necessarie",t.necessary,"NECESSARY"],["nc","NC",t.unclassified,"UNCLASSIFIED"],["d","Discrezionali",t.discretionary,"DISCRETIONARY"],
-    ["other","Altre operative",t.otherOperating,"UNKNOWN"],["save","Risparmio",t.savings,"INVESTMENT"],["free","Residuo",Math.max(0,t.available),null]
+    ["other","Altre operative",t.otherOperating,"UNKNOWN"],["save","Risparmio",t.savings,"INVESTMENT"],["free","Disponibile",Math.max(0,t.available),null]
   ];
   const visible=parts.filter(function(x){return x[2]>.5});
   const temporalCells=visible.map(function(x){
@@ -4424,24 +4428,32 @@ function renderBalanceErosion(){
     return '<span class="balance-erode-temporal-cell '+x[0]+'" style="width:'+width+'%" title="'+esc(x[1]+' · '+balanceTemporalTitle(tb))+'">'+balanceTemporalPiecesHtml(tb)+'</span>';
   }).join("");
   const temporal='<div class="balance-erode-temporal-row">'+temporalCells+'</div><div class="balance-erode-temporal-legend"><strong>Temporalità per segmento</strong><span><i></i>R ricorrente</span><span class="p"><i></i>P occasionale / programmabile</span><span class="e"><i></i>E eccezionale</span><span class="x"><i></i>X non applicabile</span><span class="u"><i></i>? n.d.</span></div>';
+  const essential=t.mandatory+t.necessary,essentialPct=essential*100/base,ratio=t.mandatory>0?t.necessary/t.mandatory:null;
+  const discretionaryOnMargin=margin>0?t.discretionary*100/margin:null,unclassifiedPct=t.unclassified*100/base;
+  const savingPct=t.savings*100/base,finalPct=final*100/base;
+  const segmentHtml=visible.map(function(x){
+    const width=Math.max(.7,x[2]*100/base).toFixed(2),title=esc(x[1]+' · '+money(x[2])+' · '+(x[2]*100/base).toLocaleString("it-IT",{maximumFractionDigits:1})+'% delle entrate');
+    return x[3]
+      ?'<button type="button" class="balance-erode-seg '+x[0]+'" data-balance-nature="'+esc(x[3])+'" style="width:'+width+'%" title="'+title+'" aria-label="'+title+'"></button>'
+      :'<span class="balance-erode-seg '+x[0]+'" style="width:'+width+'%" title="'+title+'"></span>';
+  }).join("");
   $("balanceErosionWidget").innerHTML=
-    '<div class="balance-erode-head"><div><strong>Dove vanno le entrate?</strong><div class="muted small">Natura delle spese · la linea sottile mostra la Temporalità</div></div><b>'+historicalSigned(t.available)+'</b></div>'+
-    '<div class="balance-erode-bar">'+visible.map(function(x){return '<span class="balance-erode-seg '+x[0]+'" style="width:'+Math.max(.7,x[2]*100/base).toFixed(2)+'%" title="'+esc(x[1])+' · '+money(x[2])+'"></span>'}).join("")+'</div>'+
-    temporal+
-    '<div class="balance-erode-legend">'+visible.map(function(x){
-      const pct=x[2]*100/base;
-      return x[3]
-        ?'<button type="button" class="balance-erode-chip" data-balance-nature="'+esc(x[3])+'"><i class="balance-erode-seg '+x[0]+'"></i><span class="name">'+esc(x[1])+'</span><span class="fig">'+money(x[2])+'</span><span class="pct">'+pct.toLocaleString("it-IT",{maximumFractionDigits:1})+'% delle entrate</span></button>'
-        :'<span class="balance-erode-chip"><i class="balance-erode-seg '+x[0]+'"></i><span class="name">'+esc(x[1])+'</span><span class="fig">'+money(x[2])+'</span><span class="pct">'+pct.toLocaleString("it-IT",{maximumFractionDigits:1})+'% delle entrate</span></span>';
-    }).join("")+'</div>';
+    '<div class="balance-erode-head"><div><strong>Dove vanno le entrate?</strong><div class="muted small">'+(historicalScope==="TOTAL"?"Struttura ordinaria; l’impatto degli eventi E è mostrato nel waterfall.":"Quota delle entrate assorbita dalle componenti della gestione ordinaria.")+'</div></div></div>'+
+    '<div class="balance-erode-bar">'+segmentHtml+'</div>'+temporal+
+    '<div class="balance-erode-insights">'+
+      '<div class="balance-erode-insight structural"><span class="k">Struttura essenziale</span><strong>O + N = '+essentialPct.toLocaleString("it-IT",{maximumFractionDigits:1})+'% delle entrate</strong><small>'+(ratio===null?"Rapporto O/N non disponibile.":"Le Necessarie valgono "+ratio.toLocaleString("it-IT",{maximumFractionDigits:1})+"× le Obbligatorie.")+'</small></div>'+
+      '<div class="balance-erode-insight margin"><span class="k">Uso del margine</span><strong>'+(discretionaryOnMargin===null?"Margine strutturale non positivo":"D = "+discretionaryOnMargin.toLocaleString("it-IT",{maximumFractionDigits:1})+"% del margine strutturale")+'</strong><small>'+(t.unclassified>.5?"NC ancora pari al "+unclassifiedPct.toLocaleString("it-IT",{maximumFractionDigits:1})+"% delle entrate.":"Nessuna quota NC significativa nel periodo.")+'</small></div>'+
+      '<div class="balance-erode-insight outcome"><span class="k">Esito del periodo</span><strong>Risparmio '+savingPct.toLocaleString("it-IT",{maximumFractionDigits:1})+'% · disponibile '+finalPct.toLocaleString("it-IT",{maximumFractionDigits:1})+'%</strong><small>'+(historicalScope==="TOTAL"&&Math.abs(t.extraNet)>.5?"Eventi E: "+historicalSigned(t.extraNet)+" sul risultato finale.":"Percentuali calcolate sulle entrate del periodo.")+'</small></div>'+
+    '</div>'+
+    '<div class="balance-erode-drill-note">Clicca un segmento della barra o una voce del waterfall per approfondire L1 → L2 → controparti → movimenti.</div>';
 }
 function renderBalanceWaterfall(){
   const t=balanceFlowModel(historicalPeriodMode);if(!t)return;
   if(balanceWaterfallChart){balanceWaterfallChart.destroy();balanceWaterfallChart=null}
   const margin=t.income-t.mandatory-t.necessary-t.unclassified;
-  const final=t.available+(historicalScope==="TOTAL"?t.extraNet:0);
-  const labels=["Entrate","Obbligatorie","Necessarie","NC","Margine strutturale","Discrezionali"].concat(t.otherOperating>.5?["Altre operative"]:[]).concat(["Risparmio","Disponibile"]);
-  const drillKeys=[null,"MANDATORY","NECESSARY","UNCLASSIFIED",null,"DISCRETIONARY"].concat(t.otherOperating>.5?["UNKNOWN"]:[]).concat(["INVESTMENT",null]);
+  const showExtra=historicalScope==="TOTAL"&&Math.abs(t.extraNet)>.5;
+  const labels=["Entrate","Obbligatorie","Necessarie","NC","Margine strutturale","Discrezionali"].concat(t.otherOperating>.5?["Altre operative"]:[]).concat(["Risparmio"]).concat(showExtra?["Eventi E"]:[]).concat(["Disponibile"]);
+  const drillKeys=[null,"MANDATORY","NECESSARY","UNCLASSIFIED",null,"DISCRETIONARY"].concat(t.otherOperating>.5?["UNKNOWN"]:[]).concat(["INVESTMENT"]).concat(showExtra?[null]:[]).concat([null]);
   const data=[],colors=[],displayValues=[];
   let cur=t.income;
   data.push([0,t.income]);colors.push("rgba(14,168,122,.88)");displayValues.push(t.income);
@@ -4452,48 +4464,47 @@ function renderBalanceWaterfall(){
   cur-=t.discretionary;data.push([cur,cur+t.discretionary]);colors.push("rgba(139,92,246,.84)");displayValues.push(-t.discretionary);
   if(t.otherOperating>.5){cur-=t.otherOperating;data.push([cur,cur+t.otherOperating]);colors.push("rgba(148,163,184,.86)");displayValues.push(-t.otherOperating)}
   cur-=t.savings;data.push([cur,cur+t.savings]);colors.push("rgba(6,182,212,.90)");displayValues.push(-t.savings);
+  if(showExtra){
+    const next=cur+t.extraNet;
+    data.push(t.extraNet>=0?[cur,next]:[next,cur]);
+    colors.push(t.extraNet>=0?"rgba(16,185,129,.76)":"rgba(239,68,68,.76)");
+    displayValues.push(t.extraNet);cur=next;
+  }
+  const final=cur;
   data.push([0,final]);colors.push(final>=0?"rgba(34,169,107,.90)":"rgba(185,28,28,.86)");displayValues.push(final);
 
   $("balanceWaterfallSubtitle").textContent=historicalScope==="TOTAL"
-    ?"Totale incl. eventi E · Eccezionale."
+    ?"Totale incl. eventi E · l’impatto eccezionale è rappresentato come passaggio separato."
     :"Lettura ordinaria · eventi E esclusi.";
   $("balanceWaterfallMode").textContent=t.label;
-  $("balanceWaterfallNote").textContent=t.priorWealthInvestments>.5
-    ?"Gli investimenti da patrimonio ("+money(t.priorWealthInvestments)+") sono mostrati a lato e non erodono il disponibile prodotto nel periodo."
-    :"Giroconti interni e riallocazioni patrimoniali restano fuori dal flusso economico.";
+  $("balanceWaterfallNote").textContent="Le riallocazioni da patrimonio pregresso non fanno parte del flusso prodotto nel periodo e, se presenti, sono riportate separatamente sotto il grafico.";
 
   const valuePlugin={
     id:"balanceWaterfallValueLabels",
     afterDatasetsDraw:function(chart){
       const ctx=chart.ctx,meta=chart.getDatasetMeta(0);
-      ctx.save();
-      ctx.textAlign="center";ctx.textBaseline="bottom";
+      ctx.save();ctx.textAlign="center";ctx.textBaseline="bottom";
       meta.data.forEach(function(el,i){
-        const v=displayValues[i],isTotal=(i===0||labels[i]==="Margine strutturale"||labels[i]==="Disponibile");
-        const props=el.getProps(["x","y","base"],true);
-        const top=Math.min(props.y,props.base);
+        const v=displayValues[i],label=labels[i],isTotal=(i===0||label==="Margine strutturale"||label==="Disponibile");
+        const props=el.getProps(["x","y","base"],true),top=Math.min(props.y,props.base);
         ctx.font=(isTotal?"850 ":"800 ")+(isTotal?"16px":"14px")+' "Segoe UI",system-ui,sans-serif';
-        if(labels[i]==="Entrate"||labels[i]==="Disponibile")ctx.fillStyle="#047857";
-        else if(labels[i]==="Margine strutturale")ctx.fillStyle="#1d4ed8";
-        else ctx.fillStyle=v<0?"#c02636":"#334155";
-        const txt=(v<0?"−":v>0&&labels[i]!=="Entrate"&&labels[i]!=="Margine strutturale"&&labels[i]!=="Disponibile"?"+":"")+money(Math.abs(v));
+        if(label==="Entrate"||label==="Disponibile")ctx.fillStyle="#047857";
+        else if(label==="Margine strutturale")ctx.fillStyle="#1d4ed8";
+        else ctx.fillStyle=v<0?"#c02636":label==="Eventi E"?"#047857":"#334155";
+        const txt=(v<0?"−":v>0&&label!=="Entrate"&&label!=="Margine strutturale"&&label!=="Disponibile"?"+":"")+money(Math.abs(v));
         ctx.fillText(txt,props.x,Math.max(18,top-7));
       });
       ctx.restore();
     }
   };
-
   balanceWaterfallChart=new Chart($("balanceWaterfallChart"),{
-    type:"bar",
-    plugins:[valuePlugin],
+    type:"bar",plugins:[valuePlugin],
     data:{labels:labels,datasets:[{data:data,backgroundColor:colors,borderWidth:0,borderRadius:5,barPercentage:.66,categoryPercentage:.82}]},
     options:{
       responsive:true,maintainAspectRatio:false,layout:{padding:{top:34,left:4,right:4,bottom:0}},
       onHover:function(evt,els,chart){const hit=chart.getElementsAtEventForMode(evt,"nearest",{intersect:true},true);chart.canvas.style.cursor=hit.length&&drillKeys[hit[0].index]?"pointer":"default"},
       onClick:function(evt,els,chart){const hit=chart.getElementsAtEventForMode(evt,"nearest",{intersect:true},true);if(!hit.length)return;const key=drillKeys[hit[0].index];if(key)openBalanceNatureDrill(key,null,"WATERFALL")},
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){
-        return (displayValues[ctx.dataIndex]<0?"−":"")+money(Math.abs(displayValues[ctx.dataIndex]));
-      }}}},
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return (displayValues[ctx.dataIndex]<0?"−":"")+money(Math.abs(displayValues[ctx.dataIndex]))}}}},
       scales:{
         x:{grid:{display:false},border:{display:false},ticks:{color:"#536176",font:{size:10.5,weight:"600"},maxRotation:0,minRotation:0,padding:6}},
         y:{beginAtZero:true,border:{display:false},ticks:{color:"#8793a5",callback:function(v){return money(v)},font:{size:9.5},padding:5,maxTicksLimit:6},grid:{color:"rgba(148,163,184,.12)",drawTicks:false}}
@@ -4721,7 +4732,7 @@ function renderHistoricalBalance(){
   if(!Array.isArray(scenarioActualRows)){msg($("historicalBalanceStatus"),"Carico il bilancio…");return}
   if(!["ROLLING_6","ROLLING_12","ROLLING_24","ALL","YEAR"].includes(historicalPeriodMode))historicalPeriodMode="ROLLING_12";
   balanceHubMode="HISTORY";historicalChartMode="CASHFLOW";
-  renderHistoricalKpis();renderBalanceWaterfall();renderHistoricalChart();renderHistoricalNatureComposition();renderHistoricalPeriodComparison();applyBalanceSubview();syncWherePeriodUI();
+  renderHistoricalKpis();renderBalanceWaterfall();renderHistoricalChart();renderHistoricalPeriodComparison();applyBalanceSubview();syncWherePeriodUI();
 }
 function renderBalanceHub(){
   balanceHubMode="HISTORY";
@@ -5280,11 +5291,16 @@ function wherePeriodValue(){
   return historicalPeriodMode==="ROLLING_6"?"6":historicalPeriodMode==="ROLLING_24"?"24":historicalPeriodMode==="ALL"?"0":"12";
 }
 function syncWherePeriodUI(){
-  const bar=$("wherePeriodBar");if(!bar)return;
-  const hide=balanceSubview==="compare"||(balanceSubview==="analysis"&&analysisTimeMode==="PROJECTION");
-  bar.classList.toggle("hidden",hide);
+  const bar=$("wherePeriodBar"),periodGroup=$("wherePeriodGroup"),scopeGroup=$("whereScopeGroup");if(!bar)return;
+  const projection=balanceSubview==="analysis"&&analysisTimeMode==="PROJECTION";
+  const hidePeriod=balanceSubview==="compare"||projection;
+  const hideScope=balanceSubview==="analysis";
+  periodGroup?.classList.toggle("hidden",hidePeriod);
+  scopeGroup?.classList.toggle("hidden",hideScope);
+  bar.classList.toggle("hidden",hidePeriod&&hideScope);
   const value=wherePeriodValue();
   document.querySelectorAll("[data-where-period]").forEach(function(b){b.classList.toggle("active",b.dataset.wherePeriod===value)});
+  document.querySelectorAll("[data-history-scope]").forEach(function(b){b.classList.toggle("active",b.dataset.historyScope===historicalScope)});
 }
 function historicalModeFromPeriodValue(value){
   return String(value)==="6"?"ROLLING_6":String(value)==="24"?"ROLLING_24":String(value)==="0"?"ALL":"ROLLING_12";
@@ -5302,17 +5318,16 @@ async function setWherePeriod(value){
 function applyBalanceSubview(){
   const flow=balanceSubview==="flow",cash=balanceSubview==="cashflow",compare=balanceSubview==="compare";
   $("balanceHubTitle").textContent=flow?"Flusso economico":(cash?"Cash flow":"Confronto periodi");
-  $("balanceHubDescription").textContent=flow?"Come entrate e uscite si trasformano nel margine disponibile della famiglia.":(cash?"Evoluzione mensile di entrate, uscite, saldo e cumulato.":"Confronta periodi realmente omogenei e individua i contributori alle differenze.");
+  $("balanceHubDescription").textContent=flow?"Come le entrate si trasformano nel margine disponibile della famiglia.":(cash?"Evoluzione mensile di entrate, uscite, saldo e cumulato.":"Confronta periodi realmente omogenei e individua i contributori alle differenze.");
   $("balanceFlowGrid")?.classList.toggle("balance-section-hidden",!flow);
+  $("balanceOutsideFlow")?.classList.toggle("balance-section-hidden",!flow);
   if($("balanceNatureDetail")&&!flow)$("balanceNatureDetail").classList.add("hidden");
   $("historicalMonthlySection")?.classList.toggle("balance-section-hidden",!cash);
-  $("historicalBottomGrid")?.classList.toggle("balance-section-hidden",!(compare||flow));
-  $("historicalBottomGrid")?.classList.toggle("single-view",true);
-  $("historicalCompositionSection")?.classList.toggle("balance-section-hidden",!flow);
+  $("historicalBottomGrid")?.classList.toggle("balance-section-hidden",!compare);
   $("historicalComparisonSection")?.classList.toggle("balance-section-hidden",!compare);
-  $("historicalBalanceStatus")?.classList.toggle("hidden",compare);
+  $("historicalBalanceStatus")?.classList.toggle("hidden",!cash);
   $("historicalBalanceKpis")?.classList.toggle("hidden",compare);
-  $("historicalScopeControls")?.classList.toggle("hidden",false);
+  if(Array.isArray(scenarioActualRows))renderHistoricalKpis();
   document.querySelectorAll("[data-where-view]").forEach(function(b){b.classList.toggle("active",b.dataset.whereView===balanceSubview)});
   syncWherePeriodUI();
 }
@@ -5848,7 +5863,10 @@ $("scenarioView").addEventListener("click",async function(e){
     loadAnalysisWorkspace(true).then(function(){openAnalysisDetail(id,"L1",null)});
   }
 });
-$("processContextWhere")?.addEventListener("click",function(e){const p=e.target.closest("[data-where-period]");if(p)setWherePeriod(p.dataset.wherePeriod)});
+$("processContextWhere")?.addEventListener("click",function(e){
+  const p=e.target.closest("[data-where-period]");if(p){setWherePeriod(p.dataset.wherePeriod);return}
+  const s=e.target.closest("[data-history-scope]");if(s){historicalScope=s.dataset.historyScope||"ORDINARY";closeBalanceNatureDrill();if(balanceSubview==="compare")renderHistoricalPeriodComparison();else if(balanceSubview!=="analysis")renderHistoricalBalance();syncWherePeriodUI()}
+});
 $("compareYearB")?.addEventListener("change",function(){compareYearB=Number(this.value)||compareYearB;compareSelectedL2=null;compareDetailData=null;compareSelectedCounterparty="";renderHistoricalPeriodComparison()});
 $("analysisPeriod").onchange=function(){if(analysisTimeMode!=="HISTORY")return;historicalPeriodMode=historicalModeFromPeriodValue(this.value);syncWherePeriodUI();const keep=captureAnalysisSelection();analysisSelectedMonth=null;analysisWorkspace=null;analysisWorkspaceKey="";loadAnalysisWorkspace(true,keep)};
 $("analysisProjectionView").onchange=function(){analysisProjectionView=this.value||"CALENDAR";analysisSelectedMonth=null;renderAnalysis()};
