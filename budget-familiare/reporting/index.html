@@ -9,7 +9,7 @@
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
 <script src="../shared/supabase-client.js?v=73.24.0-20261012-1415"></script>
-<script src="../shared/app-config.js?v=73.30.1.9-20261013"></script>
+<script src="../shared/app-config.js?v=73.30.1.10-20261013"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 :root{--bg:#f4f6fa;--card:#fff;--text:#17263e;--muted:#58677d;--line:#dce4ee;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 4px 18px rgba(15,23,42,.045);--sc-blue:#2563eb;--sc-blue-soft:#eff6ff;--sc-green:#0ea87a;--sc-red:#ef5b73;--sc-purple:#7658e6;--sc-ink:#17263e}
@@ -1434,6 +1434,20 @@ body{font-size:16px;line-height:1.5}
 .balance-drill-l1-btn .balance-temporal-badge,.balance-drill-cat-btn .balance-temporal-badge{margin-left:1px}
 .balance-drill-temporality{gap:5px}
 .balance-component-key .balance-temporal-badge{width:20px;height:20px}
+/* V73.30.1.10 — quote visive e dettaglio Entrate */
+.balance-kpi-share{display:flex;align-items:center;gap:8px;color:#2563eb;line-height:1.25;--pie-base:#dbe6fb}
+.balance-kpi-share.margin{color:#09845b;--pie-base:#d4eee1}
+.balance-kpi-share.negative{color:#b91c39;--pie-base:#f9dce3}
+.balance-kpi-share.unavailable{color:#52677f;--pie-base:#e2e8f0}
+.balance-kpi-share svg{display:block;flex:0 0 36px;width:36px;height:36px}
+.balance-kpi-share .balance-pie-base{fill:var(--pie-base)}
+.balance-kpi-share strong{font-size:16px;font-weight:700;font-variant-numeric:tabular-nums}
+.balance-kpi-share small{font-size:14px;font-weight:400;color:#475a74}
+.balance-drill-card.nature-income{--drill-accent:#0e986e;--drill-soft:#edfaf4}
+.balance-drill-temporality{align-items:center;gap:8px 12px}
+.balance-temporal-summary-label{font-size:14px;color:#475a74}
+.balance-temporal-summary-item{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.balance-temporal-summary-item strong{font-size:16px;font-weight:700;color:#263b59;font-variant-numeric:tabular-nums}
 </style>
 </head>
 <body>
@@ -1840,7 +1854,7 @@ body{font-size:16px;line-height:1.5}
         <section id="balanceNatureDetail" class="scenario-card balance-drill-card hidden">
           <div class="balance-drill-head">
             <div>
-              <h3 id="balanceDrillTitle">Dettaglio natura</h3>
+              <h3 id="balanceDrillTitle">Dettaglio del flusso</h3>
               <p id="balanceDrillSubtitle">Seleziona una componente del grafico per approfondire.</p>
               <div id="balanceDrillTemporality" class="balance-drill-temporality"></div>
             </div>
@@ -4320,6 +4334,18 @@ function historicalKpiCard(label,value,sub,tone,info){
   const icon=balanceSubview==="flow"?'<span class="historical-kpi-symbol" aria-hidden="true">'+scenarioKpiIcon(tone==="margin"?"◉":"▥")+'</span>':"";
   return '<div class="historical-kpi '+(tone||"")+'">'+icon+'<div class="label">'+esc(label)+(info?" "+historicalInfo(info):"")+'</div><div class="value '+(num(value)>=0?"positive":"negative")+'">'+historicalSigned(value)+'</div><div class="sub">'+sub+'</div></div>';
 }
+function balanceKpiShareHtml(value,total,tone){
+  const valid=num(total)>0,pct=valid?num(value)*100/num(total):null;
+  const formatted=valid?pct.toLocaleString("it-IT",{maximumFractionDigits:1})+"%":"Quota non calcolabile";
+  const negative=valid&&pct<0,overflow=valid&&pct>100,ratio=valid?Math.max(0,Math.min(1,pct/100)):0;
+  const title=valid?(negative?"Valore negativo · ":"")+formatted+" delle entrate":"Entrate assenti: quota non calcolabile";
+  let slice="";
+  if(ratio>=1)slice='<circle cx="20" cy="20" r="17" fill="currentColor"/>';
+  else if(ratio>0){const angle=ratio*Math.PI*2,x=20+17*Math.sin(angle),y=20-17*Math.cos(angle);slice='<path d="M20 20 L20 3 A17 17 0 '+(ratio>.5?1:0)+' 1 '+x.toFixed(3)+' '+y.toFixed(3)+' Z" fill="currentColor"/>'}
+  if(negative||!valid)slice='<path d="M12 20 H28" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>';
+  else if(overflow)slice+='<path d="M14 20 H26 M20 14 V26" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>';
+  return '<span class="balance-kpi-share '+esc(tone||"")+(negative?' negative':!valid?' unavailable':'')+'" role="img" title="'+esc(title)+'" aria-label="'+esc(title)+'"><svg viewBox="0 0 40 40" width="36" height="36" aria-hidden="true" focusable="false"><circle class="balance-pie-base" cx="20" cy="20" r="17"/>'+slice+'</svg><span><strong>'+esc(formatted)+'</strong>'+(valid?'<small> delle entrate</small>':'')+'</span></span>';
+}
 function renderHistoricalKpis(){
   const t=balanceFlowModel(historicalPeriodMode);if(!t)return;
   const months=Math.max(1,historicalMonthsFor(historicalPeriodMode).length),income=Math.max(0,num(t.income));
@@ -4328,8 +4354,8 @@ function renderHistoricalKpis(){
   const final=t.available+(historicalScope==="TOTAL"?t.extraNet:0);
   if(balanceSubview==="flow"){
     $("historicalBalanceKpis").innerHTML=
-      historicalKpiCard("Margine strutturale",margin,pct(margin),"balance","Quanto resta dopo Obbligatorie, Necessarie e NC, prima delle Discrezionali e del risparmio.")+
-      historicalKpiCard("Disponibile finale",final,pct(final),"margin","Quanto resta dopo spese operative, risparmio e, nel perimetro Totale, eventi eccezionali.");
+      historicalKpiCard("Margine strutturale",margin,balanceKpiShareHtml(margin,income,"balance"),"balance","Quanto resta dopo Obbligatorie, Necessarie e NC, prima delle Discrezionali e del risparmio.")+
+      historicalKpiCard("Disponibile finale",final,balanceKpiShareHtml(final,income,"margin"),"margin","Quanto resta dopo spese operative, risparmio e, nel perimetro Totale, eventi eccezionali.");
   }else{
     $("historicalBalanceKpis").innerHTML=
       '<div class="historical-kpi income"><div class="label">Entrate '+historicalInfo("Entrate economiche del periodo selezionato. Giroconti interni esclusi.")+'</div><div class="value positive">'+money(t.income)+'</div><div class="sub">Ø '+money(t.income/months)+'/mese</div></div>'+
@@ -4356,8 +4382,9 @@ function renderHistoricalStructural(){
     item("Disponibile finale",t.available,"Surplus libero","residual");
 }
 function balanceDrillNatureLabel(v){
-  return {MANDATORY:"Obbligatorie",NECESSARY:"Necessarie",UNCLASSIFIED:"NC · Non classificate",DISCRETIONARY:"Discrezionali",UNKNOWN:"Altre uscite operative",INVESTMENT:"Risparmio / investimenti",ALL_EXPENSE:"Tutte le uscite operative"}[v]||String(v||"Dettaglio");
+  return {INCOME:"Entrate",MANDATORY:"Obbligatorie",NECESSARY:"Necessarie",UNCLASSIFIED:"NC · Non classificate",DISCRETIONARY:"Discrezionali",UNKNOWN:"Altre uscite operative",INVESTMENT:"Risparmio / investimenti",ALL_EXPENSE:"Tutte le uscite operative"}[v]||String(v||"Dettaglio");
 }
+function balanceDrillDirection(){return balanceDrillSelection&&balanceDrillSelection.nature==="INCOME"?"INCOME":"EXPENSE"}
 function balanceDrillNatureForProjectionCat(cat){
   const l1=String(cat&&cat.l1_name||""),l2=String(cat&&cat.l2_name||"");
   if(l1==="Altro"&&(l2==="Prelievo contanti"||l2==="Da classificare"))return "UNCLASSIFIED";
@@ -4370,20 +4397,17 @@ function balanceDrillMonthSets(){
   if(mode==="FORECAST_12")return {all:months,actual:[],forecast:months.slice()};
   return {all:months,actual:months.slice(),forecast:[]};
 }
-function balanceModeMonthSets(mode,month){const current=historicalCurrentMonth(),months=month?[month]:historicalMonthsFor(mode||historicalPeriodMode),m=mode||historicalPeriodMode;if(m==="CURRENT_YEAR")return {all:months,actual:months.filter(function(x){return x<current}),forecast:months.filter(function(x){return x>=current})};if(m==="FORECAST_12")return {all:months,actual:[],forecast:months.slice()};return {all:months,actual:months.slice(),forecast:[]}}
 function balanceTemporalKey(v){const x=String(v||"").toUpperCase();return x==="RECURRING"?"R":x==="PLANNED_OCCASIONAL"?"P":x==="EXCEPTIONAL"?"E":x==="NOT_APPLICABLE"?"X":"U"}
-function balanceTemporalBreakdown(nature,mode,month,scope){const out={R:0,P:0,E:0,X:0,U:0},sets=balanceModeMonthSets(mode,month),actualSet=new Set(sets.actual),viewScope=scope||"ORDINARY",add=function(k,v){out[k]=(out[k]||0)+Math.max(0,num(v))};(scenarioActualCategories||[]).forEach(function(x){if(!actualSet.has(String(x.month_start)))return;const dir=String(x.direction||"");if(nature==="INVESTMENT"){if(dir!=="INVESTMENT")return;const temporal=String(x.investment_temporality||""),funding=String(x.investment_funding_source||"CURRENT_SURPLUS");if(!(temporal==="RECURRING"||(temporal==="PLANNED_OCCASIONAL"&&funding!=="PRIOR_WEALTH")))return;add(balanceTemporalKey(temporal),num(x.ordinary_amount));if(viewScope==="TOTAL")add("E",num(x.extraordinary_amount));return}if(dir!=="EXPENSE")return;const catNature=historicalNatureForCategory(x);if(nature!=="ALL_EXPENSE"&&catNature!==nature)return;const meta=historicalMetaMap().get(String(x.l2_id||""))||{};add(balanceTemporalKey(x.effective_temporality||meta.temporality),num(x.ordinary_amount));if(viewScope==="TOTAL")add("E",num(x.extraordinary_amount))});if(sets.forecast.length){if(nature==="INVESTMENT")add("R",sets.forecast.reduce(function(s,m){return s+num(scenarioForecastInvestment(m))},0));else{const data=projectionDataFor("EXPENSE"),fmap=balanceProjectionCategoryTotals(data,sets.forecast,"FORECAST"),meta=historicalMetaMap();(data&&data.categories||[]).forEach(function(cat){const cn=balanceDrillNatureForProjectionCat(cat);if(nature!=="ALL_EXPENSE"&&cn!==nature)return;const amount=num(fmap.get(String(cat.category_id)));if(amount<=.005)return;add(balanceTemporalKey((meta.get(String(cat.category_id))||{}).temporality),amount)})}}out.total=out.R+out.P+out.E+out.X+out.U;return out}
-function balanceTemporalTitle(b){if(!b||!b.total)return "Temporalità non disponibile";const p=function(v){return (v*100/b.total).toLocaleString("it-IT",{maximumFractionDigits:1})+"%"};return "R "+p(b.R)+" · P "+p(b.P)+" · E "+p(b.E)+" · X "+p(b.X)+(b.U>.5?" · n.d. "+p(b.U):"")}
 const BALANCE_TEMPORAL_DEFS=[["R","r","Ricorrente"],["P","p","Occasionale / programmabile"],["E","e","Eccezionale"],["X","x","Non applicabile"],["U","u","Non definita"]];
 function balanceTemporalPercent(value,total){return total>0?(value*100/total).toLocaleString("it-IT",{maximumFractionDigits:1})+"%":"—"}
 function balanceTemporalEmpty(){return {R:0,P:0,E:0,X:0,U:0,total:0}}
 function balanceTemporalAdd(b,key,amount){const value=Math.max(0,num(amount));b[key]=(b[key]||0)+value;b.total+=value}
 function balanceTemporalBadge(code,kind,title){return '<span class="balance-temporal-badge temporal-'+kind+'" title="'+esc(title)+'" role="img" aria-label="'+esc(title)+'">'+esc(code)+'</span>'}
-function balanceTemporalChipsHtml(b){
+function balanceTemporalSummaryHtml(b){
   if(!b||!b.total)return "";
-  return BALANCE_TEMPORAL_DEFS.filter(function(d){return b[d[0]]>.005}).map(function(d){
+  return '<span class="balance-temporal-summary-label">Temporalità sul totale:</span>'+BALANCE_TEMPORAL_DEFS.filter(function(d){return b[d[0]]>.005}).map(function(d){
     const code=d[0]==="U"?"?":d[0];
-    return balanceTemporalBadge(code,d[1],code+' · '+d[2]+' · '+money(b[d[0]])+' · '+balanceTemporalPercent(b[d[0]],b.total));
+    return '<span class="balance-temporal-summary-item" title="'+esc(d[2]+' · '+money(b[d[0]]))+'">'+balanceTemporalBadge(code,d[1],d[2])+'<strong>'+balanceTemporalPercent(b[d[0]],b.total)+'</strong></span>';
   }).join("");
 }
 function balanceTemporalCategoryBadge(b){
@@ -4401,7 +4425,8 @@ function balanceDrillRowsForSelection(){
     if(!actualSet.has(String(x.month_start)))return;
     const dir=String(x.direction||"");
     let match=false;
-    if(nature==="ALL_EXPENSE")match=dir==="EXPENSE";
+    if(nature==="INCOME")match=dir==="INCOME";
+    else if(nature==="ALL_EXPENSE")match=dir==="EXPENSE";
     else if(nature==="INVESTMENT"){
       if(dir==="INVESTMENT"){
         const temporal=String(x.investment_temporality||""),funding=String(x.investment_funding_source||"CURRENT_SURPLUS");
@@ -4412,7 +4437,7 @@ function balanceDrillRowsForSelection(){
     const id=String(x.l2_id||x.l1_id||"");
     if(!id)return;
     if(!rows.has(id))rows.set(id,{id:id,name:x.l2_name||x.l1_name||"Senza categoria",l1:x.l1_name||"",l1Id:String(x.l1_id||id),level:x.l2_id?"L2":"L1",actual:0,forecast:0,temporal:balanceTemporalEmpty()});
-    const row=rows.get(id),defaultTime=(temporalMeta.get(String(x.l2_id||""))||{}).temporality;
+    const row=rows.get(id),defaultTime=(temporalMeta.get(id)||{}).temporality;
     row.actual+=historicalCategoryAmount(x,scope);
     balanceTemporalAdd(row.temporal,balanceTemporalKey(dir==="INVESTMENT"?x.investment_temporality:x.effective_temporality||defaultTime),x.ordinary_amount);
     if(scope==="TOTAL")balanceTemporalAdd(row.temporal,"E",x.extraordinary_amount);
@@ -4423,10 +4448,10 @@ function balanceDrillRowsForSelection(){
       const amount=sets.forecast.reduce(function(s,m){return s+num(scenarioForecastInvestment(m))},0);
       if(amount>.005){const temporal=balanceTemporalEmpty();balanceTemporalAdd(temporal,"R",amount);rows.set("__INVESTMENT_FORECAST__",{id:"__INVESTMENT_FORECAST__",name:"Investimenti previsti",l1:"Debiti e Risparmio",l1Id:"__INVESTMENT_L1__",level:"L2",actual:0,forecast:amount,temporal:temporal})}
     }else{
-      const data=projectionDataFor("EXPENSE"),fmap=balanceProjectionCategoryTotals(data,sets.forecast,"FORECAST");
+      const data=projectionDataFor(balanceDrillDirection()),fmap=balanceProjectionCategoryTotals(data,sets.forecast,"FORECAST");
       (data&&data.categories||[]).forEach(function(cat){
         const catNature=balanceDrillNatureForProjectionCat(cat);
-        if(nature!=="ALL_EXPENSE"&&catNature!==nature)return;
+        if(nature!=="INCOME"&&nature!=="ALL_EXPENSE"&&catNature!==nature)return;
         const amount=num(fmap.get(String(cat.category_id)));if(amount<=.005)return;
         const id=String(cat.category_id);
         if(!rows.has(id))rows.set(id,{id:id,name:cat.l2_name||cat.category_name||cat.l1_name||"Senza categoria",l1:cat.l1_name||"",l1Id:String(cat.l1_id||cat.category_id||id),level:cat.l2_id||cat.l1_id?"L2":"L1",actual:0,forecast:0,temporal:balanceTemporalEmpty()});
@@ -4499,11 +4524,12 @@ function renderBalanceDrill(){
   balanceDrillRows=balanceDrillRowsForSelection();
   const groups=balanceDrillHierarchy(),sets=balanceDrillMonthSets(),total=balanceDrillRows.reduce(function(s,x){return s+x.total},0);
   const forecastOnly=sets.forecast.length>0&&sets.actual.length===0,mixed=sets.actual.length>0&&sets.forecast.length>0;
-  ["mandatory","necessary","unclassified","discretionary","unknown","investment","all_expense"].forEach(function(k){box.classList.remove("nature-"+k)});
+  ["income","mandatory","necessary","unclassified","discretionary","unknown","investment","all_expense"].forEach(function(k){box.classList.remove("nature-"+k)});
   box.classList.add("nature-"+String(balanceDrillSelection.nature||"").toLowerCase());
   $("balanceDrillTitle").textContent=balanceDrillNatureLabel(balanceDrillSelection.nature)+" · "+balanceDrillPeriodLabel();
   $("balanceDrillSubtitle").textContent=mixed?"Consuntivo + previsione per categoria; controparti sul solo consuntivo.":forecastOnly?"Previsione per categoria; controparti e movimenti mostrano il contesto storico.":"L1 → L2 → controparti. Clicca una controparte per aprire i movimenti.";
-  $("balanceDrillTemporality").innerHTML=balanceTemporalChipsHtml(balanceTemporalBreakdown(balanceDrillSelection.nature,balanceDrillSelection.mode,balanceDrillSelection.month,balanceDrillSelection.scope));
+  const temporal=balanceTemporalEmpty();balanceDrillRows.forEach(function(x){BALANCE_TEMPORAL_DEFS.forEach(function(d){balanceTemporalAdd(temporal,d[0],x.temporal[d[0]])})});
+  $("balanceDrillTemporality").innerHTML=balanceTemporalSummaryHtml(temporal);
   $("balanceDrillTotal").textContent=money(total);
   $("balanceDrillCategoryHint").textContent=groups.length+" categorie · % sul totale";
   $("balanceDrillSort").value=balanceDrillSort;$("balanceDrillL2Sort").value=balanceDrillL2Sort;$("balanceDrillCpSort").value=balanceDrillCpSort;
@@ -4583,7 +4609,7 @@ async function loadBalanceDrillCategory(categoryId){
   const seq=++balanceDrillLoadSeq;
   try{
     const sets=balanceDrillMonthSets(),forecastOnly=!sets.actual.length&&sets.forecast.length>0;
-    const data=await rpc("dashboard_reporting_analysis_detail_v2",{p_category_id:categoryId,p_direction:"EXPENSE",p_period_months:forecastOnly?12:0});
+    const data=await rpc("dashboard_reporting_analysis_detail_v2",{p_category_id:categoryId,p_direction:balanceDrillDirection(),p_period_months:forecastOnly?12:0});
     if(seq!==balanceDrillLoadSeq||!balanceDrillSelection||String(balanceDrillCategoryId)!==String(categoryId))return;
     balanceDrillDetail=data||{};renderBalanceDrill();
   }catch(e){
@@ -4605,14 +4631,15 @@ function closeBalanceNatureDrill(){
 }
 async function openBalanceDrillInAnalysis(categoryId){
   if(!categoryId||String(categoryId).indexOf("__")===0)return;
-  const sets=balanceDrillMonthSets(),forecast=sets.forecast.length>0&&(!sets.actual.length||(balanceDrillRows.find(function(x){return String(x.id)===String(categoryId)})||{}).forecast>0);
+  const row=balanceDrillRows.find(function(x){return String(x.id)===String(categoryId)}),direction=balanceDrillDirection();
+  const sets=balanceDrillMonthSets(),forecast=sets.forecast.length>0&&(!sets.actual.length||(row||{}).forecast>0);
   showStandardReportingView();
-  analysisViewMode="EXPENSE";analysisTimeMode=forecast?"PROJECTION":"HISTORY";
+  analysisViewMode=direction;$("analysisDirection").value=direction;analysisTimeMode=forecast?"PROJECTION":"HISTORY";
   if(forecast)analysisProjectionView=(balanceDrillSelection&&balanceDrillSelection.mode==="FORECAST_12")?"ROLLING_12":"CALENDAR";
   else if($("analysisPeriod"))$("analysisPeriod").value=balanceDrillSelection&&balanceDrillSelection.month?"12":(balanceDrillSelection&&balanceDrillSelection.mode==="ROLLING_12"?"12":"0");
   analysisWorkspace=null;analysisWorkspaceKey="";
   await loadAnalysisWorkspace(true);
-  await openAnalysisDetail(categoryId,"L2",(!forecast&&balanceDrillSelection)?balanceDrillSelection.month:null);
+  await openAnalysisDetail(categoryId,row&&row.level||"L2",(!forecast&&balanceDrillSelection)?balanceDrillSelection.month:null);
   $("categoryDetail")?.scrollIntoView({behavior:"smooth",block:"start"});
 }
 
@@ -4632,13 +4659,6 @@ function renderBalanceErosion(){
   const visible=parts.filter(function(x){return x[2]>.5}),shownTotal=visible.reduce(function(s,x){return s+x[2]},0),scale=Math.max(1,income,shownTotal);
   const quota=function(amount){return income>0?balanceTemporalPercent(amount,income):"—"};
   const width=function(amount){return (amount*100/scale).toFixed(4)};
-  const temporalRows=visible.filter(function(x){return !!x[3]}).map(function(x){
-    const b=balanceTemporalBreakdown(x[3],historicalPeriodMode,null,"ORDINARY");
-    b.U+=Math.max(0,x[2]-b.total);b.total=b.R+b.P+b.E+b.X+b.U;
-    return {part:x,breakdown:b};
-  });
-  const temporalMap=new Map(temporalRows.map(function(r){return [r.part[0],r.breakdown]}));
-  const temporalDetail=temporalRows.length?'<details class="balance-temporal-detail"><summary>Dettaglio delle percentuali di temporalità</summary><p>Le percentuali di ogni riga sono riferite alla componente, non alle entrate. Gestione ordinaria; gli eventi E inclusi nel Totale restano nel waterfall.</p><div class="balance-temporal-table-wrap"><table class="balance-temporal-table"><thead><tr><th>Componente</th>'+BALANCE_TEMPORAL_DEFS.map(function(d){return '<th><span class="temporal-table-label"><i class="balance-temporal-swatch temporal-'+d[1]+'" aria-hidden="true"></i>'+esc(d[0]==="U"?'?':d[0])+'</span></th>'}).join('')+'</tr></thead><tbody>'+temporalRows.map(function(r){return '<tr><th scope="row">'+esc(r.part[1])+'</th>'+BALANCE_TEMPORAL_DEFS.map(function(d){return '<td title="'+esc(d[2]+' · '+money(r.breakdown[d[0]]))+'">'+balanceTemporalPercent(r.breakdown[d[0]],r.breakdown.total)+'</td>'}).join('')+'</tr>'}).join('')+'</tbody></table></div></details>':'';
   const segmentHtml=visible.map(function(x){
     const title=esc(x[1]+' · '+money(x[2])+' · '+quota(x[2])+' delle entrate ordinarie'),content=income>0?'<span class="balance-erode-pct" aria-hidden="true">'+quota(x[2])+'</span>':'';
     const common=' class="balance-erode-seg '+x[0]+'" style="width:'+width(x[2])+'%" title="'+title+'"';
@@ -4646,7 +4666,7 @@ function renderBalanceErosion(){
   }).join("");
   const componentColors={o:"#ef5a5a",n:"#f4b63e",nc:"#64748b",d:"#8b5cf6",other:"#94a3b8",save:"#06b6d4",free:"#22a96b"};
   const componentKey='<div class="balance-component-key" aria-label="Componenti e percentuali sulle entrate ordinarie">'+visible.map(function(x){
-    const name=x[0]==="nc"?"NC · Da chiarire":x[1],swatch='<i style="--component-color:'+componentColors[x[0]]+'" aria-hidden="true"></i>',content=swatch+'<span>'+esc(name)+'</span>'+(x[3]?balanceTemporalChipsHtml(temporalMap.get(x[0])):'')+'<strong class="component-share">'+quota(x[2])+'</strong>';
+    const name=x[0]==="nc"?"NC · Da chiarire":x[1],swatch='<i style="--component-color:'+componentColors[x[0]]+'" aria-hidden="true"></i>',content=swatch+'<span>'+esc(name)+'</span>'+'<strong class="component-share">'+quota(x[2])+'</strong>';
     return x[3]?'<button type="button" data-balance-nature="'+esc(x[3])+'" aria-label="Approfondisci '+esc(name+' · '+quota(x[2]))+'">'+content+'</button>':'<span>'+content+'</span>';
   }).join("")+'</div>';
   const exceeds=income>0&&shownTotal>income+.5;
@@ -4655,7 +4675,7 @@ function renderBalanceErosion(){
   const ratio=t.mandatory>0?t.necessary/t.mandatory:null,discretionaryOnMargin=margin>0?t.discretionary*100/margin:null;
   $("balanceErosionWidget").innerHTML=
     '<div class="balance-erode-head"><div><strong>Dove vanno le entrate?</strong><div class="muted small">Percentuali sulle entrate ordinarie.'+(historicalScope==="TOTAL"?' L’impatto degli eventi E è nel waterfall.':'')+'</div></div></div>'+
-    '<div class="balance-composition-bars"><div class="balance-erode-bar">'+segmentHtml+'</div>'+marker+'</div>'+scaleNote+componentKey+temporalDetail+
+    '<div class="balance-composition-bars"><div class="balance-erode-bar">'+segmentHtml+'</div>'+marker+'</div>'+scaleNote+componentKey+
     '<div class="balance-erode-insights">'+
       '<div class="balance-erode-insight structural"><span class="k">Struttura essenziale</span><strong>'+(income>0?'O + N = '+quota(t.mandatory+t.necessary)+' delle entrate':'O + N · quota non calcolabile')+'</strong><small>'+(ratio===null?'Rapporto O/N non disponibile.':'Le Necessarie valgono '+ratio.toLocaleString('it-IT',{maximumFractionDigits:1})+'× le Obbligatorie.')+'</small></div>'+
       '<div class="balance-erode-insight margin"><span class="k">Uso del margine</span><strong>'+(discretionaryOnMargin===null?'Margine strutturale non positivo':'D = '+discretionaryOnMargin.toLocaleString('it-IT',{maximumFractionDigits:1})+'% del margine strutturale')+'</strong><small>'+(t.unclassified>.5?(income>0?'NC ancora pari al '+quota(t.unclassified)+' delle entrate.':'NC da chiarire: '+money(t.unclassified)+'.'):'Nessuna quota NC significativa nel periodo.')+'</small></div>'+
@@ -4668,7 +4688,7 @@ function renderBalanceWaterfall(){
   const margin=t.income-t.mandatory-t.necessary-t.unclassified;
   const showExtra=historicalScope==="TOTAL"&&Math.abs(t.extraNet)>.5;
   const labels=["Entrate","Obbligatorie","Necessarie","NC","Margine strutturale","Discrezionali"].concat(t.otherOperating>.5?["Altre operative"]:[]).concat(["Risparmio"]).concat(showExtra?["Eventi E"]:[]).concat(["Disponibile"]);
-  const drillKeys=[null,"MANDATORY","NECESSARY","UNCLASSIFIED",null,"DISCRETIONARY"].concat(t.otherOperating>.5?["UNKNOWN"]:[]).concat(["INVESTMENT"]).concat(showExtra?[null]:[]).concat([null]);
+  const drillKeys=["INCOME","MANDATORY","NECESSARY","UNCLASSIFIED",null,"DISCRETIONARY"].concat(t.otherOperating>.5?["UNKNOWN"]:[]).concat(["INVESTMENT"]).concat(showExtra?[null]:[]).concat([null]);
   const data=[],colors=[],displayValues=[];
   let cur=t.income;
   data.push([0,t.income]);colors.push("rgba(14,168,122,.88)");displayValues.push(t.income);
@@ -4884,7 +4904,7 @@ function renderHistoricalChart(){
       {type:"bar",label:"Saldo mese",data:net,backgroundColor:net.map(function(v){return v>=0?"rgba(34,197,94,.12)":"rgba(239,68,68,.12)"}),borderColor:net.map(function(v){return v>=0?"#15803d":"#b91c1c"}),borderWidth:1.7,borderRadius:3,yAxisID:"y"},
       {type:"line",label:"Cumulato periodo",data:cumulative,borderColor:"#334155",backgroundColor:"#334155",borderWidth:2.4,pointRadius:2.7,tension:.2,yAxisID:"y2"}
     ];
-    $("historicalChartNote").textContent="Il selettore Ordinario/Totale modifica solo questo grafico. Il saldo cumulato parte da zero e non rappresenta la liquidità dei conti. Clicca la barra Uscite di un mese per vedere da quali categorie e movimenti deriva.";
+    $("historicalChartNote").textContent="Il selettore Ordinario/Totale modifica solo questo grafico. Il saldo cumulato parte da zero e non rappresenta la liquidità dei conti. Clicca la barra Entrate o Uscite di un mese per vedere categorie, controparti e movimenti.";
   }else{
     const natureMap=historicalMonthlyNature(historicalPeriodMode,scope),get=function(key){return months.map(function(m){return num(natureMap.get(m)&&natureMap.get(m)[key])})};
     const O=get("MANDATORY"),N=get("NECESSARY"),D=get("DISCRETIONARY"),NC=get("UNCLASSIFIED"),OTHER=get("UNKNOWN"),INV=get("INVESTMENT");
@@ -4903,7 +4923,7 @@ function renderHistoricalChart(){
       datasets.push({type:"line",label:"Margine strutturale",data:margin,borderColor:"#15803d",backgroundColor:"#15803d",borderDash:[6,4],borderWidth:2.2,pointRadius:2.3,tension:.2,yAxisID:"y"});
     }
     $("historicalChartLegend").innerHTML='<span><i class="scenario-bar income"></i> Natura / NC</span><span><i class="scenario-line solid"></i> Entrate</span>'+(on?'<span><i class="scenario-line solid"></i> Margine strutturale</span>':'');
-    $("historicalChartNote").textContent=(on?"Margine strutturale = entrate del mese − obbligatorie − necessarie − NC. Le NC sono uscite reali senza Natura O/N/D e vengono sottratte in modo prudenziale.":"NC comprende Prelievo contanti non dettagliato e Da classificare; investimenti e altre voci senza natura restano separati.")+" Clicca una barra o un segmento per vedere categorie, controparti e movimenti.";
+    $("historicalChartNote").textContent=(on?"Margine strutturale = entrate del mese − obbligatorie − necessarie − NC. Le NC sono uscite reali senza Natura O/N/D e vengono sottratte in modo prudenziale.":"NC comprende Prelievo contanti non dettagliato e Da classificare; investimenti e altre voci senza natura restano separati.")+" Clicca una barra, un segmento o un punto delle Entrate per vedere categorie, controparti e movimenti.";
   }
   historicalBalanceChart=new Chart($("historicalBalanceChart"),{
     data:{labels:labels,datasets:datasets},
@@ -4912,13 +4932,14 @@ function renderHistoricalChart(){
         const hit=chart.getElementsAtEventForMode(evt,"nearest",{intersect:true},true);
         if(!hit.length){chart.canvas.style.cursor="default";return}
         const label=chart.data.datasets[hit[0].datasetIndex]&&chart.data.datasets[hit[0].datasetIndex].label;
-        const clickable=historicalChartMode==="NATURE"?["Obbligatorie","Necessarie","NC · Non classificate","Discrezionali","Altre operative","Investimenti"].includes(label):label==="Uscite";
+        const clickable=historicalChartMode==="NATURE"?["Entrate","Obbligatorie","Necessarie","NC · Non classificate","Discrezionali","Altre operative","Investimenti"].includes(label):["Entrate","Uscite"].includes(label);
         chart.canvas.style.cursor=clickable?"pointer":"default";
       },
       onClick:function(evt,els,chart){
         const hit=chart.getElementsAtEventForMode(evt,"nearest",{intersect:true},true);if(!hit.length)return;
         const h=hit[0],ds=chart.data.datasets[h.datasetIndex],label=ds&&ds.label,month=months[h.index],map={"Obbligatorie":"MANDATORY","Necessarie":"NECESSARY","NC · Non classificate":"UNCLASSIFIED","Discrezionali":"DISCRETIONARY","Altre operative":"UNKNOWN","Investimenti":"INVESTMENT"};
-        if(historicalChartMode==="NATURE"&&map[label])openBalanceNatureDrill(map[label],month,"MONTH_NATURE");
+        if(label==="Entrate")openBalanceNatureDrill("INCOME",month,"MONTH_CASHFLOW");
+        else if(historicalChartMode==="NATURE"&&map[label])openBalanceNatureDrill(map[label],month,"MONTH_NATURE");
         else if(historicalChartMode==="CASHFLOW"&&label==="Uscite")openBalanceNatureDrill("ALL_EXPENSE",month,"MONTH_CASHFLOW");
       },
       plugins:{legend:{display:true,position:"bottom",labels:{boxWidth:10,boxHeight:10,font:{size:14}}},tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+": "+money(ctx.raw)}}}},
