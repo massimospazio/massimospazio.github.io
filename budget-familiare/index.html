@@ -166,6 +166,27 @@
 .movement-reporting-badges{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
 .movement-reporting-badges .legacy{background:#fff1dc;color:#9a5400}.movement-reporting-badges .override{background:#eaf3ff;color:#245c9f}
 
+
+/* V73.30.1.2 — navigazione provvisoria per fasi del processo */
+.process-shell{margin:0 0 18px;padding:10px;border:1px solid #dbe4ef;border-radius:14px;background:#fff;box-shadow:0 4px 14px rgba(15,23,42,.035)}
+.process-overline{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 2px 8px;font-size:11px;color:#64748b}
+.process-overline strong{color:#172033;font-size:12px}.process-overline span{font-size:10px}
+.process-nav{display:grid;grid-template-columns:repeat(7,minmax(118px,1fr));gap:6px;overflow-x:auto;padding-bottom:2px}
+.process-step{min-width:118px;min-height:48px;border:1px solid #dfe6ef;border-radius:10px;background:#f8fafc;color:#475569;padding:6px 8px;text-decoration:none;display:flex;align-items:center;gap:7px;text-align:left;font:inherit;cursor:pointer}
+.process-step:hover:not(.future){border-color:#9bb9e8;background:#f2f7ff}
+.process-step .process-no{flex:0 0 auto;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:#e8eef6;color:#53657c;font-size:10px;font-weight:900}
+.process-step .process-copy{min-width:0;display:grid;gap:1px}.process-step .process-copy strong{font-size:10.5px;line-height:1.15;color:inherit;white-space:nowrap}.process-step .process-copy small{font-size:8px;color:#8793a4;white-space:nowrap}
+.process-step.active{background:#eaf3ff;border-color:#78a8e8;color:#174f97;box-shadow:inset 0 0 0 1px #b8d3f5}
+.process-step.active .process-no{background:#2563eb;color:#fff}
+.process-step.partial .process-copy small{color:#a16207}.process-step.future{opacity:.52;cursor:default;background:#f8fafc}
+.process-context{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:9px;padding:8px 9px 0;border-top:1px solid #edf1f5}
+.process-context.hidden{display:none}
+.process-context-copy{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap;min-width:0}.process-context-copy span{font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;color:#2563eb}.process-context-copy strong{font-size:12px;color:#172033}.process-context-copy small{font-size:10px;color:#64748b}
+.process-subnav{margin:0!important;gap:6px!important;justify-content:flex-end}.process-subnav .tab{padding:7px 10px;font-size:11px;border-radius:8px}.process-subnav-label{display:inline-flex;align-items:center;padding:0 2px 0 6px;font-size:9px;font-weight:850;color:#94a3b8;text-transform:uppercase;letter-spacing:.04em}
+.process-utility-tab{border-style:dashed!important}
+@media(max-width:900px){.process-nav{grid-template-columns:repeat(7,132px)}.process-context{align-items:flex-start;flex-direction:column}.process-subnav{width:100%;justify-content:flex-start}}
+@media(max-width:650px){.process-shell{padding:8px}.process-overline span{display:none}.process-step{min-width:126px}.process-context-copy{display:grid;gap:2px}.process-subnav .tab{flex:1 1 auto;justify-content:center}}
+
 </style>
 </head>
 <body>
@@ -186,12 +207,28 @@
     </div>
     <datalist id="v62CounterpartyOptions"></datalist>
     <datalist id="v62CounterpartyFilterOptions"></datalist>
-    <div class="tabs">
-      <button class="tab active" data-tab="overview">Panoramica</button>
-      <button class="tab" data-tab="categorization">Movimenti</button>
-      <button class="tab" data-tab="coherence">Coerenza</button>
-      <button class="tab" data-tab="catalogs">Anagrafiche</button>
-      <a class="tab" href="reporting/">Reporting</a>
+    <div class="process-shell" aria-label="Percorso di gestione del budget">
+      <div class="process-overline"><strong>Percorso budget</strong><span>Navigazione provvisoria: mostra dove ti trovi nel processo, anche prima del redesign definitivo.</span></div>
+      <div class="process-nav">
+        <button class="process-step active" type="button" data-process-phase="data" data-process-main-tab="overview"><span class="process-no">1</span><span class="process-copy"><strong>Dati affidabili</strong><small>operativa</small></span></button>
+        <a class="process-step" href="reporting/?view=balance"><span class="process-no">2</span><span class="process-copy"><strong>Dove siamo</strong><small>operativa</small></span></a>
+        <span class="process-step future"><span class="process-no">3</span><span class="process-copy"><strong>Obiettivi</strong><small>futura · V73.31</small></span></span>
+        <a class="process-step partial" href="reporting/?view=simulator"><span class="process-no">4</span><span class="process-copy"><strong>Strategia</strong><small>parziale</small></span></a>
+        <a class="process-step partial" href="reporting/?view=board"><span class="process-no">5</span><span class="process-copy"><strong>Piano</strong><small>transitorio</small></span></a>
+        <span class="process-step future"><span class="process-no">6</span><span class="process-copy"><strong>Controllo</strong><small>futuro · V74</small></span></span>
+        <span class="process-step future"><span class="process-no">7</span><span class="process-copy"><strong>Apprendimento</strong><small>futuro · V74.3</small></span></span>
+      </div>
+      <div class="process-context">
+        <div class="process-context-copy"><span id="processContextEyebrow">Fase 1</span><strong id="processContextTitle">Dati affidabili</strong><small id="processContextQuestion">Posso fidarmi dei numeri?</small></div>
+        <div class="tabs process-subnav">
+          <button class="tab active" data-tab="overview">Panoramica dati</button>
+          <button id="processImportTab" class="tab" type="button">Importa</button>
+          <button class="tab" data-tab="categorization">Movimenti / verifica</button>
+          <button class="tab" data-tab="coherence">Coerenza</button>
+          <span class="process-subnav-label">Utilità</span>
+          <button class="tab process-utility-tab" data-tab="catalogs">Anagrafiche</button>
+        </div>
+      </div>
     </div>
     <div id="categoryReturnBar" class="category-return-bar hidden"></div>
 
@@ -975,6 +1012,7 @@ async function loadMovementsData(){
     if(Array.isArray(fuzzySuggestions)){fuzzySuggestionsError=null;counterpartyFuzzySuggestions=fuzzySuggestions}else counterpartyFuzzySuggestions=[];
     renderMovementsPage();
     renderCatalogs();
+    openDashboardTabFromUrl();
     openCategoryDeepLinkFromUrl();
     openMovementFromUrl();
   }catch(e){
@@ -2677,9 +2715,18 @@ async function saveParsingRule(){
   }catch(e){msg($('parsingRuleMsg'),e.message,true)}finally{setBusy(btn,false)}
 }
 
+function syncDashboardProcessNavigation(name){
+  const utility=name==='catalogs',phase=document.querySelector('[data-process-phase="data"]');
+  if(phase)phase.classList.toggle('active',!utility);
+  if($('processContextEyebrow'))$('processContextEyebrow').textContent=utility?'Utilità':'Fase 1';
+  if($('processContextTitle'))$('processContextTitle').textContent=utility?'Anagrafiche':'Dati affidabili';
+  if($('processContextQuestion'))$('processContextQuestion').textContent=utility?'Configurazione trasversale di categorie, controparti e regole.':'Posso fidarmi dei numeri?';
+}
 function activateMainTab(name){
-  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));
+  if(!['overview','categorization','coherence','catalogs'].includes(name))name='overview';
+  document.querySelectorAll('.tab[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));
   ['overview','categorization','coherence','catalogs'].forEach(t=>$('tab-'+t).classList.toggle('hidden',t!==name));
+  syncDashboardProcessNavigation(name);
   if(name==='coherence'&&!coherenceData)loadCoherence();
 }
 function openAutomationTarget(kind,id){
@@ -3456,6 +3503,10 @@ function openCategoryDependencyTarget(index){
     const movement=(catData?.movements||[]).find(x=>String(x.id)===String(key));
     if(movement){activateMainTab('categorization');openClassify(movement)}return;
   }
+}
+function openDashboardTabFromUrl(){
+  const p=new URLSearchParams(window.location.search),tab=p.get('tab');
+  if(['overview','categorization','coherence','catalogs'].includes(tab))activateMainTab(tab);
 }
 function openCategoryDeepLinkFromUrl(){
   if(categoryDeepLinkHandled)return;
@@ -4436,7 +4487,9 @@ $('tab-catalogs').addEventListener('input',e=>{
   }
 });
 $('tab-catalogs').addEventListener('change',e=>{const nature=e.target.closest('[data-category-nature]');if(nature){saveCategoryNature(nature);return}const temporality=e.target.closest('[data-category-temporality]');if(temporality){saveCategoryTemporality(temporality);return}if(e.target.id==='categoryMergeDestination'){previewCategoryMigration();return}const one=e.target.closest('[data-select-counterparty]');if(one){one.checked?selectedCounterpartyIds.add(one.dataset.selectCounterparty):selectedCounterpartyIds.delete(one.dataset.selectCounterparty);syncCounterpartyBulkBar();return}const all=e.target.closest('[data-select-visible-counterparties]');if(all){for(const m of counterpartyFilteredRows())all.checked?selectedCounterpartyIds.add(m.id):selectedCounterpartyIds.delete(m.id);renderMerchantsCatalog();return}});
-document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>activateMainTab(b.dataset.tab));
+document.querySelectorAll('.tab[data-tab]').forEach(b=>b.onclick=()=>activateMainTab(b.dataset.tab));
+document.querySelectorAll('[data-process-main-tab]').forEach(b=>b.onclick=()=>activateMainTab(b.dataset.processMainTab||'overview'));
+if($('processImportTab'))$('processImportTab').onclick=()=>{activateMainTab('overview');$('openImportUpload')?.click();requestAnimationFrame(()=>$('openImportUpload')?.scrollIntoView({behavior:'smooth',block:'center'}))};
 $('rpcDiagnosticsOpen')?.addEventListener('click',openRpcDiagnostics);
 $('rpcPerformanceAlert')?.addEventListener('click',openRpcDiagnostics);
 $('rpcDiagnosticsClose')?.addEventListener('click',closeRpcDiagnostics);
