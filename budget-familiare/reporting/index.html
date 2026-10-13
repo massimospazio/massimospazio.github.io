@@ -9,7 +9,7 @@
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
 <script src="../shared/supabase-client.js?v=73.24.0-20261012-1415"></script>
-<script src="../shared/app-config.js?v=73.30.1.10-20261013"></script>
+<script src="../shared/app-config.js?v=73.30.1.11-20261013"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 :root{--bg:#f4f6fa;--card:#fff;--text:#17263e;--muted:#58677d;--line:#dce4ee;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 4px 18px rgba(15,23,42,.045);--sc-blue:#2563eb;--sc-blue-soft:#eff6ff;--sc-green:#0ea87a;--sc-red:#ef5b73;--sc-purple:#7658e6;--sc-ink:#17263e}
@@ -1448,6 +1448,81 @@ body{font-size:16px;line-height:1.5}
 .balance-temporal-summary-label{font-size:14px;color:#475a74}
 .balance-temporal-summary-item{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 .balance-temporal-summary-item strong{font-size:16px;font-weight:700;color:#263b59;font-variant-numeric:tabular-nums}
+/* V73.30.1.11 — Confronto periodi coerente con il Flusso economico */
+.historical-comparison-workspace{padding:20px 24px;border-radius:16px;border-color:#d9e3f0;box-shadow:0 6px 22px rgba(22,41,76,.05)}
+.historical-compare-toolbar{margin:0 0 14px;padding:12px 14px;border:1px solid #d6e0f0;border-radius:12px;background:#f0f4fb;gap:12px 20px}
+.historical-compare-toolbar-group>span{font-size:14px;font-weight:600;color:#475a74;text-transform:none;letter-spacing:0}
+.historical-compare-toolbar .scenario-segment{display:flex;flex-wrap:wrap;gap:4px;padding:4px;background:#fff;border-color:#d6e0f0;border-radius:10px}
+.historical-compare-toolbar .scenario-segment button{font-size:16px;min-height:38px;padding:7px 12px;border-radius:7px;font-weight:600;color:#344d70;white-space:nowrap}
+.historical-compare-toolbar .scenario-segment button.active{background:#2563eb;color:#fff;box-shadow:0 2px 6px rgba(37,99,235,.2)}
+.historical-compare-periods{gap:12px;margin:0 0 16px}
+.historical-compare-period{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;background:#f7f9fc;border-color:#dce5ef;min-width:0}
+.historical-compare-period.current{background:#eef4ff;border-color:#bcd1f3}
+.historical-compare-period .k{font-size:14px;text-transform:none;letter-spacing:0;font-weight:400;color:#52677f}
+.historical-compare-period .v{font-size:18px;font-weight:700;color:#193859;margin-top:2px;font-variant-numeric:tabular-nums}
+.compare-period-code{display:grid;place-items:center;flex:0 0 34px;width:34px;height:34px;border-radius:9px;font-size:18px;font-weight:700;background:#e5ebf4;color:#52677f}
+.current .compare-period-code{background:#2563eb;color:#fff}
+.historical-compare-arrow{font-size:24px;color:#6f8bb0}
+.historical-compare-kpis{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:0 0 16px}
+.historical-compare-kpi{--compare-accent:#2563eb;--compare-soft:#f4f7ff;--compare-icon:#e3ecff;min-width:0;padding:14px 16px;border-radius:14px;border:1px solid #d9e3ef;border-left:4px solid var(--compare-accent);background:var(--compare-soft);box-shadow:0 4px 14px rgba(22,41,76,.035)}
+.historical-compare-kpi.compare-income,.historical-compare-kpi.compare-available{--compare-accent:#0c8b62;--compare-soft:#f2fbf7;--compare-icon:#d9f3e7}
+.historical-compare-kpi.compare-expense{--compare-accent:#c94856;--compare-soft:#fff5f5;--compare-icon:#ffe3e7}
+.historical-compare-kpi.compare-discretionary{--compare-accent:#7c4bd3;--compare-soft:#f8f4ff;--compare-icon:#eee4ff}
+.historical-compare-kpi.compare-savings{--compare-accent:#047e9b;--compare-soft:#f1fbfe;--compare-icon:#d9f3fa}
+.compare-metric-head{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:36px}
+.historical-compare-kpi .label{font-size:16px;font-weight:600;line-height:1.3;color:#344d70;text-transform:none;letter-spacing:0}
+.compare-metric-icon{display:grid;place-items:center;flex:0 0 36px;width:36px;height:36px;border-radius:10px;background:var(--compare-icon);color:var(--compare-accent)}
+.compare-metric-icon svg{width:22px;height:22px;stroke-width:2}
+.historical-compare-kpi .values{grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:10px 12px;align-items:end;margin-top:8px}
+.historical-compare-kpi .values>span{font-size:14px;font-weight:400;gap:3px;color:#52677f;min-width:0}
+.historical-compare-kpi .values strong{line-height:1.15;letter-spacing:0;font-weight:700;white-space:nowrap}
+.historical-compare-kpi .values .compare-value-reference strong{font-size:18px;font-weight:600;color:#52677f}
+.historical-compare-kpi .values .compare-value-current strong{font-size:30px;color:var(--compare-accent)}
+.historical-compare-kpi .delta{display:inline-flex;align-items:center;gap:5px;justify-self:start;font-size:16px;line-height:1.25;font-weight:700;margin:0;padding:5px 9px;border-radius:8px;background:#e9eef5;color:#52677f;font-variant-numeric:tabular-nums}
+.historical-compare-kpi .delta.good{background:#dcf4e7;color:#11683e}.historical-compare-kpi .delta.bad{background:#ffe4e9;color:#a9233a}
+.historical-compare-kpi .values .compare-delta-arrow{display:inline;font-size:18px;line-height:1;color:inherit}
+.historical-compare-insight{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 20px;margin:0 0 20px;padding:14px 16px;border:1px solid #dce5ef;border-radius:12px;background:#f5f8fd;font-size:16px;line-height:1.5}
+.compare-summary-result,.compare-insight-block{display:grid;align-content:start;gap:3px;min-width:0}
+.compare-insight-label{font-size:14px;font-weight:600;color:#475a74}
+.historical-compare-insight .compare-summary-result>strong{font-size:26px;line-height:1.2;font-weight:700;font-variant-numeric:tabular-nums;color:#193859}
+.compare-summary-result>span:last-child{font-size:14px;color:#52677f}
+.historical-compare-insight .good>strong,.historical-compare-insight .good .compare-insight-label{color:#11683e}
+.historical-compare-insight .bad>strong,.historical-compare-insight .bad .compare-insight-label{color:#a9233a}
+.compare-insight-block p{margin:0;font-size:16px;color:#344d70;line-height:1.5}
+.historical-compare-insight .compare-insight-block strong{font-weight:600;color:#193859}
+.compare-data-coverage{grid-column:1/-1;padding-top:8px;border-top:1px solid #dce5ef;color:#52677f;font-size:14px}
+.historical-compare-section-head{margin:0 0 10px;align-items:start}
+.historical-compare-section-head h4{font-size:22px;font-weight:700;color:#193859;line-height:1.3}
+.historical-compare-section-head p{font-size:14px;line-height:1.5;color:#475a74;margin-top:4px}
+.compare-contributors-scroll{max-width:100%;overflow:auto;border:1px solid #dce5ef;border-radius:12px;background:#fff}
+.historical-compare-table-rich{table-layout:fixed;min-width:930px}
+.historical-compare-table-rich th{font-size:14px;font-weight:600;text-transform:none;letter-spacing:0;padding:10px;background:#edf3fb;color:#475a74;white-space:nowrap}
+.historical-compare-table-rich td{font-size:16px;padding:6px 10px;line-height:1.3;font-variant-numeric:tabular-nums;vertical-align:middle;white-space:nowrap;border-color:#e5edf6}
+.historical-compare-table-rich th:first-child{width:26%}.historical-compare-table-rich th:nth-child(2),.historical-compare-table-rich th:nth-child(3){width:13%}.historical-compare-table-rich th:nth-child(4){width:14%}.historical-compare-table-rich th:nth-child(5){width:10%}.historical-compare-table-rich th:last-child{width:24%}
+.historical-compare-l1 td{background:#fff;font-weight:600}
+.historical-compare-l1:nth-child(even) td{background:#f8fbff}
+.historical-compare-l1:hover td,.historical-compare-l2:hover td{background:#f0f5fd}
+.historical-compare-l2 td{background:#f6f9fd}.historical-compare-l2 td:first-child{padding-left:54px}
+.historical-compare-l2.selected td{background:#eaf2ff}.historical-compare-l2.selected td:first-child{box-shadow:inset 3px 0 #2563eb}
+.historical-compare-row-btn{display:flex;align-items:center;gap:6px;width:100%;min-width:0;min-height:26px;font-size:16px;line-height:1.3}
+.historical-compare-row-btn:focus-visible{outline:2px solid #2563eb;outline-offset:2px;border-radius:5px}
+.historical-compare-caret{flex:0 0 12px;width:12px;font-size:14px;color:#52677f}
+.compare-category-icon{display:grid;place-items:center;flex:0 0 24px;width:24px;height:24px;border-radius:6px;background:#eaf1ff;color:#4263a1}
+.compare-category-icon svg{width:17px;height:17px}
+.compare-category-name{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.historical-compare-table-rich .compare-amount-reference{color:#52677f;font-weight:400}.historical-compare-table-rich .compare-amount-current{color:#193859;font-weight:700}
+.compare-effect-meter{position:relative;display:block;min-height:26px;padding:4px 8px;line-height:1.2;border-radius:6px;color:#52677f}
+.compare-effect-meter i{position:absolute;right:0;top:0;bottom:0;max-width:100%;border-radius:6px;background:#e9eef5}
+.compare-effect-meter strong{position:relative;z-index:1;font-size:16px;font-weight:700}
+.compare-effect-meter.good{color:#11683e}.compare-effect-meter.good i{background:#dcf4e7}
+.compare-effect-meter.bad{color:#a9233a}.compare-effect-meter.bad i{background:#ffe4e9}
+.historical-compare-detail{padding:16px;border-radius:14px;background:#f5f8fd;border-color:#c7daf6}
+.historical-compare-detail-head h4{font-size:20px;line-height:1.3;color:#193859}.historical-compare-detail-head p{font-size:14px;color:#475a74}
+.historical-compare-cp-table{min-width:640px}.historical-compare-cp-table th{font-size:14px;background:#edf3fb;color:#475a74;font-weight:600;padding:9px 10px}.historical-compare-cp-table td{font-size:16px;padding:6px 10px;font-variant-numeric:tabular-nums;line-height:1.35}
+.historical-compare-moves td{font-size:16px;line-height:1.4}.historical-compare-moves th{font-size:14px;background:#edf3fb;color:#475a74}
+@media(max-width:1150px){.historical-compare-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.historical-comparison-workspace{padding:16px}.historical-compare-insight{grid-template-columns:1fr 1fr}.compare-summary-result{grid-column:1/-1}.historical-compare-table-rich{min-width:930px}.historical-compare-detail{overflow:auto}}
+@media(max-width:650px){.historical-compare-kpis{grid-template-columns:1fr}.historical-compare-insight{grid-template-columns:1fr}.historical-compare-toolbar-group{width:100%}.historical-compare-toolbar .scenario-segment button{flex:1 1 auto}.historical-compare-table-rich th:nth-child(5),.historical-compare-table-rich td:nth-child(5){display:table-cell}}
 </style>
 </head>
 <body>
@@ -4802,20 +4877,31 @@ function comparisonPct(a,b){
   if(Math.abs(a)<.5)return Math.abs(b)<.5?0:null;
   return (b-a)*100/a;
 }
-function comparisonMetricCard(label,a,b,kind){
+function comparisonMetricCard(label,a,b,kind,visual){
   const d=b-a,p=comparisonPct(a,b),tone=kind==="EXPENSE"?comparisonTone("EXPENSE",d):(kind==="INCOME"?comparisonTone("INCOME",d):(Math.abs(d)<.5?"neutral":d>0?"good":"bad"));
-  return '<div class="historical-compare-kpi"><div class="label">'+esc(label)+'</div><div class="values"><span>Periodo A<strong>'+money(a)+'</strong></span><span>Periodo B<strong>'+money(b)+'</strong></span><b class="delta '+tone+'">'+comparisonSigned(d)+(p===null?"":' · '+(p>0?"+":"")+p.toLocaleString("it-IT",{maximumFractionDigits:1})+"%")+'</b></div></div>';
+  const theme=visual||(kind==="EXPENSE"?"expense":"income"),icon={income:"↑",expense:"↓",structural:"▥",discretionary:"◎",savings:"◉",available:"◉"}[theme]||"▥",arrow=Math.abs(d)<.5?"→":d>0?"↑":"↓";
+  return '<div class="historical-compare-kpi compare-'+esc(theme)+'"><div class="compare-metric-head"><div class="label">'+esc(label)+'</div><span class="compare-metric-icon" aria-hidden="true">'+scenarioKpiIcon(icon)+'</span></div><div class="values"><span class="compare-value-reference">Periodo A<strong>'+money(a)+'</strong></span><span class="compare-value-current">Periodo B<strong title="'+esc(money(b))+'">'+money(b)+'</strong></span><b class="delta '+tone+'" title="Variazione del periodo B rispetto ad A"><span class="compare-delta-arrow" aria-hidden="true">'+arrow+'</span>'+comparisonSigned(d)+(p===null?"":' · '+(p>0?"+":"")+p.toLocaleString("it-IT",{maximumFractionDigits:1})+"%")+'</b></div></div>';
 }
 function comparisonTopInsight(groups,direction){
   const changed=groups.filter(function(x){return Math.abs(x.b-x.a)>.5});
-  if(!changed.length)return "Categorie sostanzialmente stabili.";
+  if(!changed.length)return '<div class="compare-insight-block neutral"><span class="compare-insight-label">Contributori</span><p>Categorie sostanzialmente stabili.</p></div>';
   const effect=function(x){const d=x.b-x.a;return direction==="EXPENSE"?-d:d};
   const good=changed.filter(function(x){return effect(x)>0}).sort(function(a,b){return effect(b)-effect(a)}).slice(0,2);
   const bad=changed.filter(function(x){return effect(x)<0}).sort(function(a,b){return effect(a)-effect(b)}).slice(0,2);
   const fmt=function(rows){return rows.map(function(x){return '<strong>'+esc(x.name)+'</strong> '+comparisonSigned(x.b-x.a)}).join(" · ")};
-  return (good.length?'<span class="positive">Possibili buone pratiche: '+fmt(good)+'</span>':"")+
-    (good.length&&bad.length?" · ":"")+
-    (bad.length?'<span class="negative">Da capire: '+fmt(bad)+'</span>':"");
+  return (good.length?'<div class="compare-insight-block good"><span class="compare-insight-label">Possibili buone pratiche</span><p>'+fmt(good)+'</p></div>':"")+
+    (bad.length?'<div class="compare-insight-block bad"><span class="compare-insight-label">Da approfondire</span><p>'+fmt(bad)+'</p></div>':"");
+}
+function comparisonEffectHtml(effect,maximum){
+  const tone=Math.abs(effect)<.5?"neutral":effect>0?"good":"bad",width=Math.max(0,Math.min(100,Math.abs(effect)*100/Math.max(1,maximum)));
+  return '<span class="compare-effect-meter '+tone+'" title="'+esc('Effetto sul margine: '+comparisonSigned(effect))+'"><i style="width:'+width.toFixed(2)+'%" aria-hidden="true"></i><strong>'+comparisonSigned(effect)+'</strong></span>';
+}
+function comparisonContributorRow(row,level,maxEffect){
+  const d=row.b-row.a,p=comparisonPct(row.a,row.b),tone=comparisonTone(compareDirection,d),effect=compareDirection==="EXPENSE"?-d:d;
+  const l1=level==="L1",open=l1&&compareExpandedL1.has(row.id),selected=!l1&&String(compareSelectedL2||"")===String(row.id);
+  const action=l1?'data-compare-l1="'+esc(row.id)+'" aria-expanded="'+open+'"':'data-compare-l2="'+esc(row.id)+'" data-compare-l2-name="'+esc(row.name)+'" aria-pressed="'+selected+'"';
+  const icon=l1?'<span class="historical-compare-caret" aria-hidden="true">'+(open?"▾":"▸")+'</span><span class="compare-category-icon" aria-hidden="true">'+analysisSvgIcon(row.name)+'</span>':'';
+  return '<tr class="historical-compare-'+(l1?'l1':'l2')+(selected?' selected':'')+'"><td><button type="button" class="historical-compare-row-btn" '+action+'>'+icon+'<span class="compare-category-name" title="'+esc(row.name)+'">'+esc(row.name)+'</span></button></td><td class="compare-amount-reference">'+money(row.a)+'</td><td class="compare-amount-current">'+money(row.b)+'</td><td class="historical-compare-delta '+tone+'">'+comparisonSigned(d)+'</td><td>'+(p===null?"—":((p>0?"+":"")+p.toLocaleString("it-IT",{maximumFractionDigits:1})+"%"))+'</td><td>'+comparisonEffectHtml(effect,maxEffect)+'</td></tr>';
 }
 function renderHistoricalComparisonDetail(){
   const box=$("historicalComparisonDetail");if(!box)return;
@@ -4858,24 +4944,24 @@ function renderHistoricalPeriodComparison(){
   const sets=comparisonMonthSets(),a=comparisonTotalsForMonths(sets.a),b=comparisonTotalsForMonths(sets.b),groups=comparisonCategoryRows(compareDirection,sets);
   const years=historicalAvailableYears(),yearSel=$("compareYearB");
   if(yearSel){yearSel.innerHTML=years.map(function(y){return '<option value="'+y+'"'+(Number(compareYearB)===y?' selected':'')+'>'+y+'</option>'}).join("");$("compareYearWrap")?.classList.toggle("hidden",compareWindow!=="YEAR")}
-  document.querySelectorAll("[data-compare-window]").forEach(function(x){x.classList.toggle("active",x.dataset.compareWindow===String(compareWindow))});
-  document.querySelectorAll("[data-compare-direction]").forEach(function(x){x.classList.toggle("active",x.dataset.compareDirection===compareDirection)});
-  $("historicalComparisonPeriodLabels").innerHTML='<div class="historical-compare-period"><div class="k">Periodo A · riferimento</div><div class="v">'+esc(sets.labelA)+'</div></div><div class="historical-compare-arrow">→</div><div class="historical-compare-period"><div class="k">Periodo B · confronto</div><div class="v">'+esc(sets.labelB)+'</div></div>';
+  document.querySelectorAll("[data-compare-window]").forEach(function(x){const active=x.dataset.compareWindow===String(compareWindow);x.classList.toggle("active",active);x.setAttribute("aria-pressed",String(active))});
+  document.querySelectorAll("[data-compare-direction]").forEach(function(x){const active=x.dataset.compareDirection===compareDirection;x.classList.toggle("active",active);x.setAttribute("aria-pressed",String(active))});
+  $("historicalComparisonPeriodLabels").innerHTML='<div class="historical-compare-period reference"><span class="compare-period-code" aria-hidden="true">A</span><div><div class="k">Periodo A · riferimento</div><div class="v">'+esc(sets.labelA)+'</div></div></div><div class="historical-compare-arrow" aria-hidden="true">→</div><div class="historical-compare-period current"><span class="compare-period-code" aria-hidden="true">B</span><div><div class="k">Periodo B · confronto</div><div class="v">'+esc(sets.labelB)+'</div></div></div>';
   $("historicalComparisonKpis").innerHTML=
-    comparisonMetricCard("Entrate",a.income,b.income,"INCOME")+
-    comparisonMetricCard("Uscite operative",a.operatingOut,b.operatingOut,"EXPENSE")+
-    comparisonMetricCard("Margine strutturale",a.structural,b.structural,"INCOME")+
-    comparisonMetricCard("Discrezionali",a.discretionary,b.discretionary,"EXPENSE")+
-    comparisonMetricCard("Risparmio",a.savings,b.savings,"INCOME")+
-    comparisonMetricCard("Disponibile finale",a.available,b.available,"INCOME");
-  const availableDelta=b.available-a.available,availTone=availableDelta>=0?"migliora":"peggiora";
-  $("historicalComparisonInsight").innerHTML='<strong>Il disponibile '+availTone+' di '+comparisonSigned(availableDelta)+'.</strong> '+comparisonTopInsight(groups,compareDirection)+' · <span class="muted">Copertura dati A '+a.covered+'/'+a.months+' mesi, B '+b.covered+'/'+b.months+'.</span>';
+    comparisonMetricCard("Entrate",a.income,b.income,"INCOME","income")+
+    comparisonMetricCard("Uscite operative",a.operatingOut,b.operatingOut,"EXPENSE","expense")+
+    comparisonMetricCard("Margine strutturale",a.structural,b.structural,"INCOME","structural")+
+    comparisonMetricCard("Discrezionali",a.discretionary,b.discretionary,"EXPENSE","discretionary")+
+    comparisonMetricCard("Risparmio",a.savings,b.savings,"INCOME","savings")+
+    comparisonMetricCard("Disponibile finale",a.available,b.available,"INCOME","available");
+  const availableDelta=b.available-a.available,availTone=Math.abs(availableDelta)<.5?"neutral":availableDelta>0?"good":"bad",availLabel=availTone==="neutral"?"Sostanzialmente stabile":availTone==="good"?"Migliora tra A e B":"Peggiora tra A e B";
+  $("historicalComparisonInsight").innerHTML='<div class="compare-summary-result '+availTone+'"><span class="compare-insight-label">Disponibile finale</span><strong>'+comparisonSigned(availableDelta)+'</strong><span>'+availLabel+'</span></div>'+comparisonTopInsight(groups,compareDirection)+'<div class="compare-data-coverage">Copertura dati · A '+a.covered+'/'+a.months+' mesi · B '+b.covered+'/'+b.months+' mesi</div>';
   $("historicalComparisonContributorsTitle").textContent=compareDirection==="EXPENSE"?"Cosa ha mosso le uscite?":"Cosa ha mosso le entrate?";
-  let html='<div style="overflow:auto"><table class="historical-compare-table-rich"><thead><tr><th>Categoria</th><th>Periodo A</th><th>Periodo B</th><th>Δ €</th><th>Δ %</th><th>Effetto sul margine</th></tr></thead><tbody>';
+  const maxEffect=Math.max(1,...groups.flatMap(function(g){return [Math.abs(g.b-g.a)].concat(g.children.map(function(ch){return Math.abs(ch.b-ch.a)}))}));
+  let html='<div class="compare-contributors-scroll"><table class="historical-compare-table-rich"><thead><tr><th>Categoria</th><th>Periodo A</th><th>Periodo B</th><th>Δ €</th><th>Δ %</th><th title="Lunghezza relativa al maggior effetto assoluto tra L1 e L2">Effetto sul margine</th></tr></thead><tbody>';
   groups.forEach(function(g){
-    const d=g.b-g.a,p=comparisonPct(g.a,g.b),tone=comparisonTone(compareDirection,d),effect=compareDirection==="EXPENSE"?-d:d,eTone=Math.abs(effect)<.5?"neutral":effect>0?"good":"bad",open=compareExpandedL1.has(g.id);
-    html+='<tr class="historical-compare-l1"><td><button type="button" class="historical-compare-row-btn" data-compare-l1="'+esc(g.id)+'"><span class="historical-compare-caret">'+(open?"▾":"▸")+'</span>'+esc(g.name)+'</button></td><td>'+money(g.a)+'</td><td>'+money(g.b)+'</td><td class="historical-compare-delta '+tone+'">'+comparisonSigned(d)+'</td><td>'+(p===null?"—":((p>0?"+":"")+p.toLocaleString("it-IT",{maximumFractionDigits:1})+"%"))+'</td><td class="historical-compare-effect '+eTone+'">'+comparisonSigned(effect)+'</td></tr>';
-    if(open)g.children.forEach(function(ch){const cd=ch.b-ch.a,cp=comparisonPct(ch.a,ch.b),ct=comparisonTone(compareDirection,cd),eff=compareDirection==="EXPENSE"?-cd:cd,et=Math.abs(eff)<.5?"neutral":eff>0?"good":"bad";html+='<tr class="historical-compare-l2"><td><button type="button" class="historical-compare-row-btn" data-compare-l2="'+esc(ch.id)+'" data-compare-l2-name="'+esc(ch.name)+'">'+esc(ch.name)+'</button></td><td>'+money(ch.a)+'</td><td>'+money(ch.b)+'</td><td class="historical-compare-delta '+ct+'">'+comparisonSigned(cd)+'</td><td>'+(cp===null?"—":((cp>0?"+":"")+cp.toLocaleString("it-IT",{maximumFractionDigits:1})+"%"))+'</td><td class="historical-compare-effect '+et+'">'+comparisonSigned(eff)+'</td></tr>';});
+    html+=comparisonContributorRow(g,"L1",maxEffect);
+    if(compareExpandedL1.has(g.id))g.children.forEach(function(ch){html+=comparisonContributorRow(ch,"L2",maxEffect)});
   });
   html+='</tbody></table></div>';$("historicalComparisonContributors").innerHTML=html;
   renderHistoricalComparisonDetail();
