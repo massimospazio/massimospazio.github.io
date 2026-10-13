@@ -5110,6 +5110,7 @@ function syncReportingProcessNavigation(phase){
 }
 function hideProcessRoadmap(){
   $("processRoadmapView")?.classList.remove("active");
+  document.querySelectorAll("[data-process-feature]").forEach(function(b){b.classList.remove("active")});
 }
 function hideMainProcessViews(){
   $("standardReportingView").classList.add("hidden");
@@ -5170,6 +5171,7 @@ function applyBalanceSubview(){
   $("historicalBottomGrid")?.classList.toggle("single-view",compare||flow);
   $("historicalCompositionSection")?.classList.toggle("balance-section-hidden",!flow||!pureHistory);
   $("historicalComparisonSection")?.classList.toggle("balance-section-hidden",!compare||!pureHistory);
+  document.querySelector(".balance-hub-toggle")?.classList.toggle("hidden",!flow);
   document.querySelectorAll("[data-where-view]").forEach(function(b){b.classList.toggle("active",b.dataset.whereView===balanceSubview)});
 }
 function showBalanceSubview(kind){
