@@ -55,6 +55,15 @@
         {heading:'Cosa resta distinto',paragraphs:['Flusso e Confronto escludono i prestiti dal reddito e usano i fondi propri degli acquisti coperti, in entrambi i perimetri. Il Cash flow conserva gli importi integrali per i movimenti inclusi dal filtro.','Totale non reinserisce automaticamente E nella base della previsione. Per la previsione controlla i metodi e le esclusioni in Analisi & Baseline.']}
       ],related:['temporal','forecast-exclusion','budget-vs-cashflow']
     },
+    'flow-bridge-diagnostic':{
+      title:'Perché è cambiato il bilancio? Ponte e drilldown A/B',
+      sections:[
+        {heading:'Due riconciliazioni indipendenti',paragraphs:['Le variazioni A→B vengono espresse come contributi al risultato: Δ Entrate − Δ O − Δ N − Δ NC = Δ Margine strutturale; Δ Margine − Δ D − Δ Altre operative − Δ Risparmio (+ eventi E netti nel Totale) = Δ Avanzo. Ogni passaggio è verificato, con scarti >1 € evidenziati.','Una spesa che aumenta ha effetto negativo sul risultato. Il risparmio che diminuisce aumenta contabilmente l’avanzo, ma non è un miglioramento della capacità di accantonamento: non interpretare il segno positivo come una buona pratica.']},
+        {heading:'Scelta Totale o Media mensile',paragraphs:['Con Totale si confronta la somma dei movimenti dei due periodi, che può essere fuorviante se A e B hanno durata differente. Con Media mensile tutti i contributi sono normalizzati separatamente per la rispettiva durata. Il confronto di periodi con stagionalità diversa resta da interpretare con cautela.','L’analisi per L1/L2/controparti usa la stessa unità dei grafici. Il movimento individuale mantiene SEMPRE il suo importo originale, anche quando i grafici mostrano €/mese.']},
+        {heading:'Approfondimento delle cause',paragraphs:['Clicca Entrate/O/N/NC/D/Altre/Risparmio nel ponte, espandi una L1 e poi una L2. La chiamata al dettaglio recupera le controparti e i movimenti dei periodi A e B; cliccando una controparte vedi le righe separate per periodo.','Le entrate da prestiti sono escluse; le uscite coperte da prestito sono considerate per la parte a carico del budget. Gli eventi E, quando visibili, restano un passaggio netto separato e non sono automaticamente classificati come spendibili o eliminabili. Una differenza tra somma categorie e il dato della cascata viene mostrata come avviso, senza inventare voci di compensazione.']},
+        {heading:'Diagnosi automatica: revisione ancora aperta',paragraphs:['Il ponte è una spiegazione aritmetica verificabile; è distinto dalla diagnosi automatica qualitativa introdotta in V73.30.1.18, che rimane una V1 sperimentale da rivedere con l’utente (GitHub issue #28). La vecchia scheda Confronto periodi resta temporaneamente disponibile fino al collaudo.']}
+      ],related:['flow-diagnosis','flow-period-comparison','comparison-bridge','loan-coverage']
+    },
     'flow-diagnosis':{
       title:'Diagnosi automatica del Flusso economico',
       sections:[
