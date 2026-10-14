@@ -55,6 +55,15 @@
         {heading:'Cosa resta distinto',paragraphs:['Flusso e Confronto escludono i prestiti dal reddito e usano i fondi propri degli acquisti coperti, in entrambi i perimetri. Il Cash flow conserva gli importi integrali per i movimenti inclusi dal filtro.','Totale non reinserisce automaticamente E nella base della previsione. Per la previsione controlla i metodi e le esclusioni in Analisi & Baseline.']}
       ],related:['temporal','forecast-exclusion','budget-vs-cashflow']
     },
+    'flow-diagnosis':{
+      title:'Diagnosi automatica del Flusso economico',
+      sections:[
+        {heading:'Come viene valutato il periodo',paragraphs:['La diagnosi usa calcoli deterministici sulle categorie e sui movimenti già registrati. In confronto A/B valuta separatamente il periodo A o B; in vista singola cerca un periodo di riferimento completo e coerente (quando possibile). Se mancano dati o la riconciliazione non torna, sospende le opportunità quantificate.','Sono osservazioni orientative: non è una valutazione morale del comportamento familiare né un giudizio automatico di spreco. Un acquisto occasionale, una spesa sanitaria necessaria e un aumento permanente hanno significati diversi.']},
+        {heading:'Punti positivi e criticità',paragraphs:['Il motore considera avanzo ordinario, risparmio destinato agli obiettivi, margine strutturale, incidenza delle discrezionali, NC e variazioni di O/N/D rispetto allo storico. Evidenzia anche l’evoluzione della somma Risparmio + Avanzo.','Le differenze economiche sono normalizzate per mese quando si confrontano durate differenti; le differenze stagionali vengono segnalate. Una riduzione del risparmio non è un miglioramento, anche se può aumentare contabilmente l’avanzo.']},
+        {heading:'Opportunità: ipotesi, non promesse',paragraphs:['Le voci discrezionali vengono candidate solo se presenti in almeno il 45% dei mesi osservati (minimo 3) e con una media almeno di 25 €/mese; il periodo deve contenere almeno sei mesi disponibili. La riduzione ipotetica del 5–10% indica una possibilità aritmetica, non un risparmio già realizzato o una previsione.','Per i contanti e le NC non viene stimato alcun risparmio: completare la classificazione migliora la qualità dei dati. I pulsanti Esplora movimenti aprono i dettagli effettivi del periodo selezionato, non i valori medi del grafico.']},
+        {heading:'Cosa fare dopo',paragraphs:['Esamina i movimenti delle categorie suggerite, conferma quali acquisti sono comprimibili senza ridurre le spese essenziali, quindi definisci obiettivi realizzabili nella Strategia e nel Piano. La diagnosi non modifica transazioni, categorie o budget.','La vista Confronto periodi precedente resta disponibile fino a consolidamento e collaudo definitivo.']}
+      ],related:['flow-period-comparison','comparison-bridge','budget-surplus','perimeter']
+    },
     'flow-period-comparison':{
       title:'Flusso economico: periodi, confronto e quote',
       sections:[
