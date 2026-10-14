@@ -1643,9 +1643,9 @@ body{font-size:16px;line-height:1.5}
 .historical-compare-kpi .compare-compact-values .delta{font-size:13px;padding:5px 7px;line-height:1.2;align-self:flex-end;white-space:nowrap}
 .historical-compare-kpi .compare-delta-arrow{margin-right:3px}
 .compare-on-inline{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:center;gap:6px;font-size:12px;color:#425b7c;border-top:1px solid #dfe7f1;padding-top:6px;margin-top:auto}
-.compare-on-inline .compare-on-code{width:19px;height:19px;display:inline-grid;place-items:center;margin-right:4px;font-size:12px}
-.compare-on-inline strong{font-size:12px;color:#233b5a;font-variant-numeric:tabular-nums}
-.compare-on-inline span{white-space:nowrap;font-size:11px}
+.compare-on-inline .compare-on-code{width:20px;height:20px;display:inline-grid;place-items:center;margin-right:4px;font-size:14px}
+.compare-on-inline strong{font-size:14px;color:#233b5a;font-variant-numeric:tabular-nums}
+.compare-on-inline span{white-space:nowrap;font-size:14px}
 .historical-compare-kpi:has(.compare-on-inline){min-height:112px}
 .historical-compare-kpi .compare-ab-bars,.historical-compare-kpi .compare-on-foot{display:none}
 .compare-analysis-disclosure{margin:0 0 11px;border:1px solid #d8e2ef;border-radius:11px;background:#f6f9fd;overflow:hidden}
@@ -5195,8 +5195,8 @@ function comparisonMetricCard(label,a,b,kind,visual,detail){
   const d=b-a,p=comparisonPct(a,b),tone=comparisonTone(kind==="EXPENSE"?"EXPENSE":"INCOME",d);
   const theme=visual||(kind==="EXPENSE"?"expense":"income"),icon={income:"↑",expense:"↓",structural:"▥",discretionary:"◎",savings:"◉",available:"◉"}[theme]||"▥";
   const breakdown=detail?'<div class="compare-on-inline" title="Obbligatorie (O), necessarie (N) e uscite operative totali">'+
-    '<span><b class="compare-on-code">O</b> <strong>'+money(detail.aO)+' → '+money(detail.bO)+'</strong></span>'+
-    '<span><b class="compare-on-code n">N</b> <strong>'+money(detail.aN)+' → '+money(detail.bN)+'</strong></span></div>':'';
+    '<span title="O · A '+esc(money(detail.aO))+' → B '+esc(money(detail.bO))+'"><b class="compare-on-code">O</b> <strong>'+comparisonSigned(detail.bO-detail.aO)+'</strong></span>'+
+    '<span title="N · A '+esc(money(detail.aN))+' → B '+esc(money(detail.bN))+'"><b class="compare-on-code n">N</b> <strong>'+comparisonSigned(detail.bN-detail.aN)+'</strong></span></div>':'';
   return '<article class="historical-compare-kpi compare-'+esc(theme)+'"><div class="compare-metric-head"><div class="label">'+esc(label)+
     ((label==="Margine strutturale"||label.indexOf("Avanzo")===0)?contextualHelpButton("budget-surplus",label):"")+
     '</div><span class="compare-metric-icon" aria-hidden="true">'+scenarioKpiIcon(icon)+'</span></div>'+
