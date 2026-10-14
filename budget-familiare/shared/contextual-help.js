@@ -55,6 +55,14 @@
         {heading:'Cosa resta distinto',paragraphs:['Flusso e Confronto escludono i prestiti dal reddito e usano i fondi propri degli acquisti coperti, in entrambi i perimetri. Il Cash flow conserva gli importi integrali per i movimenti inclusi dal filtro.','Totale non reinserisce automaticamente E nella base della previsione. Per la previsione controlla i metodi e le esclusioni in Analisi & Baseline.']}
       ],related:['temporal','forecast-exclusion','budget-vs-cashflow']
     },
+    'comparison-bridge':{
+      title:'Confronto periodi: variazione dell’avanzo',
+      sections:[
+        {heading:'Riconciliare A e B',paragraphs:['I contributi al Δ Avanzo sono Δ entrate meno Δ obbligatorie, necessarie, NC, discrezionali, altre uscite operative e risparmio. La somma deve corrispondere alla variazione dell’avanzo.','Un contributo positivo del risparmio può significare che hai risparmiato meno: migliora il risultato contabile ma non è necessariamente un buon comportamento. La classificazione O/N/D serve per distinguere spese rigide, necessarie e comprimibili.']},
+        {heading:'NC incluse nel confronto',paragraphs:['NC comprende Prelievo contanti e Da classificare: pesano sia sul margine strutturale sia sull’avanzo. Il riepilogo le separa per evidenziare quanto resta da descrivere.','I prelievi sono una proxy delle spese in contanti: possono essere consumati in periodi successivi. Se registri un acquisto in contanti, evita di conteggiarlo anche come nuovo esborso senza compensare il prelievo.']},
+        {heading:'Solidità e segnalazioni',paragraphs:['Il periodo più solido ha sia avanzo sia risparmio migliori; quando le due misure divergono l’esito è misto. Non è un giudizio assoluto di virtuosità.','Il segno ! compare solo per variazioni estreme, non per qualunque percentuale elevata. La natura selezionata filtra solo i contributori, non KPI e riconciliazione. Il confronto non modifica le transazioni o la previsione.']}
+      ],related:['budget-surplus','budget-vs-cashflow','perimeter']
+    },
     'investment-funding':{
       title:'Origine fondi dell’investimento',
       sections:[
