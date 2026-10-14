@@ -5334,6 +5334,164 @@ function renderFlowUnified(){
     groups.filter(function(g){return g.model.priorWealth>.005}).map(function(g,i){return ' · '+esc(compare?(g===groups[0]?"A":"B"):"Periodo")+' investimenti da patrimonio pregresso (fuori flusso): '+money(g.model.priorWealth)}).join("");
   $("balanceWaterfallSubtitle").textContent=compare?"Cascate A/B affiancate · clicca una barra per il dettaglio del relativo periodo.":"Flusso del periodo selezionato.";
   $("balanceWaterfallMode").textContent=flowAmountMode==="MONTHLY"?"Media mensile":"Totale periodo";
+  renderFlowDiagnosis(groups);
+}
+
+
+/* V73.30.1.18 — Evidence-based diagnostic engine. Never calls a language model. */
+function flowDiagnosticCategoryRows(months){
+  const set=new Set(months),groups=new Map();
+  (scenarioActualCategories||[]).forEach(function(x){
+    if(!set.has(String(x.month_start))||String(x.direction)!=="EXPENSE")return;
+    const nature=historicalNatureForCategory(x);
+    if(!["MANDATORY","NECESSARY","DISCRETIONARY","UNCLASSIFIED","UNKNOWN"].includes(nature))return;
+    const amount=historicalCategoryAmount(x,"ORDINARY");
+    if(amount<=.005)return;
+    const id=String(x.l2_id||x.l1_id||""),key=nature+"|"+id;
+    if(!id)return;
+    if(!groups.has(key))groups.set(key,{id:id,nature:nature,l1:String(x.l1_name||""),l2:String(x.l2_name||x.l1_name||"Altro"),amount:0,months:new Set()});
+    const g=groups.get(key);g.amount+=amount;g.months.add(String(x.month_start));
+  });
+  return Array.from(groups.values()).map(function(g){return {...g,monthCount:g.months.size,months:undefined}});
+}
+function flowDiagnosticReference(groups,focus){
+  const target=groups[focus],current=historicalCurrentMonth();
+  if(!target||!target.months.length)return null;
+  if(groups.length===2){
+    const other=groups[1-focus],full=other.covered.length===other.months.length;
+    return full&&other.months.length>=4?{...other,from:"OTHER"}:null;
+  }
+  const selected=target.months,count=selected.length;
+  if(count>24||count<4)return null;
+  const prior=monthSeries(addMonthsISO(selected[0],-12),count);
+  const sameCalendar=prior.length===count&&prior.every(function(m,i){return m.slice(5,7)===selected[i].slice(5,7)});
+  const comparisonMonths=sameCalendar?prior:monthSeries(addMonthsISO(selected[0],-count),count);
+  if(comparisonMonths.some(function(m){return m>=current})||flowAvailableMonths(comparisonMonths).length!==comparisonMonths.length)return null;
+  return {key:"REFERENCE",months:comparisonMonths,covered:comparisonMonths,label:"Riferimento storico ("+monthLabel(comparisonMonths[0])+" – "+monthLabel(comparisonMonths[count-1])+")",model:flowPeriodModel(comparisonMonths),from:"AUTO"};
+}
+function flowDiagnosticIntegrity(t){
+  return t.income-t.mandatory-t.necessary-t.unclassified-t.discretionary-t.otherOperating-t.savings-t.available;
+}
+function flowDiagnosticCompare(target,reference){
+  if(!reference)return null;
+  const x=target.model,y=reference.model,n=Math.max(1,target.months.length),m=Math.max(1,reference.months.length);
+  const aligned=n===m&&target.months.every(function(v,i){return v.slice(5,7)===reference.months[i].slice(5,7)});
+  const change=function(k){return num(x[k])/n-num(y[k])/m};
+  return {aligned:aligned,months:Math.min(n,m),income:change("income"),mandatory:change("mandatory"),necessary:change("necessary"),
+    unclassified:change("unclassified"),discretionary:change("discretionary"),savings:change("savings"),available:change("available"),
+    structural:change("structural"),other:change("otherOperating"),
+    baseline:reference};
+}
+function flowDiagnosticBuild(groups,focus){
+  const g=groups[focus],t=g.model,n=g.months.length,covered=g.covered.length,full=covered===n,norm=Math.max(1,n),ratio=function(v,base){return base>0?100*v/base:null};
+  const compare=flowDiagnosticReference(groups,focus),delta=full&&compare?flowDiagnosticCompare(g,compare):null;
+  const complete=full&&n>=4,integrity=flowDiagnosticIntegrity(t),validBalance=Math.abs(integrity)<=1;
+  const dShare=ratio(t.discretionary,t.structural),marginShare=ratio(t.structural,t.income);
+  const goods=[],risks=[],opportunities=[];
+  const monthly=function(x){return num(x)/norm};
+  const threshold=Math.max(30,monthly(t.income)*.006); // material, not tiny categories
+  if(!complete){
+    risks.push("Periodo non sufficientemente coperto ("+covered+"/"+n+" mesi presenti). Interpretazione e proiezioni sospese.");
+  }else{
+    if(t.available>0)goods.push("Avanzo positivo: "+money(t.available)+" nel periodo ("+money(monthly(t.available))+"/mese).");
+    if(t.savings>0)goods.push("Risparmio programmato registrato: "+money(t.savings)+" ("+money(monthly(t.savings))+"/mese). È distinto dall’avanzo.");
+    if(delta){
+      if(delta.discretionary< -threshold)goods.unshift("Discrezionali diminuite di "+money(-delta.discretionary)+"/mese rispetto al riferimento.");
+      if(delta.available>threshold)goods.unshift("Avanzo medio migliorato di "+money(delta.available)+"/mese rispetto al riferimento.");
+      if(delta.structural>threshold)goods.unshift("Margine strutturale medio cresciuto di "+money(delta.structural)+"/mese.");
+      if(delta.structural< -threshold)risks.push("Margine strutturale medio ridotto di "+money(-delta.structural)+"/mese.");
+      if(delta.necessary>threshold)risks.push("Necessarie cresciute di "+money(delta.necessary)+"/mese: distinguere aumenti permanenti da spese occasionali.");
+      if(delta.mandatory>threshold)risks.push("Obbligatorie aumentate di "+money(delta.mandatory)+"/mese: verificare nuove rate e contratti.");
+      if(delta.available< -threshold)risks.push("Avanzo medio diminuito di "+money(-delta.available)+"/mese.");
+      if(delta.savings< -threshold)risks.push("Risparmio programmato medio ridotto di "+money(-delta.savings)+"/mese.");
+    }
+    if(t.available< -1)risks.unshift("Avanzo negativo di "+money(Math.abs(t.available))+" nel periodo: le risorse correnti non coprono tutte le destinazioni.");
+    else if(t.available<=0&&t.savings<=0)risks.push("Non emerge capacità di accantonamento nel periodo selezionato.");
+    if(t.structural<=0)risks.unshift("Margine strutturale non positivo: i costi O, N e NC assorbono almeno tutte le entrate.");
+    else if(dShare!==null&&dShare>80)risks.push("Discrezionali pari al "+flowPercent(t.discretionary,t.structural)+" del margine: bassa quota residua per risparmio e avanzo.");
+    if(t.unclassified>Math.max(150,t.income*.03))risks.push("NC pari a "+flowPercent(t.unclassified,t.income)+" delle entrate: i prelievi non dettagliati limitano la diagnosi.");
+  }
+  const currentCats=flowDiagnosticCategoryRows(g.months),refCats=delta?flowDiagnosticCategoryRows(compare.months):[];
+  const refMap=new Map(refCats.map(function(x){return [x.nature+"|"+x.id,x]}));
+  if(complete&&validBalance){
+    if(delta&&delta.necessary>threshold){
+      const growth=currentCats.filter(function(x){return x.nature==="NECESSARY"}).map(function(x){
+        const prev=refMap.get(x.nature+"|"+x.id);
+        return {name:x.l2,change:x.amount/n-(prev?prev.amount/compare.months.length:0)};
+      }).sort(function(a,b){return b.change-a.change})[0];
+      if(growth&&growth.change>threshold/2)risks.push("N · "+growth.name+": incremento di circa "+money(growth.change)+"/mese nel confronto. Verificare i movimenti.");
+    }
+    const minPresence=Math.max(3,Math.ceil(n*.4));
+    const ranked=currentCats.filter(function(x){return x.nature==="DISCRETIONARY"&&x.monthCount>=minPresence&&x.amount/n>=25})
+      .map(function(x){const previous=refMap.get(x.nature+"|"+x.id);
+        return {...x,monthly:x.amount/n,change:previous?x.amount/n-previous.amount/compare.months.length:null};
+      }).sort(function(a,b){
+        const ap=a.change!==null&&a.change>0?a.change:0,bp=b.change!==null&&b.change>0?b.change:0;
+        return (bp*1.5+b.monthly)-(ap*1.5+a.monthly);
+      }).slice(0,2);
+    ranked.forEach(function(x){
+      opportunities.push({id:x.id,nature:x.nature,name:(x.l1?x.l1+" → ":"")+x.l2,months:x.monthCount,rangeLow:x.monthly*.05,rangeHigh:x.monthly*.10,
+        context:x.change!==null&&x.change>Math.max(20,x.monthly*.15)?"In crescita di "+money(x.change)+"/mese rispetto al riferimento.":"Presente in "+x.monthCount+" mesi su "+n+".",
+        action:"Simula una riduzione del 5–10%, dopo aver verificato quali acquisti siano realmente evitabili."});
+    });
+  }
+  if(complete&&t.unclassified>0)opportunities.push({nature:"UNCLASSIFIED",name:"Contanti e NC",quality:true,
+    context:money(t.unclassified)+" non attribuiti a una natura di spesa dettagliata.",action:"Dettaglia i contanti e classifica le voci mancanti; migliora la precisione, non l’avanzo per definizione."});
+  if(!validBalance)risks.unshift("Riconciliazione incompleta: differenza di "+money(Math.abs(integrity))+". Verificare i movimenti prima di interpretare i KPI.");
+  const categoryGrowth=delta&&delta.necessary>threshold;
+  const headline=!complete?"Copertura insufficiente":!validBalance?"Verifica riconciliazione":
+    t.available<0?"Avanzo negativo":
+    delta&&delta.structural< -threshold?"Margine sotto pressione":
+    delta&&delta.available< -threshold?"Avanzo in diminuzione":
+    dShare!==null&&dShare>80?"Discrezionali assorbono gran parte del margine":
+    t.available>0&&t.savings>0?"Risparmio e avanzo positivi":"Bilancio da approfondire";
+  const verdict=(!complete||!validBalance)?"Analisi limitata: dati o riconciliazione non completi.":
+    delta?"Rispetto a "+compare.label+", il margine medio "+(delta.structural< -threshold?"si è ridotto":delta.structural>threshold?"è aumentato":"è rimasto sostanzialmente stabile")+
+      " e l’avanzo medio "+(delta.available< -threshold?"è diminuito":delta.available>threshold?"è migliorato":"è cambiato poco")+
+      ". Le cause vanno distinte tra variazioni strutturali e acquisti occasionali.":
+    "Il periodo presenta "+(t.available>=0?"un avanzo non negativo":"un avanzo negativo")+
+      ". Manca un riferimento storico omogeneo sufficientemente completo per giudicare l’andamento.";
+  return {g:g,reference:compare,delta:delta,complete:complete,validBalance:validBalance,integrity:integrity,headline:headline,verdict:verdict,
+    goods:goods.slice(0,3),risks:risks.slice(0,4),opportunities:opportunities.slice(0,3),
+    chips:[
+      {label:"Margine / Entrate",value:flowPercent(t.structural,t.income)},
+      {label:"D / Margine",value:flowPercent(t.discretionary,t.structural)},
+      {label:"Risparmio + Avanzo",value:money(t.savings+t.available)}
+    ],coverage:covered+"/"+n,marginShare:marginShare,discretionaryShare:dShare};
+}
+function renderFlowDiagnosis(groups){
+  const box=$("flowDiagnosis"),summary=$("flowDiagnosisHeadline"),content=$("flowDiagnosisContent"),tabs=$("flowDiagnosisPeriodTabs");
+  if(!box||!summary||!content||!tabs)return;
+  const compare=groups.length===2;
+  if(!compare)flowDiagnosticFocus="SINGLE";
+  else if(flowDiagnosticFocus!=="A"&&flowDiagnosticFocus!=="B")flowDiagnosticFocus="B";
+  const focus=compare?(flowDiagnosticFocus==="A"?0:1):0;
+  const info=flowDiagnosticBuild(groups,focus),target=info.g;
+  summary.textContent=(compare?"Periodo "+(focus===0?"A":"B")+" · ":"")+info.headline;
+  tabs.classList.toggle("hidden",!compare);
+  tabs.innerHTML=compare?'<span class="small muted">Analizza:</span>'+groups.map(function(g,i){
+    const selected=focus===i,code=i===0?"A":"B";
+    return '<button type="button" data-flow-diagnostic-focus="'+code+'" class="'+(selected?"active":"")+'" aria-pressed="'+selected+'">Periodo '+code+'</button>';
+  }).join(""):"";
+  const chips=info.chips.map(function(x){return '<span class="flow-diagnosis-chip"><strong>'+esc(x.label)+'</strong> · '+esc(x.value)+'</span>'}).join("");
+  const listed=function(arr,kind,fallback){
+    return '<section class="flow-diagnosis-panel"><h4 class="'+kind+'">'+(kind==="good"?"✓ Punti positivi":"! Criticità e verifiche")+'</h4>'+
+      '<ul>'+(arr.length?arr.map(function(x){return '<li>'+esc(x)+'</li>'}).join(""):'<li>'+esc(fallback)+'</li>')+'</ul></section>';
+  };
+  const opportunityHtml=info.opportunities.length?info.opportunities.map(function(o){
+    const amount=o.quality?"":'<div class="potential">'+money(o.rangeLow)+"–"+money(o.rangeHigh)+'/mese <small>ipotesi di riduzione 5–10%</small></div>';
+    return '<div class="flow-diagnosis-opportunity"><div><strong>'+esc(o.name)+'</strong><small>'+esc(o.context)+' '+esc(o.action)+'</small></div>'+
+      '<div>'+amount+'<button type="button" data-flow-diagnose-nature="'+esc(o.nature)+'"'+(o.id?' data-flow-diagnose-cat="'+esc(o.id)+'"':'')+
+      ' data-flow-diagnose-focus="'+(compare?(focus===0?"A":"B"):"SINGLE")+'">Esplora movimenti →</button></div></div>';
+  }).join(""):'<p class="sub">Nessuna categoria discrezionale abbastanza frequente da stimare un intervento affidabile. Esplora il dettaglio prima di scegliere un obiettivo.</p>';
+  content.innerHTML='<div class="flow-diagnosis-chips">'+chips+'</div><p class="flow-diagnosis-intro">'+esc(info.verdict)+'</p>'+
+    (!info.complete||!info.validBalance?'<div class="flow-diagnosis-integrity">'+esc("Copertura "+info.coverage+"; differenza riconciliazione "+money(Math.abs(info.integrity))+". Suggerimenti sospesi se la base non è affidabile.")+'</div>':"")+
+    '<div class="flow-diagnosis-panels">'+listed(info.goods,"good","Nessun miglioramento specifico dimostrabile sui dati disponibili.")+
+      listed(info.risks,"bad","Non emergono criticità rilevanti dalle regole attuali; non equivale a certificare l’assenza di sprechi.")+'</div>'+
+    '<section class="flow-diagnosis-opportunities"><h4>Dove agire · opportunità da verificare</h4>'+
+      '<p class="sub">Priorità alle discrezionali presenti in più mesi. Le riduzioni sono scenari aritmetici, non stime certe né obiettivi già approvati.</p>'+
+      opportunityHtml+'</section>'+
+      '<p class="flow-diagnosis-note">Diagnosi basata su regole verificabili; soglie indicative e nessun voto di virtuosità. Risparmio e avanzo sono entrambi risorse per obiettivi familiari. Le medie e gli scenari non sostituiscono il dettaglio reale dei movimenti.</p>';
 }
 
 function comparisonMonthSets(){
