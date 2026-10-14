@@ -1630,7 +1630,7 @@ body{font-size:16px;line-height:1.5}
 .compare-verdict-chip{display:inline-flex;gap:6px;align-items:center;margin-left:auto;padding:5px 9px;max-width:195px;border:1px solid #b9e4d2;background:#e8f7ef;border-radius:8px;color:#126746;font-size:13px;font-weight:700;line-height:1.3;white-space:nowrap}
 .compare-verdict-chip.mixed{border-color:#d3ddea;background:#f1f5fa;color:#475569}
 .compare-verdict-chip:focus-visible{outline:2px solid #2563eb;outline-offset:2px}
-.historical-compare-kpis{gap:9px;margin:0 0 10px}
+.historical-compare-kpis{grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:0 0 10px}
 .historical-compare-kpi{min-height:112px;padding:10px 12px;gap:7px;border-radius:11px;display:flex;flex-direction:column}
 .historical-compare-kpi .compare-metric-head{min-height:24px}
 .historical-compare-kpi .label{font-size:15px}
@@ -1642,10 +1642,10 @@ body{font-size:16px;line-height:1.5}
 .compare-compact-values .compare-compact-current strong{font-size:25px;font-weight:800;color:var(--compare-accent);white-space:nowrap}
 .historical-compare-kpi .compare-compact-values .delta{font-size:13px;padding:5px 7px;line-height:1.2;align-self:flex-end;white-space:nowrap}
 .historical-compare-kpi .compare-delta-arrow{margin-right:3px}
-.compare-on-inline{display:flex;align-items:center;justify-content:flex-start;gap:6px 14px;flex-wrap:wrap;font-size:12px;color:#425b7c;border-top:1px solid #dfe7f1;padding-top:6px;margin-top:auto}
+.compare-on-inline{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:center;gap:6px;font-size:12px;color:#425b7c;border-top:1px solid #dfe7f1;padding-top:6px;margin-top:auto}
 .compare-on-inline .compare-on-code{width:19px;height:19px;display:inline-grid;place-items:center;margin-right:4px;font-size:12px}
 .compare-on-inline strong{font-size:12px;color:#233b5a;font-variant-numeric:tabular-nums}
-.compare-on-inline span{white-space:nowrap}
+.compare-on-inline span{white-space:nowrap;font-size:11px}
 .historical-compare-kpi:has(.compare-on-inline){min-height:112px}
 .historical-compare-kpi .compare-ab-bars,.historical-compare-kpi .compare-on-foot{display:none}
 .compare-analysis-disclosure{margin:0 0 11px;border:1px solid #d8e2ef;border-radius:11px;background:#f6f9fd;overflow:hidden}
@@ -1658,6 +1658,8 @@ body{font-size:16px;line-height:1.5}
 .compare-analysis-toggle .compare-analysis-chevron{display:inline-block;transform:rotate(0);transition:transform .16s ease;font-size:14px}
 .compare-analysis-disclosure[open] .compare-analysis-chevron{transform:rotate(90deg)}
 .compare-analysis-toggle small{font-size:12px;color:#62748c;font-weight:400}
+.compare-analysis-disclosure[open] .compare-analysis-toggle small::after{content:"Chiudi dettagli"}
+.compare-analysis-disclosure:not([open]) .compare-analysis-toggle small::after{content:"Apri dettagli"}
 .compare-analysis-strip{display:grid;grid-template-columns:auto auto minmax(120px,1fr) minmax(120px,1fr) auto;align-items:center;gap:8px 14px;min-width:0;font-size:13px;line-height:1.35}
 .compare-analysis-strip>span{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .compare-analysis-badge{display:inline-flex;align-items:center;gap:4px;padding:4px 8px;border-radius:7px;font-size:14px;font-weight:800;background:#e5eaf2;color:#475569;white-space:nowrap}
@@ -1679,9 +1681,10 @@ body{font-size:16px;line-height:1.5}
 .historical-compare-section-head{margin:0 0 8px}
 @media(max-width:1150px){
  .compare-compact-values .compare-compact-current strong{font-size:23px}
- .compare-analysis-strip{grid-template-columns:auto auto minmax(120px,1fr) minmax(120px,1fr)}
- .compare-analysis-coverage{grid-column:1/-1;justify-self:start}
+ .historical-compare-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .compare-analysis-strip{grid-template-columns:auto auto minmax(0,1fr) minmax(0,1fr) auto}
 }
+@media(max-width:920px){.historical-compare-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:760px){
  .historical-comparison-workspace{padding:12px}
  .historical-compare-periods{grid-template-columns:minmax(0,1fr) 18px minmax(0,1fr)}
@@ -5264,10 +5267,10 @@ function comparisonCompactSummary(groups,direction,delta,tone,a,b){
   const plus=sorted.filter(function(x){return impact(x)>0}).sort(function(x,y){return impact(y)-impact(x)}).slice(0,1);
   const minus=sorted.filter(function(x){return impact(x)<0}).sort(function(x,y){return impact(x)-impact(y)}).slice(0,1);
   const brief=function(items,empty){return items.length?esc(items[0].name)+' '+comparisonSigned(items[0].b-items[0].a):empty};
-  return '<span class="compare-analysis-toggle"><span class="compare-analysis-chevron" aria-hidden="true">▸</span>Analisi del confronto <small>Apri dettagli</small></span>'+
+  return '<span class="compare-analysis-toggle"><span class="compare-analysis-chevron" aria-hidden="true">▸</span>Analisi del confronto <small aria-hidden="true"></small></span>'+
     '<span class="compare-analysis-badge '+tone+'">Δ Avanzo '+deltaText+'</span>'+
-    '<span class="compare-analysis-good" title="Contributore positivo più rilevante">↓ '+brief(plus,"Nessuno")+'</span>'+
-    '<span class="compare-analysis-bad" title="Contributore negativo più rilevante">↑ '+brief(minus,"Nessuno")+'</span>'+
+    '<span class="compare-analysis-good" title="Contributore positivo più rilevante">✓ '+brief(plus,"Nessuno")+'</span>'+
+    '<span class="compare-analysis-bad" title="Contributore negativo più rilevante">! '+brief(minus,"Nessuno")+'</span>'+
     '<span class="compare-analysis-coverage">Dati A '+a.covered+'/'+a.months+' · B '+b.covered+'/'+b.months+'</span>';
 }
 function comparisonTopInsight(groups,direction){
