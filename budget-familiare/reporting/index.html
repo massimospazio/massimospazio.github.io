@@ -6702,6 +6702,12 @@ $("historicalYearSelect")?.addEventListener("change",function(){
   balanceHubMode="HISTORY";historicalPeriodMode="YEAR";closeBalanceNatureDrill();renderBalanceHub();
 });
 $("scenarioView").addEventListener("click",async function(e){
+  const mode=e.target.closest("[data-flow-mode]");
+  if(mode){flowPeriodMode=mode.dataset.flowMode==="COMPARE"?"COMPARE":"SINGLE";closeBalanceNatureDrill();renderFlowUnified();return}
+  const amount=e.target.closest("[data-flow-amount]");
+  if(amount){flowAmountMode=amount.dataset.flowAmount==="MONTHLY"?"MONTHLY":"TOTAL";renderFlowUnified();return}
+  const shares=e.target.closest("[data-flow-shares]");
+  if(shares){flowShowShares=shares.dataset.flowShares==="YES";renderFlowUnified();return}
   const cs=e.target.closest("[data-compare-sort]");if(cs){comparisonChangeSort(cs.dataset.compareSort,cs.dataset.compareSortArea||"MAIN");return}
   if(e.target.closest("[data-compare-show-anomalies]")){compareOnlyAnomalies=!compareOnlyAnomalies;compareSelectedCounterparty="";renderHistoricalComparisonDetail();return}
   const cw=e.target.closest("[data-compare-window]");
@@ -6717,7 +6723,16 @@ $("scenarioView").addEventListener("click",async function(e){
   const ca=e.target.closest("[data-compare-open-analysis]");
   if(ca){showStandardReportingView();analysisViewMode=compareDirection;analysisTimeMode="HISTORY";$("analysisDirection").value=compareDirection;$("analysisPeriod").value=compareWindow==="6"?"12":compareWindow==="12"?"24":"0";analysisWorkspace=null;analysisWorkspaceKey="";syncWherePeriodUI();await loadAnalysisWorkspace(true);await openAnalysisDetail(ca.dataset.compareOpenAnalysis,"L2",null);return}
   const closeDrill=e.target.closest("[data-balance-drill-close]");if(closeDrill){closeBalanceNatureDrill();return}
-  const nature=e.target.closest("[data-balance-nature]");if(nature){openBalanceNatureDrill(nature.dataset.balanceNature,null,"EROSION");return}
+  const nature=e.target.closest("[data-balance-nature]");
+  if(nature){
+    const code=nature.dataset.flowPeriod;
+    if(code){
+      const key=code==="A"?flowPeriodA:code==="B"?flowPeriodB:flowSinglePeriod;
+      const months=flowMonthsFor(key);
+      openBalanceNatureDrill(nature.dataset.balanceNature,null,"WATERFALL",{months:months,label:(code==="SINGLE"?"":code+" · ")+flowPeriodLabel(key,months)});
+    }else openBalanceNatureDrill(nature.dataset.balanceNature,null,"EROSION");
+    return;
+  }
   const drillBack=e.target.closest("[data-balance-drill-back]");if(drillBack){balanceDrillMobileStep=balanceDrillMobileStep==="CP"?"L2":"L1";renderBalanceDrillBreakdown();return}
   const drillStep=e.target.closest("[data-balance-drill-step]");if(drillStep){balanceDrillMobileStep=drillStep.dataset.balanceDrillStep||"L1";renderBalanceDrillBreakdown();return}
   const drillL1=e.target.closest("[data-balance-drill-l1]");if(drillL1){selectBalanceDrillL1(drillL1.dataset.balanceDrillL1);return}
@@ -6780,8 +6795,24 @@ $("processContextWhere")?.addEventListener("click",function(e){
   const s=e.target.closest("[data-history-scope]");if(s){historicalScope=s.dataset.historyScope||"ORDINARY";closeBalanceNatureDrill();if(balanceSubview==="compare")renderHistoricalPeriodComparison();else if(balanceSubview!=="analysis")renderHistoricalBalance();syncWherePeriodUI()}
 });
 $("balanceFlowGrid")?.addEventListener("keydown",function(e){
-  const step=e.target.closest(".waterfall-step[data-balance-nature]");
-  if(step&&(e.key==="Enter"||e.key===" ")){e.preventDefault();openBalanceNatureDrill(step.dataset.balanceNature,null,"WATERFALL")}
+  const step=e.target.closest(".flow-unified-step[data-balance-nature],.waterfall-step[data-balance-nature]");
+  if(step&&(e.key==="Enter"||e.key===" ")){
+    e.preventDefault();
+    const code=step.dataset.flowPeriod;
+    if(code){
+      const key=code==="A"?flowPeriodA:code==="B"?flowPeriodB:flowSinglePeriod;
+      const months=flowMonthsFor(key);
+      openBalanceNatureDrill(step.dataset.balanceNature,null,"WATERFALL",{months:months,label:(code==="SINGLE"?"":code+" · ")+flowPeriodLabel(key,months)});
+    }else openBalanceNatureDrill(step.dataset.balanceNature,null,"WATERFALL");
+  }
+});
+["flowSinglePeriod","flowPeriodA","flowPeriodB"].forEach(function(id){
+  $(id)?.addEventListener("change",function(){
+    if(id==="flowSinglePeriod")flowSinglePeriod=this.value;
+    else if(id==="flowPeriodA")flowPeriodA=this.value;
+    else flowPeriodB=this.value;
+    closeBalanceNatureDrill();renderFlowUnified();
+  });
 });
 $("compareYearB")?.addEventListener("change",function(){compareYearB=Number(this.value)||compareYearB;resetComparisonDetail();renderHistoricalPeriodComparison()});
 $("comparisonNatureFilter")?.addEventListener("change",function(){compareNatureFilter=this.value||"ALL";resetComparisonDetail();renderHistoricalPeriodComparison()});
