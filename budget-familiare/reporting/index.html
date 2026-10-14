@@ -1708,6 +1708,37 @@ body{font-size:16px;line-height:1.5}
  .compare-analysis-coverage{grid-column:1/-1;justify-self:start}
 }
 
+
+/* V73.30.1.17 — Dual waterfall and percentage overlays */
+.flow-compare-controls{display:flex;flex-wrap:wrap;gap:9px 14px;align-items:flex-end;background:#f5f8fd;border:1px solid #d8e4f4;border-radius:12px;padding:11px;margin:12px 0}
+.flow-compare-group{display:grid;gap:5px;min-width:130px;flex:1 1 150px}
+.flow-compare-group>span{font-size:13px;color:#3f5878;font-weight:700}
+.flow-compare-group select{min-height:35px;border:1px solid #cbd9ed;border-radius:8px;padding:5px 8px;background:#fff;color:#203c61;font-size:14px;width:100%}
+.flow-compare-buttons{display:flex;flex-wrap:wrap;gap:4px}
+.flow-compare-buttons button{background:#fff;color:#2e4b73;border:1px solid #cedcf0;border-radius:8px;min-height:35px;padding:6px 9px;font-size:13px;font-weight:700;cursor:pointer}
+.flow-compare-buttons button.active{color:#fff;background:#2563eb;border-color:#2563eb}
+.flow-compare-buttons button:focus-visible,.flow-compare-group select:focus-visible{outline:2px solid #2563eb;outline-offset:2px}
+.flow-compare-status{font-size:13px;line-height:1.4;color:#56718c;margin:0 0 8px}
+.flow-compare-status .warn{color:#996121;font-weight:700}
+.flow-unified-charts{display:grid;grid-template-columns:1fr;gap:12px}
+.flow-unified-charts.compare{grid-template-columns:repeat(2,minmax(0,1fr))}
+.flow-unified-panel{min-width:0;border:1px solid #dce6f2;border-radius:12px;padding:10px;background:#fff}
+.flow-unified-panel-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;padding:3px 5px 10px;color:#183f6b}
+.flow-unified-panel-head strong{font-size:16px}
+.flow-unified-panel-head small{color:#526a86;font-size:13px}
+.flow-graph-scroll{max-width:100%;overflow-x:auto;scrollbar-width:thin}
+.flow-unified-panel svg{display:block;min-width:695px;width:100%;height:auto}
+.flow-unified-step{cursor:pointer}
+.flow-unified-step:focus-visible{outline:none}
+.flow-unified-step:focus-visible .flow-unified-hit,.flow-unified-step:hover .flow-unified-hit{stroke:#245de1;stroke-width:2;fill:#eff5ff0e}
+.flow-unified-delta{display:flex;flex-wrap:wrap;align-items:center;gap:10px 24px;padding:11px;margin-top:11px;border:1px solid #d7e5f6;border-radius:11px;background:#f7faff;font-size:14px;color:#455c78}
+.flow-unified-delta strong{font-size:16px}
+.flow-unified-delta .good{color:#117044}.flow-unified-delta .bad{color:#bd2c42}
+.flow-unified-footnote{font-size:13px;line-height:1.5;color:#576f8b;margin:8px 0 1px}
+#balanceFlowGrid .balance-waterfall-viewport,#balanceFlowGrid #balanceErosionWidget{display:none}
+#balanceOutsideFlow{display:none!important}
+@media(max-width:760px){.flow-unified-charts.compare{grid-template-columns:1fr}.flow-compare-group{flex:1 1 135px}}
+
 </style>
 <style>
 .purchase-financing-detail{margin-top:4px;font-size:14px;line-height:1.5;font-weight:400;color:#425b7c;white-space:normal;min-width:200px}
@@ -5089,6 +5120,86 @@ function renderBalanceWaterfall(){
   }
   renderBalanceErosion();renderBalanceFlowSide();
 }
+
+function flowYearChoices(){
+  const now=historicalCurrentMonth(),year=Number(now.slice(0,4));
+  const years=Array.from(new Set((scenarioActualRows||[]).map(function(r){return Number(String(r.month_start||"").slice(0,4))}).filter(function(y){return y>=year-4&&y<=year}))).sort(function(a,b){return b-a});
+  if(!years.includes(year))years.unshift(year);
+  return [["ROLLING_12","Ultimi 12 mesi completi"],["PREVIOUS_12","12 mesi precedenti"],["ROLLING_6","Ultimi 6 mesi completi"],["ROLLING_24","Ultimi 24 mesi completi"]].concat(
+    years.map(function(y){return ["YEAR:"+y,y===year?"Anno "+y+" fino a "+monthLabel(addMonthsISO(now,-1)):"Anno solare "+y]})
+  );
+}
+function flowMonthsFor(key){
+  const now=historicalCurrentMonth(),year=Number(now.slice(0,4));
+  if(key==="PREVIOUS_12")return monthSeries(addMonthsISO(now,-24),12);
+  if(key==="ROLLING_24")return monthSeries(addMonthsISO(now,-24),24);
+  if(key==="ROLLING_6")return monthSeries(addMonthsISO(now,-6),6);
+  if(String(key).startsWith("YEAR:")){
+    const y=Number(String(key).slice(5)),last=y===year?Number(now.slice(5,7))-1:12;
+    return Number.isInteger(y)&&y<=year&&last>0?monthSeries(String(y)+"-01-01",last):[];
+  }
+  return monthSeries(addMonthsISO(now,-12),12);
+}
+function flowPeriodLabel(key,months){
+  const found=flowYearChoices().find(function(row){return row[0]===key});
+  return (found?found[1]:"Periodo")+' · '+months.length+' mesi';
+}
+function flowAvailableMonths(months){
+  const available=new Set((scenarioActualRows||[]).map(function(r){return String(r.month_start)}));
+  return months.filter(function(m){return available.has(m)});
+}
+function flowPeriodModel(months){
+  const base=comparisonTotalsForMonths(months,"ORDINARY");
+  const sel=new Set(months),rows=(scenarioActualRows||[]).filter(function(r){return sel.has(String(r.month_start))});
+  const financing=historicalFinancingTotals(months),coverage=purchaseFinancingTotals(months);
+  const extraNet=rows.reduce(function(total,r){return total+num(r.incoming_extraordinary)-num(r.outgoing_extraordinary)},0)-financing.extraordinary+coverage.extraordinary;
+  return {...base,otherOperating:base.operatingOut-base.mandatory-base.necessary-base.unclassified-base.discretionary,
+    extraNet:extraNet,monthCount:months.length,final:base.available+(historicalScope==="TOTAL"?extraNet:0)};
+}
+function flowPercent(v,base){
+  return base>0&&Number.isFinite(v/base)?(100*v/base).toLocaleString("it-IT",{maximumFractionDigits:1})+"%":"—";
+}
+function flowStepsFor(t){
+  const factor=flowAmountMode==="MONTHLY"?1/Math.max(1,t.monthCount):1;
+  const scale=function(v){return num(v)*factor},income=scale(t.income);
+  const margin=income-scale(t.mandatory)-scale(t.necessary)-scale(t.unclassified);
+  let cur=income;
+  const steps=[{nature:"INCOME",name:"Entrate",value:income,lo:0,hi:income,color:"#1eaa82",base:"income"}];
+  const subtract=function(nature,name,amount,color,base){
+    const val=scale(amount),next=cur-val;
+    steps.push({nature:nature,name:name,value:-val,lo:Math.min(cur,next),hi:Math.max(cur,next),color:color,base:base});
+    cur=next;
+  };
+  subtract("MANDATORY","Obbligatorie",t.mandatory,"#ed7478","income");
+  subtract("NECESSARY","Necessarie",t.necessary,"#e9b24c","income");
+  subtract("UNCLASSIFIED","NC",t.unclassified,"#8090a9","income");
+  steps.push({nature:null,name:"Margine",value:margin,lo:Math.min(0,margin),hi:Math.max(0,margin),color:"#3977ed",base:"income"});
+  cur=margin;
+  subtract("DISCRETIONARY","Discrezionali",t.discretionary,"#9164e8","margin");
+  if(Math.abs(t.otherOperating)>.005)subtract("UNKNOWN","Altre operative",t.otherOperating,"#a0aabe","margin");
+  subtract("INVESTMENT","Risparmio",t.savings,"#12b6c9","margin");
+  if(historicalScope==="TOTAL"&&Math.abs(t.extraNet)>.005){
+    const val=scale(t.extraNet),next=cur+val;
+    steps.push({nature:null,name:"Eventi E",value:val,lo:Math.min(cur,next),hi:Math.max(cur,next),color:val>=0?"#30a57f":"#d46a78",base:"income"});
+    cur=next;
+  }
+  steps.push({nature:null,name:"Avanzo",value:cur,lo:Math.min(0,cur),hi:Math.max(0,cur),color:cur>=0?"#198e62":"#bb354b",base:"margin"});
+  return {steps:steps,income:income,margin:margin,final:cur};
+}
+function flowSyncControls(){
+  const compare=flowPeriodMode==="COMPARE",choices=flowYearChoices();
+  [["flowSinglePeriod",flowSinglePeriod],["flowPeriodA",flowPeriodA],["flowPeriodB",flowPeriodB]].forEach(function(entry){
+    const el=$(entry[0]);if(!el)return;
+    el.innerHTML=choices.map(function(c){return '<option value="'+esc(c[0])+'"'+(entry[1]===c[0]?' selected':'')+'>'+esc(c[1])+'</option>'}).join("");
+  });
+  $("flowSinglePeriodWrap")?.classList.toggle("hidden",compare);
+  $("flowPeriodAWrap")?.classList.toggle("hidden",!compare);
+  $("flowPeriodBWrap")?.classList.toggle("hidden",!compare);
+  document.querySelectorAll("[data-flow-mode]").forEach(function(b){const active=b.dataset.flowMode===flowPeriodMode;b.classList.toggle("active",active);b.setAttribute("aria-pressed",String(active))});
+  document.querySelectorAll("[data-flow-amount]").forEach(function(b){const active=b.dataset.flowAmount===flowAmountMode;b.classList.toggle("active",active);b.setAttribute("aria-pressed",String(active))});
+  document.querySelectorAll("[data-flow-shares]").forEach(function(b){const active=(b.dataset.flowShares==="YES")===flowShowShares;b.classList.toggle("active",active);b.setAttribute("aria-pressed",String(active))});
+}
+
 function comparisonMonthSets(){
   const current=historicalCurrentMonth();
   if(compareWindow==="YEAR"){
