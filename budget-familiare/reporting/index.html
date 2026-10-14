@@ -1548,6 +1548,76 @@ body{font-size:16px;line-height:1.5}
 .compare-flagged-movement td{background:#fffbef}.compare-movement-signal{display:inline-flex;padding:3px 6px;border:1px solid #e7cd8d;border-radius:6px;background:#fff0c2;color:#825a07;font-size:14px;font-weight:600;white-space:nowrap}
 .balance-outside-flow{display:block}.balance-outside-item{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center}.balance-outside-item+.balance-outside-item{margin-top:10px;padding-top:10px;border-top:1px solid #eadcba}
 @media(max-width:760px){.historical-compare-section-head{align-items:stretch;flex-direction:column}.compare-nature-filter{width:100%;min-width:0}.compare-anomaly-summary .btn{margin-left:0}}
+
+/* V73.30.1.15: Option A comparison */
+.historical-compare-kpis{gap:12px;margin-bottom:14px}
+.historical-compare-kpi{padding:15px 16px 13px;min-height:183px;display:flex;flex-direction:column;gap:9px}
+.historical-compare-kpi .label{font-size:16px;font-weight:700}
+.historical-compare-kpi .values{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;align-items:end;margin:0}
+.historical-compare-kpi .values>span{display:grid;gap:3px;font-size:14px}
+.historical-compare-kpi .values .compare-value-reference strong{font-size:20px}
+.historical-compare-kpi .values .compare-value-current strong{font-size:30px}
+.historical-compare-kpi .delta{font-size:15px;margin:0;align-self:start}
+.compare-ab-bars{display:grid;gap:6px;margin-top:auto;padding-top:5px}
+.compare-ab-line{display:grid;grid-template-columns:14px minmax(0,1fr) 78px;gap:8px;align-items:center;font-size:13px;color:#465b78}
+.compare-ab-line strong{text-align:right;font-variant-numeric:tabular-nums;font-size:13px;color:#354964}
+.compare-bar-track{height:9px;border-radius:20px;background:#e5ebf3;overflow:hidden}
+.compare-ab-fill{display:block;height:100%;background:var(--compare-accent);border-radius:20px}
+.compare-ab-line.reference .compare-ab-fill{opacity:.4}
+.compare-on-breakdown{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding-top:6px;border-top:1px solid #dbe5ef}
+.compare-on-breakdown>div{display:grid;gap:4px;font-size:13px;color:#52677f}
+.compare-on-breakdown strong{font-size:14px;color:#233b5a}
+.compare-on-code{display:inline-grid;place-items:center;width:22px;height:21px;background:#eaeef8;border-radius:6px;margin-right:5px;font-weight:800}
+.compare-on-code.n{background:#fff0d1;color:#985c0b}
+.compare-on-foot{font-size:12px;color:#52677f}
+.compare-verdict-card{display:grid;align-content:center;gap:3px;margin-left:auto;padding:10px 14px;border:1px solid #c7e7d9;border-radius:12px;background:#f1fbf6;min-width:210px;max-width:355px}
+.compare-verdict-card.mixed{background:#f7f8fc;border-color:#d8e1f0}
+.compare-verdict-card .k{font-size:13px;color:#50647c;font-weight:700}
+.compare-verdict-card strong{font-size:18px;color:#1c6d51}
+.compare-verdict-card.mixed strong{color:#344d70}
+.compare-verdict-card small{font-size:13px;color:#52677f;line-height:1.4}
+.compare-bridge{border:1px solid #dce5ef;border-radius:13px;background:#fff;padding:14px 16px;margin:0 0 16px}
+.compare-bridge-title{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:5px}
+.compare-bridge-title h4{font-size:19px;color:#193859;margin:0}
+.compare-bridge-title p{font-size:14px;color:#52677f;margin:0}
+.compare-bridge-intro{font-size:14px;color:#465b78;line-height:1.5;margin:0 0 10px}
+.compare-bridge-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:22px;row-gap:5px}
+.compare-bridge-row{display:grid;grid-template-columns:minmax(125px,1fr) 100px minmax(60px,110px);gap:10px;align-items:center;min-width:0;padding:5px 0;border-bottom:1px solid #eef2f8}
+.compare-bridge-name{font-size:14px;color:#354964}
+.compare-bridge-value{font-size:15px;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:#52677f}
+.compare-bridge-value.good{color:#13784b}.compare-bridge-value.bad{color:#b52640}
+.compare-bridge-value.saving-warning{color:#a16207}
+.compare-bridge-meter{height:8px;overflow:hidden;border-radius:20px;background:#edf1f7}
+.compare-bridge-meter i{display:block;height:100%;border-radius:20px;background:#94a3b8}
+.compare-bridge-meter .good{background:#2a9d76}.compare-bridge-meter .bad{background:#dc596b}
+.compare-bridge-meter .saving-warning{background:#e0a342}
+.compare-bridge-result{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;margin-top:12px;padding:11px 12px;background:#eff5fd;border-radius:9px}
+.compare-bridge-result strong{font-size:19px;color:#1b426d;font-variant-numeric:tabular-nums}
+.compare-bridge-result span{font-size:13px;color:#465b78}
+.compare-nc-note{margin-top:10px;color:#52677f;font-size:13px}
+.compare-bridge-alert{color:#a9233a;font-size:14px;font-weight:700;margin-top:8px}
+.historical-compare-table-rich .compare-delta-cell{min-width:135px}
+.compare-delta-visual{display:grid;gap:3px}
+.compare-delta-visual strong{font-variant-numeric:tabular-nums;font-size:15px}
+.compare-delta-visual.good strong{color:#11683e}.compare-delta-visual.bad strong{color:#a9233a}
+.compare-delta-visual.neutral strong{color:#52677f}
+.compare-delta-track{height:6px;background:#edf1f7;border-radius:20px;overflow:hidden;display:block}
+.compare-delta-track i{display:block;height:100%;border-radius:20px;min-width:0;background:#b4bfce}
+.compare-delta-visual.good .compare-delta-track i{background:#21a06c}.compare-delta-visual.bad .compare-delta-track i{background:#dc596b}
+.compare-delta-visual.low .compare-delta-track i{opacity:.35}.compare-delta-visual.medium .compare-delta-track i{opacity:.65}
+.historical-compare-table-rich td.compare-pct-low{color:#697b91}
+.historical-compare-table-rich td.compare-pct-medium{font-weight:600}
+.historical-compare-table-rich td.compare-pct-strong{font-weight:800}
+.historical-compare-table-rich th:first-child{width:27%}
+.historical-compare-table-rich th:nth-child(2){width:12%}
+.historical-compare-table-rich th:nth-child(3){width:14%}
+.historical-compare-table-rich th:nth-child(4){width:14%}
+.historical-compare-table-rich th:nth-child(5){width:18%}
+.historical-compare-table-rich th:last-child{width:15%}
+.historical-compare-table-rich{min-width:950px}
+@media(max-width:1100px){.compare-bridge-list{grid-template-columns:1fr}}
+@media(max-width:760px){.historical-compare-kpi .values .compare-value-current strong{font-size:26px}.compare-bridge{padding:12px}.compare-bridge-list{grid-template-columns:1fr}.compare-verdict-card{width:100%;max-width:none;margin-left:0}.compare-bridge-row{grid-template-columns:minmax(100px,1fr) 95px 70px}}
+
 </style>
 <style>
 .purchase-financing-detail{margin-top:4px;font-size:14px;line-height:1.5;font-weight:400;color:#425b7c;white-space:normal;min-width:200px}
@@ -2019,6 +2089,7 @@ body{font-size:16px;line-height:1.5}
             <div id="historicalComparisonPeriodLabels" class="historical-compare-periods"></div>
             <div id="historicalComparisonKpis" class="historical-compare-kpis"></div>
             <div id="historicalComparisonInsight" class="historical-compare-insight"></div>
+            <section id="historicalComparisonBridge" class="compare-bridge" aria-label="Riconciliazione della variazione dell’avanzo" aria-live="polite"></section>
             <div id="comparisonFinancingNote" class="compare-financing-note hidden"></div>
             <div class="historical-compare-section-head"><div><h4 id="historicalComparisonContributorsTitle">Cosa ha mosso le uscite?</h4><p>Apri una L1 per vedere le L2; seleziona una L2 per arrivare a controparti e movimenti.</p><p id="comparisonFilterHint">Natura filtra i contributori; KPI e sintesi restano sul totale del periodo.</p></div><label class="compare-nature-filter">Natura<select id="comparisonNatureFilter" class="select"><option value="ALL">Tutte le nature</option></select></label></div>
             <div id="historicalComparisonContributors"></div>
@@ -4942,7 +5013,8 @@ function comparisonTotalsForMonths(months){
     nature[k]=(nature[k]||0)+historicalCategoryAmount(x,historicalScope);
   });
   const structural=income-nature.MANDATORY-nature.NECESSARY-nature.UNCLASSIFIED;
-  return {income:income,operatingOut:operatingOut,operatingNet:operatingNet,savings:savings,available:available,structural:structural,discretionary:nature.DISCRETIONARY,financing:scopeTotal?financing.total:financing.ordinary,months:months.length,covered:new Set(rows.map(function(x){return String(x.month_start)})).size};
+  const otherOperating=operatingOut-nature.MANDATORY-nature.NECESSARY-nature.UNCLASSIFIED-nature.DISCRETIONARY;
+  return {income:income,operatingOut:operatingOut,operatingNet:operatingNet,savings:savings,available:available,structural:structural,mandatory:nature.MANDATORY,necessary:nature.NECESSARY,unclassified:nature.UNCLASSIFIED,otherOperating:otherOperating,discretionary:nature.DISCRETIONARY,financing:scopeTotal?financing.total:financing.ordinary,months:months.length,covered:new Set(rows.map(function(x){return String(x.month_start)})).size};
 }
 const COMPARISON_NATURES={MANDATORY:["O","Obbligatorie","mandatory"],NECESSARY:["N","Necessarie","necessary"],DISCRETIONARY:["D","Discrezionali","discretionary"],UNCLASSIFIED:["NC","Non classificate","unknown"],FIXED:["F","Fisse","fixed"],PREDICTABLE:["P","Prevedibili","predictable"],VARIABLE:["V","Variabili","variable"],UNKNOWN:["?","Natura non definita","unknown"],MIXED:["Mista","Nature diverse","mixed"]};
 function comparisonNatureForCategory(x){
@@ -4955,12 +5027,13 @@ function comparisonNatureBadge(row){
   return '<span class="compare-nature-badge '+def[2]+'" title="'+esc(title)+'" aria-label="'+esc(title)+'">'+esc(def[0])+'</span>';
 }
 function comparisonCategorySignal(row){
-  const values=Object.values(row.monthly||{}).filter(function(x){return x>0}),med=medianValue(values),mad=medianValue(values.map(function(x){return Math.abs(x-med)}));
-  const peaks=values.length>=6?Object.entries(row.monthly).filter(function(x){return x[1]>=Math.max(1000,3*med,med+6*mad)}):[];
-  if(peaks.length)return {title:"Picco mensile da verificare: "+peaks.map(function(x){return monthLabel(x[0])+" "+money(x[1])}).join(" · ")+". Approfondisci i movimenti; non implica temporalità E."};
-  const pct=comparisonPct(row.a,row.b);
-  if(Math.abs(row.b-row.a)>=500&&(pct===null||Math.abs(pct)>=50))return {title:"Variazione elevata (almeno 500 € e 50%, o voce nuova). Approfondisci controparti e movimenti per verificarne la causa."};
-  return null;
+  const delta=Math.abs(row.b-row.a),pct=comparisonPct(row.a,row.b);
+  const strong=delta>=1500&&(pct===null||Math.abs(pct)>=80);
+  const values=Object.values(row.monthly||{}).filter(function(v){return v>0});
+  const med=medianValue(values),mad=medianValue(values.map(function(v){return Math.abs(v-med)}));
+  const peak=values.length>=6&&values.some(function(v){return v>=Math.max(2000,4*med,med+8*mad)&&v>=.45*Math.max(row.a,row.b)});
+  if(!strong&&!peak)return null;
+  return {title:(peak?"Picco mensile estremo":"Variazione molto elevata")+" · Δ "+comparisonSigned(row.b-row.a)+". Verifica i movimenti: non implica automaticamente una spesa evitabile o natura E."};
 }
 function comparisonCategoryRows(direction,sets){
   const aSet=new Set(sets.a),bSet=new Set(sets.b),l1=new Map();
@@ -5008,11 +5081,11 @@ function comparisonMovementSignals(moves,sets){
   const signals=new Map(),byCp=new Map(),aSet=new Set(sets.a),bSet=new Set(sets.b),totals={A:0,B:0};
   moves.forEach(function(x){const cp=String(x.counterparty||"Senza controparte");if(!byCp.has(cp))byCp.set(cp,[]);if(!comparisonMovementIsExceptional(x))byCp.get(cp).push(num(x.amount));totals[aSet.has(String(x.month_start))?"A":"B"]+=num(x.amount)});
   const all=moves.filter(function(x){return !comparisonMovementIsExceptional(x)}).map(function(x){return num(x.amount)}),stats=new Map();
-  byCp.forEach(function(values,key){const sample=values.length>=6?values:all,med=medianValue(sample),mad=medianValue(sample.map(function(x){return Math.abs(x-med)}));stats.set(key,{n:sample.length,med:med,threshold:Math.max(250,3*med,med+6*mad),basis:values.length>=6?"controparte":"categoria"})});
-  const delta=totals.B-totals.A,pct=comparisonPct(totals.A,totals.B),highChange=Math.abs(delta)>=500&&(pct===null||Math.abs(pct)>=50);
+  byCp.forEach(function(values,key){const sample=values.length>=8?values:all,med=medianValue(sample),mad=medianValue(sample.map(function(x){return Math.abs(x-med)}));stats.set(key,{n:sample.length,med:med,threshold:Math.max(1200,5*med,med+8*mad),basis:values.length>=8?"controparte":"categoria"})});
+  const delta=totals.B-totals.A,pct=comparisonPct(totals.A,totals.B),high=Math.abs(delta)>=1500&&(pct===null||Math.abs(pct)>=80);
   moves.forEach(function(x){if(comparisonMovementIsExceptional(x))return;const st=stats.get(String(x.counterparty||"Senza controparte")),amount=num(x.amount),period=bSet.has(String(x.month_start))?"B":"A";
-    if(st&&st.n>=6&&amount>=st.threshold)signals.set(x,{label:"Importo atipico",reason:money(amount)+" vs mediana "+money(st.med)+" della "+st.basis+"; "+st.n+" osservazioni. Soglia: max(250 €, 3×mediana, mediana+6×MAD)."});
-    else if(highChange&&amount>=500&&totals[period]>0&&amount/totals[period]>=.5)signals.set(x,{label:"Importo concentrato",reason:"Questo movimento pesa almeno il 50% del periodo "+period+" della L2, che varia di almeno 500 € e 50% (o è nuova). Può essere una spesa programmata; non implica un evento E."});
+    if(st&&st.n>=8&&amount>=st.threshold)signals.set(x,{label:"Importo estremamente atipico",reason:money(amount)+" vs mediana "+money(st.med)+" della "+st.basis+" su "+st.n+" osservazioni."});
+    else if(high&&amount>=1200&&totals[period]>0&&amount/totals[period]>=.7)signals.set(x,{label:"Spesa concentrata",reason:"Il movimento supera il 70% della L2; variazione L2 almeno 1.500 € e 80% (o voce nuova). Non implica natura E."});
   });return signals;
 }
 function comparisonTone(direction,delta){
@@ -5024,10 +5097,77 @@ function comparisonPct(a,b){
   if(Math.abs(a)<.5)return Math.abs(b)<.5?0:null;
   return (b-a)*100/a;
 }
-function comparisonMetricCard(label,a,b,kind,visual){
-  const d=b-a,p=comparisonPct(a,b),tone=kind==="EXPENSE"?comparisonTone("EXPENSE",d):(kind==="INCOME"?comparisonTone("INCOME",d):(Math.abs(d)<.5?"neutral":d>0?"good":"bad"));
-  const theme=visual||(kind==="EXPENSE"?"expense":"income"),icon={income:"↑",expense:"↓",structural:"▥",discretionary:"◎",savings:"◉",available:"◉"}[theme]||"▥",arrow=Math.abs(d)<.5?"→":d>0?"↑":"↓";
-  return '<div class="historical-compare-kpi compare-'+esc(theme)+'"><div class="compare-metric-head"><div class="label">'+esc(label)+((label==="Margine strutturale"||label.indexOf("Avanzo")===0)?contextualHelpButton("budget-surplus",label):"")+'</div><span class="compare-metric-icon" aria-hidden="true">'+scenarioKpiIcon(icon)+'</span></div><div class="values"><span class="compare-value-reference">Periodo A<strong>'+money(a)+'</strong></span><span class="compare-value-current">Periodo B<strong title="'+esc(money(b))+'">'+money(b)+'</strong></span><b class="delta '+tone+'" title="Variazione del periodo B rispetto ad A"><span class="compare-delta-arrow" aria-hidden="true">'+arrow+'</span>'+comparisonSigned(d)+(p===null?"":' · '+(p>0?"+":"")+p.toLocaleString("it-IT",{maximumFractionDigits:1})+"%")+'</b></div></div>';
+function comparisonABBars(a,b){
+  const scale=Math.max(1,Math.abs(a),Math.abs(b));
+  return '<div class="compare-ab-bars" aria-label="Barre di confronto A e B">'+[['A',a],['B',b]].map(function(x){
+    return '<div class="compare-ab-line '+(x[0]==="A"?"reference":"current")+'"><span>'+x[0]+'</span><span class="compare-bar-track"><i class="compare-ab-fill" style="width:'+(100*Math.abs(x[1])/scale).toFixed(1)+'%"></i></span><strong>'+money(x[1])+'</strong></div>';
+  }).join('')+'</div>';
+}
+function comparisonMetricCard(label,a,b,kind,visual,detail){
+  const d=b-a,p=comparisonPct(a,b),tone=comparisonTone(kind==="EXPENSE"?"EXPENSE":"INCOME",d);
+  const theme=visual||(kind==="EXPENSE"?"expense":"income"),icon={income:"↑",expense:"↓",structural:"▥",discretionary:"◎",savings:"◉",available:"◉"}[theme]||"▥";
+  const breakdown=detail?'<div class="compare-on-breakdown"><div><span><b class="compare-on-code">O</b> Obbligatorie</span><strong>'+money(detail.aO)+' → '+money(detail.bO)+'</strong></div>'+
+    '<div><span><b class="compare-on-code n">N</b> Necessarie</span><strong>'+money(detail.aN)+' → '+money(detail.bN)+'</strong></div></div>'+
+    '<div class="compare-on-foot">Uscite operative totali · '+money(detail.aTotal)+' → '+money(detail.bTotal)+'</div>':'';
+  return '<article class="historical-compare-kpi compare-'+esc(theme)+'"><div class="compare-metric-head"><div class="label">'+esc(label)+
+    ((label==="Margine strutturale"||label.indexOf("Avanzo")===0)?contextualHelpButton("budget-surplus",label):"")+
+    '</div><span class="compare-metric-icon" aria-hidden="true">'+scenarioKpiIcon(icon)+'</span></div>'+
+    '<div class="values"><span class="compare-value-reference">Periodo A<strong>'+money(a)+'</strong></span><span class="compare-value-current">Periodo B<strong>'+money(b)+'</strong></span></div>'+
+    '<b class="delta '+tone+'" title="Differenza B meno A"><span class="compare-delta-arrow" aria-hidden="true">'+(Math.abs(d)<.5?"→":d>0?"↑":"↓")+'</span>'+
+    comparisonSigned(d)+(p===null?"":' · '+(p>0?"+":"")+p.toLocaleString("it-IT",{maximumFractionDigits:1})+"%")+'</b>'+
+    (detail?breakdown:comparisonABBars(a,b))+'</article>';
+}
+function comparisonVerdict(a,b){
+  const ds=b.available-a.available,ss=b.savings-a.savings;
+  const tied=Math.abs(ds)<.5&&Math.abs(ss)<.5;
+  const winner=tied?"":ds>=0&&ss>=0?"B":ds<=0&&ss<=0?"A":"";
+  const disc=b.discretionary<a.discretionary-.5?"B ha ridotto le discrezionali":a.discretionary<b.discretionary-.5?"A ha minori discrezionali":"Discrezionali simili";
+  return '<div class="compare-verdict-card '+(winner?"":"mixed")+'"><span class="k">Solidità del periodo</span><strong>'+
+    (winner?"Periodo "+winner+" più solido":tied?"Situazione stabile":"Esito misto")+'</strong><small>'+
+    (winner?"Avanzo e risparmio migliori in "+winner+". ":"Avanzo e risparmio non indicano un unico vincitore. ")+esc(disc)+'.</small></div>';
+}
+function comparisonNCBreakdown(months){
+  const set=new Set(months),out={cash:0,toClassify:0};
+  (scenarioActualCategories||[]).forEach(function(x){if(!set.has(String(x.month_start))||!historicalIsUnclassifiedCategory(x))return;
+    const amount=historicalCategoryAmount(x,historicalScope);
+    if(x.l2_name==="Prelievo contanti")out.cash+=amount;
+    else if(x.l2_name==="Da classificare")out.toClassify+=amount;
+  });return out;
+}
+function comparisonBridgeRows(a,b){
+  return [
+    {label:"Entrate economiche",effect:b.income-a.income},
+    {label:"Obbligatorie (O)",effect:a.mandatory-b.mandatory},
+    {label:"Necessarie (N)",effect:a.necessary-b.necessary},
+    {label:"Non classificate (NC)",effect:a.unclassified-b.unclassified,always:true},
+    {label:"Discrezionali (D)",effect:a.discretionary-b.discretionary},
+    {label:"Altre uscite operative",effect:a.otherOperating-b.otherOperating},
+    {label:"Risparmio",effect:a.savings-b.savings,saving:true}
+  ].filter(function(x){return x.always||Math.abs(x.effect)>.5});
+}
+function renderComparisonBridge(a,b,sets){
+  const target=$("historicalComparisonBridge");if(!target)return;
+  const items=comparisonBridgeRows(a,b),scale=Math.max(1,...items.map(function(x){return Math.abs(x.effect)}));
+  const sum=items.reduce(function(v,x){return v+x.effect},0),actual=b.available-a.available,drift=sum-actual;
+  const ncA=comparisonNCBreakdown(sets.a),ncB=comparisonNCBreakdown(sets.b);
+  const shift=b.structural-a.structural,disc=b.discretionary-a.discretionary,ratioA=a.structural>0?a.discretionary/a.structural*100:null,ratioB=b.structural>0?b.discretionary/b.structural*100:null;
+  let diagnosis='Le componenti spiegano il risultato. Una riduzione del risparmio migliora contabilmente l’avanzo, ma non rappresenta un comportamento virtuoso.';
+  if(shift<-.5&&disc<-.5&&ratioA!==null&&ratioB!==null){
+    diagnosis='Il margine strutturale è diminuito di '+money(-shift)+'; le discrezionali sono scese di '+money(-disc)+
+    '. Il loro peso sul margine è passato da '+ratioA.toLocaleString("it-IT",{maximumFractionDigits:1})+'% a '+ratioB.toLocaleString("it-IT",{maximumFractionDigits:1})+'%.';
+  }
+  const signed=function(v){return (v>0?"+":v<0?"−":"")+money(Math.abs(v))};
+  const rows=items.map(function(x){
+    const tone=Math.abs(x.effect)<.5?"neutral":x.saving&&x.effect>0?"saving-warning":x.effect>0?"good":"bad";
+    return '<div class="compare-bridge-row"><span class="compare-bridge-name">'+esc(x.label)+'</span><span class="compare-bridge-value '+tone+'">'+signed(x.effect)+'</span>'+
+      '<span class="compare-bridge-meter" aria-hidden="true"><i class="'+tone+'" style="width:'+(100*Math.abs(x.effect)/scale).toFixed(1)+'%"></i></span></div>';
+  }).join('');
+  target.innerHTML='<div class="compare-bridge-title"><h4>Perché è cambiato l’avanzo?</h4><p>Contributi al Δ Avanzo, non delta della spesa</p></div>'+
+    '<p class="compare-bridge-intro">'+esc(diagnosis)+'</p><div class="compare-bridge-list">'+rows+'</div>'+
+    '<div class="compare-bridge-result"><strong>Δ Avanzo '+signed(actual)+'</strong><span>Somma contributi '+signed(sum)+' · '+(Math.abs(drift)<1?"riconciliato ✓":"da verificare")+'</span></div>'+
+    '<div class="compare-nc-note">NC incluse nel bilancio · contanti '+money(ncA.cash)+' → '+money(ncB.cash)+'; da classificare '+money(ncA.toClassify)+' → '+money(ncB.toClassify)+
+    '. I prelievi sono una proxy di spesa finché non ne viene dettagliato l’uso.</div>'+
+    (Math.abs(drift)>=1?'<div class="compare-bridge-alert">Differenza residua di '+money(Math.abs(drift))+': verificare i dati prima di trarre conclusioni.</div>':'');
 }
 function comparisonTopInsight(groups,direction){
   const changed=groups.filter(function(x){return Math.abs(x.b-x.a)>.5});
@@ -5039,13 +5179,15 @@ function comparisonTopInsight(groups,direction){
   return (good.length?'<div class="compare-insight-block good"><span class="compare-insight-label">Possibili buone pratiche</span><p>'+fmt(good)+'</p></div>':"")+
     (bad.length?'<div class="compare-insight-block bad"><span class="compare-insight-label">Da approfondire</span><p>'+fmt(bad)+'</p></div>':"");
 }
-function comparisonContributorRow(row,level){
+function comparisonContributorRow(row,level,maxScale){
   const d=row.b-row.a,p=comparisonPct(row.a,row.b),tone=comparisonTone(compareDirection,d);
   const l1=level==="L1",open=l1&&compareExpandedL1.has(row.id),selected=!l1&&String(compareSelectedL2||"")===String(row.id);
   const action=l1?'data-compare-l1="'+esc(row.id)+'" aria-expanded="'+open+'"':'data-compare-l2="'+esc(row.id)+'" data-compare-l2-name="'+esc(row.name)+'" aria-pressed="'+selected+'"';
   const icon=l1?'<span class="historical-compare-caret" aria-hidden="true">'+(open?"▾":"▸")+'</span><span class="compare-category-icon" aria-hidden="true">'+analysisSvgIcon(row.name)+'</span>':'';
   const signal=row.signal?'<span class="compare-signal" role="img" title="'+esc(row.signal.title)+'" aria-label="'+esc(row.signal.title)+'">!</span>':'';
-  return '<tr class="historical-compare-'+(l1?'l1':'l2')+(selected?' selected':'')+'"><td><button type="button" class="historical-compare-row-btn" '+action+'>'+icon+'<span class="compare-category-name" title="'+esc(row.name)+'">'+esc(row.name)+'</span>'+signal+'</button></td><td>'+comparisonNatureBadge(row)+'</td><td class="compare-amount-reference">'+money(row.a)+'</td><td class="compare-amount-current">'+money(row.b)+'</td><td class="historical-compare-delta '+tone+'">'+comparisonSigned(d)+'</td><td>'+(p===null?"—":((p>0?"+":"")+p.toLocaleString("it-IT",{maximumFractionDigits:1})+"%"))+'</td></tr>';
+  const materiality=Math.abs(d)<300?"low":Math.abs(d)<1200?"medium":"strong";
+  const bar='<div class="compare-delta-visual '+tone+' '+materiality+'"><strong>'+comparisonSigned(d)+'</strong><span class="compare-delta-track" aria-hidden="true"><i style="width:'+(100*Math.abs(d)/Math.max(1,maxScale)).toFixed(1)+'%"></i></span></div>';
+  return '<tr class="historical-compare-'+(l1?'l1':'l2')+(selected?' selected':'')+'"><td><button type="button" class="historical-compare-row-btn" '+action+'>'+icon+'<span class="compare-category-name" title="'+esc(row.name)+'">'+esc(row.name)+'</span>'+signal+'</button></td><td>'+comparisonNatureBadge(row)+'</td><td class="compare-amount-reference">'+money(row.a)+'</td><td class="compare-amount-current">'+money(row.b)+'</td><td class="compare-delta-cell">'+bar+'</td><td class="compare-pct-'+materiality+'">'+(p===null?"—":((p>0?"+":"")+p.toLocaleString("it-IT",{maximumFractionDigits:1})+"%"))+'</td></tr>';
 }
 function renderHistoricalComparisonDetail(){
   const box=$("historicalComparisonDetail");if(!box)return;
@@ -5061,7 +5203,7 @@ function renderHistoricalComparisonDetail(){
   if(compareSelectedCounterparty&&!groups.has(compareSelectedCounterparty))compareSelectedCounterparty="";
   const signalSummary=flagged.length?'<div class="compare-anomaly-summary"><strong>'+flagged.length+' movimenti da verificare</strong><span>A '+money(flagged.filter(function(x){return x.period==="A"}).reduce(function(v,x){return v+num(x.amount)},0))+' · B '+money(flagged.filter(function(x){return x.period==="B"}).reduce(function(v,x){return v+num(x.amount)},0))+' · importi dei movimenti segnalati, non del delta.</span><button type="button" class="btn ghost compact" data-compare-show-anomalies aria-pressed="'+compareOnlyAnomalies+'">'+(compareOnlyAnomalies?'Chiudi elenco segnalati':'Mostra i movimenti segnalati')+'</button></div>':"";
   box.innerHTML='<div class="historical-compare-detail-head"><div><h4>'+esc(compareSelectedL2Name)+'</h4><p>Controparti · '+esc(sets.labelA)+' vs '+esc(sets.labelB)+'</p></div><button class="btn ghost compact" type="button" data-compare-open-analysis="'+esc(compareSelectedL2)+'">Apri in Analisi & Baseline</button></div>'+signalSummary+
-    '<details class="compare-anomaly-method"><summary>Criteri delle segnalazioni</summary><p>Importo atipico: almeno 6 movimenti comparabili della stessa controparte (o, se insufficienti, della L2), con soglia max(250 €, 3×mediana, mediana+6×scarto assoluto mediano). Importo concentrato: almeno 500 € e il 50% della L2 nel periodo, con variazione della L2 di almeno 500 € e 50% o voce nuova. Sono indizi da approfondire: una spesa P può essere prevista e corretta; E va scelto per il singolo evento. I dati non vengono modificati né esclusi automaticamente.</p></details>'+
+    '<details class="compare-anomaly-method"><summary>Criteri delle segnalazioni</summary><p>Segnali rari: variazione L2 almeno 1.500 € e 80% (o nuova), oppure picco mensile oltre 2.000 €, 4×mediana e mediana+8×MAD concentrato nel periodo. Movimento atipico: almeno 8 osservazioni e soglia max(1.200 €, 5×mediana, mediana+8×MAD); concentrato: almeno 1.200 € e 70% della L2, con variazione L2 di almeno 1.500 € e 80%. Sono indizi da approfondire: una spesa P può essere prevista e corretta; E va scelto per il singolo evento. I dati non vengono modificati né esclusi automaticamente.</p></details>'+
     (cps.length?'<div class="compare-detail-scroll"><table class="historical-compare-cp-table"><thead><tr>'+comparisonSortHeader("Controparte","NAME","CP")+comparisonSortHeader("Periodo A","A","CP")+comparisonSortHeader("Periodo B","B","CP")+comparisonSortHeader("Δ €","DELTA","CP")+comparisonSortHeader("Mov. A","COUNT_A","CP")+comparisonSortHeader("Mov. B","COUNT_B","CP")+'</tr></thead><tbody>'+cps.map(function(g){const d=g.b-g.a,tone=comparisonTone(compareDirection,d),active=compareSelectedCounterparty===g.name;return '<tr class="selectable '+(active?'active':'')+'" data-compare-counterparty="'+esc(g.name)+'"><td><button type="button" class="historical-compare-row-btn" aria-pressed="'+active+'" title="'+esc(g.name)+'"><span class="compare-category-name">'+esc(g.name)+'</span>'+(g.signals?'<span class="compare-signal" title="'+g.signals+' movimenti da verificare">'+g.signals+'</span>':'')+'</button></td><td>'+money(g.a)+'</td><td>'+money(g.b)+'</td><td class="historical-compare-delta '+tone+'">'+comparisonSigned(d)+'</td><td>'+g.countA+'</td><td>'+g.countB+'</td></tr>'}).join("")+'</tbody></table></div>':'<div class="muted small">Nessun movimento nei periodi confrontati.</div>')+
     (compareSelectedCounterparty||compareOnlyAnomalies?renderHistoricalComparisonMovements(moves,sets):"");
 }
@@ -5083,16 +5225,17 @@ function renderHistoricalPeriodComparison(){
   if(yearSel){yearSel.innerHTML=years.map(function(y){return '<option value="'+y+'"'+(Number(compareYearB)===y?' selected':'')+'>'+y+'</option>'}).join("");$("compareYearWrap")?.classList.toggle("hidden",compareWindow!=="YEAR")}
   document.querySelectorAll("[data-compare-window]").forEach(function(x){const active=x.dataset.compareWindow===String(compareWindow);x.classList.toggle("active",active);x.setAttribute("aria-pressed",String(active))});
   document.querySelectorAll("[data-compare-direction]").forEach(function(x){const active=x.dataset.compareDirection===compareDirection;x.classList.toggle("active",active);x.setAttribute("aria-pressed",String(active))});
-  $("historicalComparisonPeriodLabels").innerHTML='<div class="historical-compare-period reference"><span class="compare-period-code" aria-hidden="true">A</span><div><div class="k">Periodo A · riferimento</div><div class="v">'+esc(sets.labelA)+'</div></div></div><div class="historical-compare-arrow" aria-hidden="true">→</div><div class="historical-compare-period current"><span class="compare-period-code" aria-hidden="true">B</span><div><div class="k">Periodo B · confronto</div><div class="v">'+esc(sets.labelB)+'</div></div></div>';
+  $("historicalComparisonPeriodLabels").innerHTML='<div class="historical-compare-period reference"><span class="compare-period-code" aria-hidden="true">A</span><div><div class="k">Periodo A · riferimento</div><div class="v">'+esc(sets.labelA)+'</div></div></div><div class="historical-compare-arrow" aria-hidden="true">→</div><div class="historical-compare-period current"><span class="compare-period-code" aria-hidden="true">B</span><div><div class="k">Periodo B · confronto</div><div class="v">'+esc(sets.labelB)+'</div></div></div>'+comparisonVerdict(a,b);
   $("historicalComparisonKpis").innerHTML=
     comparisonMetricCard("Entrate economiche",a.income,b.income,"INCOME","income")+
-    comparisonMetricCard("Uscite operative",a.operatingOut,b.operatingOut,"EXPENSE","expense")+
+    comparisonMetricCard("Spese O + N",a.mandatory+a.necessary,b.mandatory+b.necessary,"EXPENSE","expense",{aO:a.mandatory,bO:b.mandatory,aN:a.necessary,bN:b.necessary,aTotal:a.operatingOut,bTotal:b.operatingOut})+
     comparisonMetricCard("Margine strutturale",a.structural,b.structural,"INCOME","structural")+
     comparisonMetricCard("Discrezionali",a.discretionary,b.discretionary,"EXPENSE","discretionary")+
     comparisonMetricCard("Risparmio",a.savings,b.savings,"INCOME","savings")+
     comparisonMetricCard(balanceSurplusLabel(),a.available,b.available,"INCOME","available");
   const availableDelta=b.available-a.available,availTone=Math.abs(availableDelta)<.5?"neutral":availableDelta>0?"good":"bad",availLabel=availTone==="neutral"?"Sostanzialmente stabile":availTone==="good"?"Migliora tra A e B":"Peggiora tra A e B";
   $("historicalComparisonInsight").innerHTML='<div class="compare-summary-result '+availTone+'"><span class="compare-insight-label">'+balanceSurplusLabel()+'</span><strong>'+comparisonSigned(availableDelta)+'</strong><span>'+availLabel+'</span></div>'+comparisonTopInsight(groups,compareDirection)+'<div class="compare-data-coverage">Copertura dati · A '+a.covered+'/'+a.months+' mesi · B '+b.covered+'/'+b.months+' mesi</div>';
+  renderComparisonBridge(a,b,sets);
   $("historicalComparisonContributorsTitle").textContent=compareDirection==="EXPENSE"?"Cosa ha mosso le uscite?":"Cosa ha mosso le entrate?";
   const natureKeys=compareDirection==="EXPENSE"?["MANDATORY","NECESSARY","DISCRETIONARY","UNCLASSIFIED","UNKNOWN"]:["FIXED","PREDICTABLE","VARIABLE","UNKNOWN"];
   const filter=$("comparisonNatureFilter");if(filter){filter.innerHTML='<option value="ALL">Tutte le nature</option>'+natureKeys.map(function(k){return '<option value="'+k+'">'+COMPARISON_NATURES[k][0]+' · '+COMPARISON_NATURES[k][1]+'</option>'}).join("");filter.value=compareNatureFilter}
@@ -5100,9 +5243,10 @@ function renderHistoricalPeriodComparison(){
   if(compareSelectedL2&&!filtered.some(function(g){return g.children.some(function(ch){return ch.id===compareSelectedL2})}))resetComparisonDetail();
   if($("comparisonFinancingNote")){const note=$("comparisonFinancingNote");note.classList.toggle("hidden",a.financing<=.005&&b.financing<=.005);note.innerHTML='Prestiti esclusi dalle entrate; uscite al netto delle quote finanziate. Il dettaglio mostra totale, finanziamento e fondi propri. Il Cash flow conserva gli importi integrali.'}
   const labels={DELTA_ABS:"variazione assoluta",NAME:"categoria",NATURE:"natura",A:"periodo A",B:"periodo B",DELTA:"Δ €",PCT:"Δ %"};
-  if($("comparisonFilterHint"))$("comparisonFilterHint").textContent="Natura filtra i contributori; KPI e sintesi restano sul totale. Ordine: "+labels[compareSort.key]+" "+(compareSort.dir==="ASC"?"↑":"↓")+". Il segno ! invita ad approfondire.";
+  if($("comparisonFilterHint"))$("comparisonFilterHint").textContent="Natura filtra i contributori; KPI e sintesi restano sul totale. Ordine: "+labels[compareSort.key]+" "+(compareSort.dir==="ASC"?"↑":"↓")+". Il segno ! indica solo scostamenti estremi.";
   let html='<div class="compare-contributors-scroll"><table class="historical-compare-table-rich"><thead><tr>'+comparisonSortHeader("Categoria","NAME","MAIN")+comparisonSortHeader("Natura","NATURE","MAIN")+comparisonSortHeader("Periodo A","A","MAIN")+comparisonSortHeader("Periodo B","B","MAIN")+comparisonSortHeader("Δ €","DELTA","MAIN")+comparisonSortHeader("Δ %","PCT","MAIN")+'</tr></thead><tbody>';
-  filtered.forEach(function(g){html+=comparisonContributorRow(g,"L1");if(compareExpandedL1.has(g.id))g.children.forEach(function(ch){html+=comparisonContributorRow(ch,"L2")})});
+  const deltaScale=Math.max(1,...filtered.map(function(g){return Math.abs(g.b-g.a)}));
+  filtered.forEach(function(g){html+=comparisonContributorRow(g,"L1",deltaScale);if(compareExpandedL1.has(g.id))g.children.forEach(function(ch){html+=comparisonContributorRow(ch,"L2",deltaScale)})});
   if(!filtered.length)html+='<tr><td colspan="6" class="balance-drill-empty">Nessuna categoria per questa natura e questi periodi.</td></tr>';
   html+='</tbody></table></div>';$("historicalComparisonContributors").innerHTML=html;
   renderHistoricalComparisonDetail();
