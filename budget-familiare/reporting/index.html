@@ -1727,7 +1727,7 @@ body{font-size:16px;line-height:1.5}
 .flow-unified-panel-head strong{font-size:16px}
 .flow-unified-panel-head small{color:#526a86;font-size:13px}
 .flow-graph-scroll{max-width:100%;overflow-x:auto;scrollbar-width:thin}
-.flow-unified-panel svg{display:block;min-width:695px;width:100%;height:auto}
+.flow-unified-panel svg{display:block;min-width:590px;width:100%;height:auto}
 .flow-unified-step{cursor:pointer}
 .flow-unified-step:focus-visible{outline:none}
 .flow-unified-step:focus-visible .flow-unified-hit,.flow-unified-step:hover .flow-unified-hit{stroke:#245de1;stroke-width:2;fill:#eff5ff0e}
@@ -5124,9 +5124,11 @@ function renderBalanceWaterfall(){
 function flowYearChoices(){
   const now=historicalCurrentMonth(),year=Number(now.slice(0,4));
   const years=Array.from(new Set((scenarioActualRows||[]).map(function(r){return Number(String(r.month_start||"").slice(0,4))}).filter(function(y){return y>=year-4&&y<=year}))).sort(function(a,b){return b-a});
-  if(!years.includes(year))years.unshift(year);
+  const loaded=new Set((scenarioActualRows||[]).map(function(r){return String(r.month_start)}));
+  const completeYears=years.filter(function(y){return y===year||monthSeries(y+"-01-01",12).every(function(m){return loaded.has(m)})});
+  if(!completeYears.includes(year))completeYears.unshift(year);
   return [["ROLLING_12","Ultimi 12 mesi completi"],["PREVIOUS_12","12 mesi precedenti"],["ROLLING_6","Ultimi 6 mesi completi"],["ROLLING_24","Ultimi 24 mesi completi"]].concat(
-    years.map(function(y){return ["YEAR:"+y,y===year?"Anno "+y+" fino a "+monthLabel(addMonthsISO(now,-1)):"Anno solare "+y]})
+    completeYears.map(function(y){return ["YEAR:"+y,y===year?"Anno "+y+" fino a "+monthLabel(addMonthsISO(now,-1)):"Anno solare "+y]})
   );
 }
 function flowMonthsFor(key){
@@ -5227,7 +5229,7 @@ function flowRenderSvg(t,limits,code){
       (actionable?'<rect class="flow-unified-hit" x="'+(left+i*col)+'" y="22" width="'+col+'" height="'+(bottom-17)+'" rx="7" fill="transparent"/>':'')+
       '<rect x="'+(x-barW/2)+'" y="'+yTop+'" width="'+barW+'" height="'+h+'" rx="4" fill="'+st.color+'" opacity="'+(code==="A"?".74":".95")+'"/>'+
       '<text x="'+x+'" y="'+Math.max(16,yTop-7)+'" text-anchor="middle" font-weight="700" font-size="12" fill="'+(st.value<0?"#ae3045":"#115d4f")+'">'+esc(signedMoney(st.value))+'</text>'+
-      '<text x="'+x+'" y="'+(bottom+22)+'" text-anchor="middle" font-size="11" font-weight="700" fill="#2e4666">'+esc(st.name)+'</text>'+
+      '<text x="'+x+'" y="'+(bottom+22)+'" text-anchor="middle" font-size="11" font-weight="700" fill="#2e4666">'+esc({Obbligatorie:"O · Obbl.",Necessarie:"N · Nec.",Discrezionali:"D · Disc."}[st.name]||st.name)+'</text>'+
       (flowShowShares?'<text x="'+x+'" y="'+(bottom+42)+'" text-anchor="middle" font-size="12" font-weight="700" fill="'+(st.base==="margin"?"#7046b9":"#395b84")+'">'+esc(share)+'</text>':'')+
       '</g>';
     if(i<steps.length-1&&st.name!=="Margine"&&st.name!=="Entrate"&&st.name!=="Avanzo"){
