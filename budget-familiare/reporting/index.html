@@ -9,7 +9,8 @@
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
 <script src="../shared/supabase-client.js?v=73.24.0-20261012-1415"></script>
-<script src="../shared/app-config.js?v=73.30.1.13-20261014"></script>
+<script src="../shared/app-config.js?v=73.30.1.14-20261014"></script>
+<script src="../shared/contextual-help.js?v=73.30.1.14-20261014" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 :root{--bg:#f4f6fa;--card:#fff;--text:#17263e;--muted:#58677d;--line:#dce4ee;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 4px 18px rgba(15,23,42,.045);--sc-blue:#2563eb;--sc-blue-soft:#eff6ff;--sc-green:#0ea87a;--sc-red:#ef5b73;--sc-purple:#7658e6;--sc-ink:#17263e}
@@ -1599,7 +1600,7 @@ body{font-size:16px;line-height:1.5}
           </div>
           <span id="wherePeriodSummary" class="where-period-summary" aria-live="polite"></span>
           <div id="whereScopeGroup" class="where-filter-group where-filter-scope">
-            <span>Perimetro <span class="info-tip" tabindex="0" title="Ordinario esclude gli eventi E · Eccezionale. Totale li include nel consuntivo.">i</span></span>
+            <span>Perimetro <button class="context-help-trigger" type="button" data-context-help="perimeter" aria-label="Aiuto: Ordinario e Totale">?</button></span>
             <div class="scenario-segment" role="group" aria-label="Perimetro dei movimenti">
               <button class="active" type="button" data-history-scope="ORDINARY">Ordinario</button>
               <button type="button" data-history-scope="TOTAL">Totale incl. eccezionali</button>
@@ -1675,7 +1676,7 @@ body{font-size:16px;line-height:1.5}
     <div id="standardReportingView">
     <section class="card section">
       <div class="section-title">
-        <div><h2>Analisi per categoria</h2><p>Storico, trend e previsione nello stesso spazio. Le correzioni mensili si fanno direttamente nella previsione della categoria L2.</p></div>
+        <div><h2>Analisi per categoria <button class="context-help-trigger" type="button" data-context-help="forecast-baseline" aria-label="Aiuto: dove trovare e costruire la previsione">?</button></h2><p>Storico, trend e previsione nello stesso spazio. Le correzioni mensili si fanno direttamente nella previsione della categoria L2.</p></div>
         <div class="toolbar">
           <button id="collapseAll" class="btn ghost compact">Comprimi categorie</button>
         </div>
@@ -1802,7 +1803,7 @@ body{font-size:16px;line-height:1.5}
       <section class="planning-board-card">
         <div class="planning-board-table-wrap">
           <table class="planning-board-table">
-            <thead><tr><th>Categoria</th><th id="planningBoardHistoryHead">Storico</th><th id="planningBoardYearHead">Piano</th><th>Var. vs storico</th><th>Natura</th><th>Tipo previsione</th><th>Note / razionale</th><th></th></tr></thead>
+            <thead><tr><th>Categoria</th><th id="planningBoardHistoryHead">Storico</th><th id="planningBoardYearHead">Piano</th><th>Var. vs storico</th><th>Natura</th><th>Tipo previsione <button class="context-help-trigger" type="button" data-context-help="forecast-baseline" aria-label="Aiuto: previsione e Baseline">?</button></th><th>Note / razionale</th><th></th></tr></thead>
             <tbody id="planningBoardBody"><tr><td colspan="8" class="muted">Apri il tabellone per caricare il piano.</td></tr></tbody>
           </table>
         </div>
@@ -1943,7 +1944,7 @@ body{font-size:16px;line-height:1.5}
         <div id="balanceFlowGrid" class="balance-flow-grid">
           <section class="scenario-card balance-waterfall-card">
             <div class="scenario-card-head">
-              <div><h3>Flusso economico della famiglia</h3><p id="balanceWaterfallSubtitle">Come le entrate si trasformano nell’avanzo ordinario.</p></div>
+              <div><h3>Flusso economico della famiglia <button class="context-help-trigger" type="button" data-context-help="budget-vs-cashflow" aria-label="Aiuto: differenza fra Flusso e Cash flow">?</button></h3><p id="balanceWaterfallSubtitle">Come le entrate si trasformano nell’avanzo ordinario.</p></div>
               <span id="balanceWaterfallMode" class="balance-mode-badge">—</span>
             </div>
             <div class="balance-waterfall-viewport" tabindex="0" aria-label="Grafico del flusso economico; scorri orizzontalmente sugli schermi piccoli"><div class="balance-waterfall-chart"><div id="balanceWaterfallChart" class="balance-waterfall-vector"></div></div></div>
@@ -1987,7 +1988,7 @@ body{font-size:16px;line-height:1.5}
         <section id="historicalMonthlySection" class="scenario-card scenario-chart-card">
           <div class="scenario-card-head">
             <div><h3 id="historicalChartTitle">Cash flow storico mese per mese</h3><p id="historicalChartSubtitle">Entrate, uscite, saldo mensile e saldo cumulato del periodo.</p></div>
-            <div id="historicalChartLegend" class="scenario-legend-inline"></div>
+            <div class="context-help-chart-tools"><button class="context-help-trigger" type="button" data-context-help="budget-vs-cashflow" aria-label="Aiuto: come leggere Cash flow e saldi">?</button><div id="historicalChartLegend" class="scenario-legend-inline"></div></div>
           </div>
           <div class="scenario-chart scenario-chart-main historical-chart"><canvas id="historicalBalanceChart"></canvas></div>
           <div id="historicalChartNote" class="legend-note"></div>
@@ -1995,7 +1996,7 @@ body{font-size:16px;line-height:1.5}
 
         <div id="historicalBottomGrid" class="historical-bottom-grid">
           <section id="historicalComparisonSection" class="scenario-card historical-comparison-workspace">
-            <div class="scenario-card-head"><div><h3>Confronto storico</h3><p>Non solo quanto è cambiato: individua quali categorie hanno prodotto il miglioramento o il peggioramento.</p></div></div>
+            <div class="scenario-card-head"><div><h3>Confronto storico <button class="context-help-trigger" type="button" data-context-help="budget-vs-cashflow" aria-label="Aiuto: importi del Confronto e quote finanziate">?</button></h3><p>Non solo quanto è cambiato: individua quali categorie hanno prodotto il miglioramento o il peggioramento.</p></div></div>
             <div class="historical-compare-toolbar">
               <div class="historical-compare-toolbar-group">
                 <span>Finestra comparabile</span>
@@ -3814,7 +3815,7 @@ function updateForecastLiveResult(){
   const help=$("forecastExplanation");if(help)help.outerHTML='<div id="forecastExplanation">'+forecastExplanationHtml(ensureForecastDraft())+'</div>';
 }
 function forecastControlsHtml(d){
-  const method='<div class="forecast-field"><label>Metodo di previsione</label><select id="forecastMethod" class="select">'+forecastMethodOptions(d.method)+'</select></div>';
+  const method='<div class="forecast-field"><label>Metodo di previsione '+contextualHelpButton('forecast-baseline','metodi e base della previsione')+'</label><select id="forecastMethod" class="select">'+forecastMethodOptions(d.method)+'</select></div>';
   if(d.method==="ZERO")return method+'<div class="forecast-field"><label>Risultato</label><div class="notice">Questa voce resta nello storico ma non contribuisce alla previsione futura.</div></div>';
   const historical=!["FIXED","RANGE","ZERO"].includes(d.method);
   const variation=historical?'<div class="forecast-field"><label>Variazione attesa %</label><input id="forecastAdjustment" class="input" type="number" min="-100" max="1000" step="1" value="'+esc(num(d.adjustment))+'" /><div class="forecast-type-note">Applica la variazione alla stima base; non è cumulativa mese su mese.</div></div>':"";
@@ -4060,7 +4061,7 @@ function renderAnalysisMovements(){
       '<th class="sortable" data-sort-analysis-moves="counterparty">Controparte'+sortMark("counterparty")+'</th>'+
       '<th class="sortable" data-sort-analysis-moves="category">Categoria'+sortMark("category")+'</th>'+
       '<th class="sortable" data-sort-analysis-moves="amount" style="text-align:right">Importo'+sortMark("amount")+'</th>'+
-      '<th>Descrizione</th><th>Nota</th>'+(canEdit?'<th>Previsione</th>':"")+'</tr></thead><tbody>'+
+      '<th>Descrizione</th><th>Nota</th>'+(canEdit?'<th>Previsione '+contextualHelpButton('forecast-exclusion','escludere o ripristinare un movimento')+'</th>':"")+'</tr></thead><tbody>'+
       rows.map(function(x){
         const excluded=!!x.is_extraordinary;
         const economicExceptional=!!x.economic_exceptional;
@@ -4483,12 +4484,16 @@ function historicalUnclassifiedBreakdown(mode,scope){
   return out;
 }
 function historicalSigned(v){v=num(v);return (v>0?"+":v<0?"−":"")+money(Math.abs(v))}
-function historicalInfo(text){
+function contextualHelpButton(topic,label){
+  return '<button class="context-help-trigger" type="button" data-context-help="'+esc(topic)+'" aria-label="Aiuto: '+esc(label)+'">?</button>';
+}
+function historicalInfo(text,topic){
+  if(topic)return contextualHelpButton(topic,topic==="budget-surplus"?"margine strutturale e avanzo":text);
   return '<span class="info-tip" tabindex="0" title="'+esc(text)+'">i</span>';
 }
 function historicalKpiCard(label,value,sub,tone,info){
   const icon=balanceSubview==="flow"?'<span class="historical-kpi-symbol" aria-hidden="true">'+scenarioKpiIcon(tone==="margin"?"◉":"▥")+'</span>':"";
-  return '<div class="historical-kpi '+(tone||"")+'">'+icon+'<div class="label">'+esc(label)+(info?" "+historicalInfo(info):"")+'</div><div class="value '+(num(value)>=0?"positive":"negative")+'">'+historicalSigned(value)+'</div><div class="sub">'+sub+'</div></div>';
+  return '<div class="historical-kpi '+(tone||"")+'">'+icon+'<div class="label">'+esc(label)+(info?" "+historicalInfo(info,label==="Margine strutturale"||label.indexOf("Avanzo")===0?"budget-surplus":null):"")+'</div><div class="value '+(num(value)>=0?"positive":"negative")+'">'+historicalSigned(value)+'</div><div class="sub">'+sub+'</div></div>';
 }
 function balanceKpiShareHtml(value,total,tone){
   const valid=num(total)>0,pct=valid?num(value)*100/num(total):null;
@@ -4525,7 +4530,7 @@ function renderHistoricalStructural(){
   const t=balanceFlowModel(historicalPeriodMode);if(!t)return;
   const margin=t.income-t.mandatory-t.necessary-t.unclassified;
   function item(label,value,sub,cls,info){
-    return '<div class="historical-structural-item '+(cls||"")+'"><span>'+esc(label)+(info?" "+historicalInfo(info):"")+'</span><strong class="'+(value>=0?"positive":"negative")+'">'+historicalSigned(value)+'</strong><small>'+esc(sub)+'</small></div>';
+    return '<div class="historical-structural-item '+(cls||"")+'"><span>'+esc(label)+(info?" "+historicalInfo(info,label==="Margine strutturale"||label.indexOf("Avanzo")===0?"budget-surplus":null):"")+'</span><strong class="'+(value>=0?"positive":"negative")+'">'+historicalSigned(value)+'</strong><small>'+esc(sub)+'</small></div>';
   }
   $("historicalStructuralStrip").innerHTML=
     item("Margine strutturale",margin,"Entrate − O − N − NC","margin","Prima di discrezionali e risparmio.")+
@@ -5022,7 +5027,7 @@ function comparisonPct(a,b){
 function comparisonMetricCard(label,a,b,kind,visual){
   const d=b-a,p=comparisonPct(a,b),tone=kind==="EXPENSE"?comparisonTone("EXPENSE",d):(kind==="INCOME"?comparisonTone("INCOME",d):(Math.abs(d)<.5?"neutral":d>0?"good":"bad"));
   const theme=visual||(kind==="EXPENSE"?"expense":"income"),icon={income:"↑",expense:"↓",structural:"▥",discretionary:"◎",savings:"◉",available:"◉"}[theme]||"▥",arrow=Math.abs(d)<.5?"→":d>0?"↑":"↓";
-  return '<div class="historical-compare-kpi compare-'+esc(theme)+'"><div class="compare-metric-head"><div class="label">'+esc(label)+'</div><span class="compare-metric-icon" aria-hidden="true">'+scenarioKpiIcon(icon)+'</span></div><div class="values"><span class="compare-value-reference">Periodo A<strong>'+money(a)+'</strong></span><span class="compare-value-current">Periodo B<strong title="'+esc(money(b))+'">'+money(b)+'</strong></span><b class="delta '+tone+'" title="Variazione del periodo B rispetto ad A"><span class="compare-delta-arrow" aria-hidden="true">'+arrow+'</span>'+comparisonSigned(d)+(p===null?"":' · '+(p>0?"+":"")+p.toLocaleString("it-IT",{maximumFractionDigits:1})+"%")+'</b></div></div>';
+  return '<div class="historical-compare-kpi compare-'+esc(theme)+'"><div class="compare-metric-head"><div class="label">'+esc(label)+((label==="Margine strutturale"||label.indexOf("Avanzo")===0)?contextualHelpButton("budget-surplus",label):"")+'</div><span class="compare-metric-icon" aria-hidden="true">'+scenarioKpiIcon(icon)+'</span></div><div class="values"><span class="compare-value-reference">Periodo A<strong>'+money(a)+'</strong></span><span class="compare-value-current">Periodo B<strong title="'+esc(money(b))+'">'+money(b)+'</strong></span><b class="delta '+tone+'" title="Variazione del periodo B rispetto ad A"><span class="compare-delta-arrow" aria-hidden="true">'+arrow+'</span>'+comparisonSigned(d)+(p===null?"":' · '+(p>0?"+":"")+p.toLocaleString("it-IT",{maximumFractionDigits:1})+"%")+'</b></div></div>';
 }
 function comparisonTopInsight(groups,direction){
   const changed=groups.filter(function(x){return Math.abs(x.b-x.a)>.5});

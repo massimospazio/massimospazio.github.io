@@ -1,7 +1,7 @@
 // Canonical source: massimospazio/budget-familiare; public files are deployed automatically.
 (function(){
-  const APP_VERSION='V73.30.1.13';
-  const APP_RELEASE='Budget · quota finanziata e avanzo ordinario';
+  const APP_VERSION='V73.30.1.14';
+  const APP_RELEASE='Help contestuale · budget e previsione';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});
