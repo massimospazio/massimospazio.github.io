@@ -55,6 +55,15 @@
         {heading:'Cosa resta distinto',paragraphs:['Flusso e Confronto escludono i prestiti dal reddito e usano i fondi propri degli acquisti coperti, in entrambi i perimetri. Il Cash flow conserva gli importi integrali per i movimenti inclusi dal filtro.','Totale non reinserisce automaticamente E nella base della previsione. Per la previsione controlla i metodi e le esclusioni in Analisi & Baseline.']}
       ],related:['temporal','forecast-exclusion','budget-vs-cashflow']
     },
+    'flow-period-comparison':{
+      title:'Flusso economico: periodi, confronto e quote',
+      sections:[
+        {heading:'Periodo singolo e confronto',paragraphs:['Scegli Un periodo per una sola cascata, oppure Confronto A/B per due cascate affiancate con identica scala verticale. I periodi A e B sono indipendenti e possono rappresentare anni solari distinti.','Ultimi 12 e ultimi 24 mesi usano soltanto mesi chiusi. Nell’anno corrente sono considerati gennaio–ultimo mese concluso; se uno storico non è completamente disponibile viene segnalata la copertura. I confronti fra periodi di durata diversa o con stagionalità diversa richiedono cautela.']},
+        {heading:'Totale o Media mensile',paragraphs:['Totale mostra la somma dei valori del periodo selezionato. Media mensile divide ogni voce per il numero di mesi completi selezionati. Per confrontare durate diverse è generalmente più leggibile la media mensile, pur senza eliminare gli effetti stagionali.','I drill-down mostrano sempre movimenti e importi effettivi dell’intero periodo cliccato: non si dividono gli importi dei singoli movimenti per il numero di mesi.']},
+        {heading:'Scala logica delle percentuali',paragraphs:['Con € + %: obbligatorie (O), necessarie (N), NC e margine strutturale sono percentuali delle entrate; discrezionali (D), risparmio e avanzo sono percentuali del margine strutturale. Nel tooltip di D/Risparmio/Avanzo è disponibile anche la quota sulle entrate.','Le percentuali non cambiano passando dai totali alle medie mensili dello stesso periodo. Le NC (prelievi in contanti e voci da classificare) restano incluse nel bilancio. Gli eventi E sono mostrati come passaggio aggiuntivo nel perimetro Totale.']},
+        {heading:'Esplora i dettagli',paragraphs:['Clicca Entrate, O, N, NC, D, Risparmio o Altre operative nella cascata A o B: si apre un unico pannello per L1 → L2 → controparti → movimenti, riferito esclusivamente al periodo cliccato. Il dettaglio usa i valori di consuntivo, non la media mensile.','La sezione separata Confronto periodi rimane temporaneamente disponibile per confrontare i risultati prima del consolidamento definitivo delle viste.']}
+      ],related:['comparison-bridge','budget-surplus','loan-coverage','perimeter']
+    },
     'comparison-bridge':{
       title:'Confronto periodi: variazione dell’avanzo',
       sections:[

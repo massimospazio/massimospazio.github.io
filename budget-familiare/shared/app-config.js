@@ -1,7 +1,7 @@
 // Canonical source: massimospazio/budget-familiare; public files are deployed automatically.
 (function(){
-  const APP_VERSION='V73.30.1.16';
-  const APP_RELEASE='Confronto compatto · analisi espandibile';
+  const APP_VERSION='V73.30.1.17';
+  const APP_RELEASE='Flusso unico · cascate A/B, medie mensili e quote';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});

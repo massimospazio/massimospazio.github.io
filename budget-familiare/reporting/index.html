@@ -2135,7 +2135,7 @@ body{font-size:16px;line-height:1.5}
         <div id="balanceFlowGrid" class="balance-flow-grid">
           <section class="scenario-card balance-waterfall-card">
             <div class="scenario-card-head">
-              <div><h3>Flusso economico della famiglia <button class="context-help-trigger" type="button" data-context-help="budget-vs-cashflow" aria-label="Aiuto: differenza fra Flusso e Cash flow">?</button></h3><p id="balanceWaterfallSubtitle">Come le entrate si trasformano nell’avanzo ordinario.</p></div>
+              <div><h3>Flusso economico della famiglia <button class="context-help-trigger" type="button" data-context-help="flow-period-comparison" aria-label="Aiuto: differenza fra Flusso e Cash flow">?</button></h3><p id="balanceWaterfallSubtitle">Come le entrate si trasformano nell’avanzo ordinario.</p></div>
               <span id="balanceWaterfallMode" class="balance-mode-badge">—</span>
             </div>
             <div id="flowUnifiedControls" class="flow-compare-controls">
@@ -5155,7 +5155,8 @@ function flowPeriodModel(months){
   const sel=new Set(months),rows=(scenarioActualRows||[]).filter(function(r){return sel.has(String(r.month_start))});
   const financing=historicalFinancingTotals(months),coverage=purchaseFinancingTotals(months);
   const extraNet=rows.reduce(function(total,r){return total+num(r.incoming_extraordinary)-num(r.outgoing_extraordinary)},0)-financing.extraordinary+coverage.extraordinary;
-  return {...base,otherOperating:base.operatingOut-base.mandatory-base.necessary-base.unclassified-base.discretionary,
+  const priorWealth=rows.reduce(function(total,r){return total+num(r.investments_prior_wealth_ordinary)},0);
+  return {...base,priorWealth:priorWealth,otherOperating:base.operatingOut-base.mandatory-base.necessary-base.unclassified-base.discretionary,
     extraNet:extraNet,monthCount:months.length,final:base.available+(historicalScope==="TOTAL"?extraNet:0)};
 }
 function flowPercent(v,base){
@@ -5275,7 +5276,8 @@ function renderFlowUnified(){
   }else{$("flowUnifiedDelta").classList.add("hidden");$("flowUnifiedDelta").innerHTML=""}
   $("flowUnifiedStatus").innerHTML=(flowAmountMode==="MONTHLY"?"Media per mese completo":"Totale del periodo")+' · '+
     (flowShowShares?"Quote percentuali attive":"Solo importi")+(compare?" · Stessa scala verticale per A e B":"")+
-    (warnings.length?' <span class="warn"> · Attenzione: '+esc(warnings.join("; "))+'</span>':'');
+    (warnings.length?' <span class="warn"> · Attenzione: '+esc(warnings.join("; "))+'</span>':'')+
+    groups.filter(function(g){return g.model.priorWealth>.005}).map(function(g,i){return ' · '+esc(compare?(g===groups[0]?"A":"B"):"Periodo")+' investimenti da patrimonio pregresso (fuori flusso): '+money(g.model.priorWealth)}).join("");
   $("balanceWaterfallSubtitle").textContent=compare?"Cascate A/B affiancate · clicca una barra per il dettaglio del relativo periodo.":"Flusso del periodo selezionato.";
   $("balanceWaterfallMode").textContent=flowAmountMode==="MONTHLY"?"Media mensile":"Totale periodo";
 }
