@@ -5359,10 +5359,11 @@ function flowDiagnosticReference(groups,focus){
   if(!target||!target.months.length)return null;
   if(groups.length===2){
     const other=groups[1-focus],full=other.covered.length===other.months.length;
-    return full&&other.months.length>=4?{...other,from:"OTHER"}:null;
+    const overlapping=target.months.some(function(m){return other.months.includes(m)});
+    return full&&!overlapping&&other.months.length>=6?{...other,from:"OTHER"}:null;
   }
   const selected=target.months,count=selected.length;
-  if(count>12||count<4)return null;
+  if(count>12||count<6)return null;
   const prior=monthSeries(addMonthsISO(selected[0],-12),count);
   const sameCalendar=prior.length===count&&prior.every(function(m,i){return m.slice(5,7)===selected[i].slice(5,7)});
   const comparisonMonths=sameCalendar?prior:monthSeries(addMonthsISO(selected[0],-count),count);
@@ -5385,7 +5386,7 @@ function flowDiagnosticCompare(target,reference){
 function flowDiagnosticBuild(groups,focus){
   const g=groups[focus],t=g.model,n=g.months.length,covered=g.covered.length,full=covered===n,norm=Math.max(1,n),ratio=function(v,base){return base>0?100*v/base:null};
   const compare=flowDiagnosticReference(groups,focus),delta=full&&compare?flowDiagnosticCompare(g,compare):null;
-  const complete=full&&n>=4,integrity=flowDiagnosticIntegrity(t),validBalance=Math.abs(integrity)<=1;
+  const complete=full&&n>=6,integrity=flowDiagnosticIntegrity(t),validBalance=Math.abs(integrity)<=1;
   const dShare=ratio(t.discretionary,t.structural),marginShare=ratio(t.structural,t.income);
   const goods=[],risks=[],opportunities=[];
   const monthly=function(x){return num(x)/norm};
@@ -5400,6 +5401,12 @@ function flowDiagnosticBuild(groups,focus){
       if(delta.available>threshold)goods.unshift("Avanzo medio migliorato di "+money(delta.available)+"/mese rispetto al riferimento.");
       if(delta.structural>threshold)goods.unshift("Margine strutturale medio cresciuto di "+money(delta.structural)+"/mese.");
       if(delta.structural< -threshold)risks.push("Margine strutturale medio ridotto di "+money(-delta.structural)+"/mese.");
+      const refD=compare.model.structural>0?100*compare.model.discretionary/compare.model.structural:null;
+      if(refD!==null&&dShare!==null&&dShare-refD>2)risks.unshift("Le discrezionali assorbono "+(dShare-refD).toLocaleString("it-IT",{maximumFractionDigits:1})+" punti percentuali in più del margine rispetto al riferimento.");
+      else if(refD!==null&&dShare!==null&&refD-dShare>2)goods.unshift("Il peso delle discrezionali sul margine è diminuito di "+(refD-dShare).toLocaleString("it-IT",{maximumFractionDigits:1})+" punti percentuali.");
+      const resourceDelta=(t.available+t.savings)/n-(compare.model.available+compare.model.savings)/compare.months.length;
+      if(resourceDelta< -threshold)risks.push("Risparmio + avanzo insieme sono diminuiti di "+money(-resourceDelta)+"/mese.");
+      else if(resourceDelta>threshold)goods.unshift("Risparmio + avanzo insieme sono cresciuti di "+money(resourceDelta)+"/mese.");
       if(delta.necessary>threshold)risks.push("Necessarie cresciute di "+money(delta.necessary)+"/mese: distinguere aumenti permanenti da spese occasionali.");
       if(delta.mandatory>threshold)risks.push("Obbligatorie aumentate di "+money(delta.mandatory)+"/mese: verificare nuove rate e contratti.");
       if(delta.available< -threshold)risks.push("Avanzo medio diminuito di "+money(-delta.available)+"/mese.");
@@ -5413,7 +5420,7 @@ function flowDiagnosticBuild(groups,focus){
   }
   const currentCats=flowDiagnosticCategoryRows(g.months),refCats=delta?flowDiagnosticCategoryRows(compare.months):[];
   const refMap=new Map(refCats.map(function(x){return [x.nature+"|"+x.id,x]}));
-  if(complete&&validBalance){
+  if(complete&&validBalance&&n>=6){
     if(delta&&delta.necessary>threshold){
       const growth=currentCats.filter(function(x){return x.nature==="NECESSARY"}).map(function(x){
         const prev=refMap.get(x.nature+"|"+x.id);
@@ -5421,7 +5428,7 @@ function flowDiagnosticBuild(groups,focus){
       }).sort(function(a,b){return b.change-a.change})[0];
       if(growth&&growth.change>threshold/2)risks.unshift("N · "+growth.name+": incremento di circa "+money(growth.change)+"/mese nel confronto. Verificare i movimenti.");
     }
-    const minPresence=Math.max(3,Math.ceil(n*.4));
+    const minPresence=Math.max(3,Math.ceil(n*.45));
     const ranked=currentCats.filter(function(x){return x.nature==="DISCRETIONARY"&&x.monthCount>=minPresence&&x.amount/n>=25})
       .map(function(x){const previous=refMap.get(x.nature+"|"+x.id);
         return {...x,monthly:x.amount/n,change:previous?x.amount/n-previous.amount/compare.months.length:null};
@@ -5452,7 +5459,7 @@ function flowDiagnosticBuild(groups,focus){
     "Il periodo presenta "+(t.available>=0?"un avanzo non negativo":"un avanzo negativo")+
       ". Manca un riferimento storico omogeneo sufficientemente completo per giudicare l’andamento.";
   return {g:g,reference:compare,delta:delta,complete:complete,validBalance:validBalance,integrity:integrity,headline:headline,verdict:verdict,
-    goods:goods.slice(0,3),risks:risks.slice(0,4),opportunities:opportunities.slice(0,3),
+    goods:goods.slice(0,3),risks:risks.slice(0,5),opportunities:opportunities.slice(0,3),
     chips:[
       {label:"Margine / Entrate",value:flowPercent(t.structural,t.income)},
       {label:"D / Margine",value:flowPercent(t.discretionary,t.structural)},
