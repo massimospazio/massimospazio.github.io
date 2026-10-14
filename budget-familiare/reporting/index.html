@@ -1739,6 +1739,48 @@ body{font-size:16px;line-height:1.5}
 #balanceOutsideFlow{display:none!important}
 @media(max-width:760px){.flow-unified-charts.compare{grid-template-columns:1fr}.flow-compare-group{flex:1 1 135px}}
 
+
+/* V73.30.1.18 — diagnosi automatica del Flusso: evidence-first, compact by default */
+.flow-diagnosis{border:1px solid #d7e3f1;background:#fff;border-radius:12px;margin-top:12px;overflow:hidden}
+.flow-diagnosis>summary{display:flex;gap:10px;align-items:center;flex-wrap:wrap;cursor:pointer;list-style:none;padding:12px 14px;color:#1e426c;font-size:14px;min-height:51px}
+.flow-diagnosis>summary::-webkit-details-marker{display:none}
+.flow-diagnosis>summary:hover{background:#f3f7fc}
+.flow-diagnosis>summary:focus-visible{outline:2px solid #245de1;outline-offset:-3px}
+.flow-diagnosis-label{font-weight:800;display:inline-flex;align-items:center;gap:7px}
+.flow-diagnosis-label small{font-size:12px;color:#677d96;font-weight:500}
+.flow-diagnosis-icon{font-size:21px;color:#4776b0}
+.flow-diagnosis-headline{flex:1 1 210px;text-align:right;font-size:13px;color:#4d6483}
+.flow-diagnosis-open{font-size:19px;color:#52739e}
+.flow-diagnosis[open] .flow-diagnosis-open{transform:rotate(90deg)}
+.flow-diagnosis-body{padding:13px 15px 15px;border-top:1px solid #e4edf6}
+.flow-diagnosis-tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:9px}
+.flow-diagnosis-tabs button{background:#f4f7fd;border:1px solid #d3dfec;color:#405778;font:600 13px inherit;padding:6px 11px;border-radius:8px;cursor:pointer}
+.flow-diagnosis-tabs button.active{color:#fff;background:#2963d6;border-color:#2963d6}
+.flow-diagnosis-intro{font-size:14px;line-height:1.55;color:#415b79;margin:5px 0 12px}
+.flow-diagnosis-chips{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.flow-diagnosis-chip{border-radius:7px;padding:5px 9px;font-size:13px;background:#f1f6fc;color:#315477;font-weight:700}
+.flow-diagnosis-chip.good{background:#e5f6ee;color:#117448}
+.flow-diagnosis-chip.bad{background:#fff0f0;color:#af3650}
+.flow-diagnosis-chip.warning{background:#fff4e2;color:#9a6013}
+.flow-diagnosis-panels{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:8px 0 13px}
+.flow-diagnosis-panel{min-width:0;border:1px solid #e0e8f3;border-radius:11px;padding:12px 13px;background:#fbfcff}
+.flow-diagnosis-panel h4{display:flex;gap:8px;align-items:center;margin:0 0 8px;color:#264768;font-size:15px}
+.flow-diagnosis-panel h4.good{color:#19714b}.flow-diagnosis-panel h4.bad{color:#aa344e}
+.flow-diagnosis-panel ul{margin:0;padding-left:19px;display:grid;gap:7px;font-size:13px;line-height:1.55;color:#395574}
+.flow-diagnosis-panel li{padding-left:2px}
+.flow-diagnosis-opportunities{border:1px solid #dce7f3;background:#f7faff;border-radius:11px;padding:12px 14px}
+.flow-diagnosis-opportunities h4{font-size:16px;color:#1d416b;margin:0 0 4px}
+.flow-diagnosis-opportunities .sub{font-size:13px;color:#5a708a;line-height:1.45;margin:0 0 9px}
+.flow-diagnosis-opportunity{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;border-top:1px solid #e1eaf4;padding:10px 0}
+.flow-diagnosis-opportunity strong{font-size:14px;color:#233f60}
+.flow-diagnosis-opportunity small{display:block;font-size:12px;line-height:1.5;color:#576e89;margin-top:3px}
+.flow-diagnosis-opportunity .potential{font-size:16px;font-weight:800;color:#166e48;text-align:right}
+.flow-diagnosis-opportunity button{padding:5px 9px;font-size:12px;cursor:pointer;background:#fff;border:1px solid #c9daea;border-radius:7px;color:#2a558c}
+.flow-diagnosis-opportunity button:hover{background:#e8f2ff}
+.flow-diagnosis-note{font-size:12px;color:#667d96;margin-top:9px;line-height:1.5}
+.flow-diagnosis-integrity{font-size:13px;color:#8f5118;background:#fff5e7;padding:9px 12px;border-radius:8px;margin:9px 0}
+@media(max-width:800px){.flow-diagnosis-panels{grid-template-columns:1fr}.flow-diagnosis-headline{text-align:left}}
+
 </style>
 <style>
 .purchase-financing-detail{margin-top:4px;font-size:14px;line-height:1.5;font-weight:400;color:#425b7c;white-space:normal;min-width:200px}
@@ -2150,6 +2192,17 @@ body{font-size:16px;line-height:1.5}
  <div id="flowUnifiedCharts" class="flow-unified-charts"></div>
  <div id="flowUnifiedDelta" class="flow-unified-delta hidden"></div>
  <div class="flow-unified-footnote">O, N, NC e margine in % delle entrate; discrezionali, risparmio e avanzo in % del margine. Importi al netto delle quote finanziate. Clicca una barra per il dettaglio del periodo.</div>
+ <details id="flowDiagnosis" class="flow-diagnosis">
+   <summary id="flowDiagnosisSummary" aria-label="Apri o chiudi diagnosi automatica del flusso economico">
+     <span class="flow-diagnosis-label"><span class="flow-diagnosis-icon">◈</span> Diagnosi automatica <small>· fotografia e opportunità</small></span>
+     <span id="flowDiagnosisHeadline" class="flow-diagnosis-headline">In preparazione</span>
+     <span class="flow-diagnosis-open" aria-hidden="true">▸</span>
+   </summary>
+   <div class="flow-diagnosis-body">
+     <div id="flowDiagnosisPeriodTabs" class="flow-diagnosis-tabs" role="group" aria-label="Periodo della diagnosi"></div>
+     <div id="flowDiagnosisContent" aria-live="polite"></div>
+   </div>
+ </details>
  <div class="balance-waterfall-viewport" tabindex="0" aria-label="Grafico del flusso economico; scorri orizzontalmente sugli schermi piccoli"><div class="balance-waterfall-chart"><div id="balanceWaterfallChart" class="balance-waterfall-vector"></div></div></div>
             <div id="balanceErosionWidget" class="balance-erode-wrap"></div>
             <div id="balanceWaterfallNote" class="balance-flow-note"></div>
@@ -2357,7 +2410,7 @@ let historicalBalanceChart=null;
 let balanceWaterfallObserver=null;
 let balanceWaterfallRenderWidth=0;
 let balanceHubMode="HISTORY";
-let flowPeriodMode="SINGLE",flowPeriodA="PREVIOUS_12",flowPeriodB="ROLLING_12",flowSinglePeriod="ROLLING_12",flowAmountMode="TOTAL",flowShowShares=true;
+let flowPeriodMode="SINGLE",flowPeriodA="PREVIOUS_12",flowPeriodB="ROLLING_12",flowSinglePeriod="ROLLING_12",flowAmountMode="TOTAL",flowShowShares=true,flowDiagnosticFocus="B";
 let historicalPeriodMode="ROLLING_12";
 let historicalYearSelection=null;
 let historicalScope="ORDINARY";
@@ -4764,6 +4817,7 @@ function balanceDrillNatureForProjectionCat(cat){
 function balanceDrillMonthSets(){
   const sel=balanceDrillSelection||{},mode=sel.mode||historicalPeriodMode,current=historicalCurrentMonth();
   const months=sel.month?[sel.month]:Array.isArray(sel.months)?sel.months:historicalMonthsFor(mode);
+  if(Array.isArray(sel.months))return {all:months,actual:months.filter(function(m){return m<current}),forecast:[]};
   if(mode==="CURRENT_YEAR")return {all:months,actual:months.filter(function(m){return m<current}),forecast:months.filter(function(m){return m>=current})};
   if(mode==="FORECAST_12")return {all:months,actual:[],forecast:months.slice()};
   return {all:months,actual:months.slice(),forecast:[]};
