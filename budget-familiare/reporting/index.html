@@ -5698,6 +5698,165 @@ function flowComparisonRenderBridge(groups){
     '<p class="flow-bridge-note">I segni indicano il contributo al risultato: spese in aumento ⇒ contributo negativo. Risparmio in diminuzione ⇒ contributo positivo solo per l’avanzo contabile, non un vantaggio economico. Clicca una voce per analizzare L1, L2, controparti e movimenti.</p>';
 }
 
+
+function flowCompareResetDetail(clearNature){
+  ++flowCompareDetailSeq;flowCompareSelectedL2=null;flowCompareSelectedL2Name="";
+  flowCompareSelectedCp="";flowCompareDetails=null;flowCompareDetailLoading=false;
+  flowCompareExpandedL1.clear();
+  if(clearNature)flowCompareNature="NECESSARY";
+}
+function flowCompareViewValue(groups,value,i){
+  return num(value)/flowComparisonUnit(groups[i]);
+}
+function flowCompareViewDelta(groups,row){
+  return flowCompareViewValue(groups,row.b,1)-flowCompareViewValue(groups,row.a,0);
+}
+function flowCompareCategoryTone(nature,v){
+  if(Math.abs(v)<.005)return "neutral";
+  return (nature==="INCOME"||nature==="INVESTMENT")?(v>0?"good":"bad"):(v<0?"good":"bad");
+}
+function flowComparePct(a,b){
+  if(Math.abs(a)<.005)return Math.abs(b)<.005?"0%":"Nuova";
+  const p=100*(b-a)/Math.abs(a);
+  return (p>0?"+":p<0?"−":"")+Math.abs(p).toLocaleString("it-IT",{maximumFractionDigits:1})+"%";
+}
+function flowComparisonTable(groups,rows,level){
+  const sort=function(a,b){
+    const av=Math.abs(flowCompareViewDelta(groups,a)),bv=Math.abs(flowCompareViewDelta(groups,b));
+    return bv-av||a.name.localeCompare(b.name,"it");
+  };
+  return rows.slice().sort(sort).map(function(row){
+    const aa=flowCompareViewValue(groups,row.a,0),bb=flowCompareViewValue(groups,row.b,1),d=bb-aa,ton=flowCompareCategoryTone(flowCompareNature,d);
+    const name=level==="L1"?
+      '<button type="button" data-flow-comp-l1="'+esc(row.id)+'" aria-expanded="'+flowCompareExpandedL1.has(row.id)+'"><span aria-hidden="true">'+(flowCompareExpandedL1.has(row.id)?"▾":"▸")+'</span> '+esc(row.name)+'</button>':
+      '<button type="button" data-flow-comp-l2="'+esc(row.id)+'" data-flow-comp-l2-name="'+esc(row.name)+'" aria-pressed="'+(String(flowCompareSelectedL2)===String(row.id))+'">'+esc(row.name)+' ↗</button>';
+    const selected=String(flowCompareSelectedL2)===String(row.id),cl=level==="L2"?"child":"";
+    let html='<tr class="'+cl+(selected?" is-selected":"")+'"><td>'+name+'</td><td>'+money(aa)+'</td><td>'+money(bb)+'</td>'+
+      '<td class="'+ton+'">'+flowComparisonMoney(d)+'</td><td>'+flowComparePct(aa,bb)+'</td></tr>';
+    if(level==="L1"&&flowCompareExpandedL1.has(row.id))html+=flowComparisonTable(groups,row.children,"L2");
+    return html;
+  }).join("");
+}
+function flowComparisonRenderExplorer(groups){
+  const host=$("flowComparisonExplorer");if(!host)return;
+  if(groups.length!==2){host.innerHTML="";return}
+  const nature=flowCompareNature;
+  const tree=flowComparisonCategoryTree(groups,nature),reference=flowComparisonCategoryReference(groups,nature);
+  const totalA=tree.reduce(function(s,g){return s+g.a},0)/flowComparisonUnit(groups[0]);
+  const totalB=tree.reduce(function(s,g){return s+g.b},0)/flowComparisonUnit(groups[1]);
+  const driftA=totalA-reference.a,driftB=totalB-reference.b;
+  const bar=FLOW_COMPARISON_NATURES.map(function(x){
+    const active=x[0]===nature;
+    return '<button type="button" data-flow-comp-nature="'+x[0]+'" class="'+(active?"active":"")+'" aria-pressed="'+active+'" title="'+esc(x[2])+'">'+esc(x[1])+'</button>';
+  }).join("");
+  const headings='<div class="flow-comparison-explorer-head"><h4>Da dove arriva la variazione? <span class="small muted">L1 → L2</span></h4>'+
+    '<div class="flow-comparison-natures" aria-label="Scegli la natura da confrontare">'+bar+'</div></div>';
+  const head='<thead><tr><th>Categoria</th><th>Periodo A</th><th>Periodo B</th><th>Δ '+(flowAmountMode==="MONTHLY"?"€/mese":"€")+'</th><th>Δ %</th></tr></thead>';
+  const mismatch=Math.abs(driftA)>.99||Math.abs(driftB)>.99;
+  const caveat=mismatch?'<div class="flow-bridge-warning">Le categorie attribuite non riconciliano interamente la natura: A '+money(totalA)+' contro '+money(reference.a)+
+    ', B '+money(totalB)+' contro '+money(reference.b)+'. Possibile effetto di movimenti non classificati o dati di dettaglio mancanti: il totale della cascata rimane la fonte del KPI.</div>':
+    '<p class="flow-comparison-note">Categorie riconciliate con la natura selezionata entro 1 €.</p>';
+  host.innerHTML='<div class="flow-comparison-explorer">'+headings+
+    (tree.length?'<div class="flow-comparison-table-scroll"><table class="flow-comparison-table">'+head+'<tbody>'+flowComparisonTable(groups,tree,"L1")+'</tbody></table></div>':
+    '<p class="flow-comparison-note">Nessuna categoria con importi per questa natura nei periodi selezionati.</p>')+
+    caveat+'<p class="flow-comparison-note">Importi per '+(flowAmountMode==="MONTHLY"?"mese (periodo A / "+groups[0].months.length+" mesi, B / "+groups[1].months.length+" mesi)":"periodo")+
+    '. Clicca una L1 per espandere le L2 e una L2 per visualizzare controparti e movimenti nei due periodi.</p>'+
+    '<div id="flowComparisonCategoryDetail" class="flow-comparison-detail'+(flowCompareSelectedL2?"":" hidden")+'"></div></div>';
+  flowComparisonRenderL2Details(groups);
+}
+function flowComparisonRenderL2Details(groups){
+  const host=$("flowComparisonCategoryDetail");if(!host||!flowCompareSelectedL2)return;
+  host.classList.remove("hidden");
+  const header='<div class="flow-comparison-detail-top"><strong>'+esc(flowCompareSelectedL2Name)+' · controparti e movimenti A/B</strong>'+
+    '<button type="button" data-flow-comp-close-detail>Chiudi dettaglio</button></div>';
+  if(flowCompareDetailLoading){host.innerHTML=header+'<p class="flow-comparison-note">Caricamento controparti e movimenti…</p>';return}
+  if(!flowCompareDetails){host.innerHTML=header+'<p class="flow-comparison-note">Seleziona una sotto-categoria per aprire il dettaglio.</p>';return}
+  if(flowCompareDetails.error){host.innerHTML=header+'<p class="flow-bridge-warning">'+esc(flowCompareDetails.error)+'</p>';return}
+  const aSet=new Set(groups[0].months),bSet=new Set(groups[1].months);
+  const rows=(Array.isArray(flowCompareDetails.movements)?flowCompareDetails.movements:[]).filter(function(row){
+    const month=String(row.month_start||""),ordinary=!comparisonMovementIsExceptional(row);
+    if(!ordinary||(!aSet.has(month)&&!bSet.has(month)))return false;
+    if(flowCompareNature==="INVESTMENT"){
+      // Include only current-income investments, never transfer of prior wealth.
+      const tp=String(row.investment_temporality||row.effective_temporality||"");
+      const funding=String(row.investment_funding_source||row.effective_funding_source||"CURRENT_SURPLUS");
+      if(tp==="PLANNED_OCCASIONAL"&&funding==="PRIOR_WEALTH")return false;
+    }
+    return true;
+  }).map(function(row){
+    const move=purchaseFinancingMovement(row,false);
+    return {...move,periodA:aSet.has(String(row.month_start)),periodB:bSet.has(String(row.month_start))};
+  });
+  const cpMap=new Map();
+  rows.forEach(function(row){
+    const name=String(row.counterparty||"Senza controparte");
+    if(!cpMap.has(name))cpMap.set(name,{name:name,a:0,b:0,ca:0,cb:0});
+    const r=cpMap.get(name),value=num(row.amount);
+    if(row.periodA){r.a+=value;r.ca++}if(row.periodB){r.b+=value;r.cb++}
+  });
+  const all=Array.from(cpMap.values()).sort(function(a,b){
+    return Math.abs(flowCompareViewDelta(groups,b))-Math.abs(flowCompareViewDelta(groups,a))||a.name.localeCompare(b.name,"it");
+  });
+  if(flowCompareSelectedCp&&!cpMap.has(flowCompareSelectedCp))flowCompareSelectedCp="";
+  const cpTable='<div class="flow-comparison-table-scroll"><table class="flow-comparison-table">'+
+    '<thead><tr><th>Controparte</th><th>A</th><th>B</th><th>Δ '+(flowAmountMode==="MONTHLY"?"€/mese":"€")+'</th><th>Mov. A/B</th></tr></thead><tbody>'+
+    all.map(function(cp){
+      const d=flowCompareViewDelta(groups,cp),active=flowCompareSelectedCp===cp.name;
+      return '<tr class="'+(active?"is-selected":"")+'"><td><button type="button" data-flow-comp-cp="'+esc(cp.name)+'" aria-pressed="'+active+'">'+esc(cp.name)+' ↗</button></td>'+
+        '<td>'+money(flowCompareViewValue(groups,cp.a,0))+'</td><td>'+money(flowCompareViewValue(groups,cp.b,1))+'</td>'+
+        '<td class="'+flowCompareCategoryTone(flowCompareNature,d)+'">'+flowComparisonMoney(d)+'</td><td>'+cp.ca+' / '+cp.cb+'</td></tr>';
+    }).join("")+'</tbody></table></div>';
+  const rowSet=all.find(function(r){return r.name===flowCompareSelectedCp});
+  const byCp=flowCompareSelectedCp?rows.filter(function(row){return String(row.counterparty||"Senza controparte")===flowCompareSelectedCp}):[];
+  const chronological=byCp.slice().sort(function(a,b){return String(b.transaction_date).localeCompare(String(a.transaction_date))});
+  const movements=flowCompareSelectedCp?
+    '<div class="flow-comparison-detail-top" style="margin:10px 0"><strong>Movimenti · '+esc(flowCompareSelectedCp)+' · '+chronological.length+' righe</strong>'+
+    '<button type="button" data-flow-comp-close-cp>Chiudi movimenti</button></div>'+
+    '<div class="flow-comparison-table-scroll"><table class="flow-comparison-table moves-table"><thead><tr><th>Periodo</th><th>Data</th><th>Descrizione / nota</th><th>Importo reale</th></tr></thead><tbody>'+
+    chronological.map(function(row){
+      const mark=(row.periodA?"A":"")+(row.periodA&&row.periodB?"/":"")+(row.periodB?"B":"");
+      return '<tr><td>'+mark+'</td><td>'+dateLabel(row.transaction_date)+'</td><td>'+esc(row.description||row.counterparty||"—")+
+        (row.user_note||row.extraordinary_note?'<div class="small muted">'+esc(row.user_note||row.extraordinary_note)+'</div>':"")+
+        '</td><td>'+money(row.amount)+purchaseFinancingMovementHtml(row)+'</td></tr>';
+    }).join("")+'</tbody></table></div>':"";
+  const selectedNatureRows=flowComparisonCategoryTree(groups,flowCompareNature);
+  const selected=selectedNatureRows.flatMap(function(g){return g.children}).find(function(x){return String(x.id)===String(flowCompareSelectedL2)});
+  const selA=selected?selected.a:0,selB=selected?selected.b:0;
+  const cpsA=all.reduce(function(z,x){return z+x.a},0),cpsB=all.reduce(function(z,x){return z+x.b},0);
+  const mismatch=Math.abs(cpsA-selA)>.99||Math.abs(cpsB-selB)>.99;
+  host.innerHTML=header+
+    (mismatch?'<div class="flow-bridge-warning">Importi controparti non completamente allineati alla L2 ('+
+      'categoria A '+money(selA)+' / movimenti '+money(cpsA)+', B '+money(selB)+' / movimenti '+money(cpsB)+
+      '). Possibili limiti della finestra RPC, split o classificazioni differenti. Non utilizzare il dettaglio per correggere automaticamente il KPI.</div>':"")+
+    (all.length?cpTable:'<p class="flow-comparison-note">Nessun movimento recuperato per questa categoria: controllare la disponibilità dello storico nell’analisi dettagliata.</p>')+
+    movements+'<p class="flow-comparison-note">I movimenti sono valori effettivi, anche se sul grafico sono selezionate medie mensili. Importi economici al netto delle quote coperte da finanziamento.</p>';
+}
+async function flowComparisonLoadL2(categoryId,name,groups){
+  ++flowCompareDetailSeq;
+  const seq=flowCompareDetailSeq;
+  flowCompareSelectedL2=categoryId;flowCompareSelectedL2Name=name||"Categoria";
+  flowCompareSelectedCp="";flowCompareDetails=null;flowCompareDetailLoading=true;
+  flowComparisonRenderExplorer(groups);
+  try{
+    const direction=flowCompareNature==="INCOME"?"INCOME":"EXPENSE";
+    const result=await rpc("dashboard_reporting_analysis_detail_v2",{p_category_id:categoryId,p_direction:direction,p_period_months:0});
+    if(seq!==flowCompareDetailSeq||String(flowCompareSelectedL2)!==String(categoryId))return;
+    flowCompareDetails=result||{movements:[]};
+  }catch(err){
+    if(seq!==flowCompareDetailSeq)return;
+    flowCompareDetails={error:err.message||"Impossibile caricare il dettaglio"};
+  }finally{
+    if(seq===flowCompareDetailSeq){flowCompareDetailLoading=false;flowComparisonRenderExplorer(groups)}
+  }
+}
+function flowComparisonCurrentGroups(){
+  if(flowPeriodMode!=="COMPARE"||!Array.isArray(scenarioActualRows))return [];
+  return [flowPeriodA,flowPeriodB].map(function(key){
+    const months=flowMonthsFor(key);
+    return {key:key,months:months,covered:flowAvailableMonths(months),label:flowPeriodLabel(key,months),model:flowPeriodModel(months)};
+  });
+}
+
 function comparisonMonthSets(){
   const current=historicalCurrentMonth();
   if(compareWindow==="YEAR"){
