@@ -7281,6 +7281,27 @@ $("historicalYearSelect")?.addEventListener("change",function(){
   balanceHubMode="HISTORY";historicalPeriodMode="YEAR";closeBalanceNatureDrill();renderBalanceHub();
 });
 $("scenarioView").addEventListener("click",async function(e){
+  const compNature=e.target.closest("[data-flow-comp-nature]");
+  if(compNature){
+    const next=compNature.dataset.flowCompNature;
+    if(next!==flowCompareNature){flowCompareResetDetail(false);flowCompareNature=next}
+    $("flowComparisonAnalysis").open=true;
+    flowComparisonRenderExplorer(flowComparisonCurrentGroups());return;
+  }
+  const compL1=e.target.closest("[data-flow-comp-l1]");
+  if(compL1){const id=compL1.dataset.flowCompL1;
+    if(flowCompareExpandedL1.has(id))flowCompareExpandedL1.delete(id);else flowCompareExpandedL1.add(id);
+    flowComparisonRenderExplorer(flowComparisonCurrentGroups());return;
+  }
+  const compL2=e.target.closest("[data-flow-comp-l2]");
+  if(compL2){await flowComparisonLoadL2(compL2.dataset.flowCompL2,compL2.dataset.flowCompL2Name,flowComparisonCurrentGroups());return}
+  const compCp=e.target.closest("[data-flow-comp-cp]");
+  if(compCp){flowCompareSelectedCp=compCp.dataset.flowCompCp||"";flowComparisonRenderL2Details(flowComparisonCurrentGroups());return}
+  if(e.target.closest("[data-flow-comp-close-cp]")){flowCompareSelectedCp="";flowComparisonRenderL2Details(flowComparisonCurrentGroups());return}
+  if(e.target.closest("[data-flow-comp-close-detail]")){
+    ++flowCompareDetailSeq;flowCompareSelectedL2=null;flowCompareDetails=null;flowCompareDetailLoading=false;flowCompareSelectedCp="";
+    flowComparisonRenderExplorer(flowComparisonCurrentGroups());return;
+  }
   const diagnosisFocus=e.target.closest("[data-flow-diagnostic-focus]");
   if(diagnosisFocus){flowDiagnosticFocus=diagnosisFocus.dataset.flowDiagnosticFocus||"B";renderFlowUnified();return}
   const diagnosticLink=e.target.closest("[data-flow-diagnose-nature]");
@@ -7293,7 +7314,7 @@ $("scenarioView").addEventListener("click",async function(e){
     return;
   }
   const mode=e.target.closest("[data-flow-mode]");
-  if(mode){flowPeriodMode=mode.dataset.flowMode==="COMPARE"?"COMPARE":"SINGLE";closeBalanceNatureDrill();renderFlowUnified();return}
+  if(mode){flowPeriodMode=mode.dataset.flowMode==="COMPARE"?"COMPARE":"SINGLE";flowCompareResetDetail(true);closeBalanceNatureDrill();renderFlowUnified();return}
   const amount=e.target.closest("[data-flow-amount]");
   if(amount){flowAmountMode=amount.dataset.flowAmount==="MONTHLY"?"MONTHLY":"TOTAL";renderFlowUnified();return}
   const shares=e.target.closest("[data-flow-shares]");
@@ -7331,7 +7352,7 @@ $("scenarioView").addEventListener("click",async function(e){
   if(e.target.closest("[data-balance-drill-clear-counterparty]")){balanceDrillCounterparty="";renderBalanceDrillBreakdown();return}
   const openAnalysis=e.target.closest("[data-balance-open-analysis]");if(openAnalysis){await openBalanceDrillInAnalysis(openAnalysis.dataset.balanceOpenAnalysis);return}
   const hs=e.target.closest("[data-history-scope]");
-  if(hs){historicalScope=hs.dataset.historyScope||"ORDINARY";if(balanceDrillSelection){balanceDrillSelection.scope=historicalScope;renderBalanceDrill()}renderHistoricalBalance();return}
+  if(hs){historicalScope=hs.dataset.historyScope||"ORDINARY";flowCompareResetDetail(true);if(balanceDrillSelection){balanceDrillSelection.scope=historicalScope;renderBalanceDrill()}renderHistoricalBalance();return}
   const noteSave=e.target.closest("[data-scenario-extra-note-save]");
   if(noteSave){
     const id=noteSave.dataset.scenarioExtraNoteSave,input=$("scenarioView").querySelector('[data-scenario-extra-note="'+CSS.escape(id)+'"]');
@@ -7382,7 +7403,7 @@ $("scenarioView").addEventListener("click",async function(e){
 });
 $("processContextWhere")?.addEventListener("click",function(e){
   const p=e.target.closest("[data-where-period]");if(p){setWherePeriod(p.dataset.wherePeriod);return}
-  const s=e.target.closest("[data-history-scope]");if(s){historicalScope=s.dataset.historyScope||"ORDINARY";closeBalanceNatureDrill();if(balanceSubview==="compare")renderHistoricalPeriodComparison();else if(balanceSubview!=="analysis")renderHistoricalBalance();syncWherePeriodUI()}
+  const s=e.target.closest("[data-history-scope]");if(s){historicalScope=s.dataset.historyScope||"ORDINARY";flowCompareResetDetail(true);closeBalanceNatureDrill();if(balanceSubview==="compare")renderHistoricalPeriodComparison();else if(balanceSubview!=="analysis")renderHistoricalBalance();syncWherePeriodUI()}
 });
 $("balanceFlowGrid")?.addEventListener("keydown",function(e){
   const step=e.target.closest(".flow-unified-step[data-balance-nature],.waterfall-step[data-balance-nature]");
@@ -7401,7 +7422,7 @@ $("balanceFlowGrid")?.addEventListener("keydown",function(e){
     if(id==="flowSinglePeriod")flowSinglePeriod=this.value;
     else if(id==="flowPeriodA")flowPeriodA=this.value;
     else flowPeriodB=this.value;
-    closeBalanceNatureDrill();renderFlowUnified();
+    flowCompareResetDetail(true);closeBalanceNatureDrill();renderFlowUnified();
   });
 });
 $("compareYearB")?.addEventListener("change",function(){compareYearB=Number(this.value)||compareYearB;resetComparisonDetail();renderHistoricalPeriodComparison()});
