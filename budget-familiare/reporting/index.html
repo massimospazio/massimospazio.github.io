@@ -5179,7 +5179,7 @@ function renderBalanceWaterfall(){
 function flowYearChoices(){
   const now=historicalCurrentMonth(),year=Number(now.slice(0,4));
   const years=Array.from(new Set((scenarioActualRows||[]).map(function(r){return Number(String(r.month_start||"").slice(0,4))}).filter(function(y){return y>=year-4&&y<=year}))).sort(function(a,b){return b-a});
-  const loaded=new Set((scenarioActualRows||[]).map(function(r){return String(r.month_start)}));
+  const loaded=new Set(flowAvailableMonths((scenarioActualRows||[]).map(function(r){return String(r.month_start)})));
   const completeYears=years.filter(function(y){return y===year||monthSeries(y+"-01-01",12).every(function(m){return loaded.has(m)})});
   if(!completeYears.includes(year))completeYears.unshift(year);
   return [["ROLLING_12","Ultimi 12 mesi completi"],["PREVIOUS_12","12 mesi precedenti"],["ROLLING_6","Ultimi 6 mesi completi"],["ROLLING_24","Ultimi 24 mesi completi"]].concat(
@@ -5202,8 +5202,15 @@ function flowPeriodLabel(key,months){
   return (found?found[1]:"Periodo")+' · '+months.length+' mesi';
 }
 function flowAvailableMonths(months){
-  const available=new Set((scenarioActualRows||[]).map(function(r){return String(r.month_start)}));
-  return months.filter(function(m){return available.has(m)});
+  // The RPC creates monthly rows even when there are no movements; zero rows
+  // cannot establish actual coverage of bank statements.
+  const byMonth=new Map((scenarioActualRows||[]).map(function(r){return [String(r.month_start),r]}));
+  return months.filter(function(m){
+    const r=byMonth.get(m);
+    return !!r&&["incoming","outgoing","incoming_ordinary","outgoing_ordinary"].some(function(key){
+      return Math.abs(num(r[key]))>.005;
+    });
+  });
 }
 function flowPeriodModel(months){
   const base=comparisonTotalsForMonths(months,"ORDINARY");
@@ -5314,7 +5321,7 @@ function renderFlowUnified(){
       '<small>Entrate '+money(g.model.income/divisor)+(flowAmountMode==="MONTHLY"?'/mese':'')+'</small></div>'+
       '<div class="flow-graph-scroll">'+flowRenderSvg(g.model,limits,type)+'</div></article>';
   }).join("");
-  const warnings=groups.flatMap(function(g){return g.covered.length===g.months.length?[]:[g.label+": "+g.covered.length+"/"+g.months.length+" mesi disponibili"]});
+  const warnings=groups.flatMap(function(g){return g.covered.length===g.months.length?[]:[g.label+": "+g.covered.length+"/"+g.months.length+" mesi con movimenti"]});
   if(compare){
     const a=groups[0],b=groups[1],aligned=a.months.length===b.months.length&&a.months.every(function(m,i){return m.slice(5,7)===b.months[i].slice(5,7)});
     if(a.months.length!==b.months.length)warnings.push("durata diversa: usa Media mensile per un confronto normalizzato");
