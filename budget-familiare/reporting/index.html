@@ -1781,6 +1781,64 @@ body{font-size:16px;line-height:1.5}
 .flow-diagnosis-integrity{font-size:13px;color:#8f5118;background:#fff5e7;padding:9px 12px;border-radius:8px;margin:9px 0}
 @media(max-width:800px){.flow-diagnosis-panels{grid-template-columns:1fr}.flow-diagnosis-headline{text-align:left}}
 
+
+/* V73.30.1.19 — Scoperta delle cause: bridge strutturale + drilldown A/B */
+.flow-comparison-analysis{border:1px solid #d6e4f4;border-radius:12px;background:#fff;margin-top:12px;overflow:hidden}
+.flow-comparison-analysis>summary{list-style:none;display:flex;align-items:center;gap:12px;padding:12px 14px;cursor:pointer;color:#264c78}
+.flow-comparison-analysis>summary::-webkit-details-marker{display:none}
+.flow-comparison-analysis>summary:hover{background:#f6f9fd}
+.flow-comparison-analysis>summary:focus-visible{outline:2px solid #2563eb;outline-offset:-3px}
+.flow-comparison-head{display:flex;align-items:baseline;gap:12px;flex:1;flex-wrap:wrap}
+.flow-comparison-head>strong{font-size:15px}
+.flow-comparison-head>small{font-size:13px;color:#5f718b}
+.flow-comparison-caret{color:#5375a0;font-size:19px;transition:transform .15s}
+.flow-comparison-analysis[open] .flow-comparison-caret{transform:rotate(90deg)}
+.flow-comparison-inner{padding:12px 14px 15px;border-top:1px solid #e5edf7}
+.flow-comparison-explainer{color:#506987;font-size:13px;line-height:1.5;margin:0 0 9px}
+.flow-bridge-group{display:grid;gap:6px;margin:11px 0}
+.flow-bridge-row{display:grid;grid-template-columns:minmax(180px,1.15fr) 130px minmax(80px,.85fr);gap:10px;align-items:center;padding:5px 6px;border-radius:7px;font-size:14px}
+.flow-bridge-row button{border:0;padding:2px 0;text-align:left;font:inherit;font-weight:600;color:#31567f;background:none;cursor:pointer}
+.flow-bridge-row button:hover{color:#174fa0;text-decoration:underline}
+.flow-bridge-row button:focus-visible{outline:2px solid #2563eb}
+.flow-bridge-row strong{font-variant-numeric:tabular-nums;text-align:right}
+.flow-bridge-row .good{color:#14764c}.flow-bridge-row .bad{color:#b63146}.flow-bridge-row .neutral{color:#4b6078}
+.flow-bridge-meter{background:#e9f0f8;height:7px;border-radius:8px;overflow:hidden}
+.flow-bridge-meter i{display:block;height:100%;border-radius:8px;background:#8ea9c6}
+.flow-bridge-meter i.good{background:#24a479}.flow-bridge-meter i.bad{background:#ed8584}
+.flow-bridge-subtotal{padding:9px 12px;border:1px solid #dbe7f8;background:#f5f8ff;border-radius:8px;display:flex;gap:9px;align-items:center;justify-content:space-between;flex-wrap:wrap;font-size:14px;margin:11px 0}
+.flow-bridge-subtotal strong{font-variant-numeric:tabular-nums}
+.flow-bridge-note{font-size:12px;color:#6a7d95;line-height:1.5;margin-top:6px}
+.flow-bridge-warning{font-size:13px;color:#915915;background:#fff4e5;border-radius:7px;padding:9px 10px;margin:9px 0}
+.flow-comparison-explorer{margin-top:12px;padding:12px;border:1px solid #dce7f2;border-radius:10px;background:#f9fbff}
+.flow-comparison-explorer-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:space-between;margin-bottom:9px}
+.flow-comparison-explorer-head h4{font-size:15px;color:#24476c;margin:0}
+.flow-comparison-natures{display:flex;gap:5px;flex-wrap:wrap}
+.flow-comparison-natures button{cursor:pointer;padding:6px 10px;border:1px solid #cddbeb;border-radius:7px;background:#fff;color:#355777;font-weight:650;font-size:12px}
+.flow-comparison-natures button.active{background:#2b62d9;border-color:#2b62d9;color:#fff}
+.flow-comparison-table-scroll{overflow-x:auto;max-width:100%}
+.flow-comparison-table{border-collapse:collapse;width:100%;min-width:580px;font-size:13px;color:#344d6c}
+.flow-comparison-table th{padding:8px;text-align:right;color:#526985;border-bottom:1px solid #cad9e9;white-space:nowrap}
+.flow-comparison-table th:first-child{text-align:left}
+.flow-comparison-table td{border-bottom:1px solid #e7edf5;padding:7px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.flow-comparison-table td:first-child{text-align:left;white-space:normal;font-weight:600}
+.flow-comparison-table button{font:inherit;font-weight:600;text-align:left;color:#285482;background:none;border:0;cursor:pointer;padding:3px}
+.flow-comparison-table button:hover{text-decoration:underline;color:#194eb5}
+.flow-comparison-table button:focus-visible{outline:2px solid #2563eb}
+.flow-comparison-table .child td:first-child{padding-left:24px}
+.flow-comparison-table .is-selected{background:#e9f1ff}
+.flow-comparison-table .good{color:#158151;font-weight:700}
+.flow-comparison-table .bad{color:#b6364b;font-weight:700}
+.flow-comparison-table .negative{color:#bb354b}
+.flow-comparison-table .positive{color:#168150}
+.flow-comparison-detail{border:1px solid #d8e4f4;border-radius:9px;padding:11px;background:#fff;margin-top:11px}
+.flow-comparison-detail-top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.flow-comparison-detail-top strong{font-size:15px;color:#24496f}
+.flow-comparison-detail-top button{background:#f3f7ff;border:1px solid #cbdcf2;padding:6px 9px;border-radius:7px;color:#2a5080;cursor:pointer}
+.flow-comparison-note{font-size:13px;color:#5d7390;line-height:1.45;margin:9px 0}
+.flow-comparison-detail .counterparty-toggle{font-size:13px}
+.flow-comparison-detail .moves-table{min-width:580px}
+@media(max-width:690px){.flow-bridge-row{grid-template-columns:minmax(115px,1fr) 105px 58px;gap:6px;font-size:12px}.flow-bridge-row strong{font-size:12px}.flow-comparison-explorer{padding:8px}.flow-comparison-head{display:grid;gap:3px}}
+
 </style>
 <style>
 .purchase-financing-detail{margin-top:4px;font-size:14px;line-height:1.5;font-weight:400;color:#425b7c;white-space:normal;min-width:200px}
@@ -2192,6 +2250,14 @@ body{font-size:16px;line-height:1.5}
  <div id="flowUnifiedCharts" class="flow-unified-charts"></div>
  <div id="flowUnifiedDelta" class="flow-unified-delta hidden"></div>
  <div class="flow-unified-footnote">O, N, NC e margine in % delle entrate; discrezionali, risparmio e avanzo in % del margine. Importi al netto delle quote finanziate. Clicca una barra per il dettaglio del periodo.</div>
+ <details id="flowComparisonAnalysis" class="flow-comparison-analysis hidden">
+   <summary><span class="flow-comparison-head"><strong>Perché è cambiato il bilancio?</strong><small id="flowComparisonHeadline">Variazioni tra i due periodi</small></span><span class="flow-comparison-caret" aria-hidden="true">▸</span></summary>
+   <div class="flow-comparison-inner">
+     <p class="flow-comparison-explainer">Contributi al margine e all’avanzo: un aumento delle uscite riduce il risultato. La riduzione del risparmio migliora solo contabilmente l’avanzo, non la capacità di accantonamento.</p>
+     <div id="flowComparisonBridge"></div>
+     <div id="flowComparisonExplorer"></div>
+   </div>
+ </details>
  <details id="flowDiagnosis" class="flow-diagnosis">
    <summary id="flowDiagnosisSummary" aria-label="Apri o chiudi diagnosi automatica del flusso economico">
      <span class="flow-diagnosis-label"><span class="flow-diagnosis-icon">◈</span> Diagnosi automatica <small>· fotografia e opportunità</small></span>
@@ -2412,6 +2478,7 @@ let balanceWaterfallObserver=null;
 let balanceWaterfallRenderWidth=0;
 let balanceHubMode="HISTORY";
 let flowPeriodMode="SINGLE",flowPeriodA="PREVIOUS_12",flowPeriodB="ROLLING_12",flowSinglePeriod="ROLLING_12",flowAmountMode="TOTAL",flowShowShares=true,flowDiagnosticFocus="B";
+let flowCompareNature="NECESSARY",flowCompareExpandedL1=new Set(),flowCompareSelectedL2=null,flowCompareSelectedL2Name="",flowCompareSelectedCp="",flowCompareDetails=null,flowCompareDetailLoading=false,flowCompareDetailSeq=0,flowCompareSort="DELTA";
 let historicalPeriodMode="ROLLING_12";
 let historicalYearSelection=null;
 let historicalScope="ORDINARY";
