@@ -6940,7 +6940,7 @@ $("scenarioView").addEventListener("click",async function(e){
     const code=diagnosticLink.dataset.flowDiagnoseFocus||"SINGLE";
     const key=code==="A"?flowPeriodA:code==="B"?flowPeriodB:flowSinglePeriod,months=flowMonthsFor(key);
     const nature=diagnosticLink.dataset.flowDiagnoseNature,categoryId=diagnosticLink.dataset.flowDiagnoseCat;
-    openBalanceNatureDrill(nature,null,"WATERFALL",{months:months,label:(code==="SINGLE"?"":code+" · ")+flowPeriodLabel(key,months)});
+    openBalanceNatureDrill(nature,null,"WATERFALL",{months:months,scope:"ORDINARY",label:(code==="SINGLE"?"":code+" · ")+flowPeriodLabel(key,months)});
     if(categoryId&&balanceDrillRows.some(function(r){return String(r.id)===String(categoryId)}))await loadBalanceDrillCategory(categoryId);
     return;
   }
@@ -6971,7 +6971,7 @@ $("scenarioView").addEventListener("click",async function(e){
     if(code){
       const key=code==="A"?flowPeriodA:code==="B"?flowPeriodB:flowSinglePeriod;
       const months=flowMonthsFor(key);
-      openBalanceNatureDrill(nature.dataset.balanceNature,null,"WATERFALL",{months:months,label:(code==="SINGLE"?"":code+" · ")+flowPeriodLabel(key,months)});
+      openBalanceNatureDrill(nature.dataset.balanceNature,null,"WATERFALL",{months:months,scope:"ORDINARY",label:(code==="SINGLE"?"":code+" · ")+flowPeriodLabel(key,months)});
     }else openBalanceNatureDrill(nature.dataset.balanceNature,null,"EROSION");
     return;
   }
@@ -7044,7 +7044,7 @@ $("balanceFlowGrid")?.addEventListener("keydown",function(e){
     if(code){
       const key=code==="A"?flowPeriodA:code==="B"?flowPeriodB:flowSinglePeriod;
       const months=flowMonthsFor(key);
-      openBalanceNatureDrill(step.dataset.balanceNature,null,"WATERFALL",{months:months,label:(code==="SINGLE"?"":code+" · ")+flowPeriodLabel(key,months)});
+      openBalanceNatureDrill(step.dataset.balanceNature,null,"WATERFALL",{months:months,scope:"ORDINARY",label:(code==="SINGLE"?"":code+" · ")+flowPeriodLabel(key,months)});
     }else openBalanceNatureDrill(step.dataset.balanceNature,null,"WATERFALL");
   }
 });
