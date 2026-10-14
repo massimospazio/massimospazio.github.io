@@ -5200,6 +5200,84 @@ function flowSyncControls(){
   document.querySelectorAll("[data-flow-shares]").forEach(function(b){const active=(b.dataset.flowShares==="YES")===flowShowShares;b.classList.toggle("active",active);b.setAttribute("aria-pressed",String(active))});
 }
 
+
+function flowRenderSvg(t,limits,code){
+  const ch=flowStepsFor(t),steps=ch.steps,width=782,height=353,left=69,right=15,top=30,bottom=277;
+  const min0=Math.min(0,limits.min),max0=Math.max(0,limits.max);
+  const raw=Math.max(1,(max0-min0)/4),mag=Math.pow(10,Math.floor(Math.log10(raw))),ticks=[1,2,5,10];
+  const tick=(ticks.find(function(v){return v*mag>=raw})||10)*mag;
+  const lo=Math.floor(min0/tick)*tick,hi=Math.max(lo+tick,Math.ceil(max0/tick)*tick);
+  const y=function(v){return bottom-(v-lo)/(hi-lo)*(bottom-top)};
+  const col=(width-left-right)/steps.length,barW=Math.min(53,col*.59);
+  const signedMoney=function(v){return (v<0?"−":"")+money(Math.abs(v))};
+  let svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+width+' '+height+'" role="group" aria-label="Flusso del periodo '+esc(code)+'">';
+  for(let v=lo;v<=hi+tick/10;v+=tick){
+    svg+='<line x1="'+left+'" x2="'+(width-right)+'" y1="'+y(v)+'" y2="'+y(v)+'" stroke="'+(v===0?"#becde0":"#e7edf5")+'"/>'+
+      '<text x="'+(left-9)+'" y="'+(y(v)+4)+'" text-anchor="end" font-size="12" fill="#536b8b">'+esc(v===0?"0 €":money(v))+'</text>';
+  }
+  steps.forEach(function(st,i){
+    const x=left+col*(i+.5),yTop=Math.min(y(st.hi),y(st.lo)),h=Math.max(1.5,Math.abs(y(st.lo)-y(st.hi)));
+    const reference=st.base==="margin"?ch.margin:ch.income;
+    const share=st.name==="Entrate"?"100%":flowPercent(Math.abs(st.value),reference);
+    const alt=st.base==="margin"&&ch.income>0?", "+flowPercent(Math.abs(st.value),ch.income)+" delle entrate":"";
+    const desc=st.name+" · "+signedMoney(st.value)+(flowShowShares?" · "+share+" "+(st.base==="margin"?"del margine":"delle entrate")+alt:"");
+    const actionable=!!st.nature;
+    svg+='<g class="flow-unified-step"'+(actionable?' data-balance-nature="'+esc(st.nature)+'" data-flow-period="'+esc(code)+'" role="button" tabindex="0" aria-label="'+esc(desc+' · Apri dettaglio')+'"':'')+'>'+
+      '<title>'+esc(desc)+'</title>'+
+      (actionable?'<rect class="flow-unified-hit" x="'+(left+i*col)+'" y="22" width="'+col+'" height="'+(bottom-17)+'" rx="7" fill="transparent"/>':'')+
+      '<rect x="'+(x-barW/2)+'" y="'+yTop+'" width="'+barW+'" height="'+h+'" rx="4" fill="'+st.color+'" opacity="'+(code==="A"?".74":".95")+'"/>'+
+      '<text x="'+x+'" y="'+Math.max(16,yTop-7)+'" text-anchor="middle" font-weight="700" font-size="12" fill="'+(st.value<0?"#ae3045":"#115d4f")+'">'+esc(signedMoney(st.value))+'</text>'+
+      '<text x="'+x+'" y="'+(bottom+22)+'" text-anchor="middle" font-size="11" font-weight="700" fill="#2e4666">'+esc(st.name)+'</text>'+
+      (flowShowShares?'<text x="'+x+'" y="'+(bottom+42)+'" text-anchor="middle" font-size="12" font-weight="700" fill="'+(st.base==="margin"?"#7046b9":"#395b84")+'">'+esc(share)+'</text>':'')+
+      '</g>';
+    if(i<steps.length-1&&st.name!=="Margine"&&st.name!=="Entrate"&&st.name!=="Avanzo"){
+      const connector=y(st.value<0?st.lo:st.hi);
+      svg+='<line x1="'+(x+barW/2+5)+'" x2="'+(x+col-barW/2-5)+'" y1="'+connector+'" y2="'+connector+'" stroke="#b2c2d8" stroke-dasharray="3 4"/>';
+    }
+  });
+  return svg+'</svg>';
+}
+function renderFlowUnified(){
+  if(balanceSubview!=="flow"||!Array.isArray(scenarioActualRows))return;
+  const host=$("flowUnifiedCharts");if(!host)return;
+  flowSyncControls();
+  const compare=flowPeriodMode==="COMPARE",keys=compare?[flowPeriodA,flowPeriodB]:[flowSinglePeriod];
+  const groups=keys.map(function(key){
+    const months=flowMonthsFor(key);
+    return {key:key,months:months,covered:flowAvailableMonths(months),label:flowPeriodLabel(key,months),model:flowPeriodModel(months)};
+  });
+  const chartSets=groups.map(function(g){return flowStepsFor(g.model)});
+  const endpoints=chartSets.flatMap(function(ch){return ch.steps.flatMap(function(st){return [st.lo,st.hi]})});
+  const limits={min:Math.min(0,...endpoints),max:Math.max(1,...endpoints)};
+  host.classList.toggle("compare",compare);
+  host.innerHTML=groups.map(function(g,i){
+    const type=compare?(i?"B":"A"):"SINGLE",divisor=flowAmountMode==="MONTHLY"?Math.max(1,g.months.length):1;
+    return '<article class="flow-unified-panel"><div class="flow-unified-panel-head"><strong>'+(compare?'Periodo '+type+' · ':'')+esc(g.label)+'</strong>'+
+      '<small>Entrate '+money(g.model.income/divisor)+(flowAmountMode==="MONTHLY"?'/mese':'')+'</small></div>'+
+      '<div class="flow-graph-scroll">'+flowRenderSvg(g.model,limits,type)+'</div></article>';
+  }).join("");
+  const warnings=groups.flatMap(function(g){return g.covered.length===g.months.length?[]:[g.label+": "+g.covered.length+"/"+g.months.length+" mesi disponibili"]});
+  if(compare){
+    const a=groups[0],b=groups[1],aligned=a.months.length===b.months.length&&a.months.every(function(m,i){return m.slice(5,7)===b.months[i].slice(5,7)});
+    if(a.months.length!==b.months.length)warnings.push("durata diversa: usa Media mensile per un confronto normalizzato");
+    else if(!aligned)warnings.push("stagionalità differente tra A e B");
+    if(a.key===b.key)warnings.push("A e B coincidono");
+    const unit=function(g){return flowAmountMode==="MONTHLY"?Math.max(1,g.months.length):1};
+    const diffSurplus=b.model.final/unit(b)-a.model.final/unit(a);
+    const diffMargin=b.model.structural/unit(b)-a.model.structural/unit(a);
+    const signed=function(v){return (v>0?"+":v<0?"−":"")+money(Math.abs(v))+(flowAmountMode==="MONTHLY"?"/mese":"")};
+    $("flowUnifiedDelta").classList.remove("hidden");
+    $("flowUnifiedDelta").innerHTML='<strong class="'+(diffSurplus>=0?"good":"bad")+'">Δ Avanzo '+signed(diffSurplus)+'</strong>'+
+      '<strong class="'+(diffMargin>=0?"good":"bad")+'">Δ Margine '+signed(diffMargin)+'</strong>'+
+      '<span>Discrezionali / margine: '+flowPercent(a.model.discretionary,a.model.structural)+' → '+flowPercent(b.model.discretionary,b.model.structural)+'</span>';
+  }else{$("flowUnifiedDelta").classList.add("hidden");$("flowUnifiedDelta").innerHTML=""}
+  $("flowUnifiedStatus").innerHTML=(flowAmountMode==="MONTHLY"?"Media per mese completo":"Totale del periodo")+' · '+
+    (flowShowShares?"Quote percentuali attive":"Solo importi")+(compare?" · Stessa scala verticale per A e B":"")+
+    (warnings.length?' <span class="warn"> · Attenzione: '+esc(warnings.join("; "))+'</span>':'');
+  $("balanceWaterfallSubtitle").textContent=compare?"Cascate A/B affiancate · clicca una barra per il dettaglio del relativo periodo.":"Flusso del periodo selezionato.";
+  $("balanceWaterfallMode").textContent=flowAmountMode==="MONTHLY"?"Media mensile":"Totale periodo";
+}
+
 function comparisonMonthSets(){
   const current=historicalCurrentMonth();
   if(compareWindow==="YEAR"){
