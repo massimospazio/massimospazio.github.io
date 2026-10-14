@@ -5362,7 +5362,7 @@ function flowDiagnosticReference(groups,focus){
     return full&&other.months.length>=4?{...other,from:"OTHER"}:null;
   }
   const selected=target.months,count=selected.length;
-  if(count>24||count<4)return null;
+  if(count>12||count<4)return null;
   const prior=monthSeries(addMonthsISO(selected[0],-12),count);
   const sameCalendar=prior.length===count&&prior.every(function(m,i){return m.slice(5,7)===selected[i].slice(5,7)});
   const comparisonMonths=sameCalendar?prior:monthSeries(addMonthsISO(selected[0],-count),count);
@@ -5419,7 +5419,7 @@ function flowDiagnosticBuild(groups,focus){
         const prev=refMap.get(x.nature+"|"+x.id);
         return {name:x.l2,change:x.amount/n-(prev?prev.amount/compare.months.length:0)};
       }).sort(function(a,b){return b.change-a.change})[0];
-      if(growth&&growth.change>threshold/2)risks.push("N · "+growth.name+": incremento di circa "+money(growth.change)+"/mese nel confronto. Verificare i movimenti.");
+      if(growth&&growth.change>threshold/2)risks.unshift("N · "+growth.name+": incremento di circa "+money(growth.change)+"/mese nel confronto. Verificare i movimenti.");
     }
     const minPresence=Math.max(3,Math.ceil(n*.4));
     const ranked=currentCats.filter(function(x){return x.nature==="DISCRETIONARY"&&x.monthCount>=minPresence&&x.amount/n>=25})
@@ -5438,7 +5438,6 @@ function flowDiagnosticBuild(groups,focus){
   if(complete&&t.unclassified>0)opportunities.push({nature:"UNCLASSIFIED",name:"Contanti e NC",quality:true,
     context:money(t.unclassified)+" non attribuiti a una natura di spesa dettagliata.",action:"Dettaglia i contanti e classifica le voci mancanti; migliora la precisione, non l’avanzo per definizione."});
   if(!validBalance)risks.unshift("Riconciliazione incompleta: differenza di "+money(Math.abs(integrity))+". Verificare i movimenti prima di interpretare i KPI.");
-  const categoryGrowth=delta&&delta.necessary>threshold;
   const headline=!complete?"Copertura insufficiente":!validBalance?"Verifica riconciliazione":
     t.available<0?"Avanzo negativo":
     delta&&delta.structural< -threshold?"Margine sotto pressione":
@@ -5448,7 +5447,8 @@ function flowDiagnosticBuild(groups,focus){
   const verdict=(!complete||!validBalance)?"Analisi limitata: dati o riconciliazione non completi.":
     delta?"Rispetto a "+compare.label+", il margine medio "+(delta.structural< -threshold?"si è ridotto":delta.structural>threshold?"è aumentato":"è rimasto sostanzialmente stabile")+
       " e l’avanzo medio "+(delta.available< -threshold?"è diminuito":delta.available>threshold?"è migliorato":"è cambiato poco")+
-      ". Le cause vanno distinte tra variazioni strutturali e acquisti occasionali.":
+      ". "+(delta.aligned?"Periodi stagionalmente allineati. ":"Confronto non perfettamente omogeneo: verificare stagionalità e durata. ")+
+      "Le cause vanno distinte tra variazioni strutturali e acquisti occasionali.":
     "Il periodo presenta "+(t.available>=0?"un avanzo non negativo":"un avanzo negativo")+
       ". Manca un riferimento storico omogeneo sufficientemente completo per giudicare l’andamento.";
   return {g:g,reference:compare,delta:delta,complete:complete,validBalance:validBalance,integrity:integrity,headline:headline,verdict:verdict,
@@ -6918,6 +6918,17 @@ $("historicalYearSelect")?.addEventListener("change",function(){
   balanceHubMode="HISTORY";historicalPeriodMode="YEAR";closeBalanceNatureDrill();renderBalanceHub();
 });
 $("scenarioView").addEventListener("click",async function(e){
+  const diagnosisFocus=e.target.closest("[data-flow-diagnostic-focus]");
+  if(diagnosisFocus){flowDiagnosticFocus=diagnosisFocus.dataset.flowDiagnosticFocus||"B";renderFlowUnified();return}
+  const diagnosticLink=e.target.closest("[data-flow-diagnose-nature]");
+  if(diagnosticLink){
+    const code=diagnosticLink.dataset.flowDiagnoseFocus||"SINGLE";
+    const key=code==="A"?flowPeriodA:code==="B"?flowPeriodB:flowSinglePeriod,months=flowMonthsFor(key);
+    const nature=diagnosticLink.dataset.flowDiagnoseNature,categoryId=diagnosticLink.dataset.flowDiagnoseCat;
+    openBalanceNatureDrill(nature,null,"WATERFALL",{months:months,label:(code==="SINGLE"?"":code+" · ")+flowPeriodLabel(key,months)});
+    if(categoryId&&balanceDrillRows.some(function(r){return String(r.id)===String(categoryId)}))await loadBalanceDrillCategory(categoryId);
+    return;
+  }
   const mode=e.target.closest("[data-flow-mode]");
   if(mode){flowPeriodMode=mode.dataset.flowMode==="COMPARE"?"COMPARE":"SINGLE";closeBalanceNatureDrill();renderFlowUnified();return}
   const amount=e.target.closest("[data-flow-amount]");
