@@ -2107,7 +2107,19 @@ body{font-size:16px;line-height:1.5}
               <div><h3>Flusso economico della famiglia <button class="context-help-trigger" type="button" data-context-help="budget-vs-cashflow" aria-label="Aiuto: differenza fra Flusso e Cash flow">?</button></h3><p id="balanceWaterfallSubtitle">Come le entrate si trasformano nell’avanzo ordinario.</p></div>
               <span id="balanceWaterfallMode" class="balance-mode-badge">—</span>
             </div>
-            <div class="balance-waterfall-viewport" tabindex="0" aria-label="Grafico del flusso economico; scorri orizzontalmente sugli schermi piccoli"><div class="balance-waterfall-chart"><div id="balanceWaterfallChart" class="balance-waterfall-vector"></div></div></div>
+            <div id="flowUnifiedControls" class="flow-compare-controls">
+ <div class="flow-compare-group"><span>Modalità</span><div class="flow-compare-buttons"><button type="button" data-flow-mode="SINGLE">Un periodo</button><button type="button" data-flow-mode="COMPARE">Confronto A/B</button></div></div>
+ <label id="flowSinglePeriodWrap" class="flow-compare-group"><span>Periodo</span><select id="flowSinglePeriod"></select></label>
+ <label id="flowPeriodAWrap" class="flow-compare-group hidden"><span>Periodo A</span><select id="flowPeriodA"></select></label>
+ <label id="flowPeriodBWrap" class="flow-compare-group hidden"><span>Periodo B</span><select id="flowPeriodB"></select></label>
+ <div class="flow-compare-group"><span>Valori</span><div class="flow-compare-buttons"><button type="button" data-flow-amount="TOTAL">Totale</button><button type="button" data-flow-amount="MONTHLY">Media mensile</button></div></div>
+ <div class="flow-compare-group"><span>Quote</span><div class="flow-compare-buttons"><button type="button" data-flow-shares="YES">€ + %</button><button type="button" data-flow-shares="NO">Solo €</button></div></div>
+ </div>
+ <div id="flowUnifiedStatus" class="flow-compare-status" aria-live="polite"></div>
+ <div id="flowUnifiedCharts" class="flow-unified-charts"></div>
+ <div id="flowUnifiedDelta" class="flow-unified-delta hidden"></div>
+ <div class="flow-unified-footnote">O, N, NC e margine in % delle entrate; discrezionali, risparmio e avanzo in % del margine. Importi al netto delle quote finanziate. Clicca una barra per il dettaglio del periodo.</div>
+ <div class="balance-waterfall-viewport" tabindex="0" aria-label="Grafico del flusso economico; scorri orizzontalmente sugli schermi piccoli"><div class="balance-waterfall-chart"><div id="balanceWaterfallChart" class="balance-waterfall-vector"></div></div></div>
             <div id="balanceErosionWidget" class="balance-erode-wrap"></div>
             <div id="balanceWaterfallNote" class="balance-flow-note"></div>
           </section>
@@ -2314,6 +2326,7 @@ let historicalBalanceChart=null;
 let balanceWaterfallObserver=null;
 let balanceWaterfallRenderWidth=0;
 let balanceHubMode="HISTORY";
+let flowPeriodMode="SINGLE",flowPeriodA="PREVIOUS_12",flowPeriodB="ROLLING_12",flowSinglePeriod="ROLLING_12",flowAmountMode="TOTAL",flowShowShares=true;
 let historicalPeriodMode="ROLLING_12";
 let historicalYearSelection=null;
 let historicalScope="ORDINARY";
@@ -4693,6 +4706,7 @@ function renderHistoricalKpis(){
 }
 function renderHistoricalStructural(){
   const t=balanceFlowModel(historicalPeriodMode);if(!t)return;
+  renderFlowUnified();
   const margin=t.income-t.mandatory-t.necessary-t.unclassified;
   function item(label,value,sub,cls,info){
     return '<div class="historical-structural-item '+(cls||"")+'"><span>'+esc(label)+(info?" "+historicalInfo(info,label==="Margine strutturale"||label.indexOf("Avanzo")===0?"budget-surplus":null):"")+'</span><strong class="'+(value>=0?"positive":"negative")+'">'+historicalSigned(value)+'</strong><small>'+esc(sub)+'</small></div>';
@@ -4718,7 +4732,7 @@ function balanceDrillNatureForProjectionCat(cat){
 }
 function balanceDrillMonthSets(){
   const sel=balanceDrillSelection||{},mode=sel.mode||historicalPeriodMode,current=historicalCurrentMonth();
-  const months=sel.month?[sel.month]:historicalMonthsFor(mode);
+  const months=sel.month?[sel.month]:Array.isArray(sel.months)?sel.months:historicalMonthsFor(mode);
   if(mode==="CURRENT_YEAR")return {all:months,actual:months.filter(function(m){return m<current}),forecast:months.filter(function(m){return m>=current})};
   if(mode==="FORECAST_12")return {all:months,actual:[],forecast:months.slice()};
   return {all:months,actual:months.slice(),forecast:[]};
@@ -4817,7 +4831,7 @@ function balanceDrillHierarchy(){
 function balanceDrillPeriodLabel(){
   if(!balanceDrillSelection)return "";
   if(balanceDrillSelection.month)return monthLabel(balanceDrillSelection.month);
-  return historicalPeriodLabel(balanceDrillSelection.mode||historicalPeriodMode);
+  return balanceDrillSelection.label||historicalPeriodLabel(balanceDrillSelection.mode||historicalPeriodMode);
 }
 function balanceDrillShareHtml(value){
   const pct=Number.isFinite(value)?value:0;
@@ -4946,11 +4960,11 @@ async function loadBalanceDrillCategory(categoryId){
     balanceDrillDetail={error:e.message||"Errore caricamento dettaglio"};renderBalanceDrillBreakdown();
   }
 }
-function openBalanceNatureDrill(nature,month,origin){
+function openBalanceNatureDrill(nature,month,origin,periodSelection){
   if(!nature)return;
   resetBalanceDrillDetail();balanceDrillSelectedL1=null;balanceDrillMobileStep="L1";
   balanceDrillSort="AMOUNT";balanceDrillL2Sort="AMOUNT";balanceDrillCpSort="AMOUNT";balanceDrillMoveSort="DATE";
-  balanceDrillSelection={nature:nature,month:month||null,origin:origin||"CHART",mode:historicalPeriodMode,scope:historicalScope};
+  balanceDrillSelection={nature:nature,month:month||null,origin:origin||"CHART",mode:historicalPeriodMode,scope:historicalScope,...(periodSelection||{})};
   renderBalanceDrill();
   $("balanceNatureDetail")?.scrollIntoView({behavior:"smooth",block:"nearest"});
 }
@@ -5088,7 +5102,8 @@ function comparisonMonthSets(){
   const rangeLabel=function(months){return monthLabel(months[0])+" → "+monthLabel(months[months.length-1])};
   return {a:a,b:b,labelA:rangeLabel(a),labelB:rangeLabel(b)};
 }
-function comparisonTotalsForMonths(months){
+function comparisonTotalsForMonths(months,scopeOverride){
+  const requestedScope=scopeOverride||historicalScope;
   const set=new Set(months),rows=(scenarioActualRows||[]).filter(function(x){return set.has(String(x.month_start))});
   const sum=function(key){return rows.reduce(function(s,x){return s+num(x[key])},0)};
   const financing=historicalFinancingTotals(months),coverage=purchaseFinancingTotals(months),ordinaryIncome=sum("incoming_ordinary")-financing.ordinary,extraIncome=sum("incoming_extraordinary")-financing.extraordinary,extraOut=sum("outgoing_extraordinary")-coverage.extraordinary;
@@ -5099,12 +5114,12 @@ function comparisonTotalsForMonths(months){
     const v=x.net_operating_ordinary;return s+(v!==undefined&&v!==null?num(v):num(x.incoming_ordinary)-Math.max(0,num(x.outgoing_ordinary)-num(x.investments_ordinary)));
   },0)-financing.ordinary+coverage.ordinary;
   const recurring=sum("investments_recurring_ordinary"),currentSurplus=sum("investments_current_surplus_ordinary"),savings=recurring+currentSurplus;
-  const scopeTotal=historicalScope==="TOTAL",income=ordinaryIncome+(scopeTotal?extraIncome:0),operatingOut=ordinaryOut+(scopeTotal?extraOut:0),operatingNet=ordinaryNet+(scopeTotal?(extraIncome-extraOut):0),available=operatingNet-savings;
+  const scopeTotal=requestedScope==="TOTAL",income=ordinaryIncome+(scopeTotal?extraIncome:0),operatingOut=ordinaryOut+(scopeTotal?extraOut:0),operatingNet=ordinaryNet+(scopeTotal?(extraIncome-extraOut):0),available=operatingNet-savings;
   const nature={MANDATORY:0,NECESSARY:0,DISCRETIONARY:0,UNCLASSIFIED:0,UNKNOWN:0};
   (scenarioActualCategories||[]).forEach(function(x){
     if(!set.has(String(x.month_start))||String(x.direction)!=="EXPENSE")return;
     const k=historicalNatureForCategory(x)||"UNKNOWN";if(k==="INVESTMENT")return;
-    nature[k]=(nature[k]||0)+historicalCategoryAmount(x,historicalScope);
+    nature[k]=(nature[k]||0)+historicalCategoryAmount(x,requestedScope);
   });
   const structural=income-nature.MANDATORY-nature.NECESSARY-nature.UNCLASSIFIED;
   const otherOperating=operatingOut-nature.MANDATORY-nature.NECESSARY-nature.UNCLASSIFIED-nature.DISCRETIONARY;
@@ -5905,7 +5920,7 @@ async function loadScenarioData(force){
     const jobs=[];
     if(needExpense)jobs.push({kind:"EXPENSE",promise:rpc("dashboard_reporting_analysis_projection_v1",{p_direction:"EXPENSE"})});
     if(needIncome)jobs.push({kind:"INCOME",promise:rpc("dashboard_reporting_analysis_projection_v1",{p_direction:"INCOME"})});
-    if(needActual)jobs.push({kind:"ACTUAL",promise:rpc("dashboard_reporting_scenario_actual_v3",{p_months:30})});
+    if(needActual)jobs.push({kind:"ACTUAL",promise:rpc("dashboard_reporting_scenario_actual_v3",{p_months:36})});
     if(needRationales)jobs.push({kind:"RATIONALES",promise:rpc("dashboard_reporting_scenario_rationales_v1",{p_months:12})});
     if(needMeta)jobs.push({kind:"META",promise:rpc("dashboard_reporting_planning_meta_v1")});
     const values=await Promise.all(jobs.map(function(x){return x.promise}));
@@ -5991,7 +6006,7 @@ function wherePeriodValue(){
 function syncWherePeriodUI(){
   const bar=$("wherePeriodBar"),periodGroup=$("wherePeriodGroup"),scopeGroup=$("whereScopeGroup");if(!bar)return;
   const projection=balanceSubview==="analysis"&&analysisTimeMode==="PROJECTION";
-  const hidePeriod=balanceSubview==="compare"||projection;
+  const hidePeriod=balanceSubview==="compare"||balanceSubview==="flow"||projection;
   const hideScope=balanceSubview==="analysis";
   periodGroup?.classList.toggle("hidden",hidePeriod);
   scopeGroup?.classList.toggle("hidden",hideScope);
@@ -6025,13 +6040,14 @@ function applyBalanceSubview(){
   $("balanceHubTitle").textContent=flow?"Flusso economico":(cash?"Cash flow":"Confronto periodi");
   $("balanceHubDescription").textContent=flow?"Come le entrate si trasformano nell’avanzo ordinario della famiglia.":(cash?"Evoluzione mensile di entrate, uscite, saldo e cumulato.":"Confronta periodi realmente omogenei e individua i contributori alle differenze.");
   $("balanceFlowGrid")?.classList.toggle("balance-section-hidden",!flow);
+  if(flow&&Array.isArray(scenarioActualRows))renderFlowUnified();
   $("balanceOutsideFlow")?.classList.toggle("balance-section-hidden",!flow);
   if($("balanceNatureDetail")&&!flow)$("balanceNatureDetail").classList.add("hidden");
   $("historicalMonthlySection")?.classList.toggle("balance-section-hidden",!cash);
   $("historicalBottomGrid")?.classList.toggle("balance-section-hidden",!compare);
   $("historicalComparisonSection")?.classList.toggle("balance-section-hidden",!compare);
   $("historicalBalanceStatus")?.classList.toggle("hidden",!cash);
-  $("historicalBalanceKpis")?.classList.toggle("hidden",compare);
+  $("historicalBalanceKpis")?.classList.toggle("hidden",compare||flow);
   if(Array.isArray(scenarioActualRows))renderHistoricalKpis();
   document.querySelectorAll("[data-where-view]").forEach(function(b){const active=b.dataset.whereView===balanceSubview;b.classList.toggle("active",active);b.setAttribute("aria-pressed",String(active))});
   syncWherePeriodUI();
