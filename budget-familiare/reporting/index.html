@@ -9,7 +9,7 @@
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
 <script src="../shared/supabase-client.js?v=73.24.0-20261012-1415"></script>
-<script src="../shared/app-config.js?v=73.30.1.12-20261014"></script>
+<script src="../shared/app-config.js?v=73.30.1.13-20261014"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 :root{--bg:#f4f6fa;--card:#fff;--text:#17263e;--muted:#58677d;--line:#dce4ee;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 4px 18px rgba(15,23,42,.045);--sc-blue:#2563eb;--sc-blue-soft:#eff6ff;--sc-green:#0ea87a;--sc-red:#ef5b73;--sc-purple:#7658e6;--sc-ink:#17263e}
@@ -1548,6 +1548,9 @@ body{font-size:16px;line-height:1.5}
 .balance-outside-flow{display:block}.balance-outside-item{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center}.balance-outside-item+.balance-outside-item{margin-top:10px;padding-top:10px;border-top:1px solid #eadcba}
 @media(max-width:760px){.historical-compare-section-head{align-items:stretch;flex-direction:column}.compare-nature-filter{width:100%;min-width:0}.compare-anomaly-summary .btn{margin-left:0}}
 </style>
+<style>
+.purchase-financing-detail{margin-top:4px;font-size:14px;line-height:1.5;font-weight:400;color:#425b7c;white-space:normal;min-width:200px}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -1928,7 +1931,7 @@ body{font-size:16px;line-height:1.5}
         <div>
           <div class="scenario-eyebrow">MiaFinanza · Bilancio familiare</div>
           <h2 id="balanceHubTitle">Flusso economico</h2>
-          <p id="balanceHubDescription">Come entrate e uscite si trasformano nel margine disponibile della famiglia.</p>
+          <p id="balanceHubDescription">Come entrate e uscite si trasformano nell’avanzo ordinario della famiglia.</p>
         </div>
         <div></div>
       </div>
@@ -1940,7 +1943,7 @@ body{font-size:16px;line-height:1.5}
         <div id="balanceFlowGrid" class="balance-flow-grid">
           <section class="scenario-card balance-waterfall-card">
             <div class="scenario-card-head">
-              <div><h3>Flusso economico della famiglia</h3><p id="balanceWaterfallSubtitle">Come le entrate si trasformano nel disponibile finale.</p></div>
+              <div><h3>Flusso economico della famiglia</h3><p id="balanceWaterfallSubtitle">Come le entrate si trasformano nell’avanzo ordinario.</p></div>
               <span id="balanceWaterfallMode" class="balance-mode-badge">—</span>
             </div>
             <div class="balance-waterfall-viewport" tabindex="0" aria-label="Grafico del flusso economico; scorri orizzontalmente sugli schermi piccoli"><div class="balance-waterfall-chart"><div id="balanceWaterfallChart" class="balance-waterfall-vector"></div></div></div>
@@ -2192,6 +2195,7 @@ const planningBoardExpandedL2=new Set();
 let scenarioLoading=false;
 let scenarioActualRows=null;
 let scenarioActualCategories=[];
+let scenarioPurchaseFinancing=[];
 let scenarioExtraordinaryMovements=[];
 let scenarioForecastRationales=null;
 let scenarioSelectedMonth=null;
@@ -2340,7 +2344,7 @@ async function loadReport(){
   analysisWorkspaceKey="";
   analysisProjectionData.clear();
   scenarioActualRows=null;
-  scenarioActualCategories=[];
+  scenarioActualCategories=[];scenarioPurchaseFinancing=[];
   scenarioExtraordinaryMovements=[];
   scenarioSelectedMonth=null;
   scenarioSelectedFlow=null;
@@ -4091,7 +4095,7 @@ async function setAnalysisMovementForecastExclusion(transactionId,exclude,btn){
     report.cashflow_monthly=oldCash||report.cashflow_monthly||[];
     report.liquidity_history=oldLiquidity||{available:false,rows:[]};
     invalidateAnalysisProjection("EXPENSE");
-    scenarioActualRows=null;scenarioActualCategories=[];scenarioExtraordinaryMovements=[];
+    scenarioActualRows=null;scenarioActualCategories=[];scenarioPurchaseFinancing=[];scenarioExtraordinaryMovements=[];
     analysisWorkspace=null;analysisWorkspaceKey="";
     await loadAnalysisWorkspace(true,keep);
     if(month){analysisSelectedMonth=month;renderAnalysisMovements()}
@@ -4261,7 +4265,7 @@ function historicalRowsFor(mode){
 function historicalTotalsFor(mode){
   const rows=historicalRowsFor(mode);
   const sum=function(key){return rows.reduce(function(s,x){return s+num(x[key])},0)};
-  const financing=historicalFinancingTotals(historicalMonthsFor(mode));
+  const financing=historicalFinancingTotals(historicalMonthsFor(mode)),coverage=purchaseFinancingTotals(historicalMonthsFor(mode));
   const ordinaryIncome=sum("incoming_ordinary")-financing.ordinary;
   const cashOrdinaryOut=sum("outgoing_ordinary"),cashOrdinaryNet=sum("net_ordinary");
   const recurringInvestments=sum("investments_recurring_ordinary");
@@ -4271,13 +4275,13 @@ function historicalTotalsFor(mode){
   const ordinaryOut=rows.reduce(function(s,x){
     const v=x.outgoing_operating_ordinary;
     return s+(v!==undefined&&v!==null?num(v):Math.max(0,num(x.outgoing_ordinary)-num(x.investments_ordinary)));
-  },0);
+  },0)-coverage.ordinary;
   const ordinaryNet=rows.reduce(function(s,x){
     const v=x.net_operating_ordinary;
     return s+(v!==undefined&&v!==null?num(v):num(x.incoming_ordinary)-Math.max(0,num(x.outgoing_ordinary)-num(x.investments_ordinary)));
-  },0)-financing.ordinary;
+  },0)-financing.ordinary+coverage.ordinary;
   const availableAfterSavings=ordinaryNet-recurringInvestments-currentSurplusInvestments;
-  const totalIncome=sum("incoming")-financing.total,totalOut=sum("outgoing"),totalNet=sum("net")-financing.total,extraIncome=sum("incoming_extraordinary")-financing.extraordinary,extraOut=sum("outgoing_extraordinary"),extraNet=extraIncome-extraOut;
+  const totalIncome=sum("incoming")-financing.total,totalOut=sum("outgoing")-coverage.total,totalNet=sum("net")-financing.total+coverage.total,extraIncome=sum("incoming_extraordinary")-financing.extraordinary,extraOut=sum("outgoing_extraordinary")-coverage.extraordinary,extraNet=extraIncome-extraOut;
   return {rows:rows,ordinaryIncome:ordinaryIncome,ordinaryOut:ordinaryOut,ordinaryNet:ordinaryNet,cashOrdinaryOut:cashOrdinaryOut,cashOrdinaryNet:cashOrdinaryNet,
     recurringInvestments:recurringInvestments,currentSurplusInvestments:currentSurplusInvestments,priorWealthInvestments:priorWealthInvestments,plannedInvestments:plannedInvestments,availableAfterSavings:availableAfterSavings,
     totalIncome:totalIncome,totalOut:totalOut,totalNet:totalNet,extraIncome:extraIncome,extraOut:extraOut,extraNet:extraNet,
@@ -4296,7 +4300,7 @@ function balanceProjectionCategoryTotals(data,months,mode){
 }
 function balanceProjectedNature(expenseData,actualMonths,forecastMonths){
   const out={MANDATORY:0,NECESSARY:0,DISCRETIONARY:0,UNCLASSIFIED:0,UNKNOWN:0};
-  const actual=balanceProjectionCategoryTotals(expenseData,actualMonths,"ACTUAL");
+  const actual=balanceBudgetActualCategoryTotals(expenseData,actualMonths);
   const forecast=balanceProjectionCategoryTotals(expenseData,forecastMonths,"FORECAST");
   const meta=historicalMetaMap();
   (expenseData&&expenseData.categories||[]).forEach(function(cat){
@@ -4311,7 +4315,7 @@ function balanceProjectedNature(expenseData,actualMonths,forecastMonths){
   return out;
 }
 function balanceProjectionDirectionTotal(data,actualMonths,forecastMonths,excludeFinancing){
-  const a=balanceProjectionCategoryTotals(data,actualMonths,"ACTUAL");
+  const a=excludeFinancing?balanceProjectionCategoryTotals(data,actualMonths,"ACTUAL"):balanceBudgetActualCategoryTotals(data,actualMonths);
   const f=balanceProjectionCategoryTotals(data,forecastMonths,"FORECAST");
   const financingIds=new Set(excludeFinancing?(data&&data.categories||[]).filter(historicalIsFinancingCategory).map(function(x){return String(x.category_id)}):[]);
   let total=0;a.forEach(function(v,k){if(!financingIds.has(k))total+=num(v)});f.forEach(function(v,k){if(!financingIds.has(k))total+=num(v)});return total;
@@ -4350,7 +4354,7 @@ function balanceFlowModel(mode){
       extraIncome+=num(x.incoming_extraordinary);extraOut+=num(x.outgoing_extraordinary);
     });
   }
-  extraIncome-=historicalFinancingTotals(actualMonths).extraordinary;
+  extraIncome-=historicalFinancingTotals(actualMonths).extraordinary;extraOut-=purchaseFinancingTotals(actualMonths).extraordinary;
   forecastMonths.forEach(function(month){recurring+=num(scenarioForecastInvestment(month))});
   const operatingNet=income-operatingOut,available=operatingNet-recurring-currentSurplus;
   return {mode:m,label:m==="CURRENT_YEAR"?"Anno "+year+" · consuntivo + previsione":"Prossimi 12 mesi",historical:false,
@@ -4379,8 +4383,40 @@ function historicalCategoryRows(mode){
   const months=new Set(historicalMonthsFor(mode));
   return (scenarioActualCategories||[]).filter(function(x){return months.has(String(x.month_start))});
 }
-function historicalCategoryAmount(x,scope){
-  return scope==="TOTAL"?num(x.total_amount):num(x.ordinary_amount);
+function purchaseFinancingTotals(months){
+  const set=new Set(months),out={ordinary:0,extraordinary:0,total:0};
+  scenarioPurchaseFinancing.forEach(function(x){if(!set.has(String(x.month_start)))return;const amount=num(x.covered_amount);out.total+=amount;out[x.economic_exceptional?"extraordinary":"ordinary"]+=amount});
+  return out;
+}
+function purchaseFinancingCategoryAmount(x,scope){
+  if(String(x.direction)!=="EXPENSE")return 0;
+  return scenarioPurchaseFinancing.reduce(function(sum,f){
+    const match=String(f.month_start)===String(x.month_start)&&String(f.l1_id||"")===String(x.l1_id||"")&&String(f.l2_id||"")===String(x.l2_id||"")&&String(f.effective_temporality||"")===String(x.effective_temporality||"");
+    return sum+(match&&(scope==="TOTAL"||!f.economic_exceptional)?num(f.covered_amount):0);
+  },0);
+}
+function historicalCategoryAmount(x,scope,cash){
+  const gross=scope==="TOTAL"?num(x.total_amount):num(x.ordinary_amount);
+  return cash?gross:Math.max(0,gross-purchaseFinancingCategoryAmount(x,scope));
+}
+function purchaseFinancingMovement(x,cash){
+  const f=scenarioPurchaseFinancing.find(function(v){return String(v.transaction_id)===String(x.id||x.transaction_id)});
+  if(!f)return x;
+  const gross=num(x.amount),covered=Math.min(gross,num(f.covered_amount));
+  return {...x,gross_amount:gross,financed_amount:covered,own_funds_amount:gross-covered,amount:cash?gross:gross-covered};
+}
+function purchaseFinancingMovementHtml(x){
+  return num(x.financed_amount)>.005?'<div class="purchase-financing-detail">Totale '+money(x.gross_amount)+' · finanziati '+money(x.financed_amount)+' · fondi propri '+money(x.own_funds_amount)+'</div>':"";
+}
+function balanceSurplusLabel(){return historicalScope==="TOTAL"?"Avanzo complessivo":"Avanzo ordinario"}
+function balanceBudgetActualCategoryTotals(data,months){
+  const totals=balanceProjectionCategoryTotals(data,months,"ACTUAL"),set=new Set(months);
+  scenarioPurchaseFinancing.forEach(function(f){
+    if(!set.has(String(f.month_start))||f.economic_exceptional)return;
+    const id=String(f.l2_id||f.l1_id),delta=f.forecast_excluded?num(f.own_funds_amount):-num(f.covered_amount);
+    totals.set(id,Math.max(0,num(totals.get(id))+delta));
+  });
+  return totals;
 }
 function historicalIsFinancingCategory(x){
   if(!x)return false;
@@ -4475,13 +4511,13 @@ function renderHistoricalKpis(){
   if(balanceSubview==="flow"){
     $("historicalBalanceKpis").innerHTML=
       historicalKpiCard("Margine strutturale",margin,balanceKpiShareHtml(margin,income,"balance"),"balance","Quanto resta dopo Obbligatorie, Necessarie e NC, prima delle Discrezionali e del risparmio.")+
-      historicalKpiCard("Disponibile finale",final,balanceKpiShareHtml(final,income,"margin"),"margin","Quanto resta dopo spese operative, risparmio e, nel perimetro Totale, eventi eccezionali.");
+      historicalKpiCard(balanceSurplusLabel(),final,balanceKpiShareHtml(final,income,"margin"),"margin","Avanzo dopo spese, rate e risparmio; acquisti al netto delle quote finanziate. Il Totale include gli eventi E. Non è il saldo dei conti.");
   }else{
     $("historicalBalanceKpis").innerHTML=
       '<div class="historical-kpi income"><div class="label">Entrate economiche '+historicalInfo("Entrate economiche del periodo selezionato. Giroconti interni e finanziamenti ricevuti esclusi.")+'</div><div class="value positive">'+money(t.income)+'</div><div class="sub">Ø '+money(t.income/months)+'/mese</div></div>'+
-      '<div class="historical-kpi expense"><div class="label">Uscite operative '+historicalInfo("Spese di gestione. Gli investimenti patrimoniali non sono consumo.")+'</div><div class="value negative">'+money(t.operatingOut)+'</div><div class="sub">Ø '+money(t.operatingOut/months)+'/mese</div></div>'+
+      '<div class="historical-kpi expense"><div class="label">Uscite operative '+historicalInfo("Spese a carico del budget, al netto delle quote coperte da prestiti. Gli investimenti patrimoniali restano separati.")+'</div><div class="value negative">'+money(t.operatingOut)+'</div><div class="sub">Ø '+money(t.operatingOut/months)+'/mese</div></div>'+
       historicalKpiCard("Saldo operativo",t.operatingNet,pct(t.operatingNet),"balance","Entrate meno uscite operative prima delle allocazioni di risparmio.")+
-      historicalKpiCard("Disponibile finale",final,pct(final),"margin","Risultato della gestione corrente nel periodo.");
+      historicalKpiCard(balanceSurplusLabel(),final,pct(final),"margin","Risultato della gestione corrente nel periodo.");
   }
   if($("historicalBalanceStatus"))$("historicalBalanceStatus").innerHTML='<div class="historical-period-chip">'+esc(t.label)+'</div>';
 }
@@ -4498,8 +4534,8 @@ function renderHistoricalStructural(){
     item("NC · Non classificate",t.unclassified,"Da dettagliare","unclassified")+
     item("Discrezionali",t.discretionary,"Spese comprimibili","discretionary")+
     (t.otherOperating>.5?item("Altre uscite operative",t.otherOperating,"Senza Natura O/N/D","other"):"")+
-    item("Risparmio / investimenti da surplus",-t.savings,"Riduce il disponibile","other")+
-    item("Disponibile finale",t.available,"Surplus libero","residual");
+    item("Risparmio / investimenti da surplus",-t.savings,"Riduce l’avanzo ordinario","other")+
+    item("Avanzo ordinario",t.available,"Dopo spese, rate e risparmio","residual");
 }
 function balanceDrillNatureLabel(v){
   return {INCOME:"Entrate",MANDATORY:"Obbligatorie",NECESSARY:"Necessarie",UNCLASSIFIED:"NC · Non classificate",DISCRETIONARY:"Discrezionali",UNKNOWN:"Altre uscite operative",INVESTMENT:"Risparmio / investimenti",ALL_EXPENSE:"Tutte le uscite operative"}[v]||String(v||"Dettaglio");
@@ -4558,9 +4594,11 @@ function balanceDrillRowsForSelection(){
     if(!id)return;
     if(!rows.has(id))rows.set(id,{id:id,name:x.l2_name||x.l1_name||"Senza categoria",l1:x.l1_name||"",l1Id:String(x.l1_id||id),level:x.l2_id?"L2":"L1",actual:0,forecast:0,temporal:balanceTemporalEmpty()});
     const row=rows.get(id),defaultTime=(temporalMeta.get(id)||{}).temporality;
-    row.actual+=historicalCategoryAmount(x,scope);
-    balanceTemporalAdd(row.temporal,balanceTemporalKey(dir==="INVESTMENT"?x.investment_temporality:x.effective_temporality||defaultTime),x.ordinary_amount);
-    if(scope==="TOTAL")balanceTemporalAdd(row.temporal,"E",x.extraordinary_amount);
+    const cash=balanceDrillSelection.origin==="MONTH_CASHFLOW";
+    row.actual+=historicalCategoryAmount(x,scope,cash);
+    row.financed=(row.financed||0)+(cash?0:purchaseFinancingCategoryAmount(x,scope));
+    balanceTemporalAdd(row.temporal,balanceTemporalKey(dir==="INVESTMENT"?x.investment_temporality:x.effective_temporality||defaultTime),historicalCategoryAmount(x,"ORDINARY",cash));
+    if(scope==="TOTAL")balanceTemporalAdd(row.temporal,"E",Math.max(0,historicalCategoryAmount(x,"TOTAL",cash)-historicalCategoryAmount(x,"ORDINARY",cash)));
   });
 
   if(sets.forecast.length){
@@ -4581,7 +4619,7 @@ function balanceDrillRowsForSelection(){
       });
     }
   }
-  let out=Array.from(rows.values()).map(function(x){x.total=x.actual+x.forecast;balanceTemporalAdd(x.temporal,"U",Math.max(0,x.total-x.temporal.total));return x}).filter(function(x){return x.total>.005});
+  let out=Array.from(rows.values()).map(function(x){x.total=x.actual+x.forecast;balanceTemporalAdd(x.temporal,"U",Math.max(0,x.total-x.temporal.total));return x}).filter(function(x){return x.total>.005||x.financed>.005});
   const total=out.reduce(function(s,x){return s+x.total},0);
   out.forEach(function(x){x.share=total?x.total*100/total:0});
   if(balanceDrillSort==="NAME")out.sort(function(a,b){return a.name.localeCompare(b.name,"it")||b.total-a.total});
@@ -4670,9 +4708,9 @@ function balanceDrillMovementRows(){
     return all.filter(function(x){
       const exceptional=x.economic_exceptional===undefined?!!x.is_extraordinary&&!x.forecast_excluded:!!x.economic_exceptional;
       return set.has(String(x.month_start))&&(!ordinary||!exceptional);
-    });
+    }).map(function(x){return purchaseFinancingMovement(x,balanceDrillSelection.origin==="MONTH_CASHFLOW")});
   }
-  return all.filter(function(x){return !x.is_extraordinary});
+  return all.filter(function(x){return !x.is_extraordinary}).map(function(x){return purchaseFinancingMovement(x,false)});
 }
 function renderBalanceDrillBreakdown(){
   const box=$("balanceDrillBreakdown"),movementBox=$("balanceDrillMovements");if(!box)return;
@@ -4717,7 +4755,7 @@ function renderBalanceDrillBreakdown(){
   movementBox.classList.remove("hidden");
   movementBox.innerHTML='<div class="balance-drill-section-title"><div><strong>Movimenti · '+esc(balanceDrillCounterparty)+'</strong><div class="small muted">'+moves.length+' movimenti · '+money(selected.total)+' · '+esc(forecastOnly?"Base storica ordinaria · ultimi 12 mesi completi":balanceDrillPeriodLabel())+'</div></div><div class="balance-drill-movement-actions"><label class="small">Ordina <select class="select" data-balance-drill-move-sort><option value="DATE"'+(balanceDrillMoveSort==="DATE"?' selected':'')+'>Più recenti</option><option value="AMOUNT"'+(balanceDrillMoveSort==="AMOUNT"?' selected':'')+'>Importo ↓</option></select></label><button class="btn ghost compact" type="button" data-balance-drill-clear-counterparty>Chiudi movimenti</button></div></div>'+
     '<div class="balance-drill-moves"><table><thead><tr><th>Data</th><th>Descrizione</th><th>Nota</th><th>Importo</th></tr></thead><tbody>'+moves.map(function(x){
-      return '<tr><td>'+dateLabel(x.transaction_date)+'</td><td>'+esc(x.description||x.counterparty||"—")+'</td><td>'+esc(x.user_note||x.extraordinary_note||"—")+'</td><td><strong>'+money(x.amount)+'</strong></td></tr>';
+      return '<tr><td>'+dateLabel(x.transaction_date)+'</td><td>'+esc(x.description||x.counterparty||"—")+'</td><td>'+esc(x.user_note||x.extraordinary_note||"—")+'</td><td><strong>'+money(x.amount)+'</strong>'+purchaseFinancingMovementHtml(x)+'</td></tr>';
     }).join("")+'</tbody></table></div>';
 }
 async function loadBalanceDrillCategory(categoryId){
@@ -4766,9 +4804,8 @@ async function openBalanceDrillInAnalysis(categoryId){
 
 function renderBalanceFlowSide(){
   const t=balanceFlowModel(historicalPeriodMode),box=$("balanceOutsideFlow");if(!t||!box)return;
-  const financing=historicalFinancingTotals(historicalMonthsFor(historicalPeriodMode)),items=[];
-  if(t.priorWealthInvestments>.5)items.push('<div class="balance-outside-item"><span class="icon" aria-hidden="true">◈</span><span class="copy"><strong>Fuori dal flusso corrente · investimenti da patrimonio pregresso</strong><span>Riallocazione patrimoniale: non riduce il disponibile prodotto dalla gestione del periodo.</span></span><span class="value">'+money(t.priorWealthInvestments)+'</span></div>');
-  if(financing.total>.5)items.push('<div class="balance-outside-item"><span class="icon" aria-hidden="true">↙</span><span class="copy"><strong>Finanziamenti ricevuti · fuori dalle entrate economiche</strong><span>Liquidità da restituire: resta nel Cash flow, senza aumentare margine o disponibile economico.</span></span><span class="value">'+money(financing.total)+'</span></div>');
+  const items=[];
+  if(t.priorWealthInvestments>.5)items.push('<div class="balance-outside-item"><span class="icon" aria-hidden="true">◈</span><span class="copy"><strong>Fuori dal flusso corrente · investimenti da patrimonio pregresso</strong><span>Riallocazione patrimoniale: non riduce l’avanzo prodotto dalla gestione del periodo.</span></span><span class="value">'+money(t.priorWealthInvestments)+'</span></div>');
   box.classList.toggle("hidden",!items.length);box.innerHTML=items.join("");
 }
 function renderBalanceErosion(){
@@ -4776,7 +4813,7 @@ function renderBalanceErosion(){
   const income=Math.max(0,num(t.income)),margin=t.income-t.mandatory-t.necessary-t.unclassified,final=t.available+(historicalScope==="TOTAL"?t.extraNet:0);
   const parts=[
     ["o","Obbligatorie",t.mandatory,"MANDATORY"],["n","Necessarie",t.necessary,"NECESSARY"],["nc","NC",t.unclassified,"UNCLASSIFIED"],["d","Discrezionali",t.discretionary,"DISCRETIONARY"],
-    ["other","Altre operative",t.otherOperating,"UNKNOWN"],["save","Risparmio",t.savings,"INVESTMENT"],["free","Disponibile",Math.max(0,t.available),null]
+    ["other","Altre operative",t.otherOperating,"UNKNOWN"],["save","Risparmio",t.savings,"INVESTMENT"],["free","Avanzo ordinario",Math.max(0,t.available),null]
   ];
   const visible=parts.filter(function(x){return x[2]>.5}),shownTotal=visible.reduce(function(s,x){return s+x[2]},0),scale=Math.max(1,income,shownTotal);
   const quota=function(amount){return income>0?balanceTemporalPercent(amount,income):"—"};
@@ -4801,7 +4838,7 @@ function renderBalanceErosion(){
     '<div class="balance-erode-insights">'+
       '<div class="balance-erode-insight structural"><span class="k">Struttura essenziale</span><strong>'+(income>0?'O + N = '+quota(t.mandatory+t.necessary)+' delle entrate':'O + N · quota non calcolabile')+'</strong><small>'+(ratio===null?'Rapporto O/N non disponibile.':'Le Necessarie valgono '+ratio.toLocaleString('it-IT',{maximumFractionDigits:1})+'× le Obbligatorie.')+'</small></div>'+
       '<div class="balance-erode-insight margin"><span class="k">Uso del margine</span><strong>'+(discretionaryOnMargin===null?'Margine strutturale non positivo':'D = '+discretionaryOnMargin.toLocaleString('it-IT',{maximumFractionDigits:1})+'% del margine strutturale')+'</strong><small>'+(t.unclassified>.5?(income>0?'NC ancora pari al '+quota(t.unclassified)+' delle entrate.':'NC da chiarire: '+money(t.unclassified)+'.'):'Nessuna quota NC significativa nel periodo.')+'</small></div>'+
-      '<div class="balance-erode-insight outcome"><span class="k">Esito del periodo</span><strong>Risparmio '+(income>0?quota(t.savings):money(t.savings))+' · disponibile '+(income>0?quota(final):money(final))+'</strong><small>'+(historicalScope==='TOTAL'&&Math.abs(t.extraNet)>.5?'Eventi E: '+historicalSigned(t.extraNet)+' sul risultato finale.':'Percentuali calcolate sulle entrate del periodo.')+'</small></div>'+
+      '<div class="balance-erode-insight outcome"><span class="k">Esito del periodo</span><strong>Risparmio '+(income>0?quota(t.savings):money(t.savings))+' · avanzo '+(income>0?quota(final):money(final))+'</strong><small>'+(historicalScope==='TOTAL'&&Math.abs(t.extraNet)>.5?'Eventi E: '+historicalSigned(t.extraNet)+' sul risultato finale.':'Percentuali calcolate sulle entrate del periodo.')+'</small></div>'+
     '</div><div class="balance-erode-drill-note">Clicca una componente per approfondire L1 → L2 → controparti → movimenti.</div>';
 }
 
@@ -4809,7 +4846,7 @@ function renderBalanceWaterfall(){
   const t=balanceFlowModel(historicalPeriodMode);if(!t)return;
   const margin=t.income-t.mandatory-t.necessary-t.unclassified;
   const showExtra=historicalScope==="TOTAL"&&Math.abs(t.extraNet)>.5;
-  const labels=["Entrate","Obbligatorie","Necessarie","NC","Margine strutturale","Discrezionali"].concat(t.otherOperating>.5?["Altre operative"]:[]).concat(["Risparmio"]).concat(showExtra?["Eventi E"]:[]).concat(["Disponibile"]);
+  const labels=["Entrate","Obbligatorie","Necessarie","NC","Margine strutturale","Discrezionali"].concat(t.otherOperating>.5?["Altre operative"]:[]).concat(["Risparmio"]).concat(showExtra?["Eventi E"]:[]).concat([balanceSurplusLabel()]);
   const drillKeys=["INCOME","MANDATORY","NECESSARY","UNCLASSIFIED",null,"DISCRETIONARY"].concat(t.otherOperating>.5?["UNKNOWN"]:[]).concat(["INVESTMENT"]).concat(showExtra?[null]:[]).concat([null]);
   const data=[],colors=[],displayValues=[];
   let cur=t.income;
@@ -4834,7 +4871,7 @@ function renderBalanceWaterfall(){
     ?"Totale incl. eventi E · l’impatto eccezionale è rappresentato come passaggio separato."
     :"Lettura ordinaria · eventi E esclusi.";
   $("balanceWaterfallMode").textContent=t.label;
-  $("balanceWaterfallNote").textContent="";
+  $("balanceWaterfallNote").textContent="Spese al netto delle quote coperte da prestiti. Rate incluse nelle Obbligatorie; importi bancari integrali nel Cash flow.";
 
   const box=$("balanceWaterfallChart"),host=box.parentElement;
   const extremes=data.flat().concat([0]),max=Math.max.apply(null,extremes),min=Math.min.apply(null,extremes);
@@ -4846,10 +4883,10 @@ function renderBalanceWaterfall(){
   const width=Math.max(left+right+labels.length*120,Math.round(host.clientWidth||0)),height=370,top=42,bottom=304;
   balanceWaterfallRenderWidth=Math.round(host.clientWidth||0);
   const y=function(v){return bottom-(v-low)*(bottom-top)/(high-low)},column=(width-left-right)/labels.length,barWidth=Math.min(78,column*.56);
-  let svg='<svg xmlns="http://www.w3.org/2000/svg" width="'+width+'" height="'+height+'" viewBox="0 0 '+width+' '+height+'" role="group" aria-label="'+esc('Flusso economico: entrate '+money(t.income)+', margine strutturale '+money(margin)+', disponibile '+money(final))+'">';
+  let svg='<svg xmlns="http://www.w3.org/2000/svg" width="'+width+'" height="'+height+'" viewBox="0 0 '+width+' '+height+'" role="group" aria-label="'+esc('Flusso economico: entrate '+money(t.income)+', margine strutturale '+money(margin)+', '+balanceSurplusLabel().toLowerCase()+' '+money(final))+'">';
   ticks.forEach(function(v){const yy=y(v);svg+='<line x1="'+left+'" x2="'+(width-right)+'" y1="'+yy+'" y2="'+yy+'" stroke="'+(v===0?'#bdcadc':'#e5ecf5')+'" stroke-width="1"/><text x="'+(left-14)+'" y="'+(yy+5)+'" text-anchor="end" class="waterfall-axis">'+esc(money(v))+'</text>'});
   data.forEach(function(pair,i){
-    const value=displayValues[i],label=labels[i],total=i===0||label==="Margine strutturale"||label==="Disponibile",center=Math.round(left+column*(i+.5)),barTop=Math.min(y(pair[0]),y(pair[1])),barHeight=Math.abs(y(pair[0])-y(pair[1])),key=drillKeys[i];
+    const value=displayValues[i],label=labels[i],total=i===0||label==="Margine strutturale"||label===balanceSurplusLabel(),center=Math.round(left+column*(i+.5)),barTop=Math.min(y(pair[0]),y(pair[1])),barHeight=Math.abs(y(pair[0])-y(pair[1])),key=drillKeys[i];
     const color=label==="Margine strutturale"?'#2563eb':total?(value>=0?'#087f5b':'#b91c1c'):(value<0?'#ad293f':'#087f5b');
     const valueText=(value<0?'−':value>0&&label==="Eventi E"?'+':'')+money(Math.abs(value));
     const tip=label+' · '+valueText+(key?' · Apri il dettaglio':'');
@@ -4857,7 +4894,7 @@ function renderBalanceWaterfall(){
     if(key)svg+='<rect class="waterfall-hit" x="'+(left+column*i+3)+'" y="24" width="'+(column-6)+'" height="'+(height-28)+'" rx="10" fill="transparent"/>';
     svg+='<rect class="waterfall-bar" x="'+(center-barWidth/2)+'" y="'+barTop+'" width="'+barWidth+'" height="'+(barHeight>0?Math.max(2,barHeight):0)+'" rx="5" fill="'+colors[i]+'"/>';
     svg+='<text x="'+center+'" y="'+Math.round(Math.max(24,barTop-12))+'" text-anchor="middle" class="waterfall-value'+(total?' total':'')+'" fill="'+color+'">'+esc(valueText)+'</text>';
-    const lines=label==="Margine strutturale"?['Margine','strutturale']:label==="Altre operative"?['Altre','operative']:[label];
+    const lines=label==="Margine strutturale"?['Margine','strutturale']:label===balanceSurplusLabel()?['Avanzo',historicalScope==="TOTAL"?'complessivo':'ordinario']:label==="Altre operative"?['Altre','operative']:[label];
     svg+='<text x="'+center+'" y="'+(bottom+28)+'" text-anchor="middle" class="waterfall-category">'+lines.map(function(line,j){return '<tspan x="'+center+'" dy="'+(j?20:0)+'">'+esc(line)+'</tspan>'}).join('')+'</text></g>';
     if(i<labels.length-1){const endValue=total?pair[1]:(value<0?pair[0]:pair[1]),lineY=y(endValue);svg+='<line x1="'+(center+barWidth/2+4)+'" x2="'+(center+column-barWidth/2-4)+'" y1="'+lineY+'" y2="'+lineY+'" stroke="#adbacd" stroke-width="1" stroke-dasharray="3 4" aria-hidden="true"/>'}
   });
@@ -4884,13 +4921,13 @@ function comparisonMonthSets(){
 function comparisonTotalsForMonths(months){
   const set=new Set(months),rows=(scenarioActualRows||[]).filter(function(x){return set.has(String(x.month_start))});
   const sum=function(key){return rows.reduce(function(s,x){return s+num(x[key])},0)};
-  const financing=historicalFinancingTotals(months),ordinaryIncome=sum("incoming_ordinary")-financing.ordinary,extraIncome=sum("incoming_extraordinary")-financing.extraordinary,extraOut=sum("outgoing_extraordinary");
+  const financing=historicalFinancingTotals(months),coverage=purchaseFinancingTotals(months),ordinaryIncome=sum("incoming_ordinary")-financing.ordinary,extraIncome=sum("incoming_extraordinary")-financing.extraordinary,extraOut=sum("outgoing_extraordinary")-coverage.extraordinary;
   const ordinaryOut=rows.reduce(function(s,x){
     const v=x.outgoing_operating_ordinary;return s+(v!==undefined&&v!==null?num(v):Math.max(0,num(x.outgoing_ordinary)-num(x.investments_ordinary)));
-  },0);
+  },0)-coverage.ordinary;
   const ordinaryNet=rows.reduce(function(s,x){
     const v=x.net_operating_ordinary;return s+(v!==undefined&&v!==null?num(v):num(x.incoming_ordinary)-Math.max(0,num(x.outgoing_ordinary)-num(x.investments_ordinary)));
-  },0)-financing.ordinary;
+  },0)-financing.ordinary+coverage.ordinary;
   const recurring=sum("investments_recurring_ordinary"),currentSurplus=sum("investments_current_surplus_ordinary"),savings=recurring+currentSurplus;
   const scopeTotal=historicalScope==="TOTAL",income=ordinaryIncome+(scopeTotal?extraIncome:0),operatingOut=ordinaryOut+(scopeTotal?extraOut:0),operatingNet=ordinaryNet+(scopeTotal?(extraIncome-extraOut):0),available=operatingNet-savings;
   const nature={MANDATORY:0,NECESSARY:0,DISCRETIONARY:0,UNCLASSIFIED:0,UNKNOWN:0};
@@ -5012,7 +5049,7 @@ function renderHistoricalComparisonDetail(){
   if(!compareDetailData){box.innerHTML='<div class="muted small">Dettaglio non disponibile.</div>';return}
   if(compareDetailData.error){box.innerHTML='<div class="msg error">'+esc(compareDetailData.error)+'</div>';return}
   const sets=comparisonMonthSets(),aSet=new Set(sets.a),bSet=new Set(sets.b);
-  const raw=(compareDetailData.movements||[]).filter(function(x){return (historicalScope==="TOTAL"||!comparisonMovementIsExceptional(x))&&(aSet.has(String(x.month_start))||bSet.has(String(x.month_start)))});
+  const raw=(compareDetailData.movements||[]).filter(function(x){return (historicalScope==="TOTAL"||!comparisonMovementIsExceptional(x))&&(aSet.has(String(x.month_start))||bSet.has(String(x.month_start)))}).map(function(x){return purchaseFinancingMovement(x,false)});
   const signals=comparisonMovementSignals(raw,sets),moves=raw.map(function(x){const signal=signals.get(x)||null;return {...x,signal:signal,signalLabel:signal?signal.label:comparisonMovementIsExceptional(x)?"Evento E":"",period:bSet.has(String(x.month_start))?"B":"A"}}),groups=new Map();
   moves.forEach(function(x){const name=String(x.counterparty||"Senza controparte");if(!groups.has(name))groups.set(name,{name:name,a:0,b:0,countA:0,countB:0,signals:0});const g=groups.get(name);if(x.period==="A"){g.a+=num(x.amount);g.countA++}else{g.b+=num(x.amount);g.countB++}if(x.signal)g.signals++});
   const cps=comparisonSorted(Array.from(groups.values()),compareCpSort),flagged=moves.filter(function(x){return x.signal});
@@ -5025,7 +5062,7 @@ function renderHistoricalComparisonDetail(){
 }
 function renderHistoricalComparisonMovements(moves,sets){
   const rows=comparisonSorted(moves.filter(function(x){return compareOnlyAnomalies?!!x.signal:String(x.counterparty||"Senza controparte")===compareSelectedCounterparty}),compareMoveSort);
-  return '<div class="compare-movements-head"><strong>'+esc(compareOnlyAnomalies?"Movimenti segnalati":compareSelectedCounterparty)+'</strong><span>'+rows.length+' movimenti</span></div><div class="historical-compare-moves"><table><thead><tr>'+comparisonSortHeader("Periodo","PERIOD","MOVES")+comparisonSortHeader("Data","DATE","MOVES")+(compareOnlyAnomalies?comparisonSortHeader("Controparte","COUNTERPARTY","MOVES"):"")+comparisonSortHeader("Descrizione","DESCRIPTION","MOVES")+comparisonSortHeader("Nota","NOTE","MOVES")+comparisonSortHeader("Importo","AMOUNT","MOVES")+comparisonSortHeader("Segnalazione","SIGNAL","MOVES")+'</tr></thead><tbody>'+rows.map(function(x){return '<tr class="'+(x.signal?'compare-flagged-movement':'')+'"><td><span class="historical-period-badge '+(x.period==="B"?'b':'')+'">'+x.period+'</span></td><td>'+dateLabel(x.transaction_date)+'</td>'+(compareOnlyAnomalies?'<td>'+esc(x.counterparty||"Senza controparte")+'</td>':'')+'<td>'+esc(x.description||x.counterparty||"—")+'</td><td>'+esc(x.user_note||x.extraordinary_note||"—")+'</td><td><strong>'+money(x.amount)+'</strong></td><td>'+(x.signal?'<span class="compare-movement-signal" tabindex="0" title="'+esc(x.signal.reason)+'">'+esc(x.signal.label)+'</span>':comparisonMovementIsExceptional(x)?'<span title="Evento E già classificato sul movimento">E</span>':'—')+'</td></tr>'}).join("")+'</tbody></table></div>';
+  return '<div class="compare-movements-head"><strong>'+esc(compareOnlyAnomalies?"Movimenti segnalati":compareSelectedCounterparty)+'</strong><span>'+rows.length+' movimenti</span></div><div class="historical-compare-moves"><table><thead><tr>'+comparisonSortHeader("Periodo","PERIOD","MOVES")+comparisonSortHeader("Data","DATE","MOVES")+(compareOnlyAnomalies?comparisonSortHeader("Controparte","COUNTERPARTY","MOVES"):"")+comparisonSortHeader("Descrizione","DESCRIPTION","MOVES")+comparisonSortHeader("Nota","NOTE","MOVES")+comparisonSortHeader("Importo","AMOUNT","MOVES")+comparisonSortHeader("Segnalazione","SIGNAL","MOVES")+'</tr></thead><tbody>'+rows.map(function(x){return '<tr class="'+(x.signal?'compare-flagged-movement':'')+'"><td><span class="historical-period-badge '+(x.period==="B"?'b':'')+'">'+x.period+'</span></td><td>'+dateLabel(x.transaction_date)+'</td>'+(compareOnlyAnomalies?'<td>'+esc(x.counterparty||"Senza controparte")+'</td>':'')+'<td>'+esc(x.description||x.counterparty||"—")+'</td><td>'+esc(x.user_note||x.extraordinary_note||"—")+'</td><td><strong>'+money(x.amount)+'</strong>'+purchaseFinancingMovementHtml(x)+'</td><td>'+(x.signal?'<span class="compare-movement-signal" tabindex="0" title="'+esc(x.signal.reason)+'">'+esc(x.signal.label)+'</span>':comparisonMovementIsExceptional(x)?'<span title="Evento E già classificato sul movimento">E</span>':'—')+'</td></tr>'}).join("")+'</tbody></table></div>';
 }
 async function loadHistoricalComparisonDetail(categoryId,name){
   resetComparisonDetail();compareSelectedL2=categoryId;compareSelectedL2Name=name||"Categoria";compareDetailLoading=true;compareCpSort={key:"DELTA_ABS",dir:"DESC"};compareMoveSort={key:"DATE",dir:"DESC"};
@@ -5048,15 +5085,15 @@ function renderHistoricalPeriodComparison(){
     comparisonMetricCard("Margine strutturale",a.structural,b.structural,"INCOME","structural")+
     comparisonMetricCard("Discrezionali",a.discretionary,b.discretionary,"EXPENSE","discretionary")+
     comparisonMetricCard("Risparmio",a.savings,b.savings,"INCOME","savings")+
-    comparisonMetricCard("Disponibile finale",a.available,b.available,"INCOME","available");
+    comparisonMetricCard(balanceSurplusLabel(),a.available,b.available,"INCOME","available");
   const availableDelta=b.available-a.available,availTone=Math.abs(availableDelta)<.5?"neutral":availableDelta>0?"good":"bad",availLabel=availTone==="neutral"?"Sostanzialmente stabile":availTone==="good"?"Migliora tra A e B":"Peggiora tra A e B";
-  $("historicalComparisonInsight").innerHTML='<div class="compare-summary-result '+availTone+'"><span class="compare-insight-label">Disponibile finale</span><strong>'+comparisonSigned(availableDelta)+'</strong><span>'+availLabel+'</span></div>'+comparisonTopInsight(groups,compareDirection)+'<div class="compare-data-coverage">Copertura dati · A '+a.covered+'/'+a.months+' mesi · B '+b.covered+'/'+b.months+' mesi</div>';
+  $("historicalComparisonInsight").innerHTML='<div class="compare-summary-result '+availTone+'"><span class="compare-insight-label">'+balanceSurplusLabel()+'</span><strong>'+comparisonSigned(availableDelta)+'</strong><span>'+availLabel+'</span></div>'+comparisonTopInsight(groups,compareDirection)+'<div class="compare-data-coverage">Copertura dati · A '+a.covered+'/'+a.months+' mesi · B '+b.covered+'/'+b.months+' mesi</div>';
   $("historicalComparisonContributorsTitle").textContent=compareDirection==="EXPENSE"?"Cosa ha mosso le uscite?":"Cosa ha mosso le entrate?";
   const natureKeys=compareDirection==="EXPENSE"?["MANDATORY","NECESSARY","DISCRETIONARY","UNCLASSIFIED","UNKNOWN"]:["FIXED","PREDICTABLE","VARIABLE","UNKNOWN"];
   const filter=$("comparisonNatureFilter");if(filter){filter.innerHTML='<option value="ALL">Tutte le nature</option>'+natureKeys.map(function(k){return '<option value="'+k+'">'+COMPARISON_NATURES[k][0]+' · '+COMPARISON_NATURES[k][1]+'</option>'}).join("");filter.value=compareNatureFilter}
   const filtered=comparisonFilteredRows(groups);
   if(compareSelectedL2&&!filtered.some(function(g){return g.children.some(function(ch){return ch.id===compareSelectedL2})}))resetComparisonDetail();
-  if($("comparisonFinancingNote")){const note=$("comparisonFinancingNote");note.classList.toggle("hidden",a.financing<=.005&&b.financing<=.005);note.innerHTML='Finanziamenti ricevuti · A '+money(a.financing)+' · B '+money(b.financing)+'. Esclusi dalle entrate e dal risultato economico; restano negli incassi del Cash flow.'}
+  if($("comparisonFinancingNote")){const note=$("comparisonFinancingNote");note.classList.toggle("hidden",a.financing<=.005&&b.financing<=.005);note.innerHTML='Prestiti esclusi dalle entrate; uscite al netto delle quote finanziate. Il dettaglio mostra totale, finanziamento e fondi propri. Il Cash flow conserva gli importi integrali.'}
   const labels={DELTA_ABS:"variazione assoluta",NAME:"categoria",NATURE:"natura",A:"periodo A",B:"periodo B",DELTA:"Δ €",PCT:"Δ %"};
   if($("comparisonFilterHint"))$("comparisonFilterHint").textContent="Natura filtra i contributori; KPI e sintesi restano sul totale. Ordine: "+labels[compareSort.key]+" "+(compareSort.dir==="ASC"?"↑":"↓")+". Il segno ! invita ad approfondire.";
   let html='<div class="compare-contributors-scroll"><table class="historical-compare-table-rich"><thead><tr>'+comparisonSortHeader("Categoria","NAME","MAIN")+comparisonSortHeader("Natura","NATURE","MAIN")+comparisonSortHeader("Periodo A","A","MAIN")+comparisonSortHeader("Periodo B","B","MAIN")+comparisonSortHeader("Δ €","DELTA","MAIN")+comparisonSortHeader("Δ %","PCT","MAIN")+'</tr></thead><tbody>';
@@ -5089,7 +5126,7 @@ function renderHistoricalChart(){
       {type:"bar",label:"Saldo mese",data:net,backgroundColor:net.map(function(v){return v>=0?"rgba(34,197,94,.12)":"rgba(239,68,68,.12)"}),borderColor:net.map(function(v){return v>=0?"#15803d":"#b91c1c"}),borderWidth:1.7,borderRadius:3,yAxisID:"y"},
       {type:"line",label:"Cumulato periodo",data:cumulative,borderColor:"#334155",backgroundColor:"#334155",borderWidth:2.4,pointRadius:2.7,tension:.2,yAxisID:"y2"}
     ];
-    $("historicalChartNote").textContent="Il grafico mostra gli incassi e i pagamenti, inclusi i finanziamenti ricevuti. I KPI economici escludono i prestiti. Il saldo cumulato parte da zero e non rappresenta la liquidità dei conti. Clicca la barra Entrate o Uscite di un mese per vedere categorie, controparti e movimenti.";
+    $("historicalChartNote").textContent="Il grafico mostra gli incassi e i pagamenti, inclusi i finanziamenti ricevuti. I KPI del budget escludono i prestiti dalle entrate e le quote finanziate dalle uscite. Il saldo cumulato parte da zero e non rappresenta la liquidità dei conti. Clicca la barra Entrate o Uscite di un mese per vedere categorie, controparti e movimenti.";
   }else{
     const natureMap=historicalMonthlyNature(historicalPeriodMode,scope),get=function(key){return months.map(function(m){return num(natureMap.get(m)&&natureMap.get(m)[key])})};
     const O=get("MANDATORY"),N=get("NECESSARY"),D=get("DISCRETIONARY"),NC=get("UNCLASSIFIED"),OTHER=get("UNKNOWN"),INV=get("INVESTMENT");
@@ -5102,9 +5139,10 @@ function renderHistoricalChart(){
     if(all||donly)datasets.push({type:"bar",label:"Discrezionali",data:D,backgroundColor:"#8b5cf6",stack:"nature",borderWidth:0});
     if(all)datasets.push({type:"bar",label:"Altre operative",data:OTHER,backgroundColor:"#94a3b8",stack:"nature",borderWidth:0});
     if(all)datasets.push({type:"bar",label:"Investimenti",data:INV,backgroundColor:"#06b6d4",stack:"nature",borderWidth:0});
-    datasets.push({type:"line",label:"Entrate",data:income,borderColor:"#2687e8",backgroundColor:"#2687e8",borderWidth:2.3,pointRadius:2.6,tension:.2,yAxisID:"y"});
+    const budgetIncome=months.map(function(m,i){return num(income[i])-(historicalScope==="TOTAL"?historicalFinancingTotals([m]).total:historicalFinancingTotals([m]).ordinary)});
+    datasets.push({type:"line",label:"Entrate",data:budgetIncome,borderColor:"#2687e8",backgroundColor:"#2687e8",borderWidth:2.3,pointRadius:2.6,tension:.2,yAxisID:"y"});
     if(on){
-      const margin=income.map(function(v,i){return v-O[i]-N[i]-NC[i]});
+      const margin=budgetIncome.map(function(v,i){return v-O[i]-N[i]-NC[i]});
       datasets.push({type:"line",label:"Margine strutturale",data:margin,borderColor:"#15803d",backgroundColor:"#15803d",borderDash:[6,4],borderWidth:2.2,pointRadius:2.3,tension:.2,yAxisID:"y"});
     }
     $("historicalChartLegend").innerHTML='<span><i class="scenario-bar income"></i> Natura / NC</span><span><i class="scenario-line solid"></i> Entrate</span>'+(on?'<span><i class="scenario-line solid"></i> Margine strutturale</span>':'');
@@ -5123,7 +5161,7 @@ function renderHistoricalChart(){
       onClick:function(evt,els,chart){
         const hit=chart.getElementsAtEventForMode(evt,"nearest",{intersect:true},true);if(!hit.length)return;
         const h=hit[0],ds=chart.data.datasets[h.datasetIndex],label=ds&&ds.label,month=months[h.index],map={"Obbligatorie":"MANDATORY","Necessarie":"NECESSARY","NC · Non classificate":"UNCLASSIFIED","Discrezionali":"DISCRETIONARY","Altre operative":"UNKNOWN","Investimenti":"INVESTMENT"};
-        if(label==="Entrate")openBalanceNatureDrill("INCOME",month,"MONTH_CASHFLOW");
+        if(label==="Entrate")openBalanceNatureDrill("INCOME",month,historicalChartMode==="CASHFLOW"?"MONTH_CASHFLOW":"MONTH_NATURE");
         else if(historicalChartMode==="NATURE"&&map[label])openBalanceNatureDrill(map[label],month,"MONTH_NATURE");
         else if(historicalChartMode==="CASHFLOW"&&label==="Uscite")openBalanceNatureDrill("ALL_EXPENSE",month,"MONTH_CASHFLOW");
       },
@@ -5623,6 +5661,7 @@ async function loadScenarioData(force){
         const actual=values[i]||{};
         scenarioActualRows=Array.isArray(actual.monthly)?actual.monthly:[];
         scenarioActualCategories=Array.isArray(actual.category_monthly)?actual.category_monthly:[];
+        scenarioPurchaseFinancing=Array.isArray(actual.purchase_financing)?actual.purchase_financing:[];
         scenarioExtraordinaryMovements=Array.isArray(actual.extraordinary_movements)?actual.extraordinary_movements:[];
       }else if(job.kind==="RATIONALES"){
         const semantic=values[i]||{};scenarioForecastRationales=Array.isArray(semantic.rows)?semantic.rows:[];
@@ -5731,7 +5770,7 @@ async function setWherePeriod(value){
 function applyBalanceSubview(){
   const flow=balanceSubview==="flow",cash=balanceSubview==="cashflow",compare=balanceSubview==="compare";
   $("balanceHubTitle").textContent=flow?"Flusso economico":(cash?"Cash flow":"Confronto periodi");
-  $("balanceHubDescription").textContent=flow?"Come le entrate si trasformano nel margine disponibile della famiglia.":(cash?"Evoluzione mensile di entrate, uscite, saldo e cumulato.":"Confronta periodi realmente omogenei e individua i contributori alle differenze.");
+  $("balanceHubDescription").textContent=flow?"Come le entrate si trasformano nell’avanzo ordinario della famiglia.":(cash?"Evoluzione mensile di entrate, uscite, saldo e cumulato.":"Confronta periodi realmente omogenei e individua i contributori alle differenze.");
   $("balanceFlowGrid")?.classList.toggle("balance-section-hidden",!flow);
   $("balanceOutsideFlow")?.classList.toggle("balance-section-hidden",!flow);
   if($("balanceNatureDetail")&&!flow)$("balanceNatureDetail").classList.add("hidden");

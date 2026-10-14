@@ -9,7 +9,7 @@
 <title>Budget Familiare — Dashboard gestione</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
 <script src="shared/supabase-client.js?v=73.24.0-20261012-1415"></script>
-<script src="shared/app-config.js?v=73.30.1.12-20261014"></script>
+<script src="shared/app-config.js?v=73.30.1.13-20261014"></script>
 <style>
 :root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#6b7280;--line:#e5e7eb;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 8px 24px rgba(15,23,42,.06)}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,input,select{font:inherit}.wrap{max-width:1500px;margin:0 auto;padding:22px}.top{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:18px}.brand h1{font-size:24px;margin:0}.brand small{color:var(--muted)}.userbar{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:13px}.tabs{display:flex;gap:8px;margin:0 0 18px;flex-wrap:wrap}.tab{border:1px solid var(--line);background:#fff;padding:9px 14px;border-radius:10px;cursor:pointer}.tab.active{background:var(--text);color:#fff;border-color:var(--text)}.tabs a.tab{text-decoration:none;color:inherit;display:inline-flex;align-items:center}.card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:16px}.grid{display:grid;gap:14px}.kpis{grid-template-columns:repeat(6,minmax(150px,1fr));margin-bottom:14px}.kpi .label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}.kpi .value{font-size:27px;font-weight:750;margin-top:6px}.kpi .sub{font-size:12px;color:var(--muted);margin-top:4px}.section-title{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:4px 0 12px}.section-title h2{font-size:18px;margin:0}.section-title p{margin:4px 0 0;color:var(--muted);font-size:13px}.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.input,.select{border:1px solid var(--line);border-radius:9px;padding:9px 10px;background:#fff;min-height:38px}.input{min-width:220px}.btn{border:0;border-radius:9px;padding:9px 12px;cursor:pointer;background:var(--accent);color:#fff;font-weight:650}.btn.secondary{background:#eef2ff;color:#3730a3}.btn.ghost{background:#fff;color:var(--text);border:1px solid var(--line)}.btn.danger{background:#fee2e2;color:#991b1b}
@@ -187,6 +187,13 @@
 @media(max-width:900px){.process-nav{grid-template-columns:repeat(7,132px)}.process-context{align-items:flex-start;flex-direction:column}.process-subnav{width:100%;justify-content:flex-start}}
 @media(max-width:650px){.process-shell{padding:8px}.process-overline span{display:none}.process-step{min-width:126px}.process-context-copy{display:grid;gap:2px}.process-subnav .tab{flex:1 1 auto;justify-content:center}}
 
+</style>
+<style>
+.purchase-financing-controls{display:grid;grid-template-columns:minmax(200px,1fr) minmax(140px,190px) auto;gap:8px;align-items:center;margin:6px 0}
+.purchase-financing-controls .select,.purchase-financing-controls .input,.purchase-financing-controls .btn{font-size:14px;min-height:36px}
+#classPurchaseFinancingField{padding:10px 12px;border:1px solid #c7daf6;border-radius:10px;background:#f0f6ff}
+#classPurchaseFinancingState{font-size:14px;line-height:1.5}
+@media(max-width:760px){.purchase-financing-controls{grid-template-columns:1fr}.purchase-financing-controls .btn{justify-self:start}}
 </style>
 </head>
 <body>
@@ -373,12 +380,21 @@
                   <div id="classTemporalityOverrideState" class="small muted">Caricamento…</div>
                 </div>
                 <div id="classInvestmentFundingSourceField" class="field hidden">
-                  <label>Origine fondi investimento <span class="help" data-tip="Per investimenti occasionali indica se stai usando il surplus prodotto dal reddito corrente oppure patrimonio già esistente. Il primo riduce il Disponibile dopo risparmio; il secondo no.">?</span></label>
+                  <label>Origine fondi investimento <span class="help" data-tip="Per investimenti occasionali indica se stai usando il surplus prodotto dal reddito corrente oppure patrimonio già esistente. Il primo riduce l’avanzo ordinario; il secondo no.">?</span></label>
                   <select id="classInvestmentFundingSource" class="select">
                     <option value="CURRENT_SURPLUS">Surplus / liquidità corrente</option>
                     <option value="PRIOR_WEALTH">Patrimonio pregresso / disinvestimento</option>
                   </select>
                   <div id="classInvestmentFundingSourceState" class="small muted">Default prudenziale: surplus corrente.</div>
+                </div>
+                <div id="classPurchaseFinancingField" class="field hidden" style="grid-column:1/-1">
+                    <label>Quota coperta da prestito <span class="help" data-tip="Collega una parte di questa spesa a un prestito ricevuto. Flusso economico e Confronto mostrano i fondi propri; il Cash flow conserva gli importi integrali. Il singolo acquisto viene escluso dalla previsione automatica; le rate restano nel budget.">?</span></label>
+                    <div class="purchase-financing-controls">
+                      <select id="classPurchaseLoan" class="select" aria-label="Prestito collegato"><option value="">Nessuna copertura</option></select>
+                      <input id="classPurchaseCoveredAmount" class="input" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Importo finanziato €" aria-label="Importo coperto dal prestito">
+                      <button id="savePurchaseFinancing" class="btn ghost compact" type="button">Salva copertura</button>
+                    </div>
+                    <div id="classPurchaseFinancingState" class="small muted" role="status"></div>
                 </div>
                 <div class="field" style="grid-column:1/-1">
                   <label>Nota personale</label>
@@ -2234,7 +2250,7 @@ function closeClassificationPanel(){
 
 
 function resetClassificationPanel(close=true){
-  selectedRow=null;splitData=null;
+  selectedRow=null;splitData=null;purchaseFinancingState=null;++purchaseFinancingLoadSeq;
   $('classificationSuggestion')?.classList.add('hidden');if($('classificationSuggestion'))$('classificationSuggestion').innerHTML='';
   if($('movementAliasBox')){$('movementAliasBox').innerHTML='';$('movementAliasBox').classList.add('hidden')}if($('movementProtectionBox')){$('movementProtectionBox').innerHTML='';$('movementProtectionBox').classList.add('hidden')}if($('parsingCorrectionBox')){$('parsingCorrectionBox').classList.add('hidden');$('parsingCorrectionPreview').innerHTML='';msg($('parsingCorrectionMsg'),'')}if($('futureAutomationBox'))$('futureAutomationBox').innerHTML='';
   if($('pipelineStepCounterparty'))$('pipelineStepCounterparty').open=true;if($('pipelineStepCategory'))$('pipelineStepCategory').open=false;if($('pipelineStepContext'))$('pipelineStepContext').open=false;syncClassificationPipelineNav();
@@ -2243,6 +2259,7 @@ function resetClassificationPanel(close=true){
   if($('classNatureOverride'))$('classNatureOverride').innerHTML='';if($('classNatureOverrideState'))$('classNatureOverrideState').textContent='';
   if($('classTemporalityOverride'))$('classTemporalityOverride').innerHTML='';if($('classTemporalityOverrideState'))$('classTemporalityOverrideState').textContent='';
   if($('classInvestmentFundingSourceField'))$('classInvestmentFundingSourceField').classList.add('hidden');if($('classInvestmentFundingSource'))$('classInvestmentFundingSource').value='CURRENT_SURPLUS';if($('classInvestmentFundingSourceState'))$('classInvestmentFundingSourceState').textContent='';
+  $("classPurchaseFinancingField")?.classList.add("hidden");
   $('classMode').value='all';$('quickCounterpartyBox').classList.add('hidden');$('transferTarget').value='EXPENSE';$('transferDecision').classList.add('hidden');$('transferDecisionHint').textContent='';msg($('classMsg'),'');
   if(close)$('classifyBox').classList.add('hidden');
 }
@@ -2272,7 +2289,8 @@ function updateClassificationPipelineState(){
     const project=$('classProject')?.value||'',tags=document.querySelectorAll('[data-class-tag]:checked').length,splits=Number(selectedRow?.split_count||0);
     const natureOverride=selectedRow?.nature_override,temporalityOverride=selectedRow?.temporality_override;
     const funding=selectedRow?.investment_funding_source;
-    const parts=[project?'progetto':null,tags?tags+' tag':null,splits?splits+' quote':null,natureOverride?'natura '+movementNatureShort(natureOverride):null,temporalityOverride?'temporalità '+movementTemporalityShort(temporalityOverride):null,funding==='PRIOR_WEALTH'?'fondi patrimonio':funding==='CURRENT_SURPLUS'?'fondi surplus':null].filter(Boolean);
+    const coverage=purchaseFinancingState?.transactionId===String(selectedRow?.id)?purchaseFinancingState.rows?.[0]:null;
+    const parts=[project?'progetto':null,tags?tags+' tag':null,splits?splits+' quote':null,natureOverride?'natura '+movementNatureShort(natureOverride):null,temporalityOverride?'temporalità '+movementTemporalityShort(temporalityOverride):null,funding==='PRIOR_WEALTH'?'fondi patrimonio':funding==='CURRENT_SURPLUS'?'fondi surplus':null,coverage?'finanziati '+euroInt(coverage.covered_amount):null].filter(Boolean);
     ctxState.textContent=parts.length?parts.join(' · '):'Facoltativo';
   }
 }
@@ -2390,9 +2408,10 @@ function renderMovementAttributeControls(){
     fundingSel.value=fundingValue;
     fundingSel.disabled=!showFunding;
     if(fundingState)fundingState.textContent=fundingValue==="PRIOR_WEALTH"
-      ?"Patrimonio pregresso: resta visibile come investimento ma non riduce il Disponibile dopo risparmio."
-      :"Surplus corrente: l'investimento riduce il Disponibile dopo risparmio. È il default prudenziale.";
+      ?"Patrimonio pregresso: resta visibile come investimento ma non riduce l’avanzo ordinario."
+      :"Surplus corrente: l'investimento riduce l’avanzo ordinario. È il default prudenziale.";
   }
+  renderPurchaseFinancing();
   if(technical){
     if(nState)nState.textContent="Giroconto interno: escluso dal reporting economico; Natura non utilizzata.";
     if(tState)tState.textContent="Giroconto interno: Temporalità non utilizzata nel reporting economico.";
@@ -2405,10 +2424,55 @@ async function loadReportingAttributesState(row){
     const flag=await rpc('dashboard_reporting_transaction_flag_v1',{p_transaction_id:row.id});
     if(!selectedRow||selectedRow.id!==row.id)return;
     movementApplyReportingAttributes(flag||{});
+    await loadPurchaseFinancing(row);
   }catch(e){
     if($("classNatureOverrideState"))$("classNatureOverrideState").textContent="Attributi reporting non disponibili";
     if($("classTemporalityOverrideState"))$("classTemporalityOverrideState").textContent=e.message||"Errore caricamento";
   }
+}
+let purchaseFinancingState=null;
+let purchaseFinancingBusy=false;
+let purchaseFinancingLoadSeq=0;
+function renderPurchaseFinancing(){
+  const field=$("classPurchaseFinancingField"),loan=$("classPurchaseLoan"),amount=$("classPurchaseCoveredAmount"),state=$("classPurchaseFinancingState"),save=$("savePurchaseFinancing");
+  if(!field||!loan||!amount||!state||!save)return;
+  const target=String(selectedRow?.is_bank_transfer?($("transferTarget")?.value||selectedRow.transaction_type):selectedRow?.transaction_type||"").toUpperCase();
+  const eligible=selectedRow&&Number(selectedRow.amount)<0&&["EXPENSE","FEE"].includes(target);
+  field.classList.toggle("hidden",!eligible);if(!eligible)return;
+  const data=purchaseFinancingState&&purchaseFinancingState.transactionId===String(selectedRow.id)?purchaseFinancingState:null;
+  const current=data?.rows?.[0],loans=data?.loans||[];
+  loan.innerHTML='<option value="">Nessuna copertura</option>'+loans.map(function(x){return '<option value="'+esc(x.id)+'">'+esc(String(x.transaction_date).split('-').reverse().join('/')+' · '+x.label+' · '+euro(x.amount)+' · utilizzabili '+euro(x.remaining_amount))+'</option>'}).join("");
+  loan.value=current?.loan_transaction_id||"";amount.value=current?Number(current.covered_amount):"";
+  amount.max=String(Math.abs(Number(selectedRow.amount)));loan.disabled=amount.disabled=save.disabled=purchaseFinancingBusy||!data||!!data.error;
+  state.textContent=data?.error||(!data?"Caricamento coperture…":current?'Totale '+euro(current.gross_amount)+' · finanziati '+euro(current.covered_amount)+' · fondi propri '+euro(current.own_funds_amount)+'. Acquisto escluso dalla previsione automatica.':loans.length?"Seleziona il prestito e l’importo coperto. Per rimuovere una copertura salva 0 €.":"Nessun prestito ricevuto disponibile nel perimetro del reporting.");
+}
+async function loadPurchaseFinancing(row){
+  const seq=++purchaseFinancingLoadSeq;purchaseFinancingState=null;renderPurchaseFinancing();
+  try{
+    const data=await rpc('dashboard_reporting_purchase_financing_v1',{p_transaction_id:row.id});
+    if(seq!==purchaseFinancingLoadSeq||!selectedRow||String(selectedRow.id)!==String(row.id))return;
+    purchaseFinancingState={...data,transactionId:String(row.id)};
+  }catch(e){
+    if(seq!==purchaseFinancingLoadSeq||!selectedRow||String(selectedRow.id)!==String(row.id))return;
+    purchaseFinancingState={transactionId:String(row.id),error:e.message||"Copertura non disponibile"};
+  }
+  renderPurchaseFinancing();
+  updateClassificationPipelineState();
+}
+async function savePurchaseFinancing(){
+  if(!selectedRow||purchaseFinancingBusy)return;
+  const id=selectedRow.id,loan=$("classPurchaseLoan").value||null,amount=Number($("classPurchaseCoveredAmount").value||0),state=$("classPurchaseFinancingState");
+  if(!Number.isFinite(amount)||amount<0||amount>Math.abs(Number(selectedRow.amount))||(amount>0&&!loan)){state.textContent="Seleziona un prestito e un importo compreso tra 0 e il totale della spesa.";return}
+  purchaseFinancingBusy=true;$("savePurchaseFinancing").disabled=true;$("classPurchaseLoan").disabled=true;$("classPurchaseCoveredAmount").disabled=true;state.textContent="Salvataggio…";
+  let saveError='';
+  try{
+    const data=await rpc('dashboard_reporting_set_purchase_financing_v1',{p_transaction_id:id,p_loan_transaction_id:loan,p_covered_amount:amount});
+    if(!selectedRow||String(selectedRow.id)!==String(id))return;
+    purchaseFinancingState={...data,transactionId:String(id)};
+    if(amount>0)selectedRow.exclude_from_forecast=true;
+    renderMovements();updateClassificationPipelineState();
+  }catch(e){saveError=e.message||"Errore nel salvataggio della copertura"}
+  finally{purchaseFinancingBusy=false;renderPurchaseFinancing();if(saveError&&selectedRow&&String(selectedRow.id)===String(id))state.textContent=saveError}
 }
 async function saveMovementNatureOverride(){
   if(!selectedRow)return;
@@ -2470,6 +2534,7 @@ function openClassify(row,options={}){
   $('classMerchant').value=row.counterparty_id||'';$('classCategory').value=row.category_id||'';syncClassificationCategoryFromMerchant(false);syncSearchFromSelect('classMerchantSearch','classMerchant');renderClassificationSuggestion();renderMovementAliasBox();renderMovementProtectionBox();renderFutureAutomationBox();if(row.manual_lock)refreshSelectedPipelinePreview();$('classProject').value=row.project_id||'';const selectedTags=new Set((row.tags||[]).map(t=>t.id));document.querySelectorAll('[data-class-tag]').forEach(cb=>cb.checked=selectedTags.has(cb.value));
   if($('classUserNote'))$('classUserNote').value=row.user_note||'';
   if($('classUserNoteState'))$('classUserNoteState').textContent=row.user_note?'Nota salvata.':'Nessuna nota.';
+  $("classPurchaseFinancingField")?.classList.add("hidden");
   $('classMode').value='all';
   if(selectedRow.is_bank_transfer)$('transferTarget').value=classificationTargetForRow(row);
   updateTransferDecisionHint();$('classifyBox').classList.remove('hidden');$('classifyBox').scrollIntoView({behavior:'smooth',block:'start'});msg($('classMsg'),'');$('splitEditor').classList.add('hidden');$('toggleSplitEditor').textContent=Number(row.split_count||0)>0?`Ripartizione (${nfmt(row.split_count)})`:'Dividi movimento';loadSplitsForMovement(row.id);loadReportingAttributesState(row);updateClassificationPipelineState();setClassificationPipelineStep('counterparty',false);updateClassificationSaveBar();
@@ -4472,6 +4537,8 @@ const cpc=e.target.closest('[data-close-counterparty-detail]');if(cpc){expandedC
 const cpmg=e.target.closest('[data-merge-counterparty]');if(cpmg){mergeSuggestedCounterparty(cpmg);return}const cm=e.target.closest('[data-toggle-category-movements]');if(cm){const k=cm.dataset.toggleCategoryMovements;expandedCategoryMovementDetails.has(k)?expandedCategoryMovementDetails.delete(k):expandedCategoryMovementDetails.add(k);renderCategoriesCatalog();return}const cpm=e.target.closest('[data-toggle-counterparty-movements]');if(cpm){const k=cpm.dataset.toggleCounterpartyMovements;if(expandedCounterpartyMovementDetails.has(k))expandedCounterpartyMovementDetails.delete(k);else{expandedCounterpartyMovementDetails.add(k);expandedCounterpartyAliasDetails.delete(k);expandedCounterpartyDetails.delete(k)}renderMerchantsCatalog();return}const cpa=e.target.closest('[data-toggle-counterparty-aliases]');if(cpa){const k=cpa.dataset.toggleCounterpartyAliases;if(expandedCounterpartyAliasDetails.has(k))expandedCounterpartyAliasDetails.delete(k);else{expandedCounterpartyAliasDetails.add(k);expandedCounterpartyMovementDetails.delete(k);expandedCounterpartyDetails.delete(k)}renderMerchantsCatalog();return}const cap=e.target.closest('[data-cancel-alias-panel]');if(cap){expandedCounterpartyAliasDetails.delete(cap.dataset.cancelAliasPanel);renderMerchantsCatalog();return}const emv=e.target.closest('[data-edit-movement]');if(emv){const row=(catData?.movements||[]).find(x=>x.id===emv.dataset.editMovement);if(row){activateMainTab('categorization');openClassify(row)}return}const aa=e.target.closest('[data-add-alias]');if(aa){addCounterpartyAlias(aa);return}const ma=e.target.closest('[data-move-alias]');if(ma){moveCounterpartyAlias(ma);return}const da=e.target.closest('[data-delete-alias]');if(da){deleteCounterpartyAlias(da);return}const cg=e.target.closest('[data-toggle-category-group]');if(cg){const k=cg.dataset.toggleCategoryGroup;expandedCategoryGroups.has(k)?expandedCategoryGroups.delete(k):expandedCategoryGroups.add(k);renderCategoriesCatalog();return}const mg=e.target.closest('[data-toggle-counterparty-group]');if(mg){const k=mg.dataset.toggleCounterpartyGroup;expandedCounterpartyGroups.has(k)?expandedCounterpartyGroups.delete(k):expandedCounterpartyGroups.add(k);renderMerchantsCatalog();return}const mm=e.target.closest('[data-toggle-mcc-movements]');if(mm){const row=mm.closest('[data-mcc-row]'),k=row?.dataset.mccRow;if(k){expandedMccMovementDetails.has(k)?expandedMccMovementDetails.delete(k):expandedMccMovementDetails.add(k);renderMccCatalog()}return}const em=e.target.closest('[data-edit-mcc]');if(em){editMccCategory(em);return}const cmc=e.target.closest('[data-cancel-mcc-edit]');if(cmc){cancelMccEdit(cmc);return}const sm=e.target.closest('[data-save-mcc]');if(sm){saveMccCategory(sm);return}const sh=e.target.closest('[data-catalog-sort]');if(sh){setCatalogSort(sh.dataset.catalogSort,sh.dataset.catalogKey);return}const del=e.target.closest('[data-delete-entity]');if(del){deleteCatalogEntity(del);return}const cc=e.target.closest('[data-edit-cat]');if(cc){editCategory(cc.dataset.editCat);return}const m=e.target.closest('[data-edit-merch]');if(m){editMerchant(m.dataset.editMerch);return}const p=e.target.closest('[data-edit-project]');if(p){editProject(p.dataset.editProject);return}const t=e.target.closest('[data-edit-tag]');if(t){editTag(t.dataset.editTag);return}const rr=e.target.closest('[data-edit-rule]');if(rr){editCompoundRule(rr.dataset.editRule);return}const pr=e.target.closest('[data-edit-parsing]');if(pr){editParsingRule(pr.dataset.editParsing);return}});
 $('classNatureOverride')?.addEventListener('change',saveMovementNatureOverride);
 $('classTemporalityOverride')?.addEventListener('change',saveMovementTemporalityOverride);
+$('savePurchaseFinancing')?.addEventListener('click',savePurchaseFinancing);
+$('classPurchaseLoan')?.addEventListener('change',function(){if(!this.value)$('classPurchaseCoveredAmount').value='0'});
 $('classInvestmentFundingSource')?.addEventListener('change',saveInvestmentFundingSource);
 $('tab-catalogs').addEventListener('input',e=>{
   const s=e.target.closest('[data-category-cp-search]');
