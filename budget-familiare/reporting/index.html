@@ -1618,6 +1618,93 @@ body{font-size:16px;line-height:1.5}
 @media(max-width:1100px){.compare-bridge-list{grid-template-columns:1fr}}
 @media(max-width:760px){.historical-compare-kpi .values .compare-value-current strong{font-size:26px}.compare-bridge{padding:12px}.compare-bridge-list{grid-template-columns:1fr}.compare-verdict-card{width:100%;max-width:none;margin-left:0}.compare-bridge-row{grid-template-columns:minmax(100px,1fr) 95px 70px}}
 
+
+/* V73.30.1.16 — Confronto compatto, unico approfondimento a richiesta */
+.historical-comparison-workspace{padding:14px 18px}
+.historical-compare-toolbar{padding:9px 12px;margin-bottom:9px}
+.historical-compare-periods{grid-template-columns:minmax(0,1fr) 20px minmax(0,1fr);gap:9px;margin:0 0 10px;align-items:stretch}
+.historical-compare-period{padding:9px 12px;gap:10px;min-height:55px}
+.historical-compare-period .v{font-size:17px;margin-top:1px}
+.historical-compare-period .k{font-size:13px}
+.historical-compare-period .compare-period-code{flex-basis:30px;width:30px;height:30px;font-size:16px}
+.compare-verdict-chip{display:inline-flex;gap:6px;align-items:center;margin-left:auto;padding:5px 9px;max-width:195px;border:1px solid #b9e4d2;background:#e8f7ef;border-radius:8px;color:#126746;font-size:13px;font-weight:700;line-height:1.3;white-space:nowrap}
+.compare-verdict-chip.mixed{border-color:#d3ddea;background:#f1f5fa;color:#475569}
+.compare-verdict-chip:focus-visible{outline:2px solid #2563eb;outline-offset:2px}
+.historical-compare-kpis{gap:9px;margin:0 0 10px}
+.historical-compare-kpi{min-height:112px;padding:10px 12px;gap:7px;border-radius:11px;display:flex;flex-direction:column}
+.historical-compare-kpi .compare-metric-head{min-height:24px}
+.historical-compare-kpi .label{font-size:15px}
+.historical-compare-kpi .compare-metric-icon{flex-basis:28px;width:28px;height:28px;border-radius:8px}
+.historical-compare-kpi .compare-metric-icon svg{width:18px;height:18px}
+.compare-compact-values{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:7px 13px;min-width:0}
+.compare-compact-values .compare-compact-reference,.compare-compact-values .compare-compact-current{display:grid;gap:2px;line-height:1.2;min-width:0;color:#536882;font-size:12px}
+.compare-compact-values .compare-compact-reference strong{font-size:17px;font-weight:600;color:#54667c;white-space:nowrap}
+.compare-compact-values .compare-compact-current strong{font-size:25px;font-weight:800;color:var(--compare-accent);white-space:nowrap}
+.historical-compare-kpi .compare-compact-values .delta{font-size:13px;padding:5px 7px;line-height:1.2;align-self:flex-end;white-space:nowrap}
+.historical-compare-kpi .compare-delta-arrow{margin-right:3px}
+.compare-on-inline{display:flex;align-items:center;justify-content:flex-start;gap:6px 14px;flex-wrap:wrap;font-size:12px;color:#425b7c;border-top:1px solid #dfe7f1;padding-top:6px;margin-top:auto}
+.compare-on-inline .compare-on-code{width:19px;height:19px;display:inline-grid;place-items:center;margin-right:4px;font-size:12px}
+.compare-on-inline strong{font-size:12px;color:#233b5a;font-variant-numeric:tabular-nums}
+.compare-on-inline span{white-space:nowrap}
+.historical-compare-kpi:has(.compare-on-inline){min-height:112px}
+.historical-compare-kpi .compare-ab-bars,.historical-compare-kpi .compare-on-foot{display:none}
+.compare-analysis-disclosure{margin:0 0 11px;border:1px solid #d8e2ef;border-radius:11px;background:#f6f9fd;overflow:hidden}
+.compare-analysis-disclosure>summary{list-style:none;cursor:pointer;padding:9px 12px;outline-offset:-3px}
+.compare-analysis-disclosure>summary::-webkit-details-marker{display:none}
+.compare-analysis-disclosure>summary:focus-visible{outline:2px solid #2563eb;border-radius:8px}
+.compare-analysis-disclosure>summary:hover{background:#edf4fd}
+.compare-analysis-disclosure[open]>summary{border-bottom:1px solid #dae4f0}
+.compare-analysis-toggle{display:flex;align-items:center;gap:7px;color:#1a426f;font-size:14px;font-weight:700;white-space:nowrap}
+.compare-analysis-toggle .compare-analysis-chevron{display:inline-block;transform:rotate(0);transition:transform .16s ease;font-size:14px}
+.compare-analysis-disclosure[open] .compare-analysis-chevron{transform:rotate(90deg)}
+.compare-analysis-toggle small{font-size:12px;color:#62748c;font-weight:400}
+.compare-analysis-strip{display:grid;grid-template-columns:auto auto minmax(120px,1fr) minmax(120px,1fr) auto;align-items:center;gap:8px 14px;min-width:0;font-size:13px;line-height:1.35}
+.compare-analysis-strip>span{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.compare-analysis-badge{display:inline-flex;align-items:center;gap:4px;padding:4px 8px;border-radius:7px;font-size:14px;font-weight:800;background:#e5eaf2;color:#475569;white-space:nowrap}
+.compare-analysis-badge.bad{background:#fee6e9;color:#ad2940}
+.compare-analysis-badge.good{background:#dcf5e8;color:#13633e}
+.compare-analysis-good{color:#146641}
+.compare-analysis-bad{color:#a9233a}
+.compare-analysis-coverage{font-size:12px;color:#596d84;justify-self:end}
+.compare-analysis-detail{padding:12px 14px 14px;background:#fff}
+.compare-analysis-detail .compare-bridge{margin:0;padding:0;border:0;border-radius:0;background:transparent}
+.compare-analysis-detail .compare-bridge-title{margin-bottom:8px}
+.compare-analysis-detail .compare-bridge-title h4{font-size:17px}
+.compare-analysis-detail .compare-bridge-title p{font-size:13px}
+.compare-analysis-detail .compare-bridge-intro{font-size:14px;margin-bottom:9px}
+.compare-analysis-detail .compare-bridge-row{padding:4px 0}
+.compare-analysis-detail .compare-bridge-result{margin-top:9px;padding:9px}
+.compare-analysis-detail .compare-nc-note{margin-top:8px}
+.compare-analysis-detail .compare-financing-note{margin:10px 0 0}
+.historical-compare-section-head{margin:0 0 8px}
+@media(max-width:1150px){
+ .compare-compact-values .compare-compact-current strong{font-size:23px}
+ .compare-analysis-strip{grid-template-columns:auto auto minmax(120px,1fr) minmax(120px,1fr)}
+ .compare-analysis-coverage{grid-column:1/-1;justify-self:start}
+}
+@media(max-width:760px){
+ .historical-comparison-workspace{padding:12px}
+ .historical-compare-periods{grid-template-columns:minmax(0,1fr) 18px minmax(0,1fr)}
+ .compare-verdict-chip{font-size:12px;padding:4px 6px;white-space:normal;max-width:120px}
+ .historical-compare-period{gap:6px;padding:7px}
+ .historical-compare-period .v{font-size:15px}
+ .historical-compare-kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .historical-compare-kpi{padding:9px 10px}
+ .compare-analysis-strip{grid-template-columns:auto auto minmax(0,1fr)}
+ .compare-analysis-strip .compare-analysis-bad{grid-column:1/-2}
+ .compare-analysis-coverage{grid-column:auto;justify-self:end}
+}
+@media(max-width:560px){
+ .historical-compare-periods{grid-template-columns:1fr}
+ .historical-compare-arrow{display:none}
+ .historical-compare-kpis{grid-template-columns:1fr}
+ .compare-analysis-strip{grid-template-columns:1fr auto;gap:6px 10px}
+ .compare-analysis-toggle{grid-column:1/-1}
+ .compare-analysis-badge{justify-self:end}
+ .compare-analysis-good,.compare-analysis-bad{grid-column:1/-1}
+ .compare-analysis-coverage{grid-column:1/-1;justify-self:start}
+}
+
 </style>
 <style>
 .purchase-financing-detail{margin-top:4px;font-size:14px;line-height:1.5;font-weight:400;color:#425b7c;white-space:normal;min-width:200px}
@@ -2088,9 +2175,13 @@ body{font-size:16px;line-height:1.5}
             </div>
             <div id="historicalComparisonPeriodLabels" class="historical-compare-periods"></div>
             <div id="historicalComparisonKpis" class="historical-compare-kpis"></div>
-            <div id="historicalComparisonInsight" class="historical-compare-insight"></div>
-            <section id="historicalComparisonBridge" class="compare-bridge" aria-label="Riconciliazione della variazione dell’avanzo" aria-live="polite"></section>
-            <div id="comparisonFinancingNote" class="compare-financing-note hidden"></div>
+            <details id="historicalComparisonAnalysis" class="compare-analysis-disclosure">
+              <summary id="historicalComparisonInsight" class="compare-analysis-strip" aria-label="Analisi del confronto: apri o chiudi la spiegazione"></summary>
+              <div class="compare-analysis-detail">
+                <section id="historicalComparisonBridge" class="compare-bridge" aria-label="Riconciliazione della variazione dell’avanzo" aria-live="polite"></section>
+                <div id="comparisonFinancingNote" class="compare-financing-note hidden"></div>
+              </div>
+            </details>
             <div class="historical-compare-section-head"><div><h4 id="historicalComparisonContributorsTitle">Cosa ha mosso le uscite?</h4><p>Apri una L1 per vedere le L2; seleziona una L2 per arrivare a controparti e movimenti.</p><p id="comparisonFilterHint">Natura filtra i contributori; KPI e sintesi restano sul totale del periodo.</p></div><label class="compare-nature-filter">Natura<select id="comparisonNatureFilter" class="select"><option value="ALL">Tutte le nature</option></select></label></div>
             <div id="historicalComparisonContributors"></div>
             <div id="historicalComparisonDetail" class="historical-compare-detail hidden"></div>
@@ -5097,34 +5188,31 @@ function comparisonPct(a,b){
   if(Math.abs(a)<.5)return Math.abs(b)<.5?0:null;
   return (b-a)*100/a;
 }
-function comparisonABBars(a,b){
-  const scale=Math.max(1,Math.abs(a),Math.abs(b));
-  return '<div class="compare-ab-bars" aria-label="Barre di confronto A e B">'+[['A',a],['B',b]].map(function(x){
-    return '<div class="compare-ab-line '+(x[0]==="A"?"reference":"current")+'"><span>'+x[0]+'</span><span class="compare-bar-track"><i class="compare-ab-fill" style="width:'+(100*Math.abs(x[1])/scale).toFixed(1)+'%"></i></span><strong>'+money(x[1])+'</strong></div>';
-  }).join('')+'</div>';
-}
 function comparisonMetricCard(label,a,b,kind,visual,detail){
   const d=b-a,p=comparisonPct(a,b),tone=comparisonTone(kind==="EXPENSE"?"EXPENSE":"INCOME",d);
   const theme=visual||(kind==="EXPENSE"?"expense":"income"),icon={income:"↑",expense:"↓",structural:"▥",discretionary:"◎",savings:"◉",available:"◉"}[theme]||"▥";
-  const breakdown=detail?'<div class="compare-on-breakdown"><div><span><b class="compare-on-code">O</b> Obbligatorie</span><strong>'+money(detail.aO)+' → '+money(detail.bO)+'</strong></div>'+
-    '<div><span><b class="compare-on-code n">N</b> Necessarie</span><strong>'+money(detail.aN)+' → '+money(detail.bN)+'</strong></div></div>'+
-    '<div class="compare-on-foot">Uscite operative totali · '+money(detail.aTotal)+' → '+money(detail.bTotal)+'</div>':'';
+  const breakdown=detail?'<div class="compare-on-inline" title="Obbligatorie (O), necessarie (N) e uscite operative totali">'+
+    '<span><b class="compare-on-code">O</b> <strong>'+money(detail.aO)+' → '+money(detail.bO)+'</strong></span>'+
+    '<span><b class="compare-on-code n">N</b> <strong>'+money(detail.aN)+' → '+money(detail.bN)+'</strong></span></div>':'';
   return '<article class="historical-compare-kpi compare-'+esc(theme)+'"><div class="compare-metric-head"><div class="label">'+esc(label)+
     ((label==="Margine strutturale"||label.indexOf("Avanzo")===0)?contextualHelpButton("budget-surplus",label):"")+
     '</div><span class="compare-metric-icon" aria-hidden="true">'+scenarioKpiIcon(icon)+'</span></div>'+
-    '<div class="values"><span class="compare-value-reference">Periodo A<strong>'+money(a)+'</strong></span><span class="compare-value-current">Periodo B<strong>'+money(b)+'</strong></span></div>'+
+    '<div class="compare-compact-values"><span class="compare-compact-reference">Periodo A<strong>'+money(a)+'</strong></span>'+
+    '<span class="compare-compact-current">Periodo B<strong>'+money(b)+'</strong></span>'+
     '<b class="delta '+tone+'" title="Differenza B meno A"><span class="compare-delta-arrow" aria-hidden="true">'+(Math.abs(d)<.5?"→":d>0?"↑":"↓")+'</span>'+
-    comparisonSigned(d)+(p===null?"":' · '+(p>0?"+":"")+p.toLocaleString("it-IT",{maximumFractionDigits:1})+"%")+'</b>'+
-    (detail?breakdown:comparisonABBars(a,b))+'</article>';
+    comparisonSigned(d)+(p===null?"":' · '+(p>0?"+":"")+p.toLocaleString("it-IT",{maximumFractionDigits:1})+"%")+'</b></div>'+
+    breakdown+'</article>';
 }
 function comparisonVerdict(a,b){
   const ds=b.available-a.available,ss=b.savings-a.savings;
   const tied=Math.abs(ds)<.5&&Math.abs(ss)<.5;
   const winner=tied?"":ds>=0&&ss>=0?"B":ds<=0&&ss<=0?"A":"";
-  const disc=b.discretionary<a.discretionary-.5?"B ha ridotto le discrezionali":a.discretionary<b.discretionary-.5?"A ha minori discrezionali":"Discrezionali simili";
-  return '<div class="compare-verdict-card '+(winner?"":"mixed")+'"><span class="k">Solidità del periodo</span><strong>'+
-    (winner?"Periodo "+winner+" più solido":tied?"Situazione stabile":"Esito misto")+'</strong><small>'+
-    (winner?"Avanzo e risparmio migliori in "+winner+". ":"Avanzo e risparmio non indicano un unico vincitore. ")+esc(disc)+'.</small></div>';
+  const disc=b.discretionary<a.discretionary-.5?"B riduce le discrezionali":a.discretionary<b.discretionary-.5?"A ha discrezionali minori":"Discrezionali simili";
+  const title=winner?"Avanzo e risparmio migliori nel periodo "+winner+". "+disc:
+    tied?"Avanzo e risparmio pressoché stabili. "+disc:
+    "Avanzo e risparmio non indicano un unico vincitore. "+disc;
+  return '<span class="compare-verdict-chip '+(winner?"":"mixed")+'" title="'+esc(title)+'" aria-label="'+esc(title)+'">'+
+    (winner?"🏆 "+winner+" più solido":tied?"≈ Stabile":"≈ Esito misto")+'</span>';
 }
 function comparisonNCBreakdown(months){
   const set=new Set(months),out={cash:0,toClassify:0};
@@ -5168,6 +5256,19 @@ function renderComparisonBridge(a,b,sets){
     '<div class="compare-nc-note">NC incluse nel bilancio · contanti '+money(ncA.cash)+' → '+money(ncB.cash)+'; da classificare '+money(ncA.toClassify)+' → '+money(ncB.toClassify)+
     '. I prelievi sono una proxy di spesa finché non ne viene dettagliato l’uso.</div>'+
     (Math.abs(drift)>=1?'<div class="compare-bridge-alert">Differenza residua di '+money(Math.abs(drift))+': verificare i dati prima di trarre conclusioni.</div>':'');
+}
+function comparisonCompactSummary(groups,direction,delta,tone,a,b){
+  const deltaText=comparisonSigned(delta);
+  const impact=function(x){return direction==="EXPENSE"?x.a-x.b:x.b-x.a};
+  const sorted=groups.filter(function(x){return Math.abs(impact(x))>.5});
+  const plus=sorted.filter(function(x){return impact(x)>0}).sort(function(x,y){return impact(y)-impact(x)}).slice(0,1);
+  const minus=sorted.filter(function(x){return impact(x)<0}).sort(function(x,y){return impact(x)-impact(y)}).slice(0,1);
+  const brief=function(items,empty){return items.length?esc(items[0].name)+' '+comparisonSigned(items[0].b-items[0].a):empty};
+  return '<span class="compare-analysis-toggle"><span class="compare-analysis-chevron" aria-hidden="true">▸</span>Analisi del confronto <small>Apri dettagli</small></span>'+
+    '<span class="compare-analysis-badge '+tone+'">Δ Avanzo '+deltaText+'</span>'+
+    '<span class="compare-analysis-good" title="Contributore positivo più rilevante">↓ '+brief(plus,"Nessuno")+'</span>'+
+    '<span class="compare-analysis-bad" title="Contributore negativo più rilevante">↑ '+brief(minus,"Nessuno")+'</span>'+
+    '<span class="compare-analysis-coverage">Dati A '+a.covered+'/'+a.months+' · B '+b.covered+'/'+b.months+'</span>';
 }
 function comparisonTopInsight(groups,direction){
   const changed=groups.filter(function(x){return Math.abs(x.b-x.a)>.5});
@@ -5234,7 +5335,7 @@ function renderHistoricalPeriodComparison(){
     comparisonMetricCard("Risparmio",a.savings,b.savings,"INCOME","savings")+
     comparisonMetricCard(balanceSurplusLabel(),a.available,b.available,"INCOME","available");
   const availableDelta=b.available-a.available,availTone=Math.abs(availableDelta)<.5?"neutral":availableDelta>0?"good":"bad",availLabel=availTone==="neutral"?"Sostanzialmente stabile":availTone==="good"?"Migliora tra A e B":"Peggiora tra A e B";
-  $("historicalComparisonInsight").innerHTML='<div class="compare-summary-result '+availTone+'"><span class="compare-insight-label">'+balanceSurplusLabel()+'</span><strong>'+comparisonSigned(availableDelta)+'</strong><span>'+availLabel+'</span></div>'+comparisonTopInsight(groups,compareDirection)+'<div class="compare-data-coverage">Copertura dati · A '+a.covered+'/'+a.months+' mesi · B '+b.covered+'/'+b.months+' mesi</div>';
+  $("historicalComparisonInsight").innerHTML=comparisonCompactSummary(groups,compareDirection,availableDelta,availTone,a,b);
   renderComparisonBridge(a,b,sets);
   $("historicalComparisonContributorsTitle").textContent=compareDirection==="EXPENSE"?"Cosa ha mosso le uscite?":"Cosa ha mosso le entrate?";
   const natureKeys=compareDirection==="EXPENSE"?["MANDATORY","NECESSARY","DISCRETIONARY","UNCLASSIFIED","UNKNOWN"]:["FIXED","PREDICTABLE","VARIABLE","UNKNOWN"];
