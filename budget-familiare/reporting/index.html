@@ -5143,7 +5143,7 @@ function comparisonBridgeRows(a,b){
     {label:"Discrezionali (D)",effect:a.discretionary-b.discretionary},
     {label:"Altre uscite operative",effect:a.otherOperating-b.otherOperating},
     {label:"Risparmio",effect:a.savings-b.savings,saving:true}
-  ].filter(function(x){return x.always||Math.abs(x.effect)>.5});
+  ].filter(function(x){return x.always||Math.abs(x.effect)>.005});
 }
 function renderComparisonBridge(a,b,sets){
   const target=$("historicalComparisonBridge");if(!target)return;
@@ -5162,7 +5162,7 @@ function renderComparisonBridge(a,b,sets){
     return '<div class="compare-bridge-row"><span class="compare-bridge-name">'+esc(x.label)+'</span><span class="compare-bridge-value '+tone+'">'+signed(x.effect)+'</span>'+
       '<span class="compare-bridge-meter" aria-hidden="true"><i class="'+tone+'" style="width:'+(100*Math.abs(x.effect)/scale).toFixed(1)+'%"></i></span></div>';
   }).join('');
-  target.innerHTML='<div class="compare-bridge-title"><h4>Perché è cambiato l’avanzo?</h4><p>Contributi al Δ Avanzo, non delta della spesa</p></div>'+
+  target.innerHTML='<div class="compare-bridge-title"><h4>Perché è cambiato l’avanzo? <button class="context-help-trigger" type="button" data-context-help="comparison-bridge" aria-label="Aiuto: interpretare il confronto">?</button></h4><p>Contributi al Δ Avanzo, non delta della spesa</p></div>'+
     '<p class="compare-bridge-intro">'+esc(diagnosis)+'</p><div class="compare-bridge-list">'+rows+'</div>'+
     '<div class="compare-bridge-result"><strong>Δ Avanzo '+signed(actual)+'</strong><span>Somma contributi '+signed(sum)+' · '+(Math.abs(drift)<1?"riconciliato ✓":"da verificare")+'</span></div>'+
     '<div class="compare-nc-note">NC incluse nel bilancio · contanti '+money(ncA.cash)+' → '+money(ncB.cash)+'; da classificare '+money(ncA.toClassify)+' → '+money(ncB.toClassify)+
