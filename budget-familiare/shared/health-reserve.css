@@ -48,3 +48,34 @@
  .hr-fields{grid-template-columns:1fr}
  .hr-tabs button{padding:8px;font-size:13px}
 }
+
+/* V73.30.1.28 — Visual shift analysis. */
+.hr-analysis{margin:18px 0;padding:14px;border:1px solid #d7e4f1;border-radius:11px;background:#fcfdff}
+.hr-analysis h3{margin:0 0 4px;font-size:17px}
+.hr-chart-heading{display:flex;align-items:start;justify-content:space-between;gap:12px}
+.hr-chart-heading .hr-help{margin:6px 0 13px}
+.hr-choices{display:flex;gap:5px;white-space:nowrap}
+.hr-choices button,.hr-lag-pick{cursor:pointer;border:1px solid #cbd9ea;background:#f3f7ff;color:#294c73;border-radius:7px;padding:7px 10px;font-weight:650;font-size:13px}
+.hr-choices button.active,.hr-lag-pick.active{background:#2056ad;color:#fff;border-color:#2056ad}
+.hr-lag-table-wrap{overflow-x:auto;border:1px solid #e0e9f4;border-radius:9px;margin-top:9px}
+.hr-lag-table{min-width:640px}
+.hr-lag-table td:first-child{white-space:nowrap}
+.hr-lag-table td:last-child,.hr-lag-table th:last-child{text-align:center}
+.hr-graph-scroll{max-width:100%;overflow-x:auto;overscroll-behavior-x:contain;border:1px solid #e8eef6;border-radius:9px;background:#fff}
+.hr-graph-body{height:315px;min-width:880px;position:relative;padding:12px 10px 8px}
+.hr-graph-body-compare{height:320px}
+.hr-lag-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:12px 0}
+.hr-lag-summary>div{padding:11px;background:#eef4fd;border-radius:8px;min-width:0;display:grid;gap:5px}
+.hr-lag-summary small{font-size:12px;color:#536883}
+.hr-lag-summary strong{font-size:18px;line-height:1.2;white-space:nowrap;font-variant-numeric:tabular-nums}
+#hrLagDetail{border-radius:8px;padding:5px 0 13px}
+#hrLagDetail .btn:disabled{opacity:.55;cursor:not-allowed}
+.hr-analysis .hr-help strong{color:#304c6e}
+@media(max-width:760px){
+ .hr-analysis{padding:10px}
+ .hr-chart-heading{flex-direction:column;gap:2px}
+ .hr-chart-heading .hr-choices{margin-bottom:9px}
+ .hr-lag-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .hr-lag-summary strong{font-size:17px}
+ .hr-graph-body{height:290px}
+}
