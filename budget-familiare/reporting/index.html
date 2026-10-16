@@ -778,36 +778,63 @@ button,input,select{font:inherit}
 .analysis-zero-trend{display:inline-flex;align-items:center;justify-content:center;min-width:24px;color:#94a3b8;font-size:14px;font-weight:700}
 
 
-/* V73.30.1.24 — compact, reconciled baseline overview; single row */
+/* V73.30.1.25 — accessible compact overview, no microtype, still one row */
 .planning-overview-scroll{overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;max-width:100%;margin:1px 0 0}
 .planning-overview-scroll:focus-visible{outline:2px solid #3b82f6;outline-offset:2px}
-.planning-overview-strip{display:grid;grid-template-columns:minmax(215px,1.15fr) minmax(285px,1.6fr) minmax(156px,.81fr) minmax(156px,.81fr);gap:7px;min-width:850px;align-items:stretch}
-.planning-overview-item{background:#fff;border:1px solid #d9e4f2;border-radius:10px;padding:9px 11px;min-width:0;display:flex;flex-direction:column;gap:5px}
+.planning-overview-strip{
+  display:grid;grid-template-columns:minmax(258px,1.25fr) minmax(370px,1.78fr) minmax(190px,.91fr) minmax(190px,.91fr);
+  gap:8px;min-width:1030px;align-items:stretch;
+  font-family:system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+}
+.planning-overview-item{
+  background:#fff;border:1px solid #d9e4f2;border-radius:10px;
+  padding:10px 12px;min-width:0;display:flex;flex-direction:column;gap:6px;
+}
 .planning-overview-item.income{border-top:3px solid #23a880}
 .planning-overview-item.expense{border-top:3px solid #e16469}
 .planning-overview-item.margin{border-top:3px solid #467cce}
 .planning-overview-item.surplus{border-top:3px solid #7a63bc}
-.planning-overview-item .po-top{display:flex;justify-content:space-between;align-items:center;gap:5px}
-.planning-overview-item .po-label{font-size:12px;font-weight:800;color:#3c5679;white-space:nowrap}
+.planning-overview-item .po-top{display:flex;align-items:center;gap:5px}
+.planning-overview-item .po-label{font-size:13px;line-height:1.3;font-weight:750;color:#354c6b}
 .planning-overview-item .po-total{display:flex;flex-wrap:wrap;align-items:baseline;gap:5px 8px}
-.planning-overview-item .po-value{font-size:20px;line-height:1.15;letter-spacing:-.45px;color:#102b57;font-weight:800;font-variant-numeric:tabular-nums}
-.planning-overview-item .po-value.negative{color:#ae3045}
-.planning-overview-item .po-delta{font-size:11px;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
-.planning-overview-item .po-delta.good{color:#14845e}
-.planning-overview-item .po-delta.bad{color:#bd4052}
-.planning-overview-item .po-delta.neutral{color:#64748b}
-.planning-overview-item .po-breakdown{display:flex;align-items:center;gap:5px;flex-wrap:nowrap;overflow:visible;margin-top:auto;padding-top:3px;border-top:1px solid #eff2f7;min-width:0}
-.planning-overview-item .po-mini{display:flex;flex-direction:column;gap:1px;min-width:0;flex:1;border-radius:5px;background:#f5f8fe;padding:4px 5px;font-variant-numeric:tabular-nums}
-.planning-overview-item .po-mini-label{color:#445d80;font-size:10px;font-weight:800}
-.planning-overview-item .po-mini-value{color:#243d5e;font-size:11px;font-weight:800;white-space:nowrap}
-.planning-overview-item .po-mini-delta{font-size:9px;white-space:nowrap;font-weight:700}
-.planning-overview-item .po-mini-delta.good{color:#13835e}
-.planning-overview-item .po-mini-delta.bad{color:#be4655}
-.planning-overview-item .po-mini-delta.neutral{color:#71839b}
-.planning-overview-item .po-explanation{font-size:10px;line-height:1.35;color:#657a98;margin-top:auto}
-.planning-overview-item .po-contribution{font-size:10px;color:#536a8a;font-weight:650;white-space:nowrap;margin-top:auto;padding-top:4px;border-top:1px solid #eff2f7}
-.planning-overview-item .po-mini{cursor:help}
-@media(max-width:1100px){.planning-overview-scroll{margin:0 -2px}.planning-overview-strip{min-width:875px}}
+.planning-overview-item .po-value{
+  font-size:23px;line-height:1.17;letter-spacing:-.3px;color:#132d52;
+  font-weight:780;font-variant-numeric:tabular-nums;white-space:nowrap
+}
+.planning-overview-item .po-value.negative{color:#a82540}
+.planning-overview-item .po-delta{font-size:12px;line-height:1.3;font-weight:750;font-variant-numeric:tabular-nums;white-space:nowrap}
+.planning-overview-item .po-delta.good{color:#0f7757}
+.planning-overview-item .po-delta.bad{color:#b52e45}
+.planning-overview-item .po-delta.neutral{color:#566980}
+.planning-overview-item .po-breakdown{
+  display:grid;grid-template-columns:repeat(var(--po-columns,3),minmax(0,1fr));
+  gap:5px;margin-top:auto;padding-top:6px;border-top:1px solid #e8eff8;min-width:0
+}
+.planning-overview-item .po-mini{
+  display:flex;flex-direction:column;gap:3px;min-width:0;
+  border-radius:6px;background:#f3f7fd;padding:7px 6px 6px;
+  font-variant-numeric:tabular-nums;cursor:help
+}
+.planning-overview-item .po-mini-line{display:flex;align-items:baseline;justify-content:flex-start;flex-wrap:wrap;gap:2px 5px;min-width:0}
+.planning-overview-item .po-mini-label{color:#385578;font-size:12px;line-height:1.25;font-weight:850}
+.planning-overview-item .po-mini-value{color:#172f54;font-size:14px;line-height:1.3;font-weight:800;white-space:nowrap;letter-spacing:-.2px}
+.planning-overview-item .po-mini-delta{font-size:12px;line-height:1.25;white-space:nowrap;font-weight:750}
+.planning-overview-item .po-mini-delta.good{color:#117857}
+.planning-overview-item .po-mini-delta.bad{color:#b6364b}
+.planning-overview-item .po-mini-delta.neutral{color:#526880}
+.planning-overview-item .po-explanation{font-size:12px;line-height:1.4;color:#536b8a;margin-top:auto}
+.planning-overview-item .po-contribution{
+  font-size:12px;line-height:1.4;color:#385b83;font-weight:700;
+  margin-top:auto;padding-top:6px;border-top:1px solid #e8eff8;
+  white-space:normal;overflow-wrap:anywhere;
+}
+@media(max-width:1150px){
+  .planning-overview-scroll{margin:0 -2px}
+  .planning-overview-strip{min-width:1030px}
+}
+@media(min-width:1151px) and (max-width:1300px){
+  .planning-overview-strip{grid-template-columns:minmax(255px,1.17fr) minmax(366px,1.73fr) minmax(186px,.94fr) minmax(186px,.94fr)}
+}
 
 /* V73.30.1.23 — Universal table: baseline / provisional plan */
 .analysis-baseline-launch{white-space:nowrap;font-weight:700}
@@ -7398,9 +7425,9 @@ function planningOverviewChip(code,fullname,baseline,history,kind){
   const delta=planningOverviewDelta(baseline,history,kind);
   const compact=(n)=>Math.abs(n)>=10000?
     (num(n)/1000).toLocaleString("it-IT",{maximumFractionDigits:1})+"k €":money(n);
-  return '<span class="po-mini" title="'+esc(fullname+" · "+delta.tooltip)+'">'+
-    '<span class="po-mini-label">'+esc(code)+'</span>'+
-    '<strong class="po-mini-value">'+esc(compact(baseline))+'</strong>'+
+  return '<span class="po-mini" title="'+esc(fullname+" · "+delta.tooltip)+'" aria-label="'+esc(fullname+": "+delta.tooltip)+'">'+
+    '<span class="po-mini-line"><span class="po-mini-label">'+esc(code)+'</span>'+
+    '<strong class="po-mini-value">'+esc(compact(baseline))+'</strong></span>'+
     '<span class="po-mini-delta '+delta.quality+'">'+esc(delta.label)+'</span></span>';
 }
 function planningOverviewBlock(label,theme,current,history,kind,body,description){
@@ -7421,9 +7448,9 @@ function planningOverviewRenderModel(model,context){
     incomeKinds.push(["OTHER_INCOME","?","Altre entrate"]);
   if(Math.abs(b.expense.UNCLASSIFIED)>.005||Math.abs(h.expense.UNCLASSIFIED)>.005)
     expenseKinds.push(["UNCLASSIFIED","NC","Non classificate"]);
-  const incomeHtml='<div class="po-breakdown">'+incomeKinds.map(([k,code,name])=>
+  const incomeHtml='<div class="po-breakdown" style="--po-columns:'+incomeKinds.length+'">'+incomeKinds.map(([k,code,name])=>
     planningOverviewChip(code,name,b.income[k],h.income[k],"INCOME")).join("")+'</div>';
-  const expenseHtml='<div class="po-breakdown">'+expenseKinds.map(([k,code,name])=>
+  const expenseHtml='<div class="po-breakdown" style="--po-columns:'+expenseKinds.length+'">'+expenseKinds.map(([k,code,name])=>
     planningOverviewChip(code,name,b.expense[k],h.expense[k],"EXPENSE")).join("")+'</div>';
   const residual=[
     ["Risparmio/Investimenti",b.expense.SAVINGS,h.expense.SAVINGS],
