@@ -2239,26 +2239,44 @@ body{font-size:16px;line-height:1.5}
     <div id="planningSimulatorView" class="hidden planning-simulator-page">
       <div class="planning-board-hero">
         <div>
-          <h1>Simulatore what-if</h1>
-          <p>Parti dallo storico ordinario, varia entrate e spese per natura e misura subito l'effetto sul saldo. Nessuna simulazione modifica il piano.</p>
+          <h1>Simulatore · dalla Baseline agli obiettivi</h1>
+          <p>Verifica se il margine strutturale copre discrezionali, altre uscite e investimenti. Poi costruisci scenari sulle quote ancora future, senza modificare Baseline o Piano approvato.</p>
         </div>
         <div class="planning-board-hero-actions">
           <div class="planning-period-box">
-            <span>Baseline</span>
+            <span>Orizzonte Baseline</span>
             <div class="mode-toggle">
-              <button class="btn compact" type="button" data-simulator-horizon="CALENDAR">Anno precedente</button>
-              <button class="btn ghost compact" type="button" data-simulator-horizon="ROLLING_12">Ultimi 12 mesi</button>
+              <button class="btn compact" type="button" data-simulator-horizon="CALENDAR">Anno corrente</button>
+              <button class="btn ghost compact" type="button" data-simulator-horizon="ROLLING_12">Prossimi 12 mesi</button>
             </div>
           </div>
         </div>
       </div>
       <div id="planningSimulatorStatus"></div>
 
+      <section id="planningSimDiagnostic" class="planning-insight-card bf-scenario-diagnosis" aria-live="polite"></section>
+      <section class="planning-insight-card bf-scenario-goals">
+        <div class="bf-scenario-section-heading"><div><h3>Obiettivi annuali</h3><p>Prima il pareggio, poi la prudenza e un progetto familiare. Sono ipotesi di simulazione, non importi già impegnati.</p></div></div>
+        <div class="bf-scenario-goal-fields">
+          <label>Fondo prudenziale da finanziare con l'avanzo dell'anno (€)
+            <input id="planningSimReserve" type="number" min="0" max="10000000" step="50" value="0" inputmode="decimal">
+          </label>
+          <label>Obiettivo aggiuntivo (es. viaggio importante) (€)
+            <input id="planningSimProject" type="number" min="0" max="10000000" step="100" value="0" inputmode="decimal">
+          </label>
+        </div>
+        <div class="bf-scenario-goal-summary" id="planningSimGoalsResult" aria-live="polite"></div>
+        <div class="bf-scenario-quick-actions">
+          <button type="button" class="btn ghost compact" data-scenario-solve="BREAK_EVEN">Trova pareggio con D</button>
+          <button type="button" class="btn compact" data-scenario-solve="GOALS">Prova a finanziare gli obiettivi con D</button>
+        </div>
+        <p class="bf-scenario-disclaimer">Se il fondo prudenziale è già finanziato da liquidità preesistente non inserirlo di nuovo come destinazione dell'avanzo di quest'anno. Il progetto è una destinazione da finanziare, non una spesa aggiunta alla Baseline.</p>
+      </section>
       <section class="planning-insight-card planning-simulator-card planning-simulator-standalone">
         <div class="planning-simulator-head">
           <div>
-            <h3>Scenario simulato</h3>
-            <p>Baseline: storico ordinario con movimenti straordinari esclusi. Le percentuali si applicano all'intero periodo storico selezionato.</p>
+            <h3>Elabora lo scenario</h3>
+            <p>Partenza: Baseline/proiezione attuale. Gli slider modificano soltanto la quota non ancora sostenuta o incassata; quanto già avvenuto resta fisso.</p>
           </div>
           <span id="planningSimulatorScope" class="planning-simulator-scope"></span>
         </div>
@@ -2266,8 +2284,8 @@ body{font-size:16px;line-height:1.5}
         <div id="planningSimulatorResults" class="planning-simulator-results"></div>
 
         <div class="planning-sim-presets planning-sim-presets-main" aria-label="Scenari predefiniti">
-          <button class="btn ghost compact" type="button" data-planning-sim-preset="RESET">Storico invariato</button>
-          <button class="btn ghost compact planning-sim-forecast-preset" type="button" data-planning-sim-preset="FORECAST">★ Previsione attuale</button>
+          <button class="btn ghost compact" type="button" data-planning-sim-preset="RESET">Baseline invariata</button>
+          
           <button class="btn ghost compact" type="button" data-planning-sim-preset="D25">D −25%</button>
           <button class="btn ghost compact" type="button" data-planning-sim-preset="D50">D −50%</button>
           <button class="btn ghost compact" type="button" data-planning-sim-preset="D100">D −100%</button>
@@ -2278,7 +2296,7 @@ body{font-size:16px;line-height:1.5}
         <div class="planning-sim-groups">
           <section class="planning-sim-group income">
             <div class="planning-sim-group-head">
-              <div><strong>Entrate</strong><span>Variazione rispetto allo storico ordinario.</span></div>
+              <div><strong>Entrate</strong><span>Variazione sulla quota futura della Baseline.</span></div>
               <span>F / P / V</span>
             </div>
             <div class="planning-simulator-controls">
@@ -2302,7 +2320,7 @@ body{font-size:16px;line-height:1.5}
 
           <section class="planning-sim-group expense">
             <div class="planning-sim-group-head">
-              <div><strong>Spese</strong><span>Variazione rispetto allo storico ordinario.</span></div>
+              <div><strong>Spese</strong><span>Variazione sulla quota futura della Baseline.</span></div>
               <span>O / N / D</span>
             </div>
             <div class="planning-simulator-controls">
@@ -2332,7 +2350,14 @@ body{font-size:16px;line-height:1.5}
           </div>
           <div id="planningSimMatrix"></div>
         </div>
-        <div class="planning-sim-note">Lo scenario “Previsione attuale” usa direttamente il piano costruito in Analisi. Gli scenari personalizzati partono invece dallo storico ordinario e applicano le percentuali selezionate.</div>
+        <div class="planning-sim-note">Gli importi fuori O/N/D (NC, investimenti e altre uscite) non cambiano con gli slider: sono visibili nella diagnosi. Una riduzione simulata non è ancora un Piano né una decisione approvata. Il saldo può differire dal Flusso economico per investimenti finanziati da patrimonio pregresso o coperture.</div>
+      </section>
+      <section class="planning-insight-card bf-scenario-compare">
+        <div class="bf-scenario-section-heading">
+          <div><h3>Confronta gli scenari</h3><p>Salva fino a tre simulazioni in questa sessione, senza modificare Baseline, Piano o database.</p></div>
+          <button type="button" class="btn compact" data-scenario-action="SAVE">Salva scenario</button>
+        </div>
+        <div id="planningSimSaved" class="bf-scenario-saved"></div>
       </section>
     </div>
 
@@ -2596,6 +2621,7 @@ body{font-size:16px;line-height:1.5}
   </div>
 </div>
 
+<script src="../shared/scenario-strategy.js?v=73.30.3.0-20261017"></script>
 <script>
 const sb=window.appSupabase;
 if(typeof Chart!=="undefined"){
@@ -2662,6 +2688,7 @@ let planningNatureChart=null;
 let planningMonthlyChart=null;
 let planningSimulatorHorizon="CALENDAR";
 let planningSimulationMode="CUSTOM";
+let planningSimReserve=0,planningSimProject=0,planningSavedScenarios=[],planningScenarioSequence=0,planningScenarioFeedback="";
 let planningSimulation={MANDATORY:0,NECESSARY:0,DISCRETIONARY:0,FIXED:0,PREDICTABLE:0,VARIABLE:0};
 const planningBoardExpandedL1=new Set();
 const planningBoardExpandedL2=new Set();
