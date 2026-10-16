@@ -778,6 +778,9 @@ button,input,select{font:inherit}
 .analysis-zero-trend{display:inline-flex;align-items:center;justify-content:center;min-width:24px;color:#94a3b8;font-size:14px;font-weight:700}
 
 
+/* V73.30.1.26 — concise table values: monthly basis explained once and on hover */
+.planning-board-table .planning-header-info{display:inline-block;margin-left:3px;color:#3876b0;font-size:12px;font-weight:700;vertical-align:baseline;cursor:help}
+.planning-value-cell>span[title],.planning-delta-text>span[title]{cursor:help}
 /* V73.30.1.25 — accessible compact overview, no microtype, still one row */
 .planning-overview-scroll{overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;max-width:100%;margin:1px 0 0}
 .planning-overview-scroll:focus-visible{outline:2px solid #3b82f6;outline-offset:2px}
@@ -2207,7 +2210,7 @@ body{font-size:16px;line-height:1.5}
       <section class="planning-board-card">
         <div class="planning-board-table-wrap">
           <table class="planning-board-table">
-            <thead><tr><th>Categoria</th><th id="planningBoardHistoryHead">Storico</th><th id="planningBoardYearHead">Previsione</th><th>Var. vs storico</th><th>Natura</th><th>Tipo previsione <button class="context-help-trigger" type="button" data-context-help="forecast-baseline" aria-label="Aiuto: previsione e Baseline">?</button></th><th>Note / razionale</th><th></th></tr></thead>
+            <thead><tr><th>Categoria</th><th id="planningBoardHistoryHead" title="Prima riga: totale del periodo. Seconda riga (Ø): media mensile, totale diviso 12.">Storico</th><th id="planningBoardYearHead" title="Prima riga: totale del periodo. Seconda riga (Ø): media mensile, totale diviso 12.">Previsione</th><th title="Variazione rispetto allo storico: percentuale, differenza totale in euro e differenza media mensile preceduta da Ø.">Var. vs storico <span class="planning-header-info" aria-label="Variazione totale e media mensile" title="Importo totale · Ø media mensile">ⓘ</span></th><th>Natura</th><th>Tipo previsione <button class="context-help-trigger" type="button" data-context-help="forecast-baseline" aria-label="Aiuto: previsione e Baseline">?</button></th><th>Note / razionale</th><th></th></tr></thead>
             <tbody id="planningBoardBody"><tr><td colspan="8" class="muted">Apri il tabellone per caricare il piano.</td></tr></tbody>
           </table>
         </div>
@@ -7270,17 +7273,31 @@ function planningNoteFilterMatch(row){
   return filter==="WITH"?has:!has;
 }
 function planningValueHtml(value){
-  return '<div class="planning-value-cell"><strong>'+money(value)+'</strong><span>Ø '+money(num(value)/12)+'/mese</span></div>';
+  const monthly=money(num(value)/12);
+  return '<div class="planning-value-cell"><strong>'+money(value)+'</strong>'+
+    '<span title="'+esc("Media mensile: "+monthly+"/mese (totale del periodo diviso 12)")+'" aria-label="'+esc("Media mensile: "+monthly+"/mese")+'">Ø '+monthly+'</span></div>';
 }
 function planningL1NatureHtml(rows,direction){const d=planningDominantNature(rows,direction);if(!d.nature)return '<span class="planning-nature-badge unknown">?</span>';return '<span class="planning-nature-badge '+planningNatureClass(d.nature)+'" title="'+esc(planningNatureLabel(d.nature))+'">'+planningNatureShort(d.nature)+' '+d.pct.toLocaleString("it-IT",{maximumFractionDigits:0})+'%</span>'}
 function planningMonthPanelHtml(row){return '<tr class="planning-month-row"><td colspan="8"><div class="planning-month-panel"><div class="planning-month-head"><div class="small"><strong>'+esc(row.l2_name)+'</strong> · dettaglio mensile del periodo selezionato.</div><button class="btn ghost compact" type="button" data-planning-open-analysis="'+esc(row.category_id)+'" data-planning-open-direction="'+row.direction+'">Apri in Analisi</button></div><div class="planning-month-grid">'+row.months.map(function(m){return '<div class="planning-month-cell '+(m.kind==="actual"?"actual ":"")+(m.override?"override":"")+'"><div class="m">'+esc(monthLabel(m.month))+'</div><div class="a">'+money(m.amount)+'</div><div class="t">'+(m.kind==="actual"?"reale":(m.override?"override":planningBoardContext==="BASELINE"?"baseline":"prev."))+'</div></div>'}).join("")+'</div></div></td></tr>'}
 function planningDeltaHtml(deltaAbs,deltaPct,direction,comparison){
-  const abs=num(deltaAbs),monthly=abs/12,isNeutral=Math.abs(abs)<.5,pct=(deltaPct===null||deltaPct===undefined||!Number.isFinite(Number(deltaPct)))?null:num(deltaPct);
-  if(isNeutral)return '<div class="planning-delta-cell"><div class="planning-delta-track"><i class="planning-delta-zero"></i></div><div class="planning-delta-text"><strong class="neutral">0%</strong><span>€0/mese</span></div></div>';
-  const favorable=direction==="EXPENSE"?abs<0:abs>0,quality=favorable?"good":"bad",sign=abs>0?"+":"−",pos=abs>0?"pos":"neg";
-  if(comparison<=0)return '<div class="planning-delta-cell"><div class="planning-delta-track"><i class="planning-delta-zero"></i></div><div class="planning-delta-text"><strong class="'+quality+'">NUOVA</strong><span>'+sign+money(Math.abs(abs))+' · '+sign+money(Math.abs(monthly))+'/mese</span></div></div>';
+  const abs=num(deltaAbs),monthly=abs/12,isNeutral=Math.abs(abs)<.5,
+    pct=(deltaPct===null||deltaPct===undefined||!Number.isFinite(Number(deltaPct)))?null:num(deltaPct);
+  const signed=function(v){return (v>0?"+":v<0?"−":"")+money(Math.abs(v))};
+  const totalText=signed(abs),monthlyText=signed(monthly);
+  const explanation=esc("Variazione totale rispetto allo storico: "+totalText+
+    ". Variazione media mensile: "+monthlyText+"/mese (differenza totale divisa 12).");
+  const figures='<span title="'+explanation+'" aria-label="'+explanation+'">'+
+    totalText+' · Ø '+monthlyText+'</span>';
+  if(isNeutral)return '<div class="planning-delta-cell"><div class="planning-delta-track"><i class="planning-delta-zero"></i></div>'+
+    '<div class="planning-delta-text"><strong class="neutral">0%</strong><span title="'+explanation+'">Ø '+money(0)+'</span></div></div>';
+  const favorable=direction==="EXPENSE"?abs<0:abs>0,quality=favorable?"good":"bad",
+    pos=abs>0?"pos":"neg";
+  if(comparison<=0)return '<div class="planning-delta-cell"><div class="planning-delta-track"><i class="planning-delta-zero"></i></div>'+
+    '<div class="planning-delta-text"><strong class="'+quality+'">NUOVA</strong>'+figures+'</div></div>';
   const rounded=Math.round(pct),width=Math.min(50,Math.max(3,Math.abs(pct)/100*50));
-  return '<div class="planning-delta-cell"><div class="planning-delta-track"><i class="planning-delta-zero"></i><i class="planning-delta-fill '+pos+' '+quality+'" style="width:'+width.toFixed(1)+'%"></i></div><div class="planning-delta-text"><strong class="'+quality+'">'+(rounded>0?"+":"")+rounded+'%</strong><span>'+sign+money(Math.abs(abs))+' · '+sign+money(Math.abs(monthly))+'/mese</span></div></div>';
+  return '<div class="planning-delta-cell"><div class="planning-delta-track"><i class="planning-delta-zero"></i>'+
+    '<i class="planning-delta-fill '+pos+' '+quality+'" style="width:'+width.toFixed(1)+'%"></i></div>'+
+    '<div class="planning-delta-text"><strong class="'+quality+'">'+(rounded>0?"+":"")+rounded+'%</strong>'+figures+'</div></div>';
 }
 function planningSectionHtml(direction,allRows){
   const q=planningBoardSearch.trim().toLocaleLowerCase("it"),groups=planningGroupRows(allRows);
@@ -7611,7 +7628,7 @@ function renderPlanningBoard(){
   renderPlanningOverview(exp,inc,view);
   renderPlanningBaselineAudit(exp,inc);
   let html="";if(planningBoardFilter!=="EXPENSE")html+=planningSectionHtml("INCOME",inc);if(planningBoardFilter!=="INCOME")html+=planningSectionHtml("EXPENSE",exp);$("planningBoardBody").innerHTML=html||'<tr><td colspan="8" class="muted">Nessuna voce corrisponde ai filtri.</td></tr>';
-  $("planningBoardLegend").textContent="Δ previsione/baseline rispetto allo storico: per le spese una diminuzione è verde, per le entrate è verde un aumento. «Nuova» significa storico pari a zero. I valori sono quelli del forecast corrente, non ancora un piano indipendente.";
+  $("planningBoardLegend").textContent="Lettura valori: prima riga = totale del periodo; Ø = media mensile (totale / 12). Nel confronto: variazione totale · Ø variazione mensile. Verde sulle spese = riduzione; verde sulle entrate = aumento. «Nuova» indica storico zero. Baseline e Piano sono ancora alimentati dallo stesso forecast.";
   renderPlanningNatureChart(exp);renderPlanningMonthlyChart(exp,inc);
 }
 async function loadPlanningBoard(force){
