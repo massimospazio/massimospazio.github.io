@@ -9,10 +9,11 @@
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
 <script src="../shared/supabase-client.js?v=73.24.0-20261012-1415"></script>
-<script src="../shared/app-config.js?v=73.30.1.28-20261016"></script>
+<script src="../shared/app-config.js?v=73.30.2.0-20261017"></script>
 <script src="../shared/contextual-help.js?v=73.30.1.14-20261014" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <link rel="stylesheet" href="../shared/health-reserve.css?v=73.30.1.28-20261016">
+<link rel="stylesheet" href="../shared/approved-plan.css?v=73.30.2.0-20261017">
 <style>
 :root{--bg:#f4f6fa;--card:#fff;--text:#17263e;--muted:#58677d;--line:#dce4ee;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 4px 18px rgba(15,23,42,.045);--sc-blue:#2563eb;--sc-blue-soft:#eff6ff;--sc-green:#0ea87a;--sc-red:#ef5b73;--sc-purple:#7658e6;--sc-ink:#17263e}
 *{box-sizing:border-box}
@@ -7615,23 +7616,57 @@ function renderPlanningSimulatorView(){
   html+='</tbody></table>';$("planningSimMatrix").innerHTML=html;
 }
 function renderPlanningBoard(){
-  if(!planningBoardData||!planningBoardData.expense||!planningBoardData.income)return;planningRenderFilterButtons();
-  const exp=planningBuildRows(planningBoardData.expense,"EXPENSE"),inc=planningBuildRows(planningBoardData.income,"INCOME"),expTotals=planningDirectionTotals(exp),incTotals=planningDirectionTotals(inc),balance=incTotals.planned-expTotals.planned,def=planningDefinition(planningBoardData.expense),year=String(planningBoardData.expense.current_year_start||"").slice(0,4)||String(new Date().getFullYear()),rolling=planningBoardHorizon==="ROLLING_12";
-  const view=planningBoardPresentation(planningBoardContext,planningBoardHorizon,year,def.comparisonLabel);
-  $("planningBoardView").dataset.boardContext=planningBoardContext;
-  $("planningBoardTitle").textContent=view.title;
-  $("planningBoardYear").textContent=view.period;
-  $("planningBoardHistoryHead").textContent=rolling?"Storico 12M":"Storico "+def.comparisonLabel;
-  $("planningBoardYearHead").textContent=view.column;
-  $("planningBoardSubtitle").textContent=view.subtitle;
-  $("planningBoardContextNote").textContent=view.note;
-  $("planningBoardBackToAnalysis").classList.toggle("hidden",!view.baseline);
-  renderPlanningOverview(exp,inc,view);
-  renderPlanningBaselineAudit(exp,inc);
-  let html="";if(planningBoardFilter!=="EXPENSE")html+=planningSectionHtml("INCOME",inc);if(planningBoardFilter!=="INCOME")html+=planningSectionHtml("EXPENSE",exp);$("planningBoardBody").innerHTML=html||'<tr><td colspan="8" class="muted">Nessuna voce corrisponde ai filtri.</td></tr>';
-  $("planningBoardLegend").textContent="Lettura valori: prima riga = totale del periodo; Ø = media mensile (totale / 12). Nel confronto: variazione totale · Ø variazione mensile. Verde sulle spese = riduzione; verde sulle entrate = aumento. «Nuova» indica storico zero. Baseline e Piano sono ancora alimentati dallo stesso forecast.";
-  renderPlanningNatureChart(exp);renderPlanningMonthlyChart(exp,inc);
+  if(!planningBoardData||!planningBoardData.expense||!planningBoardData.income)return;
+  const liveBoardData=planningBoardData;
+  const calendarYear=String(liveBoardData.expense.current_year_start||"").slice(0,4);
+  const approved=planningBoardContext==="PLAN"&&planningBoardHorizon==="CALENDAR"
+     ?window.BudgetFamilyPlan?.snapshotFor(Number(calendarYear)):null;
+  if(approved)planningBoardData={expense:approved.expense,income:approved.income,meta:approved.meta};
+  try{
+    planningRenderFilterButtons();
+    const exp=planningBuildRows(planningBoardData.expense,"EXPENSE"),inc=planningBuildRows(planningBoardData.income,"INCOME"),
+      expTotals=planningDirectionTotals(exp),incTotals=planningDirectionTotals(inc),
+      balance=incTotals.planned-expTotals.planned,def=planningDefinition(planningBoardData.expense),
+      year=String(planningBoardData.expense.current_year_start||"").slice(0,4)||String(new Date().getFullYear()),
+      rolling=planningBoardHorizon==="ROLLING_12";
+    const view=planningBoardPresentation(planningBoardContext,planningBoardHorizon,year,def.comparisonLabel);
+    if(approved){
+      view.title="Tabellone · Piano approvato V"+approved.revision;
+      view.period=year;
+      view.column="Piano V"+approved.revision+" · "+year;
+      view.subtitle="Piano annuale approvato e congelato: fotografia dei consuntivi già chiusi e delle previsioni rimanenti alla data dell'approvazione.";
+      view.note="Piano V"+approved.revision+" immutabile: la Baseline e il Forecast corrente possono cambiare senza alterarlo. La differenza rispetto alla previsione attuale è mostrata nel riquadro delle versioni.";
+    }else if(planningBoardContext==="PLAN"){
+      if(rolling){
+        view.title="Tabellone · Rolling Forecast";
+        view.note="Vista operativa dei prossimi 12 mesi, sempre aggiornata: non equivale a un Piano annuale approvato. Per esaminare il Piano congelato seleziona Anno corrente.";
+      }else{
+        view.title="Tabellone · Proiezione non approvata";
+        view.note="Non esiste ancora una fotografia approvata per l'anno selezionato. I dati rappresentano la Baseline/proiezione corrente, non un Piano ufficiale.";
+      }
+    }
+    $("planningBoardView").dataset.boardContext=planningBoardContext;
+    $("planningBoardTitle").textContent=view.title;
+    $("planningBoardYear").textContent=view.period;
+    $("planningBoardHistoryHead").textContent=rolling?"Storico 12M":"Storico "+def.comparisonLabel;
+    $("planningBoardYearHead").textContent=view.column;
+    $("planningBoardSubtitle").textContent=view.subtitle;
+    $("planningBoardContextNote").textContent=view.note;
+    $("planningBoardBackToAnalysis").classList.toggle("hidden",!view.baseline);
+    renderPlanningOverview(exp,inc,view);
+    renderPlanningBaselineAudit(exp,inc);
+    let html="";
+    if(planningBoardFilter!=="EXPENSE")html+=planningSectionHtml("INCOME",inc);
+    if(planningBoardFilter!=="INCOME")html+=planningSectionHtml("EXPENSE",exp);
+    $("planningBoardBody").innerHTML=html||'<tr><td colspan="8" class="muted">Nessuna voce corrisponde ai filtri.</td></tr>';
+    $("planningBoardLegend").textContent="Lettura valori: prima riga = totale del periodo; Ø = media mensile (totale / 12). Nel confronto: variazione totale · Ø variazione mensile. Verde sulle spese = riduzione; verde sulle entrate = aumento. «Nuova» indica storico zero. "+(approved?"Questi importi sono congelati nella versione approvata V"+approved.revision+".":rolling?"Questa è la previsione rolling corrente, non il Piano annuale.":"Per creare un Piano stabile occorre l'approvazione esplicita.");
+    renderPlanningNatureChart(exp);renderPlanningMonthlyChart(exp,inc);
+  }finally{
+    planningBoardData=liveBoardData;
+  }
+  window.BudgetFamilyPlan?.onBoardRendered();
 }
+
 async function loadPlanningBoard(force){
   if(planningBoardLoading)return;
   if(!force&&planningBoardData&&planningBoardData.expense&&planningBoardData.income){if(planningBoardVisible)renderPlanningBoard();if(planningSimulatorVisible)renderPlanningSimulatorView();return}
@@ -8137,6 +8172,7 @@ document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!$("rpcDiag
 init();
 </script>
 <script src="../shared/health-reserve.js?v=73.30.1.28-final-20261016"></script>
+<script src="../shared/approved-plan.js?v=73.30.2.0-20261017"></script>
 </body>
 </html>
 
