@@ -168,7 +168,7 @@ function renderHealth(){
  '<div class="hr-scroll"><table class="hr-table"><thead><tr><th>Mese reale</th><th>Medici</th><th>Diagnostica</th><th>Rimborsi</th><th>Netto</th></tr></thead><tbody>'+
  current.months.map(x=>'<tr><td>'+esc(x.month.slice(0,7))+'</td><td>'+eu2(x.medical)+'</td><td>'+eu2(x.diagnostics)+'</td><td>'+eu2(x.insurance)+'</td><td>'+eu2(x.medical+x.diagnostics-x.insurance)+'</td></tr>').join("")+
  '</tbody></table></div>'+
- '<section class="hr-calc"><h3>Stima da riportare nella baseline</h3><p class="hr-help">Scegli una copertura prudente: i rapporti storici sopra non sono percentuali contrattuali. Il calcolatore non modifica le previsioni; l’inserimento nella baseline resta manuale.</p>'+
+ '<section class="hr-calc"><h3>Stima da riportare nella baseline</h3><p class="hr-help">Scegli una copertura prudente: i rapporti storici sopra non sono percentuali contrattuali. La percentuale iniziale deriva dal confronto a 0 mesi sulla finestra omogenea e va verificata. Il calcolatore non modifica le previsioni; l’inserimento nella baseline resta manuale.</p>'+
  '<div class="hr-fields"><label>Medici e visite previste (€)<input id="hrMed" type="number" step="10" min="0" value="'+esc(calc.med)+'"></label>'+
  '<label>Analisi / Diagnostica previste (€)<input id="hrDiag" type="number" step="10" min="0" value="'+esc(calc.diag)+'"></label>'+
  '<label>Copertura stimata (%)<input id="hrPct" type="number" step="1" min="0" max="100" value="'+esc(calc.pct)+'"></label></div>'+
