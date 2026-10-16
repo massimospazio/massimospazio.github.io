@@ -1,0 +1,43 @@
+/* V73.30.3.0 · Baseline → diagnosi → leve → scenari, senza nuovi stili globali */
+.bf-scenario-diagnosis{padding:0!important;overflow:hidden;border:1px solid #dce4ef}
+.bf-diagnostic-top{padding:14px 17px;border-bottom:1px solid #e5eaf1;background:#eaf6ed;color:#14563a}
+.bf-diagnostic-top.warning{background:#fff7e9;color:#785216}
+.bf-diagnostic-top.danger{background:#fff0f0;color:#91282d}
+.bf-diagnostic-eyebrow{font-size:12px;font-weight:750;letter-spacing:.07em}
+.bf-diagnostic-top h2{font-size:21px;line-height:1.24;margin:5px 0}
+.bf-diagnostic-top p{font-size:15px;margin:0;max-width:1000px;line-height:1.5}
+.bf-diagnostic-flow{display:grid;grid-template-columns:repeat(4,minmax(145px,1fr));gap:8px;padding:13px}
+.bf-diagnostic-stat{border:1px solid #e0e8f1;border-radius:9px;padding:10px 11px;background:#fbfcfe;display:grid;gap:5px;min-width:0}
+.bf-diagnostic-stat span{font-size:12px;font-weight:650;color:#5b6c84}
+.bf-diagnostic-stat strong{font-size:20px;font-weight:750;white-space:nowrap;font-variant-numeric:tabular-nums;color:#233c5e}
+.bf-diagnostic-stat.emphasis{background:#eaf2fc;border-color:#c8dcf6}
+.bf-diagnostic-stat.bad strong{color:#ae3030}.bf-diagnostic-stat.good strong{color:#096b44}
+.bf-diagnostic-explanation{font-size:14px;line-height:1.5;color:#475e78;padding:0 14px 13px;margin:0}
+.bf-scenario-section-heading{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+.bf-scenario-section-heading h3{font-size:18px;margin:0 0 4px;color:#1b2f52}
+.bf-scenario-section-heading p{font-size:14px;color:#64758e;margin:0}
+.bf-scenario-goal-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}
+.bf-scenario-goal-fields label{font-size:14px;font-weight:650;display:grid;gap:5px;color:#344c66}
+.bf-scenario-goal-fields input{width:100%;box-sizing:border-box;border:1px solid #b9cbe1;border-radius:9px;padding:10px 12px;font-size:17px;font-weight:700;color:#1c3250;background:white}
+.bf-goals-kpis{display:grid;grid-template-columns:repeat(4,minmax(160px,1fr));gap:8px;margin-top:12px}
+.bf-goals-kpis>div{display:grid;gap:5px;border:1px solid #dce4ed;border-radius:10px;padding:12px;background:#f6f9fd}
+.bf-goals-kpis span{font-size:12px;color:#566d87;font-weight:650}
+.bf-goals-kpis strong{font-size:20px;font-variant-numeric:tabular-nums;color:#1a355a}
+.bf-goals-kpis strong.negative,.bf-scenario-option-value.negative{color:#b52a3d}
+.bf-goals-kpis strong.positive,.bf-scenario-option-value.positive{color:#087c50}
+.bf-goals-foot,.bf-scenario-disclaimer{font-size:13px;color:#596f89;line-height:1.5;margin:9px 0 0}
+.bf-scenario-quick-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.bf-scenario-saved{display:grid;grid-template-columns:repeat(3,minmax(180px,1fr));gap:10px;margin-top:13px}
+.bf-scenario-option{padding:12px;border:1px solid #d7e1ec;border-radius:10px;background:#fcfdff;display:grid;gap:8px}
+.bf-scenario-option-header{display:flex;align-items:center;justify-content:space-between;gap:7px}
+.bf-scenario-option-header strong{font-size:15px;overflow-wrap:anywhere}
+.bf-scenario-option-value{font-size:23px;font-weight:750;font-variant-numeric:tabular-nums}
+.bf-scenario-option-detail{font-size:13px;color:#58708a;line-height:1.4}
+.bf-scenario-stale{font-size:12px;font-weight:700;color:#a54d11;background:#fff7e5;border-radius:5px;padding:7px}
+.bf-scenario-empty{margin:0;font-size:14px;color:#6b7f97}
+@media(max-width:1050px){.bf-diagnostic-flow,.bf-goals-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){
+ .bf-diagnostic-flow,.bf-goals-kpis,.bf-scenario-goal-fields,.bf-scenario-saved{grid-template-columns:1fr}
+ .bf-diagnostic-top h2{font-size:19px}
+ .bf-scenario-quick-actions .btn{flex:1 1 100%}
+}
