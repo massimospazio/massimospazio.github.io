@@ -42,18 +42,18 @@ function paint(){
  const sameYear=year===new Date().getFullYear();
  const live=planningBoardData&&planningBoardData.expense&&planningBoardData.income?planningBoardData:null;
  const info=rolling?'I prossimi 12 mesi sono il Rolling Forecast, non una versione del Piano annuale. Passa ad Anno corrente per vedere il Piano congelato.':
-  p?'Piano V'+p.revision+' approvato il '+dateHuman(p.approved_at)+'. Snapshot immutabile; i mesi chiusi a quella data erano già Actual.':
-    'Nessun Piano ufficiale approvato per '+year+'. Il tabellone mostra temporaneamente la Baseline corrente.';
+  p?'Fotografia V'+p.revision+' salvata il '+dateHuman(p.approved_at)+'. È una fotografia tecnica, non una strategia validata; i mesi chiusi erano già Actual.':
+    'Nessuna fotografia tecnica salvata per '+year+'. Il tabellone mostra temporaneamente la Baseline corrente.';
  const delta=p&&live&&!rolling?surplus(live)-surplus(p):null;
  const showStatus=state.status?'<p class="bf-plan-status'+(state.error?' error':'')+'" role="status">'+esc(state.status)+'</p>':"";
- el.innerHTML='<div class="bf-plan-head"><div class="bf-plan-heading"><strong>'+ (p&&!rolling?'Piano approvato · V'+p.revision:'Piano annuale · '+year) +'</strong><span>'+esc(info)+'</span></div>'+
+ el.innerHTML='<div class="bf-plan-head"><div class="bf-plan-heading"><strong>'+ (p&&!rolling?'Fotografia tecnica · V'+p.revision:'Fotografie della Baseline · '+year) +'</strong><span>'+esc(info)+'</span></div>'+
  '<div class="bf-plan-actions">'+
  (versions.length?'<label>Versione <select id="bfPlanVersion" '+(state.busy||rolling?'disabled':'')+'>'+versions.map(v=>'<option value="'+v.revision+'" '+(p&&v.revision===p.revision?'selected':'')+'>V'+v.revision+' · '+esc(dateHuman(v.approved_at))+'</option>').join("")+'</select></label>':'')+
  '<button type="button" id="bfPlanReload" class="btn ghost compact" '+(state.busy?'disabled':'')+'>↻ Piano</button>'+
- (!rolling&&sameYear?'<button type="button" id="bfPlanApprove" class="btn compact" '+(state.busy?'disabled':'')+'>'+(versions.length?'Approva una revisione':'Approva Piano V1')+'</button>':'')+
+ (!rolling&&sameYear?'<button type="button" id="bfPlanApprove" class="btn compact" '+(state.busy?'disabled':'')+'>'+(versions.length?'Salva nuova fotografia':'Salva fotografia V1')+'</button>':'')+
  '</div></div>'+
- (delta!==null?'<div class="bf-plan-delta">Risultato del Piano selezionato: <strong>'+eu(surplus(p))+'</strong> · Previsione corrente: <strong>'+eu(surplus(live))+'</strong> · Scostamento: <strong class="'+(delta>=0?'positive':'negative')+'">'+(delta>0?'+':'')+eu(delta)+'</strong></div>':'')+
- (p&&!rolling?'<p class="bf-plan-caveat">Il confronto riguarda il risultato del Tabellone (entrate meno uscite della proiezione), non necessariamente il Flusso economico riconciliato. La fotografia conserva anche gli importi reali dei mesi già trascorsi al momento dell’approvazione. La modifica della Baseline NON altera questo Piano.</p>':'')+
+ (delta!==null?'<div class="bf-plan-delta">Risultato della fotografia selezionata: <strong>'+eu(surplus(p))+'</strong> · Previsione corrente: <strong>'+eu(surplus(live))+'</strong> · Scostamento: <strong class="'+(delta>=0?'positive':'negative')+'">'+(delta>0?'+':'')+eu(delta)+'</strong></div>':'')+
+ (p&&!rolling?'<p class="bf-plan-caveat">Il confronto riguarda il risultato del Tabellone (entrate meno uscite della proiezione), non necessariamente il Flusso economico riconciliato. La fotografia conserva anche gli importi reali dei mesi già trascorsi al momento dell’approvazione. La modifica della Baseline NON altera la fotografia, che non rappresenta ancora il Piano strategico.</p>':'')+
  showStatus;
 }
 async function load(y,rev){
@@ -64,7 +64,7 @@ async function load(y,rev){
    if(seq!==state.seq)return;
    state.record=result.plan||null;state.versions=Array.isArray(result.versions)?result.versions:[];
    state.status="";state.error=false;
- }catch(e){state.record=null;state.versions=[];state.status=e.message||"Impossibile leggere il Piano approvato.";state.error=true}
+ }catch(e){state.record=null;state.versions=[];state.status=e.message||"Impossibile leggere le fotografie tecniche.";state.error=true}
  finally{state.busy=false;paint();if(visible()&&planningBoardHorizon==="CALENDAR")root.renderPlanningBoard?.()}
 }
 async function approve(){
@@ -73,18 +73,18 @@ async function approve(){
  const rev=state.versions.length?Math.max(...state.versions.map(v=>Number(v.revision||0)))+1:1;
  const midyear=Number(String(planningBoardData?.expense?.current_month||"").slice(5,7))>1;
  const explanation=rev===1
- ? 'Questa approvazione congela l’intera proiezione corrente, NON il budget originale del 1° gennaio.'+(midyear?' I mesi già chiusi sono consuntivi storici, non obiettivi fissati a gennaio.':'')
+ ? 'Questa fotografia tecnica congela la proiezione corrente, NON un Piano strategico validato né il budget originale del 1° gennaio.'+(midyear?' I mesi già chiusi sono consuntivi storici, non obiettivi fissati a gennaio.':'')
  : 'Una nuova revisione viene congelata dalla Baseline corrente, ma non cancella le precedenti. Non è ancora disponibile un editor separato dei target.';
- if(!root.confirm('Approvare Piano V'+rev+' per '+year+'?\n\n'+explanation+'\n\nLa modifica della Baseline non cambierà questa versione.'))return;
- const reason=root.prompt('Motivazione per il Piano V'+rev+' (minimo 8 caratteri)',rev===1?'Prima approvazione della proiezione annuale':'Revisione del Piano dopo verifica delle previsioni');
+ if(!root.confirm('Salvare fotografia V'+rev+' per '+year+'?\n\n'+explanation+'\n\nLa modifica della Baseline non cambierà questa versione.'))return;
+ const reason=root.prompt('Motivo della fotografia V'+rev+' (minimo 8 caratteri)',rev===1?'Prima fotografia tecnica della proiezione annuale':'Nuova fotografia tecnica dopo verifica delle previsioni');
  if(reason===null)return;
  if(reason.trim().length<8||reason.trim().length>600){message('Inserisci una motivazione di 8–600 caratteri.',true);return}
- state.busy=true;message("Salvo la fotografia server del Piano V"+rev+"…");
+ state.busy=true;message("Salvo fotografia tecnica V"+rev+"…");
  try{
   const r=await rpc("dashboard_family_approved_plan_v1",{p_action:"APPROVE",p_year:year,p_note:reason.trim()});
   state.year=year;state.record=r.plan;state.versions=r.versions||[];
-  state.status="Piano V"+(r.plan?.revision||rev)+" approvato e congelato.";state.error=false;
- }catch(e){state.status=e.message||"Impossibile approvare il Piano.";state.error=true}
+  state.status="Fotografia V"+(r.plan?.revision||rev)+" salvata e congelata; il Piano strategico non è ancora finalizzato.";state.error=false;
+ }catch(e){state.status=e.message||"Impossibile salvare la fotografia.";state.error=true}
  finally{state.busy=false;paint();if(visible()&&planningBoardHorizon==="CALENDAR")root.renderPlanningBoard?.()}
 }
 function onBoardRendered(){
@@ -97,7 +97,7 @@ function init(){
  if(!view||!$("planningBoardContextNote"))return;
  const bar=doc.createElement("section");
  bar.id="bfApprovedPlanBar";bar.className="bf-approved-plan-bar hidden";
- bar.setAttribute("aria-label","Piano annuale approvato e versioni");
+ bar.setAttribute("aria-label","Fotografie tecniche annuali versionate");
  $("planningBoardContextNote").before(bar);
  bar.addEventListener("click",e=>{
   if(e.target.closest("#bfPlanApprove"))approve();
