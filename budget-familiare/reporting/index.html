@@ -7531,15 +7531,8 @@ function renderPlanningMonthlyChart(exp,inc){
   const income=months.map(function(m){return inc.reduce(function(s,r){const x=r.months.find(function(z){return z.month===m});return s+num(x&&x.amount)},0)}),unknown=months.map(function(m){return exp.filter(function(r){return !planningNatureValue(r.meta,"EXPENSE")}).reduce(function(s,r){const x=r.months.find(function(z){return z.month===m});return s+num(x&&x.amount)},0)}),datasets=[{type:"bar",label:"Obbligatorie",data:series("MANDATORY"),backgroundColor:"#ef5a5a",stack:"expenses",borderWidth:0},{type:"bar",label:"Necessarie",data:series("NECESSARY"),backgroundColor:"#f4b63e",stack:"expenses",borderWidth:0},{type:"bar",label:"Discrezionali",data:series("DISCRETIONARY"),backgroundColor:"#2bbf83",stack:"expenses",borderWidth:0}];
   if(unknown.some(function(v){return v>.5}))datasets.push({type:"bar",label:"Non classificate",data:unknown,backgroundColor:"#aab4c3",stack:"expenses",borderWidth:0});datasets.push({type:"line",label:"Entrate",data:income,borderColor:"#2687e8",backgroundColor:"#2687e8",borderWidth:2.3,pointRadius:2.8,pointHoverRadius:4,tension:.22,yAxisID:"y"});const canvas=$("planningMonthlyChart");if(planningMonthlyChart){planningMonthlyChart.destroy();planningMonthlyChart=null}if(canvas&&typeof Chart!=="undefined")planningMonthlyChart=new Chart(canvas,{data:{labels:labels,datasets:datasets},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},plugins:{legend:{position:"bottom",labels:{boxWidth:10,boxHeight:10,font:{size:14}}},tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+": "+money(ctx.raw)}}}},scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:14}}},y:{stacked:true,beginAtZero:true,ticks:{font:{size:14},callback:function(v){return Number(v).toLocaleString("it-IT")}},grid:{color:"rgba(148,163,184,.16)"}}}}});
 }
-function planningSimulationNatureTotals(rows,direction,field){
-  const keys=direction==="EXPENSE"?["MANDATORY","NECESSARY","DISCRETIONARY"]:["FIXED","PREDICTABLE","VARIABLE"],out={UNKNOWN:0};
-  keys.forEach(function(k){out[k]=0});
-  rows.forEach(function(r){
-    const nature=planningNatureValue(r.meta,direction)||"UNKNOWN",value=num(r[field]);
-    if(out[nature]===undefined)out.UNKNOWN+=value;else out[nature]+=value;
-  });
-  return out;
-}
+/* V73.30.3.0 · Simulator: the current Baseline is the only starting point.
+   Locked actuals are excluded from every slider; goals are not forecast expenses. */
 function planningSimulationRange(key){
   return {
     MANDATORY:[-20,20],NECESSARY:[-50,30],DISCRETIONARY:[-100,50],
@@ -7551,65 +7544,138 @@ function planningSimulationSet(next){
   keys.forEach(function(k){const range=planningSimulationRange(k),v=next&&next[k]!==undefined?num(next[k]):num(planningSimulation[k]);out[k]=Math.max(range[0],Math.min(range[1],v))});
   planningSimulation=out;planningSimulationMode="CUSTOM";
 }
+function planningSimulationRows(){
+  if(!planningBoardData)return {exp:[],inc:[]};
+  const exp=planningBuildRows(planningBoardData.expense,"EXPENSE",planningSimulatorHorizon),
+        inc=planningBuildRows(planningBoardData.income,"INCOME",planningSimulatorHorizon);
+  return {
+    exp:exp.map(function(r){return {...r,kind:planningOverviewExpenseKind(r)}}),
+    inc:inc.map(function(r){return {...r,kind:planningOverviewIncomeKind(r)}})
+  };
+}
 function planningSimulationCalc(exp,inc,override,modeOverride){
-  const sim=override||planningSimulation,mode=modeOverride||planningSimulationMode;
-  const baseExp=planningSimulationNatureTotals(exp,"EXPENSE","comparison"),baseInc=planningSimulationNatureTotals(inc,"INCOME","comparison");
-  const planExp=planningSimulationNatureTotals(exp,"EXPENSE","annual"),planInc=planningSimulationNatureTotals(inc,"INCOME","annual");
-  const baselineExpenses=Object.values(baseExp).reduce(function(s,v){return s+num(v)},0),baselineIncome=Object.values(baseInc).reduce(function(s,v){return s+num(v)},0),baselineBalance=baselineIncome-baselineExpenses;
-  let simulatedExpenses,simulatedIncome;
-  if(mode==="FORECAST"){
-    simulatedExpenses=Object.values(planExp).reduce(function(s,v){return s+num(v)},0);
-    simulatedIncome=Object.values(planInc).reduce(function(s,v){return s+num(v)},0);
-  }else{
-    simulatedExpenses=baseExp.UNKNOWN+
-      baseExp.MANDATORY*(1+num(sim.MANDATORY)/100)+
-      baseExp.NECESSARY*(1+num(sim.NECESSARY)/100)+
-      baseExp.DISCRETIONARY*(1+num(sim.DISCRETIONARY)/100);
-    simulatedIncome=baseInc.UNKNOWN+
-      baseInc.FIXED*(1+num(sim.FIXED)/100)+
-      baseInc.PREDICTABLE*(1+num(sim.PREDICTABLE)/100)+
-      baseInc.VARIABLE*(1+num(sim.VARIABLE)/100);
-  }
-  simulatedExpenses=Math.max(0,simulatedExpenses);simulatedIncome=Math.max(0,simulatedIncome);
-  const simulatedBalance=simulatedIncome-simulatedExpenses,impact=simulatedBalance-baselineBalance;
-  return {baselineIncome:baselineIncome,baselineExpenses:baselineExpenses,baselineBalance:baselineBalance,simulatedIncome:simulatedIncome,simulatedExpenses:simulatedExpenses,simulatedBalance:simulatedBalance,impact:impact,monthlyBalance:simulatedBalance/12,monthlyImpact:impact/12,baseExp:baseExp,baseInc:baseInc,planExp:planExp,planInc:planInc};
+  if(!window.BudgetFamilyScenario)throw new Error("Motore simulatore non disponibile");
+  return window.BudgetFamilyScenario.calculate(exp,inc,override||planningSimulation,{reserve:planningSimReserve,project:planningSimProject});
 }
 function planningSimPct(v){const n=Math.round(num(v));return (n>0?"+":"")+n+"%"}
 function planningSimulationPreset(code){
-  if(code==="FORECAST"){planningSimulationMode="FORECAST";return}
-  if(code==="D25")planningSimulationSet({MANDATORY:0,NECESSARY:0,DISCRETIONARY:-25,FIXED:0,PREDICTABLE:0,VARIABLE:0});
-  else if(code==="D50")planningSimulationSet({MANDATORY:0,NECESSARY:0,DISCRETIONARY:-50,FIXED:0,PREDICTABLE:0,VARIABLE:0});
-  else if(code==="D100")planningSimulationSet({MANDATORY:0,NECESSARY:0,DISCRETIONARY:-100,FIXED:0,PREDICTABLE:0,VARIABLE:0});
-  else if(code==="N10D50")planningSimulationSet({MANDATORY:0,NECESSARY:-10,DISCRETIONARY:-50,FIXED:0,PREDICTABLE:0,VARIABLE:0});
-  else planningSimulationSet({MANDATORY:0,NECESSARY:0,DISCRETIONARY:0,FIXED:0,PREDICTABLE:0,VARIABLE:0});
+  const zero={MANDATORY:0,NECESSARY:0,DISCRETIONARY:0,FIXED:0,PREDICTABLE:0,VARIABLE:0};
+  if(code==="D25")zero.DISCRETIONARY=-25;
+  else if(code==="D50")zero.DISCRETIONARY=-50;
+  else if(code==="D100")zero.DISCRETIONARY=-100;
+  else if(code==="N10D50"){zero.NECESSARY=-10;zero.DISCRETIONARY=-50}
+  planningSimulationSet(zero);
+  planningScenarioFeedback="";
 }
 function planningSimulationOutputClass(key,value){
   const v=num(value);if(Math.abs(v)<.001)return "neutral";
-  const isIncome=["FIXED","PREDICTABLE","VARIABLE"].includes(key),favorable=isIncome?v>0:v<0;
-  return favorable?"reduce":"increase";
+  const isIncome=["FIXED","PREDICTABLE","VARIABLE"].includes(key);
+  return (isIncome?v>0:v<0)?"reduce":"increase";
 }
-function planningSimulationRows(){
-  if(!planningBoardData)return {exp:[],inc:[]};
-  return {
-    exp:planningBuildRows(planningBoardData.expense,"EXPENSE",planningSimulatorHorizon),
-    inc:planningBuildRows(planningBoardData.income,"INCOME",planningSimulatorHorizon)
-  };
+function planningSimValueClass(v){return num(v)<-.005?"negative":num(v)>.005?"positive":"neutral"}
+function planningSimSigned(v){return num(v)>0?("+"+money(v)):num(v)<0?("−"+money(Math.abs(v))):money(0)}
+function planningSimDiagnosisHtml(calc){
+  const deficit=calc.structuralBaseline-calc.dAndSavings;
+  const final=calc.baselineBalance;
+  const difference=calc.coverageGap;
+  const negative=final<-.005,insufficient=deficit<-.005;
+  const title=negative?"La Baseline non è in pareggio":
+    insufficient?"Il margine strutturale non copre tutte le allocazioni OLTRE O/N":"Il margine strutturale copre la situazione attesa";
+  const message=negative?
+    "Per raggiungere l'avanzo zero occorre migliorare il risultato previsto di "+money(-final)+". Parti dalle discrezionali future, ma verifica anche investimenti, uscite tecniche ed eventi già consuntivati.":
+    "Il risultato annuale previsto è "+planningSimSigned(final)+". Puoi valutare quanta parte proteggere per il fondo prudenziale e per i progetti senza creare nuove spese nella Baseline.";
+  const stats=[
+    ["Entrate previste",calc.baseIncome,""],
+    ["O + N + NC",calc.expenses.MANDATORY.baseline+calc.expenses.NECESSARY.baseline+calc.expenses.UNCLASSIFIED.baseline,""],
+    ["Margine strutturale",calc.structuralBaseline,calc.structuralBaseline<0?"bad":"good"],
+    ["Discrezionali (D)",calc.expenses.DISCRETIONARY.baseline,""],
+    ["Investimenti / risparmio",calc.expenses.SAVINGS.baseline,""],
+    ["Altre uscite",calc.expenses.OTHER.baseline,""],
+    ["Avanzo Baseline",calc.baselineBalance,calc.baselineBalance<0?"bad":"good"]
+  ];
+  return '<div class="bf-diagnostic-top '+(negative?"danger":insufficient?"warning":"positive")+'">'+
+      '<span class="bf-diagnostic-eyebrow">DIAGNOSI IMMEDIATA DELLA BASELINE</span>'+
+      '<h2>'+esc(title)+'</h2><p>'+esc(message)+'</p></div>'+
+    '<div class="bf-diagnostic-flow">'+stats.map(function(row,i){
+      return '<div class="bf-diagnostic-stat '+(row[2]||"")+(i===2||i===6?" emphasis":"")+'"><span>'+esc(row[0])+'</span><strong>'+money(row[1])+'</strong></div>';
+    }).join("")+'</div>'+
+    '<p class="bf-diagnostic-explanation"><strong>Copertura D + Investimenti:</strong> '+(deficit<0?"mancano "+money(-deficit):"restano "+money(deficit))+
+      '. '+(calc.other>0.005?"Altre uscite "+money(calc.other)+" riducono ulteriormente l’avanzo. ":"")+
+      'Margine = Entrate − O − N − NC; Avanzo = Margine − D − Investimenti − Altre uscite. '+(difference>0?"Gap totale per il pareggio: "+money(difference)+". ":"")+
+      'Questo è il risultato del Tabellone: prima di approvare una strategia occorre riconciliare investimenti da patrimonio pregresso, finanziamenti ed eventi E con il Flusso economico.</p>';
+}
+function planningSimGoalsHtml(calc){
+  const target=calc.target,missing=calc.gapToTarget;
+  return '<div class="bf-goals-kpis">'+
+    '<div><span>Gap iniziale per il pareggio</span><strong class="'+planningSimValueClass(-calc.gapBefore)+'">'+money(calc.gapBefore)+'</strong></div>'+
+    '<div><span>Nuovo avanzo simulato</span><strong class="'+planningSimValueClass(calc.simulatedBalance)+'">'+planningSimSigned(calc.simulatedBalance)+'</strong></div>'+
+    '<div><span>Fondo + progetto da finanziare</span><strong>'+money(target)+'</strong></div>'+
+    '<div><span>'+(missing>.005?"Ancora da recuperare":"Avanzo libero dopo obiettivi")+'</span><strong class="'+(missing>.005?"negative":"positive")+'">'+money(missing>.005?missing:calc.freeAfterGoals)+'</strong></div>'+
+    '</div>'+
+    '<p class="bf-goals-foot">'+(target>0?"Obiettivo minimo: avanzo annuale di "+money(target)+". ":"Obiettivo minimo: avanzo annuale non negativo. ")+
+    'Le quote di fondo e progetto sono destinazioni di risorse, non nuove spese né utilizzi di liquidità già disponibile.</p>';
+}
+function planningSimSavedHtml(calc){
+  const box=$("planningSimSaved");if(!box)return;
+  if(!planningSavedScenarios.length){box.innerHTML='<p class="bf-scenario-empty">Nessuno scenario salvato in questa sessione. Prova a ridurre D, poi salva e confronta.</p>';return}
+  const context=planningSimulatorHorizon+"|"+String(planningBoardData&&planningBoardData.expense&&planningBoardData.expense.current_month||"");
+  box.innerHTML=planningSavedScenarios.map(function(item,index){
+    const different=item.context!==context||Math.abs(item.baseline-calc.baselineBalance)>.005;
+    return '<article class="bf-scenario-option"><div class="bf-scenario-option-header"><strong>'+esc(item.name)+'</strong>'+
+      '<button type="button" class="btn ghost compact" data-scenario-remove="'+index+'" title="Rimuovi scenario">×</button></div>'+
+      '<div class="bf-scenario-option-value '+planningSimValueClass(item.result)+'">'+planningSimSigned(item.result)+'</div>'+
+      '<div class="bf-scenario-option-detail">Δ Baseline '+planningSimSigned(item.impact)+' · Gap obiettivi '+money(item.gapToTarget)+'</div>'+
+      (different?'<div class="bf-scenario-stale">Baseline o periodo cambiati: risultati non direttamente confrontabili.</div>':'')+
+      '<button type="button" class="btn ghost compact" data-scenario-load="'+index+'">Ricarica leve</button></article>';
+  }).join("");
+}
+function planningSimSaveScenario(){
+  if(!planningBoardData)return;
+  if(planningSavedScenarios.length>=3){planningScenarioFeedback="Massimo tre scenari: elimina uno prima di salvarne un altro.";renderPlanningSimulatorView();return}
+  const rows=planningSimulationRows(),calc=planningSimulationCalc(rows.exp,rows.inc);
+  const name=window.prompt("Nome del nuovo scenario (max 40 caratteri)","Scenario "+(planningScenarioSequence+1));
+  if(name===null)return;
+  const trimmed=name.trim();
+  if(!trimmed||trimmed.length>40){planningScenarioFeedback="Inserisci un nome di 1–40 caratteri.";renderPlanningSimulatorView();return}
+  planningScenarioSequence++;
+  planningSavedScenarios.push({
+    name:trimmed,simulation:{...planningSimulation},reserve:planningSimReserve,project:planningSimProject,
+    context:planningSimulatorHorizon+"|"+String(planningBoardData.expense.current_month||""),
+    baseline:calc.baselineBalance,result:calc.simulatedBalance,impact:calc.impact,gapToTarget:calc.gapToTarget
+  });
+  planningScenarioFeedback="Scenario salvato per il confronto, soltanto in questa sessione.";
+  renderPlanningSimulatorView();
+}
+function planningSimSolve(goal){
+  const rows=planningSimulationRows(),calc=planningSimulationCalc(rows.exp,rows.inc);
+  const desired=goal==="BREAK_EVEN"?0:planningSimReserve+planningSimProject;
+  const rec=window.BudgetFamilyScenario.reductionForGoal(calc,desired);
+  if(rec.needed<=.005){
+    planningScenarioFeedback="L'obiettivo selezionato è già coperto dallo scenario corrente.";
+  }else{
+    planningSimulationSet({...planningSimulation,DISCRETIONARY:Math.max(-100,num(planningSimulation.DISCRETIONARY)-rec.pct)});
+    const after=planningSimulationCalc(rows.exp,rows.inc);
+    const residual=Math.max(0,desired-after.simulatedBalance);
+    planningScenarioFeedback=residual>.005?
+      "Le sole discrezionali future non bastano: restano "+money(residual)+" da recuperare. Valuta altre leve, investimenti da patrimonio o modifica gli obiettivi.":
+      "Con questa riduzione delle D future raggiungi l'obiettivo simulato, da validare sulle categorie L2.";
+  }
+  renderPlanningSimulatorView();
 }
 function renderPlanningSimulatorView(){
   if(!planningBoardData||!planningBoardData.expense||!planningBoardData.income)return;
-  const rows=planningSimulationRows(),exp=rows.exp,inc=rows.inc,calc=planningSimulationCalc(exp,inc),impactCls=calc.impact>0.5?"positive":(calc.impact<-.5?"negative":"");
+  const rows=planningSimulationRows(),exp=rows.exp,inc=rows.inc,calc=planningSimulationCalc(exp,inc),impactCls=planningSimValueClass(calc.impact);
   document.querySelectorAll("[data-simulator-horizon]").forEach(function(b){b.classList.toggle("ghost",b.dataset.simulatorHorizon!==planningSimulatorHorizon)});
-  $("planningSimulatorScope").textContent=planningSimulatorHorizon==="ROLLING_12"?"ultimi 12 mesi ordinari":"anno precedente ordinario";
+  $("planningSimulatorScope").textContent=planningSimulatorHorizon==="ROLLING_12"?"prossimi 12 mesi · forecast attuale":"anno corrente · actual + previsione";
+  $("planningSimDiagnostic").innerHTML=planningSimDiagnosisHtml(calc);
+  $("planningSimGoalsResult").innerHTML=planningSimGoalsHtml(calc);
   $("planningSimulatorResults").innerHTML=
-    '<div class="planning-sim-result"><div class="k">Saldo storico</div><div class="v '+(calc.baselineBalance>=0?"positive":"negative")+'">'+(calc.baselineBalance>=0?"+":"")+money(calc.baselineBalance)+'</div><div class="mini">Ø '+money(calc.baselineBalance/12)+'/mese</div></div>'+
-    '<div class="planning-sim-result simulated"><div class="k">'+(planningSimulationMode==="FORECAST"?"Saldo previsione attuale":"Saldo simulato")+'</div><div class="v '+(calc.simulatedBalance>=0?"positive":"negative")+'">'+(calc.simulatedBalance>=0?"+":"")+money(calc.simulatedBalance)+'</div><div class="mini">Ø '+money(calc.monthlyBalance)+'/mese</div></div>'+
-    '<div class="planning-sim-result"><div class="k">Impatto vs storico</div><div class="v '+impactCls+'">'+(calc.impact>=0?"+":"")+money(calc.impact)+'</div><div class="mini">'+(calc.monthlyImpact>=0?"+":"")+money(calc.monthlyImpact)+'/mese</div></div>'+
-    '<div class="planning-sim-result"><div class="k">Entrate / Uscite</div><div class="v planning-sim-flow">'+money(calc.simulatedIncome)+' <span>/</span> '+money(calc.simulatedExpenses)+'</div><div class="mini">Storico '+money(calc.baselineIncome)+' / '+money(calc.baselineExpenses)+'</div></div>';
-  $("planningSimulatorModeNote").innerHTML=planningSimulationMode==="FORECAST"
-    ?'<strong>★ Previsione attuale</strong> — risultato esatto del piano costruito in Analisi. Muovi uno slider per tornare allo scenario personalizzato.'
-    :'<strong>Scenario personalizzato</strong> — storico ordinario × variazioni impostate. Le voci senza natura restano invariate.';
-  $("planningSimulatorView").classList.toggle("forecast-mode",planningSimulationMode==="FORECAST");
-
+    '<div class="planning-sim-result"><div class="k">Avanzo Baseline</div><div class="v '+planningSimValueClass(calc.baselineBalance)+'">'+planningSimSigned(calc.baselineBalance)+'</div><div class="mini">Valore prima di nuove scelte</div></div>'+
+    '<div class="planning-sim-result simulated"><div class="k">Avanzo dello scenario</div><div class="v '+planningSimValueClass(calc.simulatedBalance)+'">'+planningSimSigned(calc.simulatedBalance)+'</div><div class="mini">Ø '+planningSimSigned(calc.simulatedBalance/12)+' / mese</div></div>'+
+    '<div class="planning-sim-result"><div class="k">Miglioramento vs Baseline</div><div class="v '+impactCls+'">'+planningSimSigned(calc.impact)+'</div><div class="mini">Solo quote ancora future</div></div>'+
+    '<div class="planning-sim-result"><div class="k">Margine strutturale dello scenario</div><div class="v '+planningSimValueClass(calc.structuralSimulated)+'">'+planningSimSigned(calc.structuralSimulated)+'</div><div class="mini">D + investimenti '+money(calc.dAndSavingsSim)+'</div></div>';
+  $("planningSimulatorModeNote").innerHTML='<strong>Baseline attuale + leve selezionate.</strong> I mesi già chiusi e la parte già registrata del mese in corso non vengono ridotti. '+(planningScenarioFeedback?'<strong>'+esc(planningScenarioFeedback)+'</strong>':'Seleziona una combinazione o intervieni sugli slider per elaborare lo scenario.');
+  $("planningSimulatorView").classList.remove("forecast-mode");
   const outputMap={MANDATORY:"planningSimMandatory",NECESSARY:"planningSimNecessary",DISCRETIONARY:"planningSimDiscretionary",FIXED:"planningSimFixed",PREDICTABLE:"planningSimPredictable",VARIABLE:"planningSimVariable"};
   document.querySelectorAll("#planningSimulatorView [data-planning-sim]").forEach(function(input){
     const key=input.dataset.planningSim,value=num(planningSimulation[key]);input.value=String(value);
@@ -7617,31 +7683,29 @@ function renderPlanningSimulatorView(){
   });
   document.querySelectorAll("#planningSimulatorView [data-planning-sim-preset]").forEach(function(b){
     const code=b.dataset.planningSimPreset;
-    const active=code==="FORECAST"?planningSimulationMode==="FORECAST":
-      planningSimulationMode==="CUSTOM"&&(
-        code==="RESET"&&["MANDATORY","NECESSARY","DISCRETIONARY","FIXED","PREDICTABLE","VARIABLE"].every(function(k){return num(planningSimulation[k])===0})||
-        code==="D25"&&planningSimulation.DISCRETIONARY===-25&&planningSimulation.MANDATORY===0&&planningSimulation.NECESSARY===0&&planningSimulation.FIXED===0&&planningSimulation.PREDICTABLE===0&&planningSimulation.VARIABLE===0||
-        code==="D50"&&planningSimulation.DISCRETIONARY===-50&&planningSimulation.MANDATORY===0&&planningSimulation.NECESSARY===0&&planningSimulation.FIXED===0&&planningSimulation.PREDICTABLE===0&&planningSimulation.VARIABLE===0||
-        code==="D100"&&planningSimulation.DISCRETIONARY===-100&&planningSimulation.MANDATORY===0&&planningSimulation.NECESSARY===0&&planningSimulation.FIXED===0&&planningSimulation.PREDICTABLE===0&&planningSimulation.VARIABLE===0||
-        code==="N10D50"&&planningSimulation.NECESSARY===-10&&planningSimulation.DISCRETIONARY===-50&&planningSimulation.MANDATORY===0&&planningSimulation.FIXED===0&&planningSimulation.PREDICTABLE===0&&planningSimulation.VARIABLE===0
-      );
-    b.classList.toggle("active",!!active);
+    const settings={RESET:[0,0],D25:[0,-25],D50:[0,-50],D100:[0,-100],N10D50:[-10,-50]}[code];
+    const exact=settings&&planningSimulation.NECESSARY===settings[0]&&planningSimulation.DISCRETIONARY===settings[1]&&
+      ["MANDATORY","FIXED","PREDICTABLE","VARIABLE"].every(function(k){return num(planningSimulation[k])===0});
+    b.classList.toggle("active",!!exact);
   });
-
-  const ns=[0,-10,-20,-30],ds=[0,-25,-50,-100],fixed={MANDATORY:num(planningSimulation.MANDATORY),FIXED:num(planningSimulation.FIXED),PREDICTABLE:num(planningSimulation.PREDICTABLE),VARIABLE:num(planningSimulation.VARIABLE)};
+  const ns=[0,-10,-20,-30],ds=[0,-25,-50,-100],
+    fixed={MANDATORY:num(planningSimulation.MANDATORY),FIXED:num(planningSimulation.FIXED),
+      PREDICTABLE:num(planningSimulation.PREDICTABLE),VARIABLE:num(planningSimulation.VARIABLE)};
   $("planningSimMatrixNote").textContent="O "+planningSimPct(fixed.MANDATORY)+" · F "+planningSimPct(fixed.FIXED)+" · P "+planningSimPct(fixed.PREDICTABLE)+" · V "+planningSimPct(fixed.VARIABLE);
   let html='<table class="planning-sim-matrix"><thead><tr><th>Necessarie ↓ / Discrezionali →</th>'+ds.map(function(d){return '<th>'+planningSimPct(d)+'</th>'}).join("")+'</tr></thead><tbody>';
   ns.forEach(function(n){
     html+='<tr><th class="row-head">'+planningSimPct(n)+'</th>';
     ds.forEach(function(d){
       const custom={MANDATORY:fixed.MANDATORY,NECESSARY:n,DISCRETIONARY:d,FIXED:fixed.FIXED,PREDICTABLE:fixed.PREDICTABLE,VARIABLE:fixed.VARIABLE};
-      const r=planningSimulationCalc(exp,inc,custom,"CUSTOM"),active=planningSimulationMode==="CUSTOM"&&n===num(planningSimulation.NECESSARY)&&d===num(planningSimulation.DISCRETIONARY),cls=(r.simulatedBalance<0?"negative ":"")+(active?"active":"");
-      html+='<td><button type="button" class="'+cls.trim()+'" data-planning-sim-matrix-n="'+n+'" data-planning-sim-matrix-d="'+d+'">'+(r.simulatedBalance>=0?"+":"")+money(r.simulatedBalance)+'</button></td>';
+      const r=planningSimulationCalc(exp,inc,custom),active=n===num(planningSimulation.NECESSARY)&&d===num(planningSimulation.DISCRETIONARY),cls=(r.simulatedBalance<0?"negative ":"")+(active?"active":"");
+      html+='<td><button type="button" class="'+cls.trim()+'" data-planning-sim-matrix-n="'+n+'" data-planning-sim-matrix-d="'+d+'" title="Gap obiettivi '+esc(money(r.gapToTarget))+'">'+planningSimSigned(r.simulatedBalance)+'</button></td>';
     });
     html+='</tr>';
   });
   html+='</tbody></table>';$("planningSimMatrix").innerHTML=html;
+  planningSimSavedHtml(calc);
 }
+
 function renderPlanningBoard(){
   if(!planningBoardData||!planningBoardData.expense||!planningBoardData.income)return;
   const liveBoardData=planningBoardData;
@@ -7851,6 +7915,15 @@ $("planningBoardView").addEventListener("click",function(e){
   if(open){openPlanningRowInAnalysis(open.dataset.planningOpenAnalysis,open.dataset.planningOpenDirection||"EXPENSE");return}
 });
 $("planningSimulatorView").addEventListener("click",function(e){
+  const solve=e.target.closest("[data-scenario-solve]");if(solve){planningSimSolve(solve.dataset.scenarioSolve);return}
+  const action=e.target.closest("[data-scenario-action]");if(action&&action.dataset.scenarioAction==="SAVE"){planningSimSaveScenario();return}
+  const remove=e.target.closest("[data-scenario-remove]");if(remove){planningSavedScenarios.splice(Number(remove.dataset.scenarioRemove),1);planningScenarioFeedback="";renderPlanningSimulatorView();return}
+  const load=e.target.closest("[data-scenario-load]");
+  if(load){const item=planningSavedScenarios[Number(load.dataset.scenarioLoad)];if(!item)return;
+    planningSimulationSet(item.simulation);planningSimReserve=item.reserve;planningSimProject=item.project;
+    $("planningSimReserve").value=planningSimReserve;$("planningSimProject").value=planningSimProject;
+    planningScenarioFeedback="Leve dello scenario «"+item.name+"» ricaricate sulla Baseline corrente.";
+    renderPlanningSimulatorView();return}
   const horizon=e.target.closest("[data-simulator-horizon]");
   if(horizon){planningSimulatorHorizon=horizon.dataset.simulatorHorizon||"CALENDAR";renderPlanningSimulatorView();return}
   const preset=e.target.closest("[data-planning-sim-preset]");
@@ -7862,6 +7935,11 @@ $("planningSimulatorView").addEventListener("click",function(e){
   }
 });
 $("planningSimulatorView").addEventListener("input",function(e){
+  if(e.target.id==="planningSimReserve"||e.target.id==="planningSimProject"){
+    const amount=Math.min(10000000,Math.max(0,Number(e.target.value)||0));
+    if(e.target.id==="planningSimReserve")planningSimReserve=amount;else planningSimProject=amount;
+    planningScenarioFeedback="";renderPlanningSimulatorView();return;
+  }
   const sim=e.target.closest("[data-planning-sim]");if(!sim)return;
   const next={MANDATORY:planningSimulation.MANDATORY,NECESSARY:planningSimulation.NECESSARY,DISCRETIONARY:planningSimulation.DISCRETIONARY,FIXED:planningSimulation.FIXED,PREDICTABLE:planningSimulation.PREDICTABLE,VARIABLE:planningSimulation.VARIABLE};
   next[sim.dataset.planningSim]=num(sim.value);planningSimulationSet(next);renderPlanningSimulatorView();
