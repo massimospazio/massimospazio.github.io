@@ -1,7 +1,7 @@
 // Canonical source: massimospazio/budget-familiare; public files are deployed automatically.
 (function(){
-  const APP_VERSION='V73.30.1.21';
-  const APP_RELEASE='Flusso economico · andamento mensile per natura';
+  const APP_VERSION='V73.30.1.22';
+  const APP_RELEASE='Flusso economico · approfondimento contestuale';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});
