@@ -7226,7 +7226,7 @@ function planningDefinition(data,horizonOverride){
 }
 function planningBuildRows(data,direction,horizonOverride){
   if(!data)return [];
-  const metaMap=planningMetaMap(),def=planningDefinition(data,horizonOverride),current=String(data.current_month||""),actualMap=new Map(),forecastMap=new Map(),cellMap=planningReportCellMap(direction);
+  const metaMap=planningMetaMap(),def=planningDefinition(data,horizonOverride),current=String(data.current_month||""),actualMap=new Map(),forecastMap=new Map(),cellMap=planningReportCellMap(direction),frozenIncome=direction==="INCOME"&&planningBoardContext==="PLAN"&&window.BudgetFamilyPlan?.snapshotFor(Number(String(data.current_year_start||"").slice(0,4)))?.income===data;
   (data.actual_monthly||[]).forEach(function(x){actualMap.set(String(x.category_id)+"|"+String(x.month),num(x.amount))});
   (data.forecast_monthly||[]).forEach(function(x){forecastMap.set(String(x.category_id)+"|"+String(x.month),x)});
   const actualTargetSet=new Set(def.actualTargetMonths),forecastTargetSet=new Set(def.forecastTargetMonths);
@@ -7236,7 +7236,7 @@ function planningBuildRows(data,direction,horizonOverride){
     def.targetMonths.forEach(function(month){
       const key=String(cat.category_id)+"|"+month;
       if(actualTargetSet.has(month)){const amount=num(actualMap.get(key));planned+=amount;lowTotal+=amount;highTotal+=amount;monthRows.push({month:month,amount:amount,futureAmount:0,kind:"actual",override:false,current:false});return}
-      if(forecastTargetSet.has(month)){const f=forecastMap.get(key),amount=f?num(f.effective_amount):0,actualToDate=f?num(f.actual_to_date):0,overridden=!!(f&&f.override_amount!==null&&f.override_amount!==undefined);planned+=amount;if(overridden)overrideCount++;let lo=amount,hi=amount;if(direction==="INCOME"){const cell=cellMap.get(key);if(cell&&!overridden&&cell.amount_model==="RANGE"){lo=num(cell.range_low);hi=num(cell.range_high)}if(f&&f.actual_to_date!==null&&f.actual_to_date!==undefined){lo=Math.max(lo,actualToDate);hi=Math.max(hi,actualToDate)}}lowTotal+=lo;highTotal+=hi;const futureAmount=month===current?Math.max(0,amount-actualToDate):amount;monthRows.push({month:month,amount:amount,futureAmount:futureAmount,kind:"plan",override:overridden,current:month===current});return}
+      if(forecastTargetSet.has(month)){const f=forecastMap.get(key),amount=f?num(f.effective_amount):0,actualToDate=f?num(f.actual_to_date):0,overridden=!!(f&&f.override_amount!==null&&f.override_amount!==undefined);planned+=amount;if(overridden)overrideCount++;let lo=amount,hi=amount;if(direction==="INCOME"){const cell=cellMap.get(key);if(cell&&!frozenIncome&&!overridden&&cell.amount_model==="RANGE"){lo=num(cell.range_low);hi=num(cell.range_high)}if(f&&f.actual_to_date!==null&&f.actual_to_date!==undefined){lo=Math.max(lo,actualToDate);hi=Math.max(hi,actualToDate)}}lowTotal+=lo;highTotal+=hi;const futureAmount=month===current?Math.max(0,amount-actualToDate):amount;monthRows.push({month:month,amount:amount,futureAmount:futureAmount,kind:"plan",override:overridden,current:month===current});return}
       monthRows.push({month:month,amount:0,futureAmount:0,kind:"plan",override:false,current:false});
     });
     const deltaAbs=planned-comparison,deltaPct=comparison>0?deltaAbs*100/comparison:(Math.abs(planned)<.5?0:null);
@@ -8172,7 +8172,7 @@ document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!$("rpcDiag
 init();
 </script>
 <script src="../shared/health-reserve.js?v=73.30.2.0-20261017"></script>
-<script src="../shared/approved-plan.js?v=73.30.2.0-20261017"></script>
+<script src="../shared/approved-plan.js?v=73.30.2.0-range-fix-20261017"></script>
 </body>
 </html>
 
