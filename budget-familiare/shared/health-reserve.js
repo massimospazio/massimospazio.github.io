@@ -100,12 +100,23 @@ function inline(){
  const el=$("hrFundInline"),plan=$("planningBoardView")?.dataset.boardContext==="PLAN";
  if(!el)return;
  el.classList.toggle("hidden",!plan);if(!plan)return;
- const a=n(fund&&fund.allocated),u=n(fund&&fund.used),d=a-u;
- el.innerHTML='<span><strong>Fondo imprevisti '+year+'</strong> · Stanziato '+eu(a)+' · Utilizzato '+eu(u)+' · <strong class="'+(d<0?"hr-error":"")+'">Residuo '+eu(d)+'</strong> '+(!fund?'<small>(da configurare)</small>':"")+'</span><button type="button" class="btn ghost compact" data-hr-open="fund">Gestisci</button>';
+ if(!fund){el.innerHTML='<span>Fondo imprevisti '+year+' · '+(loadLock?'Caricamento…':'Dati non ancora caricati')+'</span><button type="button" class="btn ghost compact" data-hr-open="fund">Apri</button>';return}
+ const a=n(fund.allocated),u=n(fund.used),remaining=a-u;
+ let available='';
+ // Only calendar-year totals can be compared with a calendar-year reserve.
+ try{
+   if(planningBoardHorizon==="CALENDAR"&&planningBoardData&&String(planningBoardData.expense.current_year_start).slice(0,4)===String(year)){
+     const exp=planningBuildRows(planningBoardData.expense,"EXPENSE");
+     const inc=planningBuildRows(planningBoardData.income,"INCOME");
+     const surplus=planningOverviewModel(exp,inc).baseline.surplus;
+     available=' · <strong title="Avanzo previsto meno la riserva ancora accantonata. Gli utilizzi del fondo devono essere già inclusi nel forecast.">Avanzo libero '+eu(surplus-Math.max(0,remaining))+'</strong>';
+   }
+ }catch(err){/* Fund remains visible even when board figures cannot be calculated. */}
+ el.innerHTML='<span><strong>Fondo imprevisti '+year+'</strong> · Stanziato '+eu(a)+' · Utilizzato '+eu(u)+' · <strong class="'+(remaining<0?"hr-error":"")+'">Residuo '+eu(remaining)+'</strong>'+available+'</span><button type="button" class="btn ghost compact" data-hr-open="fund">Gestisci</button>';
 }
 function renderFund(){
  const a=n(fund.allocated),u=n(fund.used),remaining=a-u,percentage=a>0?Math.max(0,Math.min(100,100*u/a)):0;
- const useDate=year===(new Date()).getFullYear()?new Date().toLocaleDateString("en-CA"):year+"-01-01";
+ const useDate=year===(new Date()).getFullYear()?(function(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")})():year+"-01-01";
  $("hrFundBody").innerHTML=
  '<p class="hr-help">Fondo '+year+' · quota dell’avanzo riservata agli imprevisti. <strong>Non è una spesa e non altera il forecast.</strong> La riduzione della riserva libera meno risorse vincolate, non genera nuove entrate.</p>'+
  '<div class="hr-metrics hr-metrics-3">'+metric("Fondo stanziato",a)+metric("Utilizzi dichiarati",u)+metric("Residuo",remaining)+'</div><div class="hr-progress"><span style="width:'+percentage+'%"></span></div>'+
@@ -142,7 +153,7 @@ function init(){
  $("hrYear").value=String(year);$("hrYear").onchange=function(){year=Number(this.value);loadFund()};
  doc.addEventListener("click",function(e){const b=e.target.closest("[data-hr-open]");if(b){open(b.dataset.hrOpen);return}const t=e.target.closest("[data-hr-tab]");if(t){show(t.dataset.hrTab);return}if(e.target.closest("[data-hr-close]")||e.target===modal)close()});
  doc.addEventListener("keydown",e=>{if(e.key==="Escape"&&!modal.classList.contains("hidden"))close()});
- new MutationObserver(inline).observe($("planningBoardView"),{attributes:true,attributeFilter:["data-board-context"]});
+ new MutationObserver(function(){inline();if($("planningBoardView").dataset.boardContext==="PLAN"&&!fund&&!loadLock)loadFund()}).observe($("planningBoardView"),{attributes:true,attributeFilter:["data-board-context"]});
  inline();
 }
 if(doc.readyState==="loading")doc.addEventListener("DOMContentLoaded",init);else init();
