@@ -79,6 +79,8 @@ async function loadHealth(force){
  }catch(e){status("hrHealthStatus",e.message||"Errore nello storico sanitario.",true)}
 }
 
+function eu2(v){return n(v).toLocaleString("it-IT",{style:"currency",currency:"EUR",minimumFractionDigits:2,maximumFractionDigits:2})}
+function metric2(title,amount){return '<div class="hr-metric"><small>'+esc(title)+'</small><strong>'+eu2(amount)+'</strong></div>'}
 function percent(v,digits){return v===null||!Number.isFinite(v)?"—":v.toLocaleString("it-IT",{minimumFractionDigits:digits||0,maximumFractionDigits:digits||0})+"%"}
 function signedCorrelation(v){return v===null?"—":(v>=0?"+":"")+v.toLocaleString("it-IT",{minimumFractionDigits:2,maximumFractionDigits:2})}
 function killCharts(){
@@ -94,7 +96,7 @@ function graph(canvas,datasets,labels){
     responsive:true,maintainAspectRatio:false,animation:false,
     interaction:{mode:"index",intersect:false},
     plugins:{legend:{position:"bottom",labels:{boxWidth:13,font:{size:12}}},
-      tooltip:{callbacks:{label:function(c){return c.dataset.label+": "+eu(c.parsed.y)}}}},
+      tooltip:{callbacks:{label:function(c){return c.dataset.label+": "+eu2(c.parsed.y)}}}},
     scales:{
       x:{stacked:true,grid:{display:false},ticks:{maxRotation:55,minRotation:0,font:{size:11}}},
       y:{stacked:true,beginAtZero:true,ticks:{callback:v=>n(v).toLocaleString("it-IT")+" €"}}
@@ -122,8 +124,8 @@ function renderLagDetail(){
  const details=$("hrLagDetail"),goodRate=result.rate!==null&&result.rate<=100;
  const high=result.rate!==null&&result.rate>100;
  details.innerHTML='<div class="hr-lag-summary">'+
- '<div><small>Spese · finestra fissa</small><strong>'+eu(result.cost)+'</strong></div>'+
- '<div><small>Rimborsi con ritardo '+selectedLag+'m</small><strong>'+eu(result.refund)+'</strong></div>'+
+ '<div><small>Spese · finestra fissa</small><strong>'+eu2(result.cost)+'</strong></div>'+
+ '<div><small>Rimborsi con ritardo '+selectedLag+'m</small><strong>'+eu2(result.refund)+'</strong></div>'+
  '<div><small>Rapporto osservato</small><strong class="'+(high?"hr-error":"")+'">'+percent(result.rate,1)+'</strong></div>'+
  '<div><small>Correlazione mensile (r)</small><strong>'+signedCorrelation(result.correlation)+'</strong></div></div>'+
  '<p class="hr-help">Per esempio, spese di luglio → rimborsi di '+(selectedLag===0?"luglio":selectedLag===1?"agosto":selectedLag===2?"settembre":"ottobre")+'. Tutte le righe usano le <strong>stesse spese</strong> ('+rep.start.slice(0,7)+' — '+rep.end.slice(0,7)+'); cambiano solo i mesi dei rimborsi confrontati.</p>'+
@@ -150,21 +152,21 @@ function renderHealth(){
  }
  $("hrHealthBody").innerHTML=
  '<p class="hr-help">Ultimi 12 mesi completi: '+esc(start.slice(0,7))+' — '+esc(last.slice(0,7))+'. Spese: solo Medici e visite + Analisi / Diagnostica. Rimborsi: Assicurazione Sanitaria. Eventi eccezionali inclusi.</p>'+
- '<div class="hr-metrics">'+metric("Medici e visite",t.medical)+metric("Analisi / Diagnostica",t.diagnostics)+metric("Assicurazione Sanitaria",t.insurance)+metric("Costo netto del periodo (spese − rimborsi)",t.net)+'</div>'+
- '<p class="hr-help">Rapporto rimborsi/spese senza sfasamento, sugli ultimi 12 mesi: <strong>'+percent(rate,1)+'</strong>. Nei 12 mesi precedenti: spese '+eu(previous.totals.eligible)+'; rimborsi '+eu(previous.totals.insurance)+'.</p>'+
- (t.net<0?'<p class="hr-warning">Rimborsi superiori alle spese del periodo di '+eu(-t.net)+'. Potrebbero riguardare prestazioni precedenti: questo saldo non misura la copertura effettiva della polizza.</p>':"")+
+ '<div class="hr-metrics">'+metric2("Medici e visite",t.medical)+metric2("Analisi / Diagnostica",t.diagnostics)+metric2("Assicurazione Sanitaria",t.insurance)+metric2("Costo netto del periodo (spese − rimborsi)",t.net)+'</div>'+
+ '<p class="hr-help">Rapporto rimborsi/spese senza sfasamento, sugli ultimi 12 mesi: <strong>'+percent(rate,1)+'</strong>. Nei 12 mesi precedenti: spese '+eu2(previous.totals.eligible)+'; rimborsi '+eu2(previous.totals.insurance)+'.</p>'+
+ (t.net<0?'<p class="hr-warning">Rimborsi superiori alle spese del periodo di '+eu2(-t.net)+'. Potrebbero riguardare prestazioni precedenti: questo saldo non misura la copertura effettiva della polizza.</p>':"")+
  '<section class="hr-analysis"><div class="hr-chart-heading"><div><h3>Quando spendiamo e quando incassiamo?</h3><p class="hr-help">Barre blu e verdi: spese mediche e diagnostiche impilate. Arancione: rimborsi effettivamente incassati nel mese. Calendario reale, senza spostamenti.</p></div><div class="hr-choices" role="group" aria-label="Mesi nel grafico storico">'+
  '<button type="button" data-hr-months="12" '+(chartMonths===12?'class="active"':'')+'>12m</button><button type="button" data-hr-months="18" '+(chartMonths===18?'class="active"':'')+'>18m</button><button type="button" data-hr-months="24" '+(chartMonths===24?'class="active"':'')+'>24m</button></div></div>'+
  '<div class="hr-graph-scroll"><div class="hr-graph-body"><canvas id="hrRealChart" aria-label="Spese e rimborsi per mese" role="img"></canvas></div></div></section>'+
  '<section class="hr-analysis"><h3>Quale ritardo spiega meglio i rimborsi?</h3>'+
  '<p class="hr-help">Confronto corretto su <strong>12 mesi identici di spesa</strong> ('+lagged.start.slice(0,7)+' — '+lagged.end.slice(0,7)+'). La finestra termina tre mesi prima di '+last.slice(0,7)+' perché anche i rimborsi ipotizzati a +3 mesi devono essere già osservabili.</p>'+
  '<div class="hr-lag-table-wrap"><table class="hr-table hr-lag-table"><thead><tr><th>Ritardo</th><th>Spese</th><th>Rimborsi abbinati</th><th>Rapporto</th><th>Correlazione r</th><th></th></tr></thead><tbody>'+
- lagged.comparisons.map(function(x){return '<tr><td><strong>'+x.lag+' '+(x.lag===1?'mese':'mesi')+'</strong></td><td>'+eu(x.cost)+'</td><td>'+eu(x.refund)+'</td><td class="'+(x.rate>100?'hr-error':'')+'">'+percent(x.rate,1)+'</td><td>'+signedCorrelation(x.correlation)+'</td><td><button type="button" class="hr-lag-pick" data-hr-lag="'+x.lag+'">Confronta</button></td></tr>'}).join("")+
+ lagged.comparisons.map(function(x){return '<tr><td><strong>'+x.lag+' '+(x.lag===1?'mese':'mesi')+'</strong></td><td>'+eu2(x.cost)+'</td><td>'+eu2(x.refund)+'</td><td class="'+(x.rate>100?'hr-error':'')+'">'+percent(x.rate,1)+'</td><td>'+signedCorrelation(x.correlation)+'</td><td><button type="button" class="hr-lag-pick" data-hr-lag="'+x.lag+'">Confronta</button></td></tr>'}).join("")+
  '</tbody></table></div><p class="hr-help">I rapporti possono superare il 100% per rimborsi relativi a spese diverse dalla finestra. Correlazioni basse o negative non escludono ritardi reali: i rimborsi potrebbero essere accorpati, parziali o distribuiti su più mesi.</p>'+
  '<div id="hrLagDetail"></div><h3>Confronto dei mesi riallineati</h3><div class="hr-graph-scroll"><div class="hr-graph-body hr-graph-body-compare"><canvas id="hrShiftChart" aria-label="Spese e rimborsi riallineati con il ritardo selezionato" role="img"></canvas></div></div>'+
  '<p class="hr-help">L’asse X indica il <strong>mese della spesa</strong>. La barra arancione mostra il rimborso incassato '+(selectedLag===0?'nello stesso mese':'nel mese spostato in avanti')+'. L’allineamento è statistico e non associa singole fatture.</p></section>'+
  '<div class="hr-scroll"><table class="hr-table"><thead><tr><th>Mese reale</th><th>Medici</th><th>Diagnostica</th><th>Rimborsi</th><th>Netto</th></tr></thead><tbody>'+
- current.months.map(x=>'<tr><td>'+esc(x.month.slice(0,7))+'</td><td>'+eu(x.medical)+'</td><td>'+eu(x.diagnostics)+'</td><td>'+eu(x.insurance)+'</td><td>'+eu(x.medical+x.diagnostics-x.insurance)+'</td></tr>').join("")+
+ current.months.map(x=>'<tr><td>'+esc(x.month.slice(0,7))+'</td><td>'+eu2(x.medical)+'</td><td>'+eu2(x.diagnostics)+'</td><td>'+eu2(x.insurance)+'</td><td>'+eu2(x.medical+x.diagnostics-x.insurance)+'</td></tr>').join("")+
  '</tbody></table></div>'+
  '<section class="hr-calc"><h3>Stima da riportare nella baseline</h3><p class="hr-help">Scegli una copertura prudente: i rapporti storici sopra non sono percentuali contrattuali. Il calcolatore non modifica le previsioni; l’inserimento nella baseline resta manuale.</p>'+
  '<div class="hr-fields"><label>Medici e visite previste (€)<input id="hrMed" type="number" step="10" min="0" value="'+esc(calc.med)+'"></label>'+
@@ -198,7 +200,7 @@ function renderHealth(){
    if(e.target.closest("#hrReload")){rows=null;loadHealth(true);return}
    if(!e.target.closest("#hrCopy"))return;
    const x=estimate(calc.med,calc.diag,calc.pct);
-   const text="Baseline sanitaria (annuale)\nMedici e visite: "+eu(calc.med)+"\nAnalisi / Diagnostica: "+eu(calc.diag)+"\nEntrate · Assicurazione Sanitaria: "+eu(x.reimbursement)+"\nCosto netto: "+eu(x.cost-x.reimbursement);
+   const text="Baseline sanitaria (annuale)\nMedici e visite: "+eu2(calc.med)+"\nAnalisi / Diagnostica: "+eu2(calc.diag)+"\nEntrate · Assicurazione Sanitaria: "+eu2(x.reimbursement)+"\nCosto netto: "+eu2(x.cost-x.reimbursement);
    try{await navigator.clipboard.writeText(text);status("hrCopyMsg","Valori copiati. Inserisci manualmente gli importi nella baseline.")}
    catch(err){status("hrCopyMsg","Copia non disponibile. Usa i valori visibili nel report.",true)}
  };
