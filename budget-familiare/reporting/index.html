@@ -777,6 +777,38 @@ button,input,select{font:inherit}
 .analysis-master-table tr.analysis-zero-row:not(.analysis-selected) .plan-icon.analysis-l2-icon{background:#f8fafc;color:#94a3b8;border-color:#e2e8f0}
 .analysis-zero-trend{display:inline-flex;align-items:center;justify-content:center;min-width:24px;color:#94a3b8;font-size:14px;font-weight:700}
 
+
+/* V73.30.1.24 — compact, reconciled baseline overview; single row */
+.planning-overview-scroll{overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;max-width:100%;margin:1px 0 0}
+.planning-overview-scroll:focus-visible{outline:2px solid #3b82f6;outline-offset:2px}
+.planning-overview-strip{display:grid;grid-template-columns:minmax(215px,1.15fr) minmax(285px,1.6fr) minmax(156px,.81fr) minmax(156px,.81fr);gap:7px;min-width:850px;align-items:stretch}
+.planning-overview-item{background:#fff;border:1px solid #d9e4f2;border-radius:10px;padding:9px 11px;min-width:0;display:flex;flex-direction:column;gap:5px}
+.planning-overview-item.income{border-top:3px solid #23a880}
+.planning-overview-item.expense{border-top:3px solid #e16469}
+.planning-overview-item.margin{border-top:3px solid #467cce}
+.planning-overview-item.surplus{border-top:3px solid #7a63bc}
+.planning-overview-item .po-top{display:flex;justify-content:space-between;align-items:center;gap:5px}
+.planning-overview-item .po-label{font-size:12px;font-weight:800;color:#3c5679;white-space:nowrap}
+.planning-overview-item .po-total{display:flex;flex-wrap:wrap;align-items:baseline;gap:5px 8px}
+.planning-overview-item .po-value{font-size:20px;line-height:1.15;letter-spacing:-.45px;color:#102b57;font-weight:800;font-variant-numeric:tabular-nums}
+.planning-overview-item .po-value.negative{color:#ae3045}
+.planning-overview-item .po-delta{font-size:11px;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
+.planning-overview-item .po-delta.good{color:#14845e}
+.planning-overview-item .po-delta.bad{color:#bd4052}
+.planning-overview-item .po-delta.neutral{color:#64748b}
+.planning-overview-item .po-breakdown{display:flex;align-items:center;gap:5px;flex-wrap:nowrap;overflow:visible;margin-top:auto;padding-top:3px;border-top:1px solid #eff2f7;min-width:0}
+.planning-overview-item .po-mini{display:flex;flex-direction:column;gap:1px;min-width:0;flex:1;border-radius:5px;background:#f5f8fe;padding:4px 5px;font-variant-numeric:tabular-nums}
+.planning-overview-item .po-mini-label{color:#445d80;font-size:10px;font-weight:800}
+.planning-overview-item .po-mini-value{color:#243d5e;font-size:11px;font-weight:800;white-space:nowrap}
+.planning-overview-item .po-mini-delta{font-size:9px;white-space:nowrap;font-weight:700}
+.planning-overview-item .po-mini-delta.good{color:#13835e}
+.planning-overview-item .po-mini-delta.bad{color:#be4655}
+.planning-overview-item .po-mini-delta.neutral{color:#71839b}
+.planning-overview-item .po-explanation{font-size:10px;line-height:1.35;color:#657a98;margin-top:auto}
+.planning-overview-item .po-contribution{font-size:10px;color:#536a8a;font-weight:650;white-space:nowrap;margin-top:auto;padding-top:4px;border-top:1px solid #eff2f7}
+.planning-overview-item .po-mini{cursor:help}
+@media(max-width:1100px){.planning-overview-scroll{margin:0 -2px}.planning-overview-strip{min-width:875px}}
+
 /* V73.30.1.23 — Universal table: baseline / provisional plan */
 .analysis-baseline-launch{white-space:nowrap;font-weight:700}
 .planning-board-context-note{padding:10px 13px;border:1px solid #d4e4f5;border-radius:10px;background:#f5f9fe;color:#3c5979;font-size:13px;line-height:1.5}
@@ -2097,9 +2129,10 @@ body{font-size:16px;line-height:1.5}
       </div>
       <div id="planningBoardStatus"></div>
       <div id="planningBoardContextNote" class="planning-board-context-note" role="note"></div>
+      <div class="planning-overview-scroll" aria-label="Riepilogo sintetico del periodo" tabindex="0">
+        <div id="planningBoardOverview" class="planning-overview-strip" aria-live="polite"></div>
+      </div>
       <div id="planningBaselineReview" class="planning-baseline-review hidden" aria-live="polite"></div>
-      <div id="planningBoardKpis" class="planning-board-kpis"></div>
-      <div id="planningNatureSummary" class="planning-nature-summary"></div>
       <div class="planning-board-toolbar">
         <div class="planning-board-toolbar-left">
           <div class="mode-toggle">
@@ -7312,9 +7345,107 @@ function planningNatureSummaryData(rows,direction){
   const order=direction==="EXPENSE"?["MANDATORY","NECESSARY","DISCRETIONARY"]:["FIXED","PREDICTABLE","VARIABLE"],total=rows.reduce(function(s,r){return s+r.annual},0);
   return order.map(function(nature){const matches=rows.filter(function(r){return planningNatureValue(r.meta,direction)===nature}),planned=matches.reduce(function(s,r){return s+r.annual},0),comparison=matches.reduce(function(s,r){return s+r.comparison},0),delta=planned-comparison,pctDelta=comparison>0?delta*100/comparison:(Math.abs(planned)<.5?0:null);return {nature:nature,planned:planned,comparison:comparison,delta:delta,pctDelta:pctDelta,share:total>0?planned*100/total:0}});
 }
-function renderPlanningNatureSummary(exp,inc){
-  function group(direction,rows){const items=planningNatureSummaryData(rows,direction),tot=planningDirectionTotals(rows),title=direction==="EXPENSE"?"Natura uscite":"Natura entrate",overallCls=planningDeltaQuality(tot.delta,direction);return '<section class="planning-nature-summary-group"><div class="planning-nature-summary-head"><strong>'+title+'</strong><span>Variazione periodo <b class="'+overallCls+'">'+planningPctText(tot.pct)+'</b></span></div><div class="planning-nature-summary-grid">'+items.map(function(x){const cls=planningDeltaQuality(x.delta,direction);return '<div class="planning-nature-summary-item"><div class="top"><span class="planning-nature-badge '+planningNatureClass(x.nature)+'">'+planningNatureShort(x.nature)+'</span><span>'+esc(planningNatureLabel(x.nature))+'</span></div><div class="pct">'+x.share.toLocaleString("it-IT",{maximumFractionDigits:0})+'%</div><div class="meta '+cls+'">'+money(x.planned)+' · Δ '+planningPctText(x.pctDelta)+'</div></div>'}).join("")+'</div></section>'} $("planningNatureSummary").innerHTML=group("EXPENSE",exp)+group("INCOME",inc);
+
+/* V73.30.1.24 — Financially reconciled single-row overview of forecast and history.
+   All inputs are planningBuildRows on ONE horizon (year/year or rolling/previous12).
+   Keep non-consumption savings distinct from operating expenses and cash/NC. */
+function planningOverviewExpenseKind(row){
+  const l1=String(row&&row.l1_name||""),l2=String(row&&row.l2_name||"");
+  if(l1==="Altro"&&(l2==="Prelievo contanti"||l2==="Da classificare"))return "UNCLASSIFIED";
+  // Only the explicit Investments L2 is identified as savings; other unknown categories
+  // remain in OTHER (never silently assumed to be investments).
+  if(["Debiti e Risparmio","Debiti","Risparmio"].includes(l1)&&l2==="Investimenti")return "SAVINGS";
+  const nature=planningNatureValue(row&&row.meta,"EXPENSE");
+  return ["MANDATORY","NECESSARY","DISCRETIONARY"].includes(nature)?nature:"OTHER";
 }
+function planningOverviewIncomeKind(row){
+  const nature=planningNatureValue(row&&row.meta,"INCOME");
+  return ["FIXED","PREDICTABLE","VARIABLE"].includes(nature)?nature:"OTHER_INCOME";
+}
+function planningOverviewModel(exp,inc){
+  function sum(rows,kindFn,types,field){
+    const out=Object.fromEntries(types.map(k=>[k,0]));
+    (rows||[]).forEach(r=>{const kind=kindFn(r);out[kind]+=num(r[field])});
+    return out;
+  }
+  const incomeTypes=["FIXED","PREDICTABLE","VARIABLE","OTHER_INCOME"],
+    expenseTypes=["MANDATORY","NECESSARY","DISCRETIONARY","UNCLASSIFIED","SAVINGS","OTHER"];
+  function one(field){
+    const income=sum(inc,planningOverviewIncomeKind,incomeTypes,field),
+      expense=sum(exp,planningOverviewExpenseKind,expenseTypes,field);
+    const totalIncome=incomeTypes.reduce((n,k)=>n+income[k],0),
+      totalExpenses=expenseTypes.reduce((n,k)=>n+expense[k],0),
+      margin=totalIncome-expense.MANDATORY-expense.NECESSARY-expense.UNCLASSIFIED,
+      surplus=margin-expense.DISCRETIONARY-expense.OTHER-expense.SAVINGS;
+    return {income,expense,totalIncome,totalExpenses,margin,surplus,
+      reconciled:Math.abs(surplus-(totalIncome-totalExpenses))<.01};
+  }
+  return {baseline:one("annual"),history:one("comparison")};
+}
+function planningOverviewDelta(current,previous,kind){
+  const diff=num(current)-num(previous),
+    positive=diff>.005,negative=diff<-.005,
+    favorable=kind==="EXPENSE"?negative:positive,
+    quality=!positive&&!negative?"neutral":kind==="NEUTRAL"?"neutral":favorable?"good":"bad",
+    percentage=previous>0?(diff/previous*100):null;
+  const signed=(diff>0?"+":diff<0?"−":"")+money(Math.abs(diff));
+  const label=percentage!==null?(percentage>0?"+":"")+percentage.toLocaleString("it-IT",{maximumFractionDigits:1})+"%":
+    Math.abs(diff)<.005?"0%":"Δ "+signed;
+  return {diff,pct:percentage,quality,label,
+    tooltip:"Baseline "+money(current)+" · storico "+money(previous)+" · variazione "+signed};
+}
+function planningOverviewChip(code,fullname,baseline,history,kind){
+  const delta=planningOverviewDelta(baseline,history,kind);
+  const compact=(n)=>Math.abs(n)>=10000?
+    (num(n)/1000).toLocaleString("it-IT",{maximumFractionDigits:1})+"k €":money(n);
+  return '<span class="po-mini" title="'+esc(fullname+" · "+delta.tooltip)+'">'+
+    '<span class="po-mini-label">'+esc(code)+'</span>'+
+    '<strong class="po-mini-value">'+esc(compact(baseline))+'</strong>'+
+    '<span class="po-mini-delta '+delta.quality+'">'+esc(delta.label)+'</span></span>';
+}
+function planningOverviewBlock(label,theme,current,history,kind,body,description){
+  const delta=planningOverviewDelta(current,history,kind),negative=current<0;
+  return '<div class="planning-overview-item '+theme+'" title="'+esc(label+": "+delta.tooltip+(description?" · "+description:""))+'">'+
+    '<div class="po-top"><span class="po-label">'+esc(label)+'</span></div>'+
+    '<div class="po-total"><strong class="po-value'+(negative?" negative":"")+'">'+money(current)+'</strong>'+
+    '<span class="po-delta '+delta.quality+'">'+esc("vs storico "+delta.label)+'</span></div>'+
+    (body||'<div class="po-explanation">'+esc(description||"")+'</div>')+
+    '</div>';
+}
+function planningOverviewRenderModel(model,context){
+  const b=model.baseline,h=model.history;
+  const baseLabel=context==="BASELINE"?"Baseline":"Previsione";
+  const incomeKinds=[["FIXED","F","Fisse"],["PREDICTABLE","P","Prevedibili"],["VARIABLE","V","Variabili"]],
+    expenseKinds=[["MANDATORY","O","Obbligatorie"],["NECESSARY","N","Necessarie"],["DISCRETIONARY","D","Discrezionali"]];
+  if(Math.abs(b.income.OTHER_INCOME)>.005||Math.abs(h.income.OTHER_INCOME)>.005)
+    incomeKinds.push(["OTHER_INCOME","?","Altre entrate"]);
+  if(Math.abs(b.expense.UNCLASSIFIED)>.005||Math.abs(h.expense.UNCLASSIFIED)>.005)
+    expenseKinds.push(["UNCLASSIFIED","NC","Non classificate"]);
+  const incomeHtml='<div class="po-breakdown">'+incomeKinds.map(([k,code,name])=>
+    planningOverviewChip(code,name,b.income[k],h.income[k],"INCOME")).join("")+'</div>';
+  const expenseHtml='<div class="po-breakdown">'+expenseKinds.map(([k,code,name])=>
+    planningOverviewChip(code,name,b.expense[k],h.expense[k],"EXPENSE")).join("")+'</div>';
+  const residual=[
+    ["Risparmio/Investimenti",b.expense.SAVINGS,h.expense.SAVINGS],
+    ["Altre uscite",b.expense.OTHER,h.expense.OTHER]
+  ].filter(x=>Math.abs(x[1])>.005||Math.abs(x[2])>.005);
+  const savingNote=residual.length?'<div class="po-contribution" title="'+esc(residual.map(x=>x[0]+" "+money(x[1])+" (storico "+money(x[2])+")").join(" · "))+'">'+
+    residual.map(x=>esc((x[0]==="Altre uscite"?"Altre":"Risparmio")+": "+money(x[1]))).join(" · ")+'</div>':"";
+  return planningOverviewBlock("Entrate · "+baseLabel,"income",b.totalIncome,h.totalIncome,"INCOME",incomeHtml)+
+    planningOverviewBlock("Uscite · "+baseLabel,"expense",b.totalExpenses,h.totalExpenses,"EXPENSE",expenseHtml)+
+    planningOverviewBlock("Margine strutturale","margin",b.margin,h.margin,"INCOME",null,
+      "Entrate − O − N − NC (escluse D e altre uscite)")+
+    planningOverviewBlock("Avanzo","surplus",b.surplus,h.surplus,"INCOME",savingNote,
+      "Margine − D − altre uscite − risparmio");
+}
+function renderPlanningOverview(exp,inc,view){
+  const model=planningOverviewModel(exp,inc),node=$("planningBoardOverview");
+  if(!node)return;
+  node.innerHTML=planningOverviewRenderModel(model,planningBoardContext);
+  const note="Valori costruiti sul medesimo periodo della tabella; margine = entrate − O − N − NC, avanzo = entrate − uscite incluse le categorie Investimenti. I valori economici possono differire dal Flusso storico (movimenti con coperture da prestito/patrimonio pregresso), perché la proiezione L2 non contiene sempre quelle informazioni.";
+  node.title=note;
+}
+
 function planningNatureTotals(exp){const out={MANDATORY:0,NECESSARY:0,DISCRETIONARY:0,UNKNOWN:0};exp.forEach(function(r){const n=planningNatureValue(r.meta,"EXPENSE");if(n&&out[n]!==undefined)out[n]+=r.annual;else out.UNKNOWN+=r.annual});return out}
 function renderPlanningNatureChart(exp){
   const totals=planningNatureTotals(exp),labels=["Obbligatorie","Necessarie","Discrezionali"],values=[totals.MANDATORY,totals.NECESSARY,totals.DISCRETIONARY],colors=["#ef5a5a","#f4b63e","#2bbf83"];if(totals.UNKNOWN>.5){labels.push("Non classificate");values.push(totals.UNKNOWN);colors.push("#aab4c3")}const total=values.reduce(function(s,v){return s+v},0),canvas=$("planningNatureChart");if(planningNatureChart){planningNatureChart.destroy();planningNatureChart=null}
@@ -7450,10 +7581,9 @@ function renderPlanningBoard(){
   $("planningBoardSubtitle").textContent=view.subtitle;
   $("planningBoardContextNote").textContent=view.note;
   $("planningBoardBackToAnalysis").classList.toggle("hidden",!view.baseline);
-  const incCls=planningDeltaQuality(incTotals.delta,"INCOME"),expCls=planningDeltaQuality(expTotals.delta,"EXPENSE");
-  $("planningBoardKpis").innerHTML='<div class="planning-board-kpi income"><div class="kpi-head"><span class="kpi-icon">'+analysisSvgIcon("Entrate")+'</span><span>'+esc(view.incomeKpi)+'</span></div><div class="v">'+money(incTotals.planned)+'</div><div class="s"><span>vs storico</span><strong class="planning-kpi-delta '+incCls+'">'+planningPctText(incTotals.pct)+'</strong></div></div><div class="planning-board-kpi expense"><div class="kpi-head"><span class="kpi-icon">'+analysisSvgIcon("Shopping personale")+'</span><span>'+esc(view.expenseKpi)+'</span></div><div class="v">'+money(expTotals.planned)+'</div><div class="s"><span>vs storico</span><strong class="planning-kpi-delta '+expCls+'">'+planningPctText(expTotals.pct)+'</strong></div></div><div class="planning-board-kpi balance"><div class="kpi-head"><span class="kpi-icon">'+analysisSvgIcon("chart")+'</span><span>'+esc(view.balanceKpi)+'</span></div><div class="v '+(balance>=0?"positive":"negative")+'">'+(balance>=0?"+":"")+money(balance)+'</div><div class="s"><span>Media mensile</span><strong class="'+(balance>=0?"positive":"negative")+'">'+(balance/12>=0?"+":"")+money(balance/12)+'</strong></div></div>';
+  renderPlanningOverview(exp,inc,view);
   renderPlanningBaselineAudit(exp,inc);
-  renderPlanningNatureSummary(exp,inc);let html="";if(planningBoardFilter!=="EXPENSE")html+=planningSectionHtml("INCOME",inc);if(planningBoardFilter!=="INCOME")html+=planningSectionHtml("EXPENSE",exp);$("planningBoardBody").innerHTML=html||'<tr><td colspan="8" class="muted">Nessuna voce corrisponde ai filtri.</td></tr>';
+  let html="";if(planningBoardFilter!=="EXPENSE")html+=planningSectionHtml("INCOME",inc);if(planningBoardFilter!=="INCOME")html+=planningSectionHtml("EXPENSE",exp);$("planningBoardBody").innerHTML=html||'<tr><td colspan="8" class="muted">Nessuna voce corrisponde ai filtri.</td></tr>';
   $("planningBoardLegend").textContent="Δ previsione/baseline rispetto allo storico: per le spese una diminuzione è verde, per le entrate è verde un aumento. «Nuova» significa storico pari a zero. I valori sono quelli del forecast corrente, non ancora un piano indipendente.";
   renderPlanningNatureChart(exp);renderPlanningMonthlyChart(exp,inc);
 }
