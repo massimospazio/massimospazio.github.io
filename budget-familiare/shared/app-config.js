@@ -1,7 +1,7 @@
 // Canonical source: massimospazio/budget-familiare; public files are deployed automatically.
 (function(){
-  const APP_VERSION='V73.30.1.19';
-  const APP_RELEASE='Ponte variazioni · confronto A/B con drilldown completo';
+  const APP_VERSION='V73.30.1.20';
+  const APP_RELEASE='Flusso economico · doppie quote entrate e margine';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});
