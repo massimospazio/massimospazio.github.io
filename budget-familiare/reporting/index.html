@@ -9,7 +9,7 @@
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
 <script src="../shared/supabase-client.js?v=73.24.0-20261012-1415"></script>
-<script src="../shared/app-config.js?v=73.30.3.0-20261017"></script>
+<script src="../shared/app-config.js?v=73.30.3.1-20261017"></script>
 <script src="../shared/contextual-help.js?v=73.30.1.14-20261014" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <link rel="stylesheet" href="../shared/health-reserve.css?v=73.30.1.28-20261016">
@@ -7723,11 +7723,11 @@ function renderPlanningBoard(){
       rolling=planningBoardHorizon==="ROLLING_12";
     const view=planningBoardPresentation(planningBoardContext,planningBoardHorizon,year,def.comparisonLabel);
     if(approved){
-      view.title="Tabellone · Piano approvato V"+approved.revision;
+      view.title="Tabellone · Fotografia tecnica V"+approved.revision;
       view.period=year;
-      view.column="Piano V"+approved.revision+" · "+year;
-      view.subtitle="Piano annuale approvato e congelato: fotografia dei consuntivi già chiusi e delle previsioni rimanenti alla data dell'approvazione.";
-      view.note="Piano V"+approved.revision+" immutabile: la Baseline e il Forecast corrente possono cambiare senza alterarlo. La differenza rispetto alla previsione attuale è mostrata nel riquadro delle versioni.";
+      view.column="Fotografia V"+approved.revision+" · "+year;
+      view.subtitle="Fotografia tecnica dei consuntivi già chiusi e del forecast alla data di salvataggio: non è ancora un Piano strategico validato.";
+      view.note="Fotografia tecnica V"+approved.revision+" immutabile: la vera approvazione del Piano seguirà obiettivi, simulatore e target L2. Baseline e Rolling Forecast possono continuare a cambiare.";
     }else if(planningBoardContext==="PLAN"){
       if(rolling){
         view.title="Tabellone · Rolling Forecast";
@@ -7751,7 +7751,7 @@ function renderPlanningBoard(){
     if(planningBoardFilter!=="EXPENSE")html+=planningSectionHtml("INCOME",inc);
     if(planningBoardFilter!=="INCOME")html+=planningSectionHtml("EXPENSE",exp);
     $("planningBoardBody").innerHTML=html||'<tr><td colspan="8" class="muted">Nessuna voce corrisponde ai filtri.</td></tr>';
-    $("planningBoardLegend").textContent="Lettura valori: prima riga = totale del periodo; Ø = media mensile (totale / 12). Nel confronto: variazione totale · Ø variazione mensile. Verde sulle spese = riduzione; verde sulle entrate = aumento. «Nuova» indica storico zero. "+(approved?"Questi importi sono congelati nella versione approvata V"+approved.revision+".":rolling?"Questa è la previsione rolling corrente, non il Piano annuale.":"Per creare un Piano stabile occorre l'approvazione esplicita.");
+    $("planningBoardLegend").textContent="Lettura valori: prima riga = totale del periodo; Ø = media mensile (totale / 12). Nel confronto: variazione totale · Ø variazione mensile. Verde sulle spese = riduzione; verde sulle entrate = aumento. «Nuova» indica storico zero. "+(approved?"Importi congelati nella fotografia tecnica V"+approved.revision+" (non Piano strategico).":rolling?"Questa è la previsione rolling corrente, non il Piano annuale.":"Per creare un Piano stabile occorre l'approvazione esplicita.");
     renderPlanningNatureChart(exp);renderPlanningMonthlyChart(exp,inc);
   }finally{
     planningBoardData=liveBoardData;
@@ -8278,7 +8278,7 @@ document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!$("rpcDiag
 init();
 </script>
 <script src="../shared/health-reserve.js?v=73.30.2.0-20261017"></script>
-<script src="../shared/approved-plan.js?v=73.30.2.0-range-fix-20261017"></script>
+<script src="../shared/approved-plan.js?v=73.30.3.1-20261017"></script>
 </body>
 </html>
 
