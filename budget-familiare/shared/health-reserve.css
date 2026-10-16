@@ -1,0 +1,50 @@
+/* V73.30.1.25 — Health report & emergency reserve */
+.hr-overlay{position:fixed;inset:0;z-index:10030;background:rgba(14,28,49,.64);padding:12px;display:flex;align-items:center;justify-content:center}
+.hr-overlay.hidden{display:none!important}
+.hr-modal{width:min(950px,100%);max-height:94vh;display:flex;flex-direction:column;overflow:hidden;background:#fff;border-radius:14px;box-shadow:0 18px 65px #0f172a55;color:#17263e}
+.hr-head{padding:14px 19px;display:flex;justify-content:space-between;gap:12px;align-items:center;border-bottom:1px solid #dce4ee}
+.hr-head h2{font-size:20px;margin:0}
+.hr-head button{background:white;color:#294868;border:1px solid #d2e0ed;border-radius:8px;font-size:22px;cursor:pointer;padding:3px 11px}
+.hr-tabs{display:flex;gap:7px;padding:12px 18px 0}
+.hr-tabs button{border:1px solid #cfdceb;background:#f7faff;color:#315274;border-radius:8px;cursor:pointer;padding:9px 12px;font-weight:650}
+.hr-tabs button.active{border-color:#2563eb;background:#2563eb;color:#fff}
+.hr-content{padding:14px 18px 20px;overflow-y:auto;min-height:140px}
+.hr-content h3{font-size:17px;margin:18px 0 8px}
+.hr-help{font-size:13px;line-height:1.5;color:#51647f}
+.hr-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:12px 0}
+.hr-metrics-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.hr-metric{display:grid;gap:5px;padding:12px 10px;background:#f1f6fd;border:1px solid #deebf8;border-radius:9px;min-width:0}
+.hr-metric small{font-size:12px;color:#516987}
+.hr-metric strong{font-size:21px;font-weight:750;font-variant-numeric:tabular-nums;white-space:nowrap}
+.hr-warning{padding:10px 12px;background:#fff3d8;color:#885419;border-radius:8px;font-size:13px}
+.hr-error{color:#b91c1c!important}
+.hr-scroll{overflow:auto;max-height:280px;border:1px solid #e2eaf4;border-radius:8px}
+.hr-table{width:100%;border-collapse:collapse;min-width:540px;font-size:13px}
+.hr-table th{position:sticky;top:0;background:#eaf1fa;color:#3c597c;text-align:right}
+.hr-table th,.hr-table td{padding:9px 10px;border-bottom:1px solid #e5edf5;font-variant-numeric:tabular-nums;text-align:right}
+.hr-table th:first-child,.hr-table td:first-child{text-align:left}
+.hr-table tr:hover td{background:#f8faff}
+.hr-calc{border:1px solid #d3e2f3;background:#fafcff;border-radius:10px;padding:14px;margin-top:16px}
+.hr-calc h3{margin-top:0}
+.hr-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;align-items:end;margin:12px 0}
+.hr-fields label,.hr-inline label{display:grid;gap:5px;font-size:13px;color:#385473;font-weight:650}
+.hr-fields input,.hr-inline input,.hr-content select{width:100%;padding:8px 10px;color:#17263e;border:1px solid #b9cbe0;border-radius:7px;background:white;font-size:15px}
+.hr-content select{width:auto}
+.hr-result{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0;font-size:14px}
+.hr-result span{padding:10px;background:#edf5ff;border-radius:8px}
+.hr-actions{display:flex;flex-wrap:wrap;gap:8px}
+.hr-inline{display:flex;gap:9px;align-items:end;flex-wrap:wrap;margin:12px 0}
+.hr-inline label{min-width:210px}
+.hr-progress{height:10px;background:#e2e8f0;border-radius:8px;overflow:hidden;margin:8px 0}
+.hr-progress span{display:block;height:100%;background:#2ba86c}
+.hr-delete{border:none;background:transparent;color:#a62530;text-decoration:underline;cursor:pointer;padding:5px}
+.hr-fund-inline{background:#f4f8ff;border:1px solid #d7e4f2;border-radius:9px;margin:9px 0;padding:9px 12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:9px;font-size:13px}
+@media(max-width:760px){
+ .hr-modal{max-height:96vh}
+ .hr-head h2{font-size:17px}
+ .hr-content{padding:12px}
+ .hr-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .hr-metric strong{font-size:18px}
+ .hr-fields{grid-template-columns:1fr}
+ .hr-tabs button{padding:8px;font-size:13px}
+}
