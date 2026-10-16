@@ -1,0 +1,16 @@
+/* V73.30.2.0 · Piano annuale versionato */
+.bf-approved-plan-bar{margin:12px 0;padding:12px 14px;border:1px solid #b7d0ed;border-radius:10px;background:#eff6ff;color:#1c3858}
+.bf-approved-plan-bar.hidden{display:none!important}
+.bf-plan-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.bf-plan-heading{display:grid;gap:4px;max-width:760px}
+.bf-plan-heading strong{font-size:16px}
+.bf-plan-heading span{font-size:13px;line-height:1.4;color:#395b7c}
+.bf-plan-actions{display:flex;align-items:end;gap:7px;flex-wrap:wrap}
+.bf-plan-actions label{display:grid;gap:4px;font-size:12px;font-weight:650;color:#375579}
+.bf-plan-actions select{max-width:200px;min-height:32px;padding:5px 7px;font-size:14px;border-radius:7px;border:1px solid #adc6e5;background:#fff}
+.bf-plan-delta{font-size:14px;margin-top:10px;padding-top:9px;border-top:1px solid #cadaed;font-variant-numeric:tabular-nums}
+.bf-plan-delta strong{margin-right:10px;white-space:nowrap}
+.bf-plan-delta .positive{color:#167348}.bf-plan-delta .negative{color:#ab2940}
+.bf-plan-caveat{font-size:12px;color:#465e79;margin:8px 0 0;line-height:1.4}
+.bf-plan-status{font-size:13px;margin:8px 0 0;font-weight:650;color:#175f47}.bf-plan-status.error{color:#b42330}
+@media(max-width:740px){.bf-plan-head{display:block}.bf-plan-actions{margin-top:9px}.bf-plan-delta strong{margin-right:4px}}

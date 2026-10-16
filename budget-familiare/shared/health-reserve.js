@@ -231,7 +231,7 @@ function inline(){
      const exp=planningBuildRows(planningBoardData.expense,"EXPENSE");
      const inc=planningBuildRows(planningBoardData.income,"INCOME");
      const surplus=planningOverviewModel(exp,inc).baseline.surplus;
-     available=' · <strong title="Avanzo previsto meno la riserva ancora accantonata. Gli utilizzi del fondo devono essere già inclusi nel forecast.">Avanzo libero '+eu(surplus-Math.max(0,remaining))+'</strong>';
+     available=' · <strong title="Avanzo previsto meno la riserva ancora accantonata. Gli utilizzi del fondo devono essere già inclusi nel forecast.">Avanzo libero (forecast) '+eu(surplus-Math.max(0,remaining))+'</strong>';
    }
  }catch(err){/* Fund remains visible even when board figures cannot be calculated. */}
  el.innerHTML='<span><strong>Fondo imprevisti '+year+'</strong> · Stanziato '+eu(a)+' · Utilizzato '+eu(u)+' · <strong class="'+(remaining<0?"hr-error":"")+'">Residuo '+eu(remaining)+'</strong>'+available+'</span><button type="button" class="btn ghost compact" data-hr-open="fund">Gestisci</button>';
