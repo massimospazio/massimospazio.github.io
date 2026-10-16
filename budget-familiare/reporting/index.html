@@ -1740,6 +1740,27 @@ body{font-size:16px;line-height:1.5}
 @media(max-width:760px){.flow-unified-charts.compare{grid-template-columns:1fr}.flow-compare-group{flex:1 1 135px}}
 
 
+/* V73.30.1.21 — Trend mensile delle spese per natura */
+.flow-monthly-nature{padding:0;overflow:hidden;margin-top:12px}
+.flow-monthly-nature>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;min-height:62px;padding:13px 17px;color:#214875}
+.flow-monthly-nature>summary::-webkit-details-marker{display:none}
+.flow-monthly-nature>summary:hover{background:#f5f9fe}
+.flow-monthly-nature>summary:focus-visible{outline:2px solid #2563eb;outline-offset:-3px}
+.flow-monthly-nature>summary span:first-child{display:grid;gap:4px}
+.flow-monthly-nature>summary strong{font-size:16px}
+.flow-monthly-nature>summary small{font-size:13px;color:#637a94;font-weight:400}
+.flow-monthly-chevron{font-size:19px;color:#52739e;transition:transform .15s}
+.flow-monthly-nature[open] .flow-monthly-chevron{transform:rotate(90deg)}
+.flow-monthly-body{border-top:1px solid #e4edf5;padding:13px 16px 17px}
+.flow-monthly-toolbar{display:flex;gap:12px 20px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px}
+.flow-monthly-control{display:flex;flex-direction:column;gap:5px;font-size:13px;color:#566b88;font-weight:650}
+.flow-monthly-control .flow-compare-buttons{display:flex;gap:5px;flex-wrap:wrap}
+.flow-monthly-control .flow-compare-buttons button{min-height:34px}
+.flow-monthly-control select{min-height:34px;padding:5px 28px 5px 9px;font-size:13px}
+.flow-monthly-status{font-size:13px;color:#516b8b;margin:6px 0 11px;line-height:1.5}
+.flow-monthly-graph{position:relative;height:345px;width:100%;min-width:0}
+.flow-monthly-note{font-size:12px;line-height:1.5;color:#657d98;margin:12px 0 0}
+@media(max-width:760px){.flow-monthly-graph{height:295px}.flow-monthly-body{padding:12px}.flow-monthly-toolbar{gap:10px}}
 /* V73.30.1.18 — diagnosi automatica del Flusso: evidence-first, compact by default */
 .flow-diagnosis{border:1px solid #d7e3f1;background:#fff;border-radius:12px;margin-top:12px;overflow:hidden}
 .flow-diagnosis>summary{display:flex;gap:10px;align-items:center;flex-wrap:wrap;cursor:pointer;list-style:none;padding:12px 14px;color:#1e426c;font-size:14px;min-height:51px}
@@ -2275,6 +2296,19 @@ body{font-size:16px;line-height:1.5}
             <div id="balanceWaterfallNote" class="balance-flow-note"></div>
           </section>
         </div>
+        <details id="flowMonthlyNatureSection" class="scenario-card flow-monthly-nature balance-section-hidden">
+  <summary aria-label="Espandi andamento mensile per natura"><span><strong>Andamento mensile per natura</strong><small>O, N, D e NC · trend del periodo selezionato</small></span><span class="flow-monthly-chevron" aria-hidden="true">▸</span></summary>
+  <div class="flow-monthly-body">
+    <div class="flow-monthly-toolbar">
+      <div id="flowMonthlyPeriodPicker" class="flow-monthly-control" role="group" aria-label="Periodo da approfondire"></div>
+      <div class="flow-monthly-control"><span>Valori</span><div class="flow-compare-buttons"><button type="button" data-flow-monthly-unit="EUR">€ mensili</button><button type="button" data-flow-monthly-unit="PCT">% entrate</button></div></div>
+      <label class="flow-monthly-control"><span>Linea opzionale</span><select class="select" id="flowMonthlyLine" aria-label="Linea del grafico mensile"><option value="NONE">Nessuna</option><option value="INCOME">Entrate</option><option value="MARGIN">Margine strutturale</option><option value="SURPLUS">Avanzo ordinario</option></select></label>
+    </div>
+    <p id="flowMonthlyStatus" class="flow-monthly-status" aria-live="polite"></p>
+    <div class="flow-monthly-graph"><canvas id="flowMonthlyNatureChart" role="img" aria-label="Grafico mensile per natura; seleziona una barra per i movimenti"></canvas></div>
+    <p class="flow-monthly-note">Barre O, N, D, NC e Altre operative (se presenti). Risparmio e investimenti non sono nature di spesa e non vengono sommati. Perimetro economico ordinario, al netto di prestiti e quote finanziate: eventi E esclusi dalle barre. Ogni percentuale è riferita alle entrate ordinarie del singolo mese. Clicca un segmento per L1 → L2 → controparti → movimenti.</p>
+  </div>
+</details>
         <div id="balanceOutsideFlow" class="balance-outside-flow hidden"></div>
 
         <section id="balanceNatureDetail" class="scenario-card balance-drill-card hidden">
@@ -2478,6 +2512,7 @@ let balanceWaterfallObserver=null;
 let balanceWaterfallRenderWidth=0;
 let balanceHubMode="HISTORY";
 let flowPeriodMode="SINGLE",flowPeriodA="PREVIOUS_12",flowPeriodB="ROLLING_12",flowSinglePeriod="ROLLING_12",flowAmountMode="TOTAL",flowShowShares=true,flowDiagnosticFocus="B";
+let flowMonthlyPeriod="B",flowMonthlyUnit="EUR",flowMonthlyLine="NONE",flowMonthlyNatureChart=null;
 let flowCompareNature="NECESSARY",flowCompareExpandedL1=new Set(),flowCompareSelectedL2=null,flowCompareSelectedL2Name="",flowCompareSelectedCp="",flowCompareDetails=null,flowCompareDetailLoading=false,flowCompareDetailSeq=0,flowCompareSort="DELTA";
 let historicalPeriodMode="ROLLING_12";
 let historicalYearSelection=null;
@@ -5421,9 +5456,95 @@ function renderFlowUnified(){
   $("balanceWaterfallMode").textContent=flowAmountMode==="MONTHLY"?"Media mensile":"Totale periodo";
   renderFlowDiagnosis(groups);
   flowComparisonRenderBridge(groups);
+  renderFlowMonthlyNature(groups);
   flowComparisonRenderExplorer(groups);
 }
 
+
+
+/* V73.30.1.21: monthly nature reuse of waterfall source */
+function flowMonthlyNatureRows(months){
+  const imported=new Set(flowAvailableMonths(months));
+  return months.map(function(month){
+    const m=flowPeriodModel([month]);
+    return {month:month,covered:imported.has(month),income:num(m.income),mandatory:num(m.mandatory),
+      necessary:num(m.necessary),discretionary:num(m.discretionary),unclassified:num(m.unclassified),
+      otherOperating:num(m.otherOperating),margin:num(m.structural),surplus:num(m.available)};
+  });
+}
+function flowMonthlyNatureConfig(rows,unit,line){
+  const pct=unit==="PCT";
+  const val=function(v,r){if(!r.covered||pct&&r.income<=0)return null;return pct?100*v/r.income:v};
+  const fields=[["mandatory","Obbligatorie","#ef5a5a","MANDATORY"],["necessary","Necessarie","#f4b63e","NECESSARY"],
+    ["discretionary","Discrezionali","#8b5cf6","DISCRETIONARY"],["unclassified","NC · Non classificate","#64748b","UNCLASSIFIED"],
+    ["otherOperating","Altre operative","#94a3b8","UNKNOWN"]].filter(f=>f[0]!=="otherOperating"||rows.some(r=>Math.abs(r.otherOperating)>.005));
+  const datasets=fields.map(f=>({type:"bar",label:f[1],data:rows.map(r=>val(r[f[0]],r)),backgroundColor:f[2],
+    stack:"nature",maxBarThickness:44,borderRadius:2,_flowNature:f[3],_flowAmounts:rows.map(r=>r[f[0]])}));
+  const lines={INCOME:["income","Entrate ordinarie","#2687e8"],MARGIN:["margin","Margine strutturale","#15803d"],SURPLUS:["surplus","Avanzo ordinario","#0f766e"]};
+  const selected=lines[line];
+  if(selected)datasets.push({type:"line",label:selected[1],data:rows.map(r=>val(r[selected[0]],r)),_flowAmounts:rows.map(r=>r[selected[0]]),
+    borderColor:selected[2],backgroundColor:selected[2],yAxisID:"yLine",borderWidth:2.4,pointRadius:2.7,tension:.18,fill:false,spanGaps:false});
+  const valid=rows.filter(r=>r.covered&&(!pct||r.income>0));
+  const bars=valid.map(r=>fields.reduce((sum,f)=>sum+Math.max(0,Number(val(r[f[0]],r))),0));
+  const lineVals=selected?valid.map(r=>Number(val(r[selected[0]],r))):[];
+  const negative=valid.flatMap(r=>fields.map(f=>Number(val(r[f[0]],r)))).filter(v=>v<0);
+  const high=Math.max(1,...bars,...lineVals),low=Math.min(0,...lineVals,...negative),step=pct?10:Math.max(1,Math.pow(10,Math.floor(Math.log10(high))-1));
+  return {datasets:datasets,axis:{min:Math.floor(low/step)*step,max:Math.max(step,Math.ceil(high/step)*step)},
+    missing:rows.filter(r=>!r.covered).length,noIncome:pct?rows.filter(r=>r.covered&&r.income<=0).length:0};
+}
+function renderFlowMonthlyNature(groups){
+  const box=$("flowMonthlyNatureSection");if(!box||balanceSubview!=="flow")return;
+  // Existing comparison helper returns [] in single-period mode.
+  if(!groups||!groups.length){const months=flowMonthsFor(flowSinglePeriod);groups=[{key:flowSinglePeriod,months:months,label:flowPeriodLabel(flowSinglePeriod,months)}]}
+  const compare=flowPeriodMode==="COMPARE",picker=$("flowMonthlyPeriodPicker");
+  picker.innerHTML=compare?'<span>Periodo</span><div class="flow-compare-buttons">'+groups.map((g,i)=>{
+    const code=i?"B":"A",active=flowMonthlyPeriod===code;
+    return '<button type="button" data-flow-monthly-period="'+code+'" class="'+(active?"active":"")+'" aria-pressed="'+active+'" title="'+esc(g.label)+'">'+code+'</button>';
+  }).join("")+'</div>':'<span>Periodo</span><strong>'+esc(groups[0].label)+'</strong>';
+  document.querySelectorAll("[data-flow-monthly-unit]").forEach(b=>{
+    const active=b.dataset.flowMonthlyUnit===flowMonthlyUnit;b.classList.toggle("active",active);b.setAttribute("aria-pressed",String(active));
+  });
+  $("flowMonthlyLine").value=flowMonthlyLine;
+  if(!box.open){if(flowMonthlyNatureChart){flowMonthlyNatureChart.destroy();flowMonthlyNatureChart=null}return}
+  const group=compare?groups[flowMonthlyPeriod==="A"?0:1]:groups[0],months=group.months;
+  const rows=flowMonthlyNatureRows(months),config=flowMonthlyNatureConfig(rows,flowMonthlyUnit,flowMonthlyLine);
+  $("flowMonthlyStatus").textContent=(compare?"Periodo "+flowMonthlyPeriod+" · ":"")+group.label+
+    " · "+(flowMonthlyUnit==="PCT"?"% sulle entrate ordinarie di ogni mese":"importi mensili effettivi")+
+    (flowAmountMode==="MONTHLY"?" · media della cascata non applicata":"")+
+    (config.missing?" · "+config.missing+" mesi senza movimenti":"")+
+    (config.noIncome?" · "+config.noIncome+" mesi senza entrate: % non calcolabili":"");
+  if(flowMonthlyNatureChart){flowMonthlyNatureChart.destroy();flowMonthlyNatureChart=null}
+  const canvas=$("flowMonthlyNatureChart");if(!canvas||typeof Chart==="undefined")return;
+  const opts={
+    responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},
+    onHover:function(evt,els,chart){
+      const items=chart.getElementsAtEventForMode(evt,"nearest",{intersect:true},true);
+      const ds=items.length?chart.data.datasets[items[0].datasetIndex]:null;
+      chart.canvas.style.cursor=ds&&ds._flowNature?"pointer":"default";
+    },
+    onClick:function(evt,els,chart){
+      const items=chart.getElementsAtEventForMode(evt,"nearest",{intersect:true},true);
+      if(!items.length)return;
+      const hit=items[0],ds=chart.data.datasets[hit.datasetIndex],month=months[hit.index];
+      if(!ds||!ds._flowNature||!rows[hit.index].covered)return;
+      openBalanceNatureDrill(ds._flowNature,month,"MONTH_NATURE",{months:[month],scope:"ORDINARY",
+        label:(compare?"Periodo "+flowMonthlyPeriod+" · ":"")+monthLabel(month)});
+    }
+  };
+  opts.plugins={legend:{display:true,position:"bottom",labels:{boxWidth:11,font:{size:12}}},
+    tooltip:{callbacks:{label:function(ctx){
+      const row=rows[ctx.dataIndex],amount=ctx.dataset._flowAmounts[ctx.dataIndex];
+      const share=row.income>0?(100*amount/row.income).toLocaleString("it-IT",{maximumFractionDigits:1})+"%":"—";
+      return ctx.dataset.label+": "+money(amount)+" · "+share+" entrate";
+    }}}};
+  opts.scales={
+    x:{stacked:true,grid:{display:false},ticks:{font:{size:12},maxRotation:0}},
+    y:{stacked:true,min:config.axis.min,max:config.axis.max,grid:{color:"rgba(148,163,184,.18)"},
+      ticks:{font:{size:12},callback:v=>flowMonthlyUnit==="PCT"?v+"%":money(v)}},
+    yLine:{display:false,position:"left",min:config.axis.min,max:config.axis.max,grid:{drawOnChartArea:false}}
+  };
+  flowMonthlyNatureChart=new Chart(canvas,{data:{labels:months.map(monthLabel),datasets:config.datasets},options:opts});
+}
 
 /* V73.30.1.18 — Evidence-based diagnostic engine. Never calls a language model. */
 function flowDiagnosticCategoryRows(months){
@@ -6818,6 +6939,7 @@ function applyBalanceSubview(){
   $("balanceHubTitle").textContent=flow?"Flusso economico":(cash?"Cash flow":"Confronto periodi");
   $("balanceHubDescription").textContent=flow?"Come le entrate si trasformano nell’avanzo ordinario della famiglia.":(cash?"Evoluzione mensile di entrate, uscite, saldo e cumulato.":"Confronta periodi realmente omogenei e individua i contributori alle differenze.");
   $("balanceFlowGrid")?.classList.toggle("balance-section-hidden",!flow);
+  $("flowMonthlyNatureSection")?.classList.toggle("balance-section-hidden",!flow);
   if(flow&&Array.isArray(scenarioActualRows))renderFlowUnified();
   $("balanceOutsideFlow")?.classList.toggle("balance-section-hidden",!flow);
   if($("balanceNatureDetail")&&!flow)$("balanceNatureDetail").classList.add("hidden");
@@ -7323,6 +7445,10 @@ $("scenarioView").addEventListener("click",async function(e){
     if(categoryId&&balanceDrillRows.some(function(r){return String(r.id)===String(categoryId)}))await loadBalanceDrillCategory(categoryId);
     return;
   }
+  const monthlyPeriod=e.target.closest("[data-flow-monthly-period]");
+  if(monthlyPeriod){flowMonthlyPeriod=monthlyPeriod.dataset.flowMonthlyPeriod==="A"?"A":"B";renderFlowMonthlyNature(flowComparisonCurrentGroups());return}
+  const monthlyUnit=e.target.closest("[data-flow-monthly-unit]");
+  if(monthlyUnit){flowMonthlyUnit=monthlyUnit.dataset.flowMonthlyUnit==="PCT"?"PCT":"EUR";renderFlowMonthlyNature(flowComparisonCurrentGroups());return}
   const mode=e.target.closest("[data-flow-mode]");
   if(mode){flowPeriodMode=mode.dataset.flowMode==="COMPARE"?"COMPARE":"SINGLE";flowCompareResetDetail(true);closeBalanceNatureDrill();renderFlowUnified();return}
   const amount=e.target.closest("[data-flow-amount]");
@@ -7427,6 +7553,8 @@ $("balanceFlowGrid")?.addEventListener("keydown",function(e){
     }else openBalanceNatureDrill(step.dataset.balanceNature,null,"WATERFALL");
   }
 });
+$("flowMonthlyLine")?.addEventListener("change",function(){flowMonthlyLine=["INCOME","MARGIN","SURPLUS"].includes(this.value)?this.value:"NONE";renderFlowMonthlyNature(flowComparisonCurrentGroups())});
+$("flowMonthlyNatureSection")?.addEventListener("toggle",function(){if(balanceSubview==="flow")renderFlowMonthlyNature(flowComparisonCurrentGroups())});
 ["flowSinglePeriod","flowPeriodA","flowPeriodB"].forEach(function(id){
   $(id)?.addEventListener("change",function(){
     if(id==="flowSinglePeriod")flowSinglePeriod=this.value;
