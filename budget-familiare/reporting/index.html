@@ -9,12 +9,12 @@
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
 <script src="../shared/supabase-client.js?v=73.24.0-20261012-1415"></script>
-<script src="../shared/app-config.js?v=73.30.3.1-20261017"></script>
+<script src="../shared/app-config.js?v=73.30.4.0-20261018"></script>
 <script src="../shared/contextual-help.js?v=73.30.1.14-20261014" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <link rel="stylesheet" href="../shared/health-reserve.css?v=73.30.1.28-20261016">
 <link rel="stylesheet" href="../shared/approved-plan.css?v=73.30.2.0-20261017">
-<link rel="stylesheet" href="../shared/scenario-strategy.css?v=73.30.3.0-20261017">
+<link rel="stylesheet" href="../shared/scenario-strategy.css?v=73.30.4.0-20261018">
 <style>
 :root{--bg:#f4f6fa;--card:#fff;--text:#17263e;--muted:#58677d;--line:#dce4ee;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 4px 18px rgba(15,23,42,.045);--sc-blue:#2563eb;--sc-blue-soft:#eff6ff;--sc-green:#0ea87a;--sc-red:#ef5b73;--sc-purple:#7658e6;--sc-ink:#17263e}
 *{box-sizing:border-box}
@@ -2293,6 +2293,7 @@ body{font-size:16px;line-height:1.5}
           <button class="btn ghost compact" type="button" data-planning-sim-preset="N10D50">N −10% + D −50%</button>
         </div>
         <div id="planningSimulatorModeNote" class="planning-simulator-mode-note"></div>
+        <div id="planningSimCategoryPanel" class="bf-category-panel"></div>
 
         <div class="planning-sim-groups">
           <section class="planning-sim-group income">
@@ -2622,7 +2623,7 @@ body{font-size:16px;line-height:1.5}
   </div>
 </div>
 
-<script src="../shared/scenario-strategy.js?v=73.30.3.0-20261017"></script>
+<script src="../shared/scenario-strategy.js?v=73.30.4.0-20261018"></script>
 <script>
 const sb=window.appSupabase;
 if(typeof Chart!=="undefined"){
@@ -2691,6 +2692,9 @@ let planningSimulatorHorizon="CALENDAR";
 let planningSimulationMode="CUSTOM";
 let planningSimReserve=0,planningSimProject=0,planningSavedScenarios=[],planningScenarioSequence=0,planningScenarioFeedback="";
 let planningSimulation={MANDATORY:0,NECESSARY:0,DISCRETIONARY:0,FIXED:0,PREDICTABLE:0,VARIABLE:0};
+let planningSimulationCategoryTargets={};
+let planningSimulationCategoryUnit="MONTH";
+let planningSimulationCategoryNature="DISCRETIONARY";
 const planningBoardExpandedL1=new Set();
 const planningBoardExpandedL2=new Set();
 let scenarioLoading=false;
@@ -7556,7 +7560,7 @@ function planningSimulationRows(){
 }
 function planningSimulationCalc(exp,inc,override,modeOverride){
   if(!window.BudgetFamilyScenario)throw new Error("Motore simulatore non disponibile");
-  return window.BudgetFamilyScenario.calculate(exp,inc,override||planningSimulation,{reserve:planningSimReserve,project:planningSimProject});
+  return window.BudgetFamilyScenario.calculate(exp,inc,override||planningSimulation,{reserve:planningSimReserve,project:planningSimProject,categoryTargets:planningSimulationCategoryTargets});
 }
 function planningSimPct(v){const n=Math.round(num(v));return (n>0?"+":"")+n+"%"}
 function planningSimulationPreset(code){
@@ -7566,6 +7570,7 @@ function planningSimulationPreset(code){
   else if(code==="D100")zero.DISCRETIONARY=-100;
   else if(code==="N10D50"){zero.NECESSARY=-10;zero.DISCRETIONARY=-50}
   planningSimulationSet(zero);
+  if(code==="RESET")planningSimulationCategoryTargets={};
   planningScenarioFeedback="";
 }
 function planningSimulationOutputClass(key,value){
@@ -7640,7 +7645,7 @@ function planningSimSaveScenario(){
   if(!trimmed||trimmed.length>40){planningScenarioFeedback="Inserisci un nome di 1–40 caratteri.";renderPlanningSimulatorView();return}
   planningScenarioSequence++;
   planningSavedScenarios.push({
-    name:trimmed,simulation:{...planningSimulation},reserve:planningSimReserve,project:planningSimProject,
+    name:trimmed,simulation:{...planningSimulation},categoryTargets:{...planningSimulationCategoryTargets},reserve:planningSimReserve,project:planningSimProject,
     context:planningSimulatorHorizon+"|"+String(planningBoardData.expense.current_month||""),
     baseline:calc.baselineBalance,result:calc.simulatedBalance,impact:calc.impact,gapToTarget:calc.gapToTarget
   });
@@ -7662,6 +7667,35 @@ function planningSimSolve(goal){
       "Con questa riduzione delle D future raggiungi l'obiettivo simulato, da validare sulle categorie L2.";
   }
   renderPlanningSimulatorView();
+}
+function renderPlanningSimCategoryPanel(exp,calc){
+ const node=$("planningSimCategoryPanel");if(!node)return;
+ const kinds={DISCRETIONARY:"Discrezionali",NECESSARY:"Necessarie",MANDATORY:"Obbligatorie"};
+ const details=new Map((calc.categoryDetails||[]).map(r=>[r.category_id,r]));
+ const rows=exp.filter(r=>r.kind===planningSimulationCategoryNature&&num(r.annual)>.005)
+   .sort((a,b)=>String(a.l1_name).localeCompare(String(b.l1_name),"it")||String(a.l2_name).localeCompare(String(b.l2_name),"it"));
+ const factor=planningSimulationCategoryUnit==="MONTH"?12:1;
+ const options=Object.keys(kinds).map(k=>'<option value="'+k+'"'+(k===planningSimulationCategoryNature?' selected':'')+'>'+kinds[k]+'</option>').join("");
+ const selected=Object.keys(planningSimulationCategoryTargets).length;
+ let html='<div class="bf-category-head"><div><h3>Interventi concreti per categoria L2</h3><p>Imposta il <strong>nuovo budget complessivo</strong> dello scenario, non il taglio. La percentuale è calcolata; le spese già sostenute non possono essere eliminate. I target L2 sostituiscono, solo per quella categoria, la leva macro.</p></div>'+
+ '<div class="bf-category-actions"><label>Natura <select id="bfCategoryNature">'+options+'</select></label>'+
+ '<label>Inserisci <select id="bfCategoryUnit"><option value="MONTH"'+(planningSimulationCategoryUnit==="MONTH"?' selected':'')+'>€/mese medio</option><option value="YEAR"'+(planningSimulationCategoryUnit==="YEAR"?' selected':'')+'>€/periodo</option></select></label>'+
+ '<button type="button" class="btn ghost compact" data-bf-category-reset>Ripristina L2 ('+selected+')</button></div></div>';
+ html+='<div class="bf-category-scroll"><table class="bf-category-table"><thead><tr><th>Categoria L1 / L2</th><th>Baseline '+(factor===12?'Ø mensile':'periodo')+'</th><th>Nuovo budget '+(factor===12?'Ø mensile':'periodo')+'</th><th>Riduzione</th><th>Quota non modificabile</th></tr></thead><tbody>';
+ let previous="";
+ rows.forEach(r=>{
+  const d=details.get(String(r.category_id));if(!d)return;
+  if(r.l1_name!==previous){previous=r.l1_name;html+='<tr class="bf-category-group"><th colspan="5">'+esc(previous)+'</th></tr>'}
+  const value=d.simulated/factor,base=d.baseline/factor;
+  const percent=d.baseline>.005?(d.simulated/d.baseline-1)*100:0;
+  const overridden=d.overridden,maximumDisplay=Math.max(0,Math.ceil(d.baseline/factor*3));
+  html+='<tr><td><strong>'+esc(r.l2_name)+'</strong>'+(overridden?' <span class="bf-custom-tag">Target manuale</span>':'')+'</td>'+
+    '<td>'+money(base)+'</td><td><input data-bf-category-target="'+esc(d.category_id)+'" type="number" min="'+(d.locked/factor).toFixed(2)+'" max="'+Math.max(maximumDisplay,Math.ceil(d.locked/factor)).toFixed(2)+'" step="1" value="'+Number(value.toFixed(2))+'" aria-label="Budget '+esc(r.l2_name)+'"></td>'+
+    '<td class="'+(percent<-.005?'positive':percent>.005?'negative':'')+'">'+(percent>0?'+':'')+percent.toFixed(1).replace(".",",")+'%</td><td>'+money(d.locked)+'</td></tr>';
+ });
+ html+='</tbody></table></div><p class="bf-category-foot">'+(rows.length?('Il valore mensile è una media sul periodo di 12 mesi, non un limite mensile. Target L2 impostati: '+selected+'. La riduzione viene realizzata esclusivamente sulla quota futura; il budget non può essere inferiore agli Actual già maturati. '):'Nessuna categoria con importi nella natura selezionata. ')+
+ 'Le modifiche sono simulazioni temporanee: non cambiano la Baseline né il Piano salvato. Il trasferimento ai target del Piano è una fase successiva.</p>';
+ node.innerHTML=html;
 }
 function renderPlanningSimulatorView(){
   if(!planningBoardData||!planningBoardData.expense||!planningBoardData.income)return;
@@ -7685,7 +7719,7 @@ function renderPlanningSimulatorView(){
   document.querySelectorAll("#planningSimulatorView [data-planning-sim-preset]").forEach(function(b){
     const code=b.dataset.planningSimPreset;
     const settings={RESET:[0,0],D25:[0,-25],D50:[0,-50],D100:[0,-100],N10D50:[-10,-50]}[code];
-    const exact=settings&&planningSimulation.NECESSARY===settings[0]&&planningSimulation.DISCRETIONARY===settings[1]&&
+    const exact=settings&&Object.keys(planningSimulationCategoryTargets).length===0&&planningSimulation.NECESSARY===settings[0]&&planningSimulation.DISCRETIONARY===settings[1]&&
       ["MANDATORY","FIXED","PREDICTABLE","VARIABLE"].every(function(k){return num(planningSimulation[k])===0});
     b.classList.toggle("active",!!exact);
   });
@@ -7704,6 +7738,7 @@ function renderPlanningSimulatorView(){
     html+='</tr>';
   });
   html+='</tbody></table>';$("planningSimMatrix").innerHTML=html;
+  renderPlanningSimCategoryPanel(exp,calc);
   planningSimSavedHtml(calc);
 }
 
@@ -7916,17 +7951,20 @@ $("planningBoardView").addEventListener("click",function(e){
   if(open){openPlanningRowInAnalysis(open.dataset.planningOpenAnalysis,open.dataset.planningOpenDirection||"EXPENSE");return}
 });
 $("planningSimulatorView").addEventListener("click",function(e){
+  const resetCat=e.target.closest("[data-bf-category-reset]");
+  if(resetCat){planningSimulationCategoryTargets={};planningScenarioFeedback="Interventi L2 ripristinati; restano le leve macro.";renderPlanningSimulatorView();return}
+
   const solve=e.target.closest("[data-scenario-solve]");if(solve){planningSimSolve(solve.dataset.scenarioSolve);return}
   const action=e.target.closest("[data-scenario-action]");if(action&&action.dataset.scenarioAction==="SAVE"){planningSimSaveScenario();return}
   const remove=e.target.closest("[data-scenario-remove]");if(remove){planningSavedScenarios.splice(Number(remove.dataset.scenarioRemove),1);planningScenarioFeedback="";renderPlanningSimulatorView();return}
   const load=e.target.closest("[data-scenario-load]");
   if(load){const item=planningSavedScenarios[Number(load.dataset.scenarioLoad)];if(!item)return;
-    planningSimulationSet(item.simulation);planningSimReserve=item.reserve;planningSimProject=item.project;
+    planningSimulationSet(item.simulation);planningSimulationCategoryTargets={...(item.categoryTargets||{})};planningSimReserve=item.reserve;planningSimProject=item.project;
     $("planningSimReserve").value=planningSimReserve;$("planningSimProject").value=planningSimProject;
     planningScenarioFeedback="Leve dello scenario «"+item.name+"» ricaricate sulla Baseline corrente.";
     renderPlanningSimulatorView();return}
   const horizon=e.target.closest("[data-simulator-horizon]");
-  if(horizon){planningSimulatorHorizon=horizon.dataset.simulatorHorizon||"CALENDAR";renderPlanningSimulatorView();return}
+  if(horizon){planningSimulatorHorizon=horizon.dataset.simulatorHorizon||"CALENDAR";planningSimulationCategoryTargets={};planningScenarioFeedback="Target L2 azzerati al cambio periodo; gli importi dipendono dall’orizzonte.";renderPlanningSimulatorView();return}
   const preset=e.target.closest("[data-planning-sim-preset]");
   if(preset){planningSimulationPreset(preset.dataset.planningSimPreset);renderPlanningSimulatorView();return}
   const cell=e.target.closest("[data-planning-sim-matrix-n]");
@@ -7934,6 +7972,22 @@ $("planningSimulatorView").addEventListener("click",function(e){
     const next={MANDATORY:planningSimulation.MANDATORY,NECESSARY:num(cell.dataset.planningSimMatrixN),DISCRETIONARY:num(cell.dataset.planningSimMatrixD),FIXED:planningSimulation.FIXED,PREDICTABLE:planningSimulation.PREDICTABLE,VARIABLE:planningSimulation.VARIABLE};
     planningSimulationSet(next);renderPlanningSimulatorView();return;
   }
+});
+$("planningSimulatorView").addEventListener("change",function(e){
+ if(e.target.id==="bfCategoryNature"){planningSimulationCategoryNature=e.target.value;renderPlanningSimulatorView();return}
+ if(e.target.id==="bfCategoryUnit"){planningSimulationCategoryUnit=e.target.value;renderPlanningSimulatorView();return}
+ const edit=e.target.closest("[data-bf-category-target]");if(!edit)return;
+ const id=String(edit.dataset.bfCategoryTarget);
+ const rows=planningSimulationRows(),before=planningSimulationCalc(rows.exp,rows.inc);
+ const detail=(before.categoryDetails||[]).find(r=>r.category_id===id);
+ if(!detail)return;
+ const factor=planningSimulationCategoryUnit==="MONTH"?12:1;
+ const entered=Number(edit.value);
+ if(!Number.isFinite(entered)||entered<0){planningScenarioFeedback="Inserisci un importo non negativo.";renderPlanningSimulatorView();return}
+ const target=Math.max(detail.locked,entered*factor);
+ planningSimulationCategoryTargets={...planningSimulationCategoryTargets,[id]:target};
+ planningScenarioFeedback=entered*factor<detail.locked-.005?"Target limitato alla quota già sostenuta: "+money(detail.locked)+".":"Target L2 applicato senza sommarlo alla leva macro.";
+ renderPlanningSimulatorView();
 });
 $("planningSimulatorView").addEventListener("input",function(e){
   if(e.target.id==="planningSimReserve"||e.target.id==="planningSimProject"){

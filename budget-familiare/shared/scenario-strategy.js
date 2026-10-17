@@ -5,32 +5,41 @@ const KEYS=["MANDATORY","NECESSARY","DISCRETIONARY","FIXED","PREDICTABLE","VARIA
 const EXP=["MANDATORY","NECESSARY","DISCRETIONARY","UNCLASSIFIED","SAVINGS","OTHER"];
 const INC=["FIXED","PREDICTABLE","VARIABLE","OTHER_INCOME"];
 const num=v=>Number.isFinite(Number(v))?Number(v):0;
-function section(rows,keys){
+function section(rows,keys,adjustments={},targets={},categoryDetails=null){
  const out={};keys.forEach(k=>out[k]={baseline:0,locked:0,flexible:0,simulated:0});
  (rows||[]).forEach(r=>{
   const key=out[r.kind]?r.kind:(keys===EXP?"OTHER":"OTHER_INCOME");
-  const entry=out[key];
   const lines=Array.isArray(r.months)?r.months:[];
   const total=lines.reduce((s,m)=>s+num(m.amount),0);
-  // Past months and actual part of current month cannot be re-written by a scenario.
+  // History and the actual-to-date component of the current month are immutable.
   const flexible=lines.reduce((s,m)=>s+(m.kind==="actual"?0:Math.max(0,num(m.futureAmount))),0);
   const locked=total-flexible;
-  entry.baseline+=total;entry.locked+=locked;entry.flexible+=flexible;
+  const id=String(r.category_id??"");
+  const hasTarget=keys===EXP&&["MANDATORY","NECESSARY","DISCRETIONARY"].includes(key)&&
+    id!==""&&Object.prototype.hasOwnProperty.call(targets,id)&&
+    Number.isFinite(Number(targets[id]));
+  const pct=keys===EXP?
+    (["MANDATORY","NECESSARY","DISCRETIONARY"].includes(key)?num(adjustments[key]):0):
+    (["FIXED","PREDICTABLE","VARIABLE"].includes(key)?num(adjustments[key]):0);
+  // A category target REPLACES its macro adjustment; never stack two reductions.
+  const simulated=hasTarget?
+    Math.max(locked,Math.max(0,num(targets[id]))):
+    locked+Math.max(0,flexible*(1+pct/100));
+  const entry=out[key];
+  entry.baseline+=total;entry.locked+=locked;entry.flexible+=flexible;entry.simulated+=simulated;
+  if(categoryDetails&&keys===EXP)categoryDetails.push({
+   category_id:id,kind:key,baseline:total,locked,flexible,simulated,
+   overridden:hasTarget,remainingMonths:lines.filter(m=>m.kind!=="actual"&&num(m.futureAmount)>.005).length
+  });
  });
  return out;
 }
 function sum(group,field){return Object.values(group).reduce((s,v)=>s+v[field],0)}
 function calculate(expRows,incRows,adjustments={},options={}){
- const expenses=section(expRows,EXP),income=section(incRows,INC);
- const modify=(groups,keys)=>{
-  Object.entries(groups).forEach(([k,entry])=>{
-   const pct=keys.includes(k)?num(adjustments[k]):0;
-   const changed=Math.max(0,entry.flexible*(1+pct/100));
-   entry.simulated=entry.locked+changed;
-  });
- };
- modify(expenses,["MANDATORY","NECESSARY","DISCRETIONARY"]);
- modify(income,["FIXED","PREDICTABLE","VARIABLE"]);
+ const categoryDetails=[];
+ const categoryTargets=options.categoryTargets||{};
+ const expenses=section(expRows,EXP,adjustments,categoryTargets,categoryDetails);
+ const income=section(incRows,INC,adjustments);
  const baseIncome=sum(income,"baseline"),baseExpenses=sum(expenses,"baseline"),
        simulatedIncome=sum(income,"simulated"),simulatedExpenses=sum(expenses,"simulated"),
        structuralBaseline=baseIncome-expenses.MANDATORY.baseline-expenses.NECESSARY.baseline-expenses.UNCLASSIFIED.baseline,
@@ -42,7 +51,7 @@ function calculate(expRows,incRows,adjustments={},options={}){
        reserve=Math.max(0,num(options.reserve)),project=Math.max(0,num(options.project)),
        goal=reserve+project;
  return {
-  income,expenses,baseIncome,baseExpenses,simulatedIncome,simulatedExpenses,
+  income,expenses,categoryDetails,baseIncome,baseExpenses,simulatedIncome,simulatedExpenses,
   structuralBaseline,structuralSimulated,dAndSavings,dAndSavingsSim,other,otherSim,
   baselineBalance,simulatedBalance,impact:simulatedBalance-baselineBalance,
   gapBefore:Math.max(0,-baselineBalance),
@@ -51,7 +60,7 @@ function calculate(expRows,incRows,adjustments={},options={}){
   target:goal,
   gapToTarget:Math.max(0,goal-simulatedBalance),
   freeAfterGoals:simulatedBalance-goal,
-  maxFutureDReduction:expenses.DISCRETIONARY.flexible,
+  maxFutureDReduction:categoryDetails.filter(r=>r.kind==="DISCRETIONARY"&&!r.overridden).reduce((s,r)=>s+r.flexible,0),
   availableDCurrent:expenses.DISCRETIONARY.simulated,
   monthsScope:expRows?.[0]?.months?.length||12,
   reconciled:Math.abs((structuralBaseline-dAndSavings-other)-baselineBalance)<.01 &&

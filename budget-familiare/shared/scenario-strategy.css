@@ -41,3 +41,23 @@
  .bf-diagnostic-top h2{font-size:19px}
  .bf-scenario-quick-actions .btn{flex:1 1 100%}
 }
+
+/* L2 targets: temporary scenario controls, independent of the Baseline editor */
+.bf-category-panel{margin:16px 0;padding:15px;border:1px solid #d9e4f1;border-radius:12px;background:#fbfdff}
+.bf-category-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.bf-category-head h3{font-size:18px;margin:0 0 5px;color:#203957}
+.bf-category-head p{font-size:14px;color:#536a83;line-height:1.48;margin:0;max-width:780px}
+.bf-category-actions{display:flex;gap:9px;align-items:end;flex-wrap:wrap}
+.bf-category-actions label{display:grid;gap:4px;font-size:12px;font-weight:700;color:#48617b}
+.bf-category-actions select{padding:8px;border:1px solid #cad8e8;border-radius:8px;background:#fff;font-size:14px;color:#172b49}
+.bf-category-scroll{overflow:auto;margin-top:13px;border:1px solid #e0e8f1;border-radius:9px}
+.bf-category-table{width:100%;border-collapse:collapse;min-width:760px}
+.bf-category-table th,.bf-category-table td{padding:8px 10px;border-bottom:1px solid #e8edf4;font-size:14px;text-align:right;font-variant-numeric:tabular-nums}
+.bf-category-table th:first-child,.bf-category-table td:first-child{text-align:left}
+.bf-category-table thead th{background:#eff4fa;color:#35506f;position:sticky;top:0}
+.bf-category-table .bf-category-group th{background:#e9f1fa;text-align:left;color:#23415f;font-size:13px;font-weight:750}
+.bf-category-table input{width:125px;max-width:100%;padding:7px 8px;text-align:right;background:#fff;border:1px solid #b5c6db;border-radius:7px;color:#1c3554;font-weight:700;font-size:15px}
+.bf-custom-tag{display:inline-block;padding:2px 5px;color:#1d4ed8;background:#eaf2ff;border-radius:5px;font-size:11px;font-weight:700}
+.bf-category-table td.positive{color:#087c50;font-weight:750}
+.bf-category-table td.negative{color:#b52a3d;font-weight:750}
+.bf-category-foot{font-size:13px;line-height:1.5;color:#5b708a;margin:9px 1px 0}
