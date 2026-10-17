@@ -9,7 +9,7 @@
 <title>Budget Familiare — Dashboard gestione</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
 <script src="shared/supabase-client.js?v=73.24.0-20261012-1415"></script>
-<script src="shared/app-config.js?v=73.30.1.14-20261014"></script>
+<script src="shared/app-config.js?v=73.30.3.2-20261017"></script>
 <script src="shared/contextual-help.js?v=73.30.1.14-20261014" defer></script>
 <style>
 :root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#6b7280;--line:#e5e7eb;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 8px 24px rgba(15,23,42,.06)}
@@ -1844,10 +1844,12 @@ function exactAliasImpactForSelection(candidate,merchantId){
 }
 function aliasImpactHtml(candidate,merchantId,existing,merchant){
   if(!candidate||!merchantId)return '';
-  if(existing&&existing.merchant_id!==merchantId){
-    return '<div class="alias-impact warn"><strong>Spostamento alias:</strong> questo alias è già associato a un’altra controparte. Lo spostamento correggerà l’identità dei movimenti collegati alla vecchia controparte; non applicherà la riclassificazione massiva del caso semplice.</div>';
-  }
   const impact=exactAliasImpactForSelection(candidate,merchantId);
+  if(existing&&existing.merchant_id!==merchantId){
+    const category=merchant?.default_category_id?categoryNameById(merchant.default_category_id):'categoria definita dalle regole';
+    return '<div class="alias-impact warn"><strong>Spostamento alias:</strong> la pipeline rivaluterà <strong>'+nfmt(impact?.eligible||0)+' movimenti non protetti</strong> con alias EXACT, aggiornando sia controparte sia categoria secondo le regole attive (default destinazione: <strong>'+esc(category)+'</strong>).'+
+      (impact?.protected?' <strong>'+nfmt(impact.protected)+' manuali protetti</strong> saranno lasciati invariati.':'')+'</div>';
+  }
   if(!impact||!impact.total)return '';
   let text='<strong>Impatto al salvataggio:</strong> '+nfmt(impact.eligible)+' movimenti non protetti con alias EXACT <span class="mono">'+esc(candidate)+'</span> saranno rivalutati dalla pipeline. ';
   text+=nfmt(impact.toAssociate)+' '+(impact.toAssociate===1?'non è ancora associato':'non sono ancora associati')+' a <strong>'+esc(merchant?.name||'questa controparte')+'</strong>; ';
@@ -1892,22 +1894,33 @@ async function addSelectedMovementAlias(btn){
     if(!confirm(`L'alias “${candidate}” è associato a ${existing.merchant_name||'un’altra controparte'}. Spostarlo a ${merchant?.name||'questa controparte'}? La modifica viene salvata subito.`))return;
   }
   const pendingState=classificationFormState(),hadPending=classificationHasPendingChanges();
+  const previousState=selectedRow.__edit_baseline||classificationPersistedState(selectedRow);
   setBusy(btn,true,'Salvo alias');msg($('classMsg'),'');
   try{
-    await rpc('dashboard_remember_counterparty_alias_v1',{
+    const saved=await rpc('dashboard_remember_counterparty_alias_v1',{
       p_raw_value:candidate,
       p_merchant_id:merchantId,
       p_default_category_id:null,
       p_set_default_category:false
     });
-    const movementId=selectedRow.id,actionText=`Alias “${candidate}” ${moving?'spostato':'associato'} a ${merchant?.name||'controparte'} e già salvato.`;coherenceData=null;
+    const movementId=selectedRow.id,checked=Number(saved?.matching_transactions_checked||0),
+      changed=Number(saved?.reclassified_matching_transactions||0),
+      actionText=`Alias “${candidate}” ${moving?'spostato':'associato'} a ${merchant?.name||'controparte'} e già salvato. Pipeline: ${checked} movimenti EXACT non protetti verificati, ${changed} aggiornati.`;
+    coherenceData=null;
     await loadMovementsData();
     const row=(catData?.movements||[]).find(x=>x.id===movementId);
     if(row){
       openClassify(row,{immediateAction:actionText});
-      if(hadPending)applyClassificationFormState(pendingState);
+      if(hadPending){
+        const nextState={...pendingState};
+        // If the category was never edited, do not resurrect the obsolete category
+        // captured before the alias triggered an automatic pipeline recalculation.
+        if(String(pendingState.category||'')===String(previousState.category||''))
+          nextState.category=String(row.category_id||'');
+        applyClassificationFormState(nextState);
+      }
     }
-    msg($('classMsg'),actionText+(hadPending?' Le modifiche al movimento che avevi fatto restano da salvare.':''));
+    msg($('classMsg'),actionText+(hadPending?' Le eventuali altre modifiche al movimento restano da salvare.':''));
   }catch(e){msg($('classMsg'),e.message,true)}finally{setBusy(btn,false)}
 }
 function classificationPipelineMethodLabel(preview){
