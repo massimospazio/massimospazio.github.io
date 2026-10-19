@@ -38,22 +38,23 @@ function paint(){
  if(!display)return;
  const year=boardYear(),rolling=planningBoardHorizon!=="CALENDAR";
  const p=state.year===year?state.record:null;
+ const strategic=p?.meta?.strategic_plan?.kind==="STRATEGIC";
  const versions=state.year===year?state.versions:[];
  const sameYear=year===new Date().getFullYear();
  const live=planningBoardData&&planningBoardData.expense&&planningBoardData.income?planningBoardData:null;
  const info=rolling?'I prossimi 12 mesi sono il Rolling Forecast, non una versione del Piano annuale. Passa ad Anno corrente per vedere il Piano congelato.':
-  p?'Fotografia V'+p.revision+' salvata il '+dateHuman(p.approved_at)+'. È una fotografia tecnica, non una strategia validata; i mesi chiusi erano già Actual.':
+  p?(strategic?'Piano strategico V'+p.revision+' approvato il '+dateHuman(p.approved_at)+'. Target e note conservati nella versione; gli Actual già trascorsi sono congelati.':'Fotografia tecnica V'+p.revision+' nell archivio. Il nuovo Piano si elabora e si approva nel Tabellone, non tramite questa fotografia.'):
     'Nessuna fotografia tecnica salvata per '+year+'. Il tabellone mostra temporaneamente la Baseline corrente.';
  const delta=p&&live&&!rolling?surplus(live)-surplus(p):null;
  const showStatus=state.status?'<p class="bf-plan-status'+(state.error?' error':'')+'" role="status">'+esc(state.status)+'</p>':"";
- el.innerHTML='<div class="bf-plan-head"><div class="bf-plan-heading"><strong>'+ (p&&!rolling?'Fotografia tecnica · V'+p.revision:'Fotografie della Baseline · '+year) +'</strong><span>'+esc(info)+'</span></div>'+
+ el.innerHTML='<div class="bf-plan-head"><div class="bf-plan-heading"><strong>'+ (p&&!rolling?(strategic?'Piano approvato · V':'Fotografia tecnica · V')+p.revision:'Fotografie e Piani · '+year) +'</strong><span>'+esc(info)+'</span></div>'+
  '<div class="bf-plan-actions">'+
  (versions.length?'<label>Versione <select id="bfPlanVersion" '+(state.busy||rolling?'disabled':'')+'>'+versions.map(v=>'<option value="'+v.revision+'" '+(p&&v.revision===p.revision?'selected':'')+'>V'+v.revision+' · '+esc(dateHuman(v.approved_at))+'</option>').join("")+'</select></label>':'')+
  '<button type="button" id="bfPlanReload" class="btn ghost compact" '+(state.busy?'disabled':'')+'>↻ Piano</button>'+
- (!rolling&&sameYear?'<button type="button" id="bfPlanApprove" class="btn compact" '+(state.busy?'disabled':'')+'>'+(versions.length?'Salva nuova fotografia':'Salva fotografia V1')+'</button>':'')+
+ ''+
  '</div></div>'+
  (delta!==null?'<div class="bf-plan-delta">Risultato della fotografia selezionata: <strong>'+eu(surplus(p))+'</strong> · Previsione corrente: <strong>'+eu(surplus(live))+'</strong> · Scostamento: <strong class="'+(delta>=0?'positive':'negative')+'">'+(delta>0?'+':'')+eu(delta)+'</strong></div>':'')+
- (p&&!rolling?'<p class="bf-plan-caveat">Il confronto riguarda il risultato del Tabellone (entrate meno uscite della proiezione), non necessariamente il Flusso economico riconciliato. La fotografia conserva anche gli importi reali dei mesi già trascorsi al momento dell’approvazione. La modifica della Baseline NON altera la fotografia, che non rappresenta ancora il Piano strategico.</p>':'')+
+ (p&&!rolling&&!strategic?'<p class="bf-plan-caveat">Il confronto riguarda il risultato del Tabellone (entrate meno uscite della proiezione), non necessariamente il Flusso economico riconciliato. La fotografia conserva anche gli importi reali dei mesi già trascorsi al momento dell’approvazione. La modifica della Baseline NON altera la fotografia, che non rappresenta ancora il Piano strategico.</p>':'')+
  showStatus;
 }
 async function load(y,rev){
@@ -100,8 +101,7 @@ function init(){
  bar.setAttribute("aria-label","Fotografie tecniche annuali versionate");
  $("planningBoardContextNote").before(bar);
  bar.addEventListener("click",e=>{
-  if(e.target.closest("#bfPlanApprove"))approve();
-  else if(e.target.closest("#bfPlanReload"))load(boardYear());
+  if(e.target.closest("#bfPlanReload"))load(boardYear());
  });
  bar.addEventListener("change",e=>{
   if(e.target.id==="bfPlanVersion")load(boardYear(),Number(e.target.value));
@@ -109,6 +109,6 @@ function init(){
  paint();
  if(visible()&&planningBoardData)onBoardRendered();
 }
-root.BudgetFamilyPlan=Object.freeze({snapshotFor,onBoardRendered,annualTotals,surplus});
+root.BudgetFamilyPlan=Object.freeze({snapshotFor,onBoardRendered,annualTotals,surplus,reload:()=>load(boardYear())});
 if(doc.readyState==="loading")doc.addEventListener("DOMContentLoaded",init);else init();
 })(typeof window!=="undefined"?window:globalThis);
