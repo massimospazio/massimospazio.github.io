@@ -7399,7 +7399,7 @@ async function quickBaselineLoad(row){
 function quickBaselineHtml(row){
  if(planningBoardContext!=="BASELINE")return "";
  const k=quickBaselineKey(row.direction,row.category_id),ed=quickBaselineEditors.get(k);
- if(!ed)return '<div class="qbe">Caricamento editor rapido…</div>';
+ if(!ed){if(!quickBaselineBusy.has(k))quickBaselineLoad(row);return '<div class="qbe">Caricamento editor rapido…</div>'}
  const setting=ed.data?.category_setting||{},scope=setting.forecast_scope||"CATEGORY";
  if(scope==="COUNTERPARTIES")return '<div class="qbe"><strong>Previsione gestita per controparti.</strong> Per evitare di sovrascrivere le regole delle singole controparti, modifica questa categoria in Analisi spese.</div>';
  const monthRows=ed.data?.monthly_plan||[],overrides=monthRows.filter(x=>x.override_amount!==null&&x.override_amount!==undefined).length;
