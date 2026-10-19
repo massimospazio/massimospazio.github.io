@@ -1,0 +1,83 @@
+name: Verify Budget Familiare live release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'budget-familiare/**'
+      - '.github/workflows/verify-budget-release.yml'
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-budget-familiare-live
+  cancel-in-progress: true
+
+jobs:
+  verify-live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout published repository
+        uses: actions/checkout@v4
+
+      - name: Verify live version and deployed content
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib, pathlib, re, sys, time, urllib.request, urllib.error
+
+          root = pathlib.Path('budget-familiare')
+          checks = {
+              'shared/app-config.js': 'https://massimospazio.github.io/budget-familiare/shared/app-config.js',
+              'reporting/index.html': 'https://massimospazio.github.io/budget-familiare/reporting/',
+              'index.html': 'https://massimospazio.github.io/budget-familiare/',
+          }
+          config = (root / 'shared/app-config.js').read_text(encoding='utf-8')
+          match = re.search(r"APP_VERSION\s*=\s*['\"](V[0-9.]+)['\"]", config)
+          if not match:
+              sys.exit('::error::Missing APP_VERSION in published app-config.js')
+          version = match.group(1)
+          print('Expected version:', version, flush=True)
+          # GitHub Pages is eventually consistent after a push; do not mistake a build delay for success.
+          # Hourly checks additionally catch regressions and inaccessible pages.
+          problems = []
+          for attempt in range(1, 13):
+              problems = []
+              for name, url in checks.items():
+                  try:
+                      req = urllib.request.Request(url + ('&' if '?' in url else '?') + 'release_check=' + str(int(time.time())), headers={'Cache-Control':'no-cache', 'User-Agent':'BudgetFamiliareReleaseVerifier/1.0'})
+                      with urllib.request.urlopen(req, timeout=20) as response:
+                          data = response.read()
+                          status = response.status
+                      expected = (root / name).read_bytes()
+                      if status != 200:
+                          problems.append(f'{name}: HTTP {status}')
+                      elif hashlib.sha256(data).digest() != hashlib.sha256(expected).digest():
+                          problems.append(f'{name}: content differs from repository')
+                      else:
+                          print(f'OK {name}: HTTP 200, SHA256 identical', flush=True)
+                  except Exception as exc:
+                      problems.append(f'{name}: {exc}')
+              if not problems:
+                  break
+              print(f'Attempt {attempt}/12: ' + '; '.join(problems), flush=True)
+              if attempt < 12:
+                  time.sleep(20)
+          summary_path = pathlib.Path('/tmp/budget-release-summary.md')
+          if problems:
+              summary_path.write_text(f'### ❌ Live release verification FAILED — {version}\n' + '\n'.join('- ' + x for x in problems) + '\n', encoding='utf-8')
+              print('::error::Live release did not match published repository: ' + '; '.join(problems))
+              exit_code = 1
+          else:
+              summary_path.write_text(f'### ✅ Live release verified — {version}\n\nAll three public endpoints returned HTTP 200 and exactly match the published repository (SHA256).\n', encoding='utf-8')
+              exit_code = 0
+          with open(__import__('os').environ['GITHUB_STEP_SUMMARY'], 'a', encoding='utf-8') as f:
+              f.write(summary_path.read_text(encoding='utf-8'))
+          sys.exit(exit_code)
+          PY
