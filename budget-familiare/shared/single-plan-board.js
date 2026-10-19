@@ -22,7 +22,8 @@ function isDirty(){
 function saveDraft(){
  persist();
  try{
-  root.localStorage.setItem(STORAGE_KEY,JSON.stringify({format:1,drafts}));
+  const newSaved={...savedDrafts,[state.year+"|"+state.horizon]:snapshot()};
+  root.localStorage.setItem(STORAGE_KEY,JSON.stringify({format:1,drafts:newSaved}));
   savedDrafts[state.year+"|"+state.horizon]=JSON.parse(JSON.stringify(snapshot()));
   saveError=false;justSaved=true;return true;
  }catch(e){saveError=true;return false}
@@ -138,6 +139,7 @@ function render(originalExp,originalInc,isPlan,context){
  '<option value="BASE"'+(state.bonus==="BASE"?' selected':'')+'>Base</option>'+
  '<option value="HIGH"'+(state.bonus==="HIGH"?' selected':'')+'>Favorevole</option></select></label>'+
 
+ '<span class="bf-draft-save-status" role="status">'+(saveError?'⚠ Errore salvataggio':isDirty()?'● Da salvare':justSaved?'✓ Salvata':'')+'</span><button class="btn compact '+(isDirty()?'bf-draft-pending':'ghost')+'" type="button" data-bf-draft-save '+(isDirty()?'':'disabled')+'>Salva bozza</button>'+
  '<button type="button" class="btn ghost compact" data-bf-draft-reset>Ripristina target</button>'+
  (strategy?'<button type="button" class="btn compact" data-bf-draft-to-plan>Prosegui al Piano →</button>':
  '<button type="button" class="btn compact" '+(state.horizon==='ROLLING_12'?'disabled title="Approvazione rolling in sviluppo" ':'')+'data-bf-draft-approve>Approva Piano</button>')+'</div></div>';
@@ -176,7 +178,7 @@ function render(originalExp,originalInc,isPlan,context){
     return '<td><button type="button" class="'+(outcome>=0?'positive':'negative')+'" data-bf-matrix-n="'+n+'" data-bf-matrix-d="'+d+'" title="Necessarie '+n+'%, Discrezionali '+d+'%">'+money(outcome)+'</button></td>';
    }).join('')+'</tr>').join('')+'</tbody></table></div></details>';
  }
- html+='<div class="bf-draft-save-status" role="status">'+(saveError?'⚠ Salvataggio non riuscito':isDirty()?'● Modifiche da salvare':justSaved?'✓ Bozza salvata':'Bozza salvata')+' · <button class="btn compact '+(isDirty()?'bf-draft-pending':'ghost')+'" type="button" data-bf-draft-save '+(isDirty()?'':'disabled')+'>Salva bozza</button></div>';
+ 
  wrapper.innerHTML=html;
 }
 function inlineAmount(row){
