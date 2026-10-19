@@ -31,7 +31,7 @@ function restore(){
 }
 restore();
 const value=r=>Number(r||0);
-const integer=n=>Math.round(value(n)).toLocaleString("it-IT",{maximumFractionDigits:0});
+const integer=n=>String(Math.round(value(n))).replace(/\B(?=(\d{3})+(?!\d))/g,".");
 const parseInteger=s=>{const x=String(s??"").trim().replace(/[.\s\u00a0]/g,"").replace(",",".");return /^\d+(?:\.\d+)?$/.test(x)?Number(x):NaN};
 const money=n=>new Intl.NumberFormat("it-IT",{style:"currency",currency:"EUR",maximumFractionDigits:0}).format(value(n));
 const escape=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -200,7 +200,8 @@ function onChange(e){
  if(!attr)return;
  const id=e.target.getAttribute(attr),base=state.originals[id];if(!base)return;
  const n=parseInteger(e.target.value);
- if(!Number.isFinite(n)||n<0)return;
+ if(!Number.isFinite(n)||n<0){e.target.setCustomValidity("Inserisci un importo valido (es. 2.419)");e.target.reportValidity();return}
+ e.target.setCustomValidity("");
  state.targets[id]=Math.max(locked(base),monthly?n*12:n);
  persist();root.renderPlanningBoard?.();
 }
