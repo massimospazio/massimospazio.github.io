@@ -1972,6 +1972,11 @@ body{font-size:16px;line-height:1.5}
 #planningBoardView .planning-board-table thead th{position:sticky;top:0;z-index:3}
 #planningBoardView .planning-board-toolbar{position:relative;z-index:4}
 @media(max-width:800px){#planningBoardView .planning-board-table-wrap{max-height:57vh}}
+#planningBoardView .planning-goals-available{position:sticky;left:0;display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:#edf5ff;border:1px solid #c5d9f2;border-radius:8px;padding:7px 12px;margin:4px 0 0;font-size:13px;z-index:1}
+#planningBoardView .planning-goals-available strong{font-size:19px;font-variant-numeric:tabular-nums}
+#planningBoardView .planning-goals-available strong.positive{color:#15803d}
+#planningBoardView .planning-goals-available strong.negative{color:#b91c1c}
+#planningBoardView .planning-goals-available small{color:#546680}
 </style>
 <style>
 .purchase-financing-detail{margin-top:4px;font-size:14px;line-height:1.5;font-weight:400;color:#425b7c;white-space:normal;min-width:200px}
@@ -7594,6 +7599,15 @@ function renderPlanningOverview(exp,inc,view){
   const model=planningOverviewModel(exp,inc),node=$("planningBoardOverview");
   if(!node)return;
   node.innerHTML=planningOverviewRenderModel(model,planningBoardContext);
+  if(planningBoardContext==="STRATEGY" && window.BudgetFamilySinglePlan){
+    const goals=window.BudgetFamilySinglePlan.details();
+    const reserved=num(goals.reserve)+num(goals.project);
+    const free=model.baseline.surplus-reserved;
+    const panel=document.createElement("div");
+    panel.className="planning-goals-available";
+    panel.innerHTML='<span>Avanzo disponibile dopo fondo e obiettivi</span><strong class="'+(free>=0?'positive':'negative')+'">'+money(free)+'</strong><small>Avanzo scenario '+money(model.baseline.surplus)+' − Fondi '+money(reserved)+'</small>';
+    node.appendChild(panel);
+  }
   const note="Valori costruiti sul medesimo periodo della tabella; margine = entrate − O − N − NC, avanzo = entrate − uscite incluse le categorie Investimenti. I valori economici possono differire dal Flusso storico (movimenti con coperture da prestito/patrimonio pregresso), perché la proiezione L2 non contiene sempre quelle informazioni.";
   node.title=note;
 }
