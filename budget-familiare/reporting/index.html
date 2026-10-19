@@ -3945,8 +3945,8 @@ function analysisDetailForecastChipHtml(){
   if(scope==="COUNTERPARTIES"&&!analysisSelectedComponent)return '<span class="analysis-detail-forecast-chip forecast">Forecast · Somma controparti</span>';
   const target=currentForecastTarget();
   if(!target)return "";
-  const meta=forecastPlanTypeMeta(target.plan_type),certainty=forecastCertaintyMeta(target.certainty_level);
-  return '<span class="analysis-detail-forecast-chip '+meta.cls+'">'+meta.icon+' '+esc(meta.label)+' <span class="forecast-certainty-badge '+certainty.cls+'">'+certainty.icon+' '+esc(certainty.label)+'</span> · '+esc(forecastSummaryLabel(target))+'</span>';
+  const meta=forecastPlanTypeMeta(target.plan_type);
+  return '<span class="analysis-detail-forecast-chip '+meta.cls+'">'+meta.icon+' '+esc(meta.label)+' · '+esc(forecastSummaryLabel(target))+'</span>';
 }
 function analysisDetailPeriodMetricsHtml(stats,periodMonths){
   if(!stats)return "";
@@ -4475,21 +4475,14 @@ function forecastCertaintyMeta(level){
   return {level:"ESTIMATED",label:"Stimata",icon:"≈",cls:"estimated"};
 }
 function forecastRationaleHtml(d){
-  const certainty=forecastCertaintyMeta(d&&d.certainty_level);
-  return '<div class="forecast-semantics forecast">'+
-    '<div class="forecast-field"><label>Ruolo del valore</label><div class="forecast-static-value">📍 Baseline</div>'+
-      '<div class="forecast-plan-type-note">In Analisi stai costruendo solo la Baseline: ciò che realisticamente accadrebbe senza una nuova decisione. I Target verranno definiti in Strategia/Piano.</div></div>'+
-    '<div class="forecast-field"><label>Affidabilità Baseline</label><select id="forecastCertaintyLevel" class="select">'+
-      '<option value="ESTIMATED"'+(certainty.level==="ESTIMATED"?" selected":"")+'>≈ Stimata</option>'+
-      '<option value="KNOWN"'+(certainty.level==="KNOWN"?" selected":"")+'>✓ Certa</option>'+
-    '</select><div class="forecast-plan-type-note">'+
-      (certainty.level==="KNOWN"?"Il valore futuro è sostanzialmente noto; non serve distinguere se deriva da contratto, prenotazione o altra conferma.":"Il valore deriva da storico, comportamento o ipotesi. Il range plausibile verrà gestito separatamente dalla Baseline.")+
-    '</div></div>'+
-    '<div class="forecast-field forecast-rationale"><label>Motivazione <span class="muted">(opzionale)</span></label>'+
-      '<textarea id="forecastRationale" class="input" maxlength="1000" placeholder="Perché questa Baseline differisce dallo storico? Es. aumento tariffa, spesa nota, variazione attesa…">'+esc(d&&d.rationale_note||"")+'</textarea>'+
-      '<div class="forecast-rationale-note">La motivazione documenta l’assunzione della Baseline; non è un Target.</div></div>'+
-    '<div class="forecast-axes-note"><strong>In questa fase:</strong> Natura = che tipo di voce è · Temporalità = quando accade · Baseline = quanto prevediamo · Affidabilità = Certa oppure Stimata. Il Target appartiene alla fase Strategia/Piano.</div>'+
-    '</div>';
+ const id=analysisSelectedCategory,manual=baselineReliabilityEditor(id);
+ return '<div class="forecast-semantics forecast">'+
+ '<div class="forecast-field"><label>Ruolo del valore</label><div class="forecast-static-value">Baseline</div></div>'+
+ '<div class="forecast-field"><label>Affidabilità previsiva (manuale)</label>'+manual+
+ '<div class="forecast-plan-type-note">Da Non valutata a Certa/Alta/Consolidata/Stimata/Incerta. Salvataggio immediato della sola affidabilità, indipendente dalla regola.</div></div>'+
+ '<div class="forecast-field forecast-rationale"><label>Motivazione (opzionale)</label>'+
+ '<textarea id="forecastRationale" class="input" maxlength="1000" placeholder="Motivo della previsione">'+esc(d?.rationale_note||"")+'</textarea></div>'+
+ '</div>';
 }
 function planInputValue(v){
   const n=Number(v);if(!Number.isFinite(n))return "";
@@ -8348,6 +8341,10 @@ document.querySelectorAll("[data-process-roadmap]").forEach(function(b){b.onclic
 document.querySelectorAll("[data-process-feature]").forEach(function(b){b.onclick=function(){showProcessRoadmap(b.dataset.featurePhase,b.dataset.processFeature)}});
 $("processRoadmapFeatures")?.addEventListener("click",function(e){const b=e.target.closest("[data-roadmap-feature]");if(b)showProcessRoadmap(b.dataset.roadmapPhase,b.dataset.roadmapFeature)});
 $("planningBoardRefresh").onclick=function(){planningBoardData=null;loadPlanningBoard(true)};
+document.addEventListener("change",function(e){
+ const el=e.target.closest("[data-baseline-reliability]");
+ if(el&&!el.closest("#planningBoardView"))baselineReliabilitySave(el.dataset.baselineReliability,el.value,el);
+});
 $("planningBoardView").addEventListener("change",function(e){
  const level=e.target.closest("[data-baseline-reliability]");if(level){baselineReliabilitySave(level.dataset.baselineReliability,level.value,level);return}
  if(e.target.id==="baselineSort"){baselineSortKey=e.target.value;renderPlanningBoard();return}
@@ -8697,9 +8694,7 @@ $("analysisForecastPanel").addEventListener("change",async function(e){
     return;
   }
   const d=ensureForecastDraft();if(!d)return;
-  if(e.target.id==="forecastCertaintyLevel"){
-    d.certainty_level=e.target.value==="KNOWN"?"KNOWN":"ESTIMATED";renderForecastEditor();return;
-  }
+  
   if(e.target.id==="forecastMethod"){
     d.method=e.target.value;d.source=forecastSourceForMethod(d.method);
     if(["FIXED","RANGE","ZERO"].includes(d.method))d.adjustment=0;
