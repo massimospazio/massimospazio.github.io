@@ -2229,7 +2229,7 @@ body{font-size:16px;line-height:1.5}
         <div class="planning-board-toolbar-right">
           <div class="mode-toggle">
             <button class="btn compact" type="button" data-planning-level="L1_L2">L1 e L2</button>
-            <button class="btn ghost compact" type="button" data-planning-level="L1">Solo L1</button><button class="btn ghost compact" type="button" data-baseline-mode="FLAT">Vista piatta</button><button class="btn ghost compact" type="button" data-baseline-mode="TREE">Gerarchica</button><select id="baselineSort" class="select" aria-label="Ordina Baseline"><option value="annual">Baseline €</option><option value="deltaAbs">Variazione €</option><option value="deltaPct">Variazione %</option><option value="confidence">Affidabilità</option><option value="l2_name">Nome L2</option></select>
+            <button class="btn ghost compact" type="button" data-planning-level="L1">Solo L1</button><button class="btn ghost compact" type="button" data-baseline-mode="FLAT">Vista piatta</button><button class="btn ghost compact" type="button" data-baseline-mode="TREE">Gerarchica</button><select id="baselineSort" class="select" aria-label="Ordina Baseline"><option value="annual">Baseline €</option><option value="deltaAbs">Variazione €</option><option value="deltaPct">Variazione %</option><option value="confidence">Affidabilità</option><option value="l2_name">Nome L2</option></select><button class="btn ghost compact" type="button" data-baseline-sort-direction title="Inverti ordinamento">↓↑</button>
           </div>
           <label class="small">Natura <select id="planningNatureFilter" class="select" style="min-height:34px;padding:5px 8px">
             <option value="ALL">Tutte</option>
@@ -8350,6 +8350,7 @@ $("planningBoardView").addEventListener("change",function(e){
  if(e.target.id==="baselineSort"){baselineSortKey=e.target.value;renderPlanningBoard();return}
 });
 $("planningBoardView").addEventListener("click",function(e){
+ const reverse=e.target.closest("[data-baseline-sort-direction]");if(reverse){baselineSortDesc=!baselineSortDesc;renderPlanningBoard();return}
  const mode=e.target.closest("[data-baseline-mode]");if(mode){baselineViewMode=mode.dataset.baselineMode;renderPlanningBoard();return}
   const horizon=e.target.closest("[data-planning-horizon]");
   if(horizon){planningBoardHorizon=horizon.dataset.planningHorizon||"CALENDAR";renderPlanningBoard();return}
