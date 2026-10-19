@@ -109,11 +109,11 @@ function render(originalExp,originalInc,isPlan,context){
  '<label>Fondo da finanziare (€)<input type="number" min="0" max="10000000" step="50" data-bf-draft-goal="reserve" value="'+Math.round(state.reserve)+'"></label>'+
  '<label>Progetto / viaggio (€)<input type="number" min="0" max="10000000" step="100" data-bf-draft-goal="project" value="'+Math.round(state.project)+'"></label>'+
  '<div class="bf-strategy-result"><span>Avanzo dopo obiettivi</span><strong class="'+(free>=0?'bf-pos':'bf-neg')+'">'+money(free)+'</strong>'+
- '<small>Gap da coprire: '+money(Math.max(0,-free))+'</small></div></div>'+
+ '<small>Gap da coprire: '+money(Math.max(0,-free))+'</small></div></div></div></details>'+
  '<div class="bf-strategy-presets"><span>Leve rapide:</span>'+
  [['RESET','Baseline invariata'],['D25','D −25%'],['D50','D −50%'],['D100','D −100%'],['N10_D50','N −10% · D −50%'],['GOAL','Copri obiettivi con D']].map(([id,label])=>
  '<button type="button" class="btn ghost compact" data-bf-strategy-preset="'+id+'">'+label+'</button>').join('')+
- '</div><p class="bf-plan-inline-hint">Gli obiettivi sono destinazioni di avanzo, non nuove spese. Le leve modificano solo importi futuri delle categorie L2. La simulazione rolling 12m è una bozza di prova distinta dal piano annuale; non è approvabile. Passando da un periodo all’altro le modifiche rimangono in sessione.</p></div></details>';
+ '</div><p class="bf-plan-inline-hint">Gli obiettivi sono destinazioni di avanzo, non nuove spese. Le leve modificano solo importi futuri delle categorie L2. La simulazione rolling 12m è una bozza di prova distinta dal piano annuale; non è approvabile. Passando da un periodo all’altro le modifiche rimangono in sessione.</p>';
  }
  if(strategy){
   const cutsN=[0,-5,-10,-15,-20],cutsD=[0,-10,-25,-40,-50];
