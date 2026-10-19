@@ -8,14 +8,14 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=73.30.10.36-20261019"></script>
-<script src="../shared/app-config.js?v=73.30.10.36-20261019"></script>
-<script src="../shared/contextual-help.js?v=73.30.10.36-20261019" defer></script>
+<script src="../shared/supabase-client.js?v=73.30.10.37-20261019"></script>
+<script src="../shared/app-config.js?v=73.30.10.37-20261019"></script>
+<script src="../shared/contextual-help.js?v=73.30.10.37-20261019" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<link rel="stylesheet" href="../shared/health-reserve.css?v=73.30.10.36-20261019">
-<link rel="stylesheet" href="../shared/approved-plan.css?v=73.30.10.36-20261019">
-<link rel="stylesheet" href="../shared/scenario-strategy.css?v=73.30.10.36-20261019">
-<link rel="stylesheet" href="../shared/single-plan-board.css?v=73.30.10.36-20261019">
+<link rel="stylesheet" href="../shared/health-reserve.css?v=73.30.10.37-20261019">
+<link rel="stylesheet" href="../shared/approved-plan.css?v=73.30.10.37-20261019">
+<link rel="stylesheet" href="../shared/scenario-strategy.css?v=73.30.10.37-20261019">
+<link rel="stylesheet" href="../shared/single-plan-board.css?v=73.30.10.37-20261019">
 <style>
 :root{--bg:#f4f6fa;--card:#fff;--text:#17263e;--muted:#58677d;--line:#dce4ee;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 4px 18px rgba(15,23,42,.045);--sc-blue:#2563eb;--sc-blue-soft:#eff6ff;--sc-green:#0ea87a;--sc-red:#ef5b73;--sc-purple:#7658e6;--sc-ink:#17263e}
 *{box-sizing:border-box}
@@ -2011,10 +2011,10 @@ body{font-size:16px;line-height:1.5}
 #planningBoardView .bf-reliability-bars i.on{height:13px}
 #planningBoardView .planning-board-table{width:100%;min-width:0;table-layout:fixed}
 #planningBoardView .planning-board-table th,#planningBoardView .planning-board-table td{padding:5px 4px;min-width:0}
-#planningBoardView .planning-board-table th:nth-child(1){width:23%}
+#planningBoardView .planning-board-table th:nth-child(1){width:22%}
 #planningBoardView .planning-board-table th:nth-child(2){width:10%}
-#planningBoardView .planning-board-table th:nth-child(3){width:10%}
-#planningBoardView .planning-board-table th:nth-child(4){width:14%}
+#planningBoardView .planning-board-table th:nth-child(3){width:12%}
+#planningBoardView .planning-board-table th:nth-child(4){width:13%}
 #planningBoardView .planning-board-table th:nth-child(5){width:6%}
 #planningBoardView .planning-board-table th:nth-child(6){width:13%}
 #planningBoardView .planning-board-table th:nth-child(7){width:7%}
@@ -2025,12 +2025,12 @@ body{font-size:16px;line-height:1.5}
 #planningBoardView .bf-l1-tag{max-width:80px}
 #planningBoardView .bf-sort-head{font-size:12px;white-space:normal}
 
-/* V73.30.10.36 — structural guards for eight-column shared table. */
+/* V73.30.10.37 — structural guards for eight-column shared table. */
 #planningBoardView .planning-board-table tbody tr.planning-l2-row>td:nth-child(3){text-align:right}
 #planningBoardView .planning-board-table tbody tr.planning-l2-row>td:nth-child(7){text-align:center}
 #planningBoardView .planning-board-table tbody tr.planning-l2-row>td:nth-child(8){text-align:left}
 #planningBoardView .planning-board-table .bf-plan-edit-cell{max-width:100%;min-width:0}
-#planningBoardView .planning-board-table .bf-plan-edit-cell input{max-width:100%;min-width:0;padding:5px 6px}
+#planningBoardView .planning-board-table .bf-plan-edit-cell input{max-width:88px;min-width:0;flex:1 1 78px;width:calc(100% - 28px);padding:5px 6px}
 </style>
 <style>
 .purchase-financing-detail{margin-top:4px;font-size:14px;line-height:1.5;font-weight:400;color:#425b7c;white-space:normal;min-width:200px}
@@ -2078,7 +2078,7 @@ body{font-size:16px;line-height:1.5}
 @media(max-width:760px){.planning-board-shell[data-board-context="BASELINE"] .forecast-grid{grid-template-columns:1fr}.planning-board-shell[data-board-context="BASELINE"] .analysis-chart-box{height:205px}}
 
 
-/* V73.30.10.36 — common economic flow view for historical, baseline and Plan */
+/* V73.30.10.37 — common economic flow view for historical, baseline and Plan */
 .flow-dataset-picker{border-right:1px solid var(--line);padding-right:10px}
 .flow-compare-controls .flow-future-only select{min-height:36px;border:1px solid #cad7e9;border-radius:7px;background:#fff;color:#1b314c;padding:5px 9px;max-width:240px;font:inherit}
 .flow-unified-panel-head .flow-source-label{display:inline-flex;align-items:center;margin-left:6px;padding:2px 7px;border-radius:6px;background:#ebf2fc;color:#27528b;font-size:12px}
@@ -2753,8 +2753,8 @@ body{font-size:16px;line-height:1.5}
   </div>
 </div>
 
-<script src="../shared/scenario-strategy.js?v=73.30.10.36-20261019"></script>
-<script src="../shared/single-plan-board.js?v=73.30.10.36-20261019"></script>
+<script src="../shared/scenario-strategy.js?v=73.30.10.37-20261019"></script>
+<script src="../shared/single-plan-board.js?v=73.30.10.37-20261019"></script>
 <script>
 const sb=window.appSupabase;
 if(typeof Chart!=="undefined"){
@@ -5682,7 +5682,7 @@ function flowStepsFor(t){
   return {steps:steps,income:income,margin:margin,final:cur};
 }
 
-/* Flow datasets v73.30.10.36: different sources, common reconciled waterfall schema.
+/* Flow datasets v73.30.10.37: different sources, common reconciled waterfall schema.
    Never treat an unapproved technical snapshot as an approved strategic Plan. */
 function flowFutureFrame(){
  const d=projectionDataFor("EXPENSE"),i=projectionDataFor("INCOME");
@@ -9120,8 +9120,8 @@ $("rpcDiagnosticsModal")?.addEventListener("click",function(e){if(e.target===$("
 document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!$("rpcDiagnosticsModal")?.classList.contains("hidden"))closeRpcDiagnostics()});
 init();
 </script>
-<script src="../shared/health-reserve.js?v=73.30.10.36-20261019"></script>
-<script src="../shared/approved-plan.js?v=73.30.10.36-20261019"></script>
+<script src="../shared/health-reserve.js?v=73.30.10.37-20261019"></script>
+<script src="../shared/approved-plan.js?v=73.30.10.37-20261019"></script>
 </body>
 </html>
 
