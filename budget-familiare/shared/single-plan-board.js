@@ -20,7 +20,7 @@ function restore(){
   const raw=JSON.parse(root.localStorage?.getItem(STORAGE_KEY)||"null");
   if(!raw||raw.format!==1||typeof raw.drafts!=="object"||!raw.drafts)return;
   for(const [k,v] of Object.entries(raw.drafts)){
-   if(!/^\\d{4}\\|(CALENDAR|ROLLING_12)$/.test(k)||!v||typeof v!=="object")continue;
+   if(!/^\d{4}\|(CALENDAR|ROLLING_12)$/.test(k)||!v||typeof v!=="object")continue;
    const targets={};
    for(const [id,amount] of Object.entries(v.targets||{})){
     if(/^(EXPENSE|INCOME):[a-f0-9-]{36}$/i.test(id)&&Number.isFinite(Number(amount))&&Number(amount)>=0)targets[id]=Number(amount);
