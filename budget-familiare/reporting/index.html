@@ -9,7 +9,7 @@
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
 <script src="../shared/supabase-client.js?v=73.24.0-20261012-1415"></script>
-<script src="../shared/app-config.js?v=73.30.6.2-20261019"></script>
+<script src="../shared/app-config.js?v=73.30.6.3-20261019"></script>
 <script src="../shared/contextual-help.js?v=73.30.1.14-20261014" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <link rel="stylesheet" href="../shared/health-reserve.css?v=73.30.1.28-20261016">
@@ -3310,6 +3310,16 @@ function analysisDetailTrendHtml(d){
     t=rows.find(function(x){return x.level==="L1"&&(String(x.l1_id||"")===String(d.category_id)||String(x.l1_name||"")===String(d.category_name||""))});
   }
   return analysisTrendChip(t);
+}
+function frequencyHtml(active,total){
+  active=num(active);total=Math.max(1,num(total));const r=active/total;
+  let label="Occasionale",cls="freq-rare";
+  if(r>=.83){label="Ricorrente";cls="freq-recurring"}else if(r>=.50){label="Frequente";cls="freq-frequent"}else if(r>=.17){label="Saltuaria";cls="freq-occasional"}
+  return '<span class="freq-chip '+cls+'" title="'+active+' mesi attivi su '+total+'">'+active+'/'+total+' · '+label+'</span>';
+}
+function analysisForecastMeta(categoryId){
+  const rows=analysisCurrentDirection()==="INCOME"?(report.income_forecast_categories||[]):(report.forecast_categories||[]);
+  return rows.find(function(x){return String(x.category_id)===String(categoryId)})||null;
 }
 function analysisForecastLabel(v){return forecastMethodLabel(v)}
 function resetAnalysisSelection(){
