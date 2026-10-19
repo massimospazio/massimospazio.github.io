@@ -1984,6 +1984,7 @@ body{font-size:16px;line-height:1.5}
 #planningBoardView .bf-plan-edit-cell{min-height:0!important;gap:0!important}
 #planningBoardView .bf-plan-edit-cell input{height:29px!important}
 #planningBoardView .bf-draft-pending{background:#e99a25!important;border-color:#e99a25!important;color:#17263e!important;font-weight:800}
+.forecast-reset-warning{padding:10px;margin:10px 0;border:1px solid #e8ad59;border-radius:8px;background:#fff7e7;color:#755014;font-size:13px}.forecast-reset-warning strong{display:block;margin-bottom:4px}
 </style>
 <style>
 .purchase-financing-detail{margin-top:4px;font-size:14px;line-height:1.5;font-weight:400;color:#425b7c;white-space:normal;min-width:200px}
@@ -4513,7 +4514,10 @@ function renderForecastEditor(){
   if(scope==="COUNTERPARTIES"&&!target){controls='<div class="notice"><strong>Forecast per controparti attivo.</strong><br>La previsione della L2 è la somma delle controparti. Seleziona una controparte sotto per modificarne la regola. “Senza controparte” è una componente esplicita: nessun residuo nascosto.</div>';result=forecastResultHtml(forecastPreviewStats())}
   else{const draft=ensureForecastDraft();controls='<div class="forecast-grid">'+forecastControlsHtml(draft)+forecastRationaleHtml(draft)+'</div><div id="forecastExplanation">'+forecastExplanationHtml(draft)+'</div>';result='<div id="forecastLiveResult">'+forecastResultHtml(forecastDraftPreview())+'</div>'}
   const targetLabel=scope==="COUNTERPARTIES"?(cp?"Controparte: "+cp.component_name:"Somma controparti"):"Categoria L2";
-  box.innerHTML='<div class="forecast-panel-head"><div><h4>Previsione</h4><div class="small muted">Definisci la regola strutturale e rifinisci direttamente sotto i singoli mesi del piano.</div></div><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">'+(!tracking?'<span class="forecast-test-badge">Modalità test · tracking OFF</span>':'')+'<div class="forecast-scope-buttons"><button class="btn '+(scope==="CATEGORY"?"":"ghost ")+'compact" type="button" data-forecast-scope="CATEGORY">Categoria L2</button><button class="btn '+(scope==="COUNTERPARTIES"?"":"ghost ")+'compact" type="button" data-forecast-scope="COUNTERPARTIES">Controparti</button></div></div></div>'+controls+result+'<div class="forecast-actions"><span class="forecast-target">'+esc(targetLabel)+'</span>'+(target?'<button class="btn compact" type="button" data-save-forecast>Salva previsione</button>':'')+'</div>'+integratedMonthlyPlanHtml();
+  const methodChanged=target&&scope==="CATEGORY"&&ensureForecastDraft().method!==String(s.forecast_method||"AVG6");
+  const overrideCount=(analysisForecastEditor.monthly_plan||[]).filter(x=>x.override_amount!==null&&x.override_amount!==undefined).length;
+  const resetWarning=methodChanged&&overrideCount?'<div class="forecast-reset-warning" role="alert"><strong>Attenzione: '+overrideCount+' override mensili presenti</strong><div>Se salvi il nuovo metodo, gli override verranno rimossi dopo la tua conferma. Potrai reinserirli sulla nuova Baseline.</div></div>':"";
+  box.innerHTML='<div class="forecast-panel-head"><div><h4>Previsione</h4><div class="small muted">Definisci la regola strutturale e rifinisci direttamente sotto i singoli mesi del piano.</div></div><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">'+(!tracking?'<span class="forecast-test-badge">Modalità test · tracking OFF</span>':'')+'<div class="forecast-scope-buttons"><button class="btn '+(scope==="CATEGORY"?"":"ghost ")+'compact" type="button" data-forecast-scope="CATEGORY">Categoria L2</button><button class="btn '+(scope==="COUNTERPARTIES"?"":"ghost ")+'compact" type="button" data-forecast-scope="COUNTERPARTIES">Controparti</button></div></div></div>'+controls+resetWarning+result+'<div class="forecast-actions"><span class="forecast-target">'+esc(targetLabel)+'</span>'+(target?'<button class="btn compact" type="button" data-save-forecast>Salva previsione</button>':'')+'</div>'+integratedMonthlyPlanHtml();
 }
 function canonicalSavedSetting(s,scope){
   const x=Object.assign({},s||{});let method=x.forecast_method||"AVG6",fixed=x.fixed_amount,rmin=x.range_min,rmax=x.range_max,adj=num(x.adjustment_pct);
@@ -4552,10 +4556,10 @@ async function saveForecastRule(btn){
   analysisForecastSaving=true;setBusy(btn,true,"Salvo");
   try{
     const merchantId=entity==="COUNTERPARTY"?(cp.component_merchant_id||null):null;
-    await rpc("dashboard_reporting_save_forecast_reset_overrides_v1",{p_category_id:analysisSelectedCategory,p_direction:analysisCurrentDirection(),p_entity_type:entity,p_merchant_id:merchantId,p_forecast_scope:scope,p_forecast_source:source,p_forecast_method:method,p_adjustment_pct:adj,p_amount_model:model,p_fixed_amount:fixed===null?null:Number(fixed),p_range_min:rmin===null?null:Number(rmin),p_range_max:rmax===null?null:Number(rmax),p_recurrence_pattern:pattern,p_confirm_reset:overrideCount>0});
+    const saveResult=await rpc("dashboard_reporting_save_forecast_reset_overrides_v1",{p_category_id:analysisSelectedCategory,p_direction:analysisCurrentDirection(),p_entity_type:entity,p_merchant_id:merchantId,p_forecast_scope:scope,p_forecast_source:source,p_forecast_method:method,p_adjustment_pct:adj,p_amount_model:model,p_fixed_amount:fixed===null?null:Number(fixed),p_range_min:rmin===null?null:Number(rmin),p_range_max:rmax===null?null:Number(rmax),p_recurrence_pattern:pattern,p_confirm_reset:overrideCount>0});
     await rpc("dashboard_reporting_save_forecast_semantics_v2",{p_category_id:analysisSelectedCategory,p_entity_type:entity,p_merchant_id:merchantId,p_plan_type:"FORECAST",p_certainty_level:d.certainty_level||"ESTIMATED",p_note:d.rationale_note||null});
     scenarioForecastRationales=null;
-    await refreshForecastAfterSave();msg($("analysisStatus"),analysisForecastEditor&&analysisForecastEditor.tracking_enabled?"Previsione/target aggiornato e tracciato.":"Previsione/target aggiornato in modalità test: nessuna cronologia ufficiale registrata.");
+    await refreshForecastAfterSave();const removed=Number(saveResult?.reset_override_count||0);msg($("analysisStatus"),removed?"Metodo aggiornato e "+removed+" override rimossi. Puoi ora inserire nuovi valori mensili.":analysisForecastEditor&&analysisForecastEditor.tracking_enabled?"Previsione aggiornata e tracciata.":"Previsione aggiornata. Nessun override eliminato.");
   }catch(e){msg($("analysisStatus"),e.message||"Errore salvataggio forecast",true)}finally{analysisForecastSaving=false;setBusy(btn,false)}
 }
 function renderAnalysisComponents(){
