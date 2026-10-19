@@ -1,9 +1,35 @@
 /* Pianificazione: un unico scenario di lavoro nel Tabellone.
-   Draft in sessione, non approvato né persistito. Non modifica Baseline/Actual. */
+   Bozza salvata automaticamente nel browser, non approvata. Non modifica Baseline/Actual. */
 (function(root){
 "use strict";
 const state={year:"",horizon:"CALENDAR",targets:{},notes:{},originals:{},bonus:"BASE",showZero:true,onlyChanged:false,reserve:0,project:0};
 const drafts={};
+const STORAGE_KEY="budget-family-scenario-drafts-v1";
+let saveError=false;
+function snapshot(){return {targets:{...state.targets},notes:{...state.notes},reserve:state.reserve,project:state.project,bonus:state.bonus}}
+function persist(){
+ if(!state.year)return false;
+ drafts[state.year+"|"+state.horizon]=snapshot();
+ try{
+  root.localStorage?.setItem(STORAGE_KEY,JSON.stringify({format:1,drafts}));
+  saveError=false;return true;
+ }catch(e){saveError=true;return false}
+}
+function restore(){
+ try{
+  const raw=JSON.parse(root.localStorage?.getItem(STORAGE_KEY)||"null");
+  if(!raw||raw.format!==1||typeof raw.drafts!=="object"||!raw.drafts)return;
+  for(const [k,v] of Object.entries(raw.drafts)){
+   if(!/^\\d{4}\\|(CALENDAR|ROLLING_12)$/.test(k)||!v||typeof v!=="object")continue;
+   const targets={};
+   for(const [id,amount] of Object.entries(v.targets||{})){
+    if(/^(EXPENSE|INCOME):[a-f0-9-]{36}$/i.test(id)&&Number.isFinite(Number(amount))&&Number(amount)>=0)targets[id]=Number(amount);
+   }
+   drafts[k]={targets,notes:v.notes||{},reserve:Number(v.reserve)||0,project:Number(v.project)||0,bonus:["LOW","BASE","HIGH"].includes(v.bonus)?v.bonus:"BASE"};
+  }
+ }catch(e){saveError=true}
+}
+restore();
 const value=r=>Number(r||0);
 const money=n=>new Intl.NumberFormat("it-IT",{style:"currency",currency:"EUR",maximumFractionDigits:0}).format(value(n));
 const escape=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -50,12 +76,12 @@ function scenarioPreset(preset){
   const immutable=locked(row),future=Math.max(0,value(row.annual)-immutable);
   if(future>.005)state.targets[key(row)]=immutable+future*factor;
  }
- root.renderPlanningBoard?.();
+ persist();root.renderPlanningBoard?.();
 }
 function resetIfYearChanged(year,horizon){
  const next=year+"|"+horizon,prev=state.year+"|"+state.horizon;
  if(next===prev)return;
- if(state.year)drafts[prev]={targets:state.targets,notes:state.notes,reserve:state.reserve,project:state.project,bonus:state.bonus};
+ if(state.year)persist();
  const saved=drafts[next]||{};
  state.year=year;state.horizon=horizon;state.targets=saved.targets||{};state.notes=saved.notes||{};state.originals={};state.bonus=saved.bonus||"BASE";state.reserve=saved.reserve||0;state.project=saved.project||0;
 }
@@ -74,7 +100,7 @@ async function approve(){
    p_year:Number(state.year),p_note:reason.trim(),p_targets:state.targets,p_notes:state.notes
   });
   if(!result||!result.plan)throw new Error("La risposta non contiene il Piano approvato");
-  state.targets={};state.notes={};
+  state.targets={};state.notes={};persist();
   await root.BudgetFamilyPlan?.reload?.();
   root.renderPlanningBoard?.();
   root.alert("Piano approvato come versione V"+result.plan.revision+". Gli importi e le note sono congelati.");
@@ -134,6 +160,7 @@ function render(originalExp,originalInc,isPlan,context){
     return '<td><button type="button" class="'+(outcome>=0?'positive':'negative')+'" data-bf-matrix-n="'+n+'" data-bf-matrix-d="'+d+'" title="Necessarie '+n+'%, Discrezionali '+d+'%">'+money(outcome)+'</button></td>';
    }).join('')+'</tr>').join('')+'</tbody></table></div></details>';
  }
+ html+='<div class="bf-draft-save-status" role="status">'+(saveError?'⚠ Salvataggio automatico non disponibile in questo browser':'✓ Bozza salvata automaticamente su questo dispositivo')+' · <button class="btn ghost compact" type="button" data-bf-draft-save>Salva bozza</button></div>';
  wrapper.innerHTML=html;
 }
 function inlineAmount(row){
@@ -151,19 +178,19 @@ function showOnlyChanged(){return state.onlyChanged}
 function onChange(e){
  if(e.target.hasAttribute("data-bf-draft-goal")){
   const name=e.target.getAttribute("data-bf-draft-goal"),n=Number(e.target.value);
-  if((name==="reserve"||name==="project")&&Number.isFinite(n)&&n>=0){state[name]=Math.min(n,10000000);root.renderPlanningBoard?.();}
+  if((name==="reserve"||name==="project")&&Number.isFinite(n)&&n>=0){state[name]=Math.min(n,10000000);persist();root.renderPlanningBoard?.();}
   return;
  }
  if(e.target.hasAttribute("data-bf-only-changed")){state.onlyChanged=!!e.target.checked;root.renderPlanningBoard?.();return}
  if(e.target.hasAttribute("data-bf-draft-zero")){state.showZero=!!e.target.checked;root.renderPlanningBoard?.();return}
  if(e.target.hasAttribute("data-bf-draft-risk")){
-  state.bonus=e.target.value;root.renderPlanningBoard?.();return;
+  state.bonus=e.target.value;persist();root.renderPlanningBoard?.();return;
  }
  let attr,monthly=false;
  if(e.target.hasAttribute("data-bf-draft-total"))attr="data-bf-draft-total";
  if(e.target.hasAttribute("data-bf-draft-month")){attr="data-bf-draft-month";monthly=true}
  if(e.target.hasAttribute("data-bf-draft-note")){
-  state.notes[e.target.getAttribute("data-bf-draft-note")]=e.target.value;
+  state.notes[e.target.getAttribute("data-bf-draft-note")]=e.target.value;persist();
   return;
  }
  if(!attr)return;
@@ -171,7 +198,7 @@ function onChange(e){
  const n=Number(e.target.value);
  if(!Number.isFinite(n)||n<0)return;
  state.targets[id]=Math.max(locked(base),monthly?n*12:n);
- root.renderPlanningBoard?.();
+ persist();root.renderPlanningBoard?.();
 }
 function init(){
  const node=root.document.getElementById("planningBoardOverview");if(!node)return;
@@ -185,7 +212,7 @@ function init(){
   const baseline=row.meta?.rationale_note||"Nessuna nota";
   const note=root.prompt("Nota Baseline (sola lettura): "+baseline+"\\n\\nNota Piano / impegno:",state.notes[k]||"");
   if(note===null)return;
-  state.notes[k]=note.slice(0,400);root.renderPlanningBoard?.();
+  state.notes[k]=note.slice(0,400);persist();root.renderPlanningBoard?.();
  });
  panel.addEventListener("click",e=>{
   const preset=e.target.closest("[data-bf-strategy-preset]");
@@ -197,11 +224,12 @@ function init(){
       const nature=r.meta?.expense_nature,rate=nature==="NECESSARY"?n:nature==="DISCRETIONARY"?d:0;
       if(rate)state.targets[key(r)]=locked(r)+Math.max(0,value(r.annual)-locked(r))*(1+rate/100);
     });
-    root.renderPlanningBoard?.();return;
+    persist();root.renderPlanningBoard?.();return;
   }
   if(e.target.closest("[data-bf-draft-to-plan]")){root.showPlanningBoardView?.("PLAN");return}
   if(e.target.closest("[data-bf-draft-approve]")){approve();return}
-  if(e.target.closest("[data-bf-draft-reset]")){state.targets={};state.notes={};root.renderPlanningBoard?.()}
+  if(e.target.closest("[data-bf-draft-save]")){persist();root.renderPlanningBoard?.();return}
+  if(e.target.closest("[data-bf-draft-reset]")){state.targets={};state.notes={};persist();root.renderPlanningBoard?.()}
  });
 }
 root.BudgetFamilySinglePlan={
