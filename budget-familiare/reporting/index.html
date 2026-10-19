@@ -8,14 +8,14 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=73.30.10.17-c323f355"></script>
-<script src="../shared/app-config.js?v=73.30.10.17-c323f355"></script>
-<script src="../shared/contextual-help.js?v=73.30.10.17-c323f355" defer></script>
+<script src="../shared/supabase-client.js?v=73.30.10.18-baseline"></script>
+<script src="../shared/app-config.js?v=73.30.10.18-baseline"></script>
+<script src="../shared/contextual-help.js?v=73.30.10.18-baseline" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<link rel="stylesheet" href="../shared/health-reserve.css?v=73.30.10.17-c323f355">
-<link rel="stylesheet" href="../shared/approved-plan.css?v=73.30.10.17-c323f355">
-<link rel="stylesheet" href="../shared/scenario-strategy.css?v=73.30.10.17-c323f355">
-<link rel="stylesheet" href="../shared/single-plan-board.css?v=73.30.10.17-c323f355">
+<link rel="stylesheet" href="../shared/health-reserve.css?v=73.30.10.18-baseline">
+<link rel="stylesheet" href="../shared/approved-plan.css?v=73.30.10.18-baseline">
+<link rel="stylesheet" href="../shared/scenario-strategy.css?v=73.30.10.18-baseline">
+<link rel="stylesheet" href="../shared/single-plan-board.css?v=73.30.10.18-baseline">
 <style>
 :root{--bg:#f4f6fa;--card:#fff;--text:#17263e;--muted:#58677d;--line:#dce4ee;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 4px 18px rgba(15,23,42,.045);--sc-blue:#2563eb;--sc-blue-soft:#eff6ff;--sc-green:#0ea87a;--sc-red:#ef5b73;--sc-purple:#7658e6;--sc-ink:#17263e}
 *{box-sizing:border-box}
@@ -1986,6 +1986,15 @@ body{font-size:16px;line-height:1.5}
 #planningBoardView .bf-draft-pending{background:#e99a25!important;border-color:#e99a25!important;color:#17263e!important;font-weight:800}
 .forecast-reset-warning{padding:10px;margin:10px 0;border:1px solid #e8ad59;border-radius:8px;background:#fff7e7;color:#755014;font-size:13px}.forecast-reset-warning strong{display:block;margin-bottom:4px}
 .qbe{margin-top:12px;border-top:1px solid #d5e2f0;padding-top:12px;text-align:left}.qbe-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:13px;margin-bottom:10px}.qbe-head span{color:#6a7787}.qbe-controls{display:flex;flex-wrap:wrap;align-items:end;gap:10px}.qbe-controls label{display:grid;gap:3px;font-size:12px;color:#566579}.qbe-controls select,.qbe-controls input,.qbe-controls textarea{border:1px solid #bbccdf;border-radius:6px;padding:6px;font:inherit;background:white;color:#17263e}.qbe-controls .qbe-note{flex:1 1 260px}.qbe-controls textarea{min-width:200px}.qbe-months{display:grid;grid-template-columns:repeat(6,minmax(85px,1fr));gap:7px}.qbe-month{display:flex;flex-direction:column;gap:3px;padding:7px;background:#f2f6fa;border-radius:7px;font-size:12px}.qbe-month input{width:100%;font-size:14px;border:1px solid #bbccdf;border-radius:5px;padding:5px}.qbe-month small{font-size:10px;color:#607083}.qbe-month-title{font-size:12px;margin:12px 0 8px;color:#566579}.qbe-warning{margin-top:8px;background:#fff4d9;padding:8px;border-radius:6px}.qbe-actions{margin-top:10px}@media(max-width:800px){.qbe-months{grid-template-columns:repeat(3,minmax(80px,1fr))}}
+
+/* Shared Baseline detail: compact heading while preserving Analysis editor and chart. */
+#planningBoardView .analysis-detail-head{padding:5px 8px;gap:8px}
+#planningBoardView .analysis-detail-title h3{font-size:15px;margin:0}
+#planningBoardView #detailSubtitle{font-size:12px;margin:1px 0}
+#planningBoardView #detailPeriodMetrics,#planningBoardView #detailStats{display:none}
+#planningBoardView .analysis-chart-box{height:265px}
+#planningBoardView .planning-month-panel{padding:8px 10px}
+#planningBoardView .planning-month-head{margin-bottom:5px}
 </style>
 <style>
 .purchase-financing-detail{margin-top:4px;font-size:14px;line-height:1.5;font-weight:400;color:#425b7c;white-space:normal;min-width:200px}
@@ -2659,8 +2668,8 @@ body{font-size:16px;line-height:1.5}
   </div>
 </div>
 
-<script src="../shared/scenario-strategy.js?v=73.30.10.17-c323f355"></script>
-<script src="../shared/single-plan-board.js?v=73.30.10.17-c323f355"></script>
+<script src="../shared/scenario-strategy.js?v=73.30.10.18-baseline"></script>
+<script src="../shared/single-plan-board.js?v=73.30.10.18-baseline"></script>
 <script>
 const sb=window.appSupabase;
 if(typeof Chart!=="undefined"){
@@ -4115,6 +4124,23 @@ function renderProjectionDetailChart(){
     months=def.targetMonths;boundary=months.findIndex(function(m){return m>=data.current_month});
   }
   const labels=months.map(function(m){return analysisProjectionView==="ROLLING_12"?monthLabel(m):monthDate(m).toLocaleDateString("it-IT",{month:"short"})});
+  const counterpartySplit=analysisSelectedLevel==="L2"&&cats.length===1&&analysisDetailData?.level==="L2"&&!selectedAnalysisComponent();
+  const components=counterpartySplit?(analysisDetailData.components||[]):[];
+  const componentMonthly=counterpartySplit?(analysisDetailData.component_monthly||[]):[];
+  const componentValues=new Map(componentMonthly.map(x=>[String(x.month)+"|"+String(x.component_id),num(x.amount)]));
+  const historicalTotalByMonth=new Map();
+  months.filter(m=>m<data.current_month).forEach(m=>{
+    historicalTotalByMonth.set(m,components.reduce((s,x)=>s+(componentValues.get(m+"|"+String(x.component_id))||0),0));
+  });
+  const canSplit=components.length>0&&historicalTotalByMonth.size>0&&[...historicalTotalByMonth].every(([m,v])=>
+    Math.abs(v-num(actualMap.get(String(cats[0].category_id)+"|"+m)))<0.05);
+  const historicalSplit=canSplit?components.map((cp,i)=>({
+    type:"bar",analysisRole:"projection-counterparty",analysisComponentId:cp.component_id,
+    label:cp.component_name||"Controparte",
+    data:months.map(m=>m<data.current_month?componentValues.get(m+"|"+String(cp.component_id))||0:0),
+    backgroundColor:projectionPaletteColor(i,components.length,.88,60),
+    borderWidth:0,borderRadius:2,stack:"projection"
+  })):[];
   const datasets=cats.map(function(cat,i){
     const catId=String(cat.category_id),base=projectionPaletteColor(i,cats.length,.86,58),forecastFill=projectionPaletteColor(i,cats.length,.24,72),border=projectionPaletteColor(i,cats.length,.95,48);
     const values=months.map(function(m){return m<data.current_month?num(actualMap.get(catId+"|"+m)):num(forecastMap.get(catId+"|"+m))});
@@ -4123,6 +4149,9 @@ function renderProjectionDetailChart(){
     const widths=months.map(function(m){return m<data.current_month?0:1.15});
     return {type:"bar",analysisRole:"projection-component",analysisComponentId:cat.category_id,label:cat.l2_name||cat.l1_name||"Categoria",data:values,backgroundColor:bg,borderColor:borders,borderWidth:widths,borderRadius:2,stack:"projection"};
   });
+  if(historicalSplit.length){
+    datasets.splice(0,datasets.length,...historicalSplit,...datasets.map(ds=>({...ds,data:ds.data.map((v,i)=>months[i]<data.current_month?0:v)})));
+  }
   if(!datasets.length){
     const ids=projectionSelectionCategoryIds(data),values=months.map(function(m){return m<data.current_month?projectionSeriesValue(data,ids,m,"actual"):projectionSeriesValue(data,ids,m,"forecast")});
     datasets.push({type:"bar",analysisRole:"projection",label:analysisDetailData&&analysisDetailData.category_name||"Totale",data:values,backgroundColor:months.map(function(m){return m<data.current_month?"rgba(37,99,235,.76)":"rgba(147,197,253,.34)"}),borderColor:months.map(function(m){return m<data.current_month?"rgba(0,0,0,0)":"#2563eb"}),borderWidth:months.map(function(m){return m<data.current_month?0:1.15}),borderRadius:2,stack:"projection"});
@@ -4140,7 +4169,7 @@ function renderProjectionDetailChart(){
         analysisSelectedMonth=months[elements[0].index]||null;
         analysisMovementSort={key:"amount",dir:"desc"};renderAnalysisMovements();
       },
-      plugins:{legend:{display:analysisSelectedLevel==="L1",position:"top",maxHeight:80,labels:{boxWidth:10,usePointStyle:true,font:{size:14}}},tooltip:{enabled:false}},
+      plugins:{legend:{display:analysisSelectedLevel==="L1"||historicalSplit.length>0,position:"top",maxHeight:80,labels:{boxWidth:10,usePointStyle:true,font:{size:14}}},tooltip:{enabled:false}},
       scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,beginAtZero:true,ticks:{callback:function(v){return money(v)}}}}
     }
   });
@@ -7601,12 +7630,12 @@ function planningBoardPresentation(context,horizon,year,comparisonLabel){
   const baseline=context==="BASELINE",rolling=horizon==="ROLLING_12";
   return {
     baseline:baseline,
-    title:baseline?"Tabellone · Baseline attuale":"Tabellone · Previsione operativa",
+    title:baseline?"Definizione Baseline":"Previsione operativa",
     period:rolling?"prossimi 12 mesi":year,
     column:(baseline?"Baseline ":"Previsione ")+(rolling?"12M":year),
     subtitle:baseline?(rolling?"Baseline dei prossimi 12 mesi vs ultimi 12 mesi reali.":"Baseline anno "+year+": consuntivi chiusi + previsione mesi aperti, confronto con "+comparisonLabel+"."):
       (rolling?"Previsione operativa dei prossimi 12 mesi vs storico.":"Anno "+year+": consuntivo chiuso + previsione, confronto con "+comparisonLabel+"."),
-    note:baseline?"Baseline attuale creata in Analisi: descrive cosa ci aspettiamo senza nuovi interventi. Puoi modificare le singole categorie tornando in Analisi. I controlli evidenziano situazioni da esaminare, non errori accertati.":
+    note:baseline?"Definisci la Baseline direttamente aprendo una categoria L2: storico, previsioni e modifiche sono nello stesso pannello. Le verifiche segnalano aspetti da approfondire, non errori accertati.":
       "Questa è la previsione operativa corrente. Baseline e obiettivi di piano NON sono ancora salvati separatamente: in questa prima fase entrambe le viste leggono lo stesso forecast. Il piano indipendente verrà introdotto in un passaggio successivo.",
     incomeKpi:baseline?"Entrate baseline":"Entrate previste",
     expenseKpi:baseline?"Uscite baseline":"Uscite previste",
@@ -8649,8 +8678,8 @@ $("rpcDiagnosticsModal")?.addEventListener("click",function(e){if(e.target===$("
 document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!$("rpcDiagnosticsModal")?.classList.contains("hidden"))closeRpcDiagnostics()});
 init();
 </script>
-<script src="../shared/health-reserve.js?v=73.30.10.17-c323f355"></script>
-<script src="../shared/approved-plan.js?v=73.30.10.17-c323f355"></script>
+<script src="../shared/health-reserve.js?v=73.30.10.18-baseline"></script>
+<script src="../shared/approved-plan.js?v=73.30.10.18-baseline"></script>
 </body>
 </html>
 
