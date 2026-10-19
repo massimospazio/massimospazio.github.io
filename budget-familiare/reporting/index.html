@@ -8146,12 +8146,12 @@ function renderPlanningBoard(){
     if($("planningBoardOnlyChanged"))$("planningBoardOnlyChanged").checked=planningBoardOnlyChanged;
     $("planningBoardTitle").textContent=view.title;
     $("planningBoardYear").textContent=view.period;
-    $("planningBoardHistoryHead").textContent=rolling?"Storico 12M":"Storico "+def.comparisonLabel;
-    $("planningBoardYearHead").textContent=view.column;
+    $("planningBoardHistoryHead").innerHTML=planningBoardContext==="BASELINE"?'<button type="button" class="bf-sort-head" data-baseline-sort="comparison">'+esc(rolling?"Storico 12M":"Storico "+def.comparisonLabel)+' ↕</button>':esc(rolling?"Storico 12M":"Storico "+def.comparisonLabel);
+    $("planningBoardYearHead").innerHTML=planningBoardContext==="BASELINE"?'<button type="button" class="bf-sort-head" data-baseline-sort="annual">'+esc(view.column)+' ↕</button>':esc(view.column);
     const deltaHead=$("planningBoardDeltaHead");
     if(deltaHead){
       const ref=planningComparisonLabel();
-      deltaHead.innerHTML='Var. vs '+ref+' <span class="planning-header-info" aria-label="Variazione totale e media mensile" title="Importo totale · Ø media mensile">ⓘ</span>';
+      deltaHead.innerHTML=planningBoardContext==="BASELINE"?'<button type="button" class="bf-sort-head" data-baseline-sort="deltaPct">Var.% ↕</button> <button type="button" class="bf-sort-head" data-baseline-sort="deltaAbs">Var. € ↕</button>':'Var. vs '+ref+' <span class="planning-header-info" title="Importo totale e media mensile">ⓘ</span>';
       deltaHead.title="Variazione vs "+ref+": percentuale e differenza in euro complessiva e media mensile.";
     }
     $("planningBoardSubtitle").textContent=view.subtitle;
