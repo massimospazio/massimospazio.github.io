@@ -1,0 +1,70 @@
+name: Budget Familiare - versione e verifica Pages
+on:
+  push:
+    branches: [main]
+    paths: ["budget-familiare/**"]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: budget-family-release
+  cancel-in-progress: false
+jobs:
+  release:
+    if: !contains(github.event.head_commit.message, '[skip release]')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Build version
+        id: version
+        run: |
+          python3 - <<'PY'
+          import re,pathlib,os
+          text=pathlib.Path('budget-familiare/shared/app-config.js').read_text()
+          match=re.search(r"APP_VERSION='V(\d+)\.(\d+)\.(\d+)\.(\d+)'",text)
+          assert match, 'Versione non valida'
+          x=list(map(int,match.groups()));x[-1]+=1
+          v='.'.join(map(str,x))
+          with open(os.environ['GITHUB_OUTPUT'],'a') as f:f.write('version='+v+'\n')
+          PY
+          python3 scripts/release_budget.py --version "$(cut -d= -f2 "$GITHUB_OUTPUT")" --sha "$GITHUB_SHA"
+      - name: Check generated assets
+        run: |
+          python3 - <<'PY'
+          import json,pathlib
+          root=pathlib.Path('budget-familiare')
+          v=json.loads((root/'version.json').read_text())['version'][1:]
+          for name in ['index.html','reporting/index.html']:
+              s=(root/name).read_text()
+              assert 'app-config.js?v='+v in s
+              assert 'data-app-version' in s
+          print('Version stamps validated:',v)
+          PY
+      - name: Commit release
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add budget-familiare/
+          git commit -m "chore(budget): version auto [skip release]"
+          git push
+      - name: Confirm published version on GitHub Pages
+        env:
+          EXPECTED: ${{ steps.version.outputs.version }}
+        run: |
+          python3 - <<'PY'
+          import os,time,json,urllib.request
+          expected='V'+os.environ['EXPECTED']
+          base='https://massimospazio.github.io/budget-familiare/'
+          for attempt in range(30):
+              try:
+                  def read(path):
+                      with urllib.request.urlopen(base+path+'?t='+str(time.time()),timeout=12) as r:return r.read().decode()
+                  meta=json.loads(read('version.json'))
+                  if meta['version']==expected and all('app-config.js?v='+expected[1:] in read(p) for p in ('','reporting/')):
+                      print('PUBBLICATO E VERIFICATO',expected);break
+              except Exception as e:print('Waiting:',e)
+              time.sleep(10)
+          else:raise SystemExit('Pubblicazione non verificata entro 5 minuti')
+          PY
