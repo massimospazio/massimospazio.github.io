@@ -7392,14 +7392,16 @@ async function quickBaselineLoad(row){
  quickBaselineBusy.add(k);
  try{
   const data=await rpc("dashboard_reporting_forecast_editor_v2",{p_category_id:row.category_id,p_direction:row.direction,p_horizon_months:12});
+  if(!data||!data.category_setting)throw new Error("Configurazione forecast non restituita");
   quickBaselineEditors.set(k,{data:data,method:data?.category_setting?.forecast_method||"AVG6",adjustment:num(data?.category_setting?.adjustment_pct),fixed:data?.category_setting?.fixed_amount,low:data?.category_setting?.range_min,high:data?.category_setting?.range_max,pattern:data?.category_setting?.recurrence_pattern||"MONTHLY",note:data?.category_setting?.rationale_note||"",dirty:false});
- }catch(e){msg($("planningBoardStatus"),"Editor rapido non disponibile: "+String(e.message||e),true)}
+ }catch(e){quickBaselineEditors.set(k,{error:String(e.message||e)});msg($("planningBoardStatus"),"Editor rapido non disponibile: "+String(e.message||e),true)}
  finally{quickBaselineBusy.delete(k);renderPlanningBoard()}
 }
 function quickBaselineHtml(row){
  if(planningBoardContext!=="BASELINE")return "";
  const k=quickBaselineKey(row.direction,row.category_id),ed=quickBaselineEditors.get(k);
  if(!ed){if(!quickBaselineBusy.has(k))quickBaselineLoad(row);return '<div class="qbe">Caricamento editor rapido…</div>'}
+ if(ed.error)return '<div class="qbe">Impossibile caricare editor: '+esc(ed.error)+' <button class="btn ghost compact" type="button" data-qbe-retry>Riprova</button></div>';
  const setting=ed.data?.category_setting||{},scope=setting.forecast_scope||"CATEGORY";
  if(scope==="COUNTERPARTIES")return '<div class="qbe"><strong>Previsione gestita per controparti.</strong> Per evitare di sovrascrivere le regole delle singole controparti, modifica questa categoria in Analisi spese.</div>';
  const monthRows=ed.data?.monthly_plan||[],overrides=monthRows.filter(x=>x.override_amount!==null&&x.override_amount!==undefined).length;
@@ -8182,6 +8184,7 @@ $("planningBoardView").addEventListener("click",function(e){
   if(l1){const k=l1.dataset.planningToggleL1;if(planningBoardExpandedL1.has(k))planningBoardExpandedL1.delete(k);else planningBoardExpandedL1.add(k);renderPlanningBoard();return}
   const l2=e.target.closest("[data-planning-toggle-l2]");
   if(l2){const k=l2.dataset.planningToggleL2;if(planningBoardExpandedL2.has(k))planningBoardExpandedL2.delete(k);else{planningBoardExpandedL2.add(k);if(planningBoardContext==="BASELINE"){const direction=k.split("|")[0],id=k.split("|")[1],rows=planningBuildRows(planningBoardData[direction==="INCOME"?"income":"expense"],direction),row=rows.find(r=>String(r.category_id)===id);if(row)quickBaselineLoad(row)}}renderPlanningBoard();return}
+  const retry=e.target.closest("[data-qbe-retry]");if(retry){const wrap=retry.closest("tr");const key=wrap?.previousElementSibling?.querySelector("[data-planning-toggle-l2]")?.dataset.planningToggleL2;if(key){const [direction,id]=key.split("|");quickBaselineEditors.delete(key);const rows=planningBuildRows(planningBoardData[direction==="INCOME"?"income":"expense"],direction),row=rows.find(r=>String(r.category_id)===id);if(row)quickBaselineLoad(row)}return}
   const reset=e.target.closest("[data-qbe-reset-month]");if(reset){const editor=reset.closest("[data-qbe-key]");if(editor)quickBaselineMonth(editor.dataset.qbeKey,reset.dataset.qbeResetMonth,null,reset);return}
   const save=e.target.closest("[data-qbe-save]");if(save){const editor=save.closest("[data-qbe-key]");if(editor)quickBaselineSave(editor.dataset.qbeKey,save);return}
   const open=e.target.closest("[data-planning-open-analysis]");
