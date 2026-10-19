@@ -135,8 +135,8 @@ function render(originalExp,originalInc,isPlan,context){
  if(strategy){
  const goal=state.reserve+state.project,free=planned-goal;
  html+='<details class="bf-strategy-fund" '+(goal?'open':'')+'><summary>Fondi e obiettivi · '+(goal?money(goal)+' destinati':'configura quando serve')+'</summary><div class="bf-strategy-controls"><div class="bf-strategy-goals">'+
- '<label>Fondo da finanziare (€)<input type="number" min="0" max="10000000" step="50" data-bf-draft-goal="reserve" value="'+Math.round(state.reserve)+'"></label>'+
- '<label>Progetto / viaggio (€)<input type="number" min="0" max="10000000" step="100" data-bf-draft-goal="project" value="'+Math.round(state.project)+'"></label>'+
+ '<label>Fondo da finanziare (€)<input type="text" inputmode="numeric" pattern="[0-9.]*" data-bf-draft-goal="reserve" value="'+integer(state.reserve)+'"></label>'+
+ '<label>Progetto / viaggio (€)<input type="text" inputmode="numeric" pattern="[0-9.]*" data-bf-draft-goal="project" value="'+integer(state.project)+'"></label>'+
  '<div class="bf-strategy-result"><span>Avanzo dopo obiettivi</span><strong class="'+(free>=0?'bf-pos':'bf-neg')+'">'+money(free)+'</strong>'+
  '<small>Gap da coprire: '+money(Math.max(0,-free))+'</small></div></div></div></details>'+
  '<div class="bf-strategy-presets"><span>Leve rapide:</span>'+
@@ -180,7 +180,7 @@ function showOnlyChanged(){return state.onlyChanged}
 
 function onChange(e){
  if(e.target.hasAttribute("data-bf-draft-goal")){
-  const name=e.target.getAttribute("data-bf-draft-goal"),n=Number(e.target.value);
+  const name=e.target.getAttribute("data-bf-draft-goal"),n=parseInteger(e.target.value);
   if((name==="reserve"||name==="project")&&Number.isFinite(n)&&n>=0){state[name]=Math.min(n,10000000);persist();root.renderPlanningBoard?.();}
   return;
  }
