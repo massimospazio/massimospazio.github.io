@@ -7374,9 +7374,9 @@ function planningDeltaHtml(deltaAbs,deltaPct,direction,comparison){
   const explanation=esc("Variazione totale rispetto "+(planningComparisonUsesBaseline()?"alla Baseline":"allo storico")+": "+totalText+
     ". Variazione media mensile: "+monthlyText+"/mese (differenza totale divisa 12).");
   const figures='<span title="'+explanation+'" aria-label="'+explanation+'">'+
-    totalText+' · Ø '+monthlyText+'</span>';
+    (planningBoardDisplayUnit==="MONTH"?'Ø '+monthlyText:totalText)+'</span>';
   if(isNeutral)return '<div class="planning-delta-cell"><div class="planning-delta-track"><i class="planning-delta-zero"></i></div>'+
-    '<div class="planning-delta-text"><strong class="neutral">0%</strong><span title="'+explanation+'">Ø '+money(0)+'</span></div></div>';
+    '<div class="planning-delta-text"><strong class="neutral">0%</strong><span title="'+explanation+'">'+(planningBoardDisplayUnit==="MONTH"?'Ø ':'')+money(0)+'</span></div></div>';
   const favorable=direction==="EXPENSE"?abs<0:abs>0,quality=favorable?"good":"bad",
     pos=abs>0?"pos":"neg";
   if(comparison<=0)return '<div class="planning-delta-cell"><div class="planning-delta-track"><i class="planning-delta-zero"></i></div>'+
