@@ -1978,6 +1978,7 @@ body{font-size:16px;line-height:1.5}
 #planningBoardView .planning-goals-available strong.negative{color:#b91c1c}
 #planningBoardView .planning-goals-available small{color:#546680}
 #planningBoardView .planning-value-cell{min-height:0!important;gap:0!important}
+#planningBoardView[data-display-unit="MONTH"] .planning-value-cell strong{display:inline!important}
 #planningBoardView .planning-value-cell span{display:none!important}
 #planningBoardView .planning-board-table td{padding-top:4px!important;padding-bottom:4px!important}
 #planningBoardView .bf-plan-edit-cell{min-height:0!important;gap:0!important}
@@ -7933,7 +7934,7 @@ function renderPlanningBoard(){
     if(planningBoardFilter!=="EXPENSE")html+=planningSectionHtml("INCOME",shownInc);
     if(planningBoardFilter!=="INCOME")html+=planningSectionHtml("EXPENSE",shownExp);
     $("planningBoardBody").innerHTML=html||'<tr><td colspan="8" class="muted">Nessuna voce corrisponde ai filtri.</td></tr>';
-    $("planningBoardLegend").textContent="Valori: totale del periodo; Ø = media mensile (totale / 12). Confronto con "+planningComparisonLabel()+". Verde sulle spese = riduzione, verde sulle entrate = aumento. "+
+    $("planningBoardLegend").textContent="Valori: "+(planningBoardDisplayUnit==="MONTH"?"media mensile":"totale periodo")+". Confronto con "+planningComparisonLabel()+". Verde sulle spese = riduzione, verde sulle entrate = aumento. "+
       (isStrategic?"Piano approvato V"+approved.revision+": confronto con la Baseline congelata alla stessa data.":
        canDraft?(planningBoardContext==="STRATEGY"?"Scenario vs Baseline: gli interventi modificano soltanto le quote future; nessun dato storico o Baseline viene sovrascritto.":"Piano in elaborazione vs Baseline: i target non modificano la Baseline e rimangono una bozza fino all’approvazione."):
        rolling?"Previsione rolling corrente, non Piano annuale.":"Baseline: confronto con periodo storico.");
