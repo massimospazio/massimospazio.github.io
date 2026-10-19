@@ -73,3 +73,10 @@
 .bf-strategy-matrix td button.positive{background:#eaf7f0;color:#166c43}
 .bf-strategy-matrix td button.negative{background:#fff0ef;color:#ac2c34}
 .bf-strategy-matrix td button:hover{outline:2px solid #3579e8}
+
+/* Draft save control beside the value selector, in the always-visible board toolbar. */
+.bf-draft-toolbar{display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
+.bf-draft-toolbar[hidden]{display:none!important}
+.bf-draft-toolbar [data-bf-save-state]{font-size:12px;color:#607187}
+.bf-draft-toolbar .bf-draft-pending{background:#f59e0b!important;color:#17263e!important;border-color:#d97706!important;font-weight:800}
+.bf-draft-toolbar button{min-width:108px}
