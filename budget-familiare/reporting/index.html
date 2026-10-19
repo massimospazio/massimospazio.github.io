@@ -1953,6 +1953,18 @@ body{font-size:16px;line-height:1.5}
 .flow-comparison-detail .moves-table{min-width:580px}
 @media(max-width:690px){.flow-bridge-row{grid-template-columns:minmax(115px,1fr) 105px 58px;gap:6px;font-size:12px}.flow-bridge-row strong{font-size:12px}.flow-comparison-explorer{padding:8px}.flow-comparison-head{display:grid;gap:3px}}
 
+
+/* V73.30.1.31 · Tabellone compatto, scelta unità e note baseline */
+.planning-board-table th,.planning-board-table td{padding-top:4px!important;padding-bottom:4px!important;line-height:1.18}
+.planning-board-table .planning-category{min-height:20px;gap:5px}
+.planning-board-table .planning-value-cell{gap:1px}
+.planning-board-table .bf-plan-edit-cell input{min-height:26px!important;padding:3px 6px!important}
+.planning-board-toolbar{gap:6px!important;margin-bottom:6px!important}
+.planning-changed-control{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;cursor:pointer}
+.planning-changed-control input{accent-color:#2563eb}
+#planningBoardView[data-display-unit="MONTH"] .planning-value-cell strong{display:none}
+#planningBoardView[data-display-unit="MONTH"] .planning-value-cell span{font-weight:750;color:#17375c;font-size:inherit}
+#planningBoardView[data-display-unit="MONTH"] .bf-plan-edit-cell input{background:#edf4ff}
 </style>
 <style>
 .purchase-financing-detail{margin-top:4px;font-size:14px;line-height:1.5;font-weight:400;color:#425b7c;white-space:normal;min-width:200px}
@@ -2208,6 +2220,8 @@ body{font-size:16px;line-height:1.5}
             <option value="WITH">Con note</option>
             <option value="WITHOUT">Senza note</option>
           </select></label>
+          <label class="small">Mostra <select id="planningBoardDisplayUnit" class="select planning-filter-select"><option value="TOTAL">Totale periodo</option><option value="MONTH">Media mese</option></select></label>
+          <label class="small planning-changed-control"><input id="planningBoardOnlyChanged" type="checkbox"> Solo modificate</label>
           <label class="planning-board-search"><input id="planningBoardSearch" type="search" placeholder="Cerca categoria…" autocomplete="off"></label>
         </div>
       </div>
@@ -2688,6 +2702,8 @@ let planningBoardForecastFilter="ALL";
 let planningBoardNoteFilter="ALL";
 let planningBoardLevel="L1_L2";
 let planningBoardSearch="";
+let planningBoardOnlyChanged=false;
+let planningBoardDisplayUnit="TOTAL";
 let planningNatureChart=null;
 let planningMonthlyChart=null;
 let planningSimulatorHorizon="CALENDAR";
@@ -7379,10 +7395,10 @@ function planningSectionHtml(direction,allRows){
     if(planningBoardNatureFilter!=="ALL")visibleRows=visibleRows.filter(function(r){return planningNatureValue(r.meta,direction)===planningBoardNatureFilter});
     visibleRows=visibleRows.filter(planningForecastFilterMatch).filter(planningNoteFilterMatch).filter(planningBaselineReviewMatches);
     const draftPlan=(planningBoardContext==="PLAN"||planningBoardContext==="STRATEGY")&&planningBoardHorizon==="CALENDAR"&&(planningBoardContext==="STRATEGY"||!planningBoardData?.meta?.strategic_plan)&&!!window.BudgetFamilySinglePlan;
-    if(draftPlan&&window.BudgetFamilySinglePlan.showOnlyChanged())visibleRows=visibleRows.filter(r=>window.BudgetFamilySinglePlan.isChanged(r));
+    if(planningBoardOnlyChanged)visibleRows=visibleRows.filter(r=>draftPlan?window.BudgetFamilySinglePlan.isChanged(r):planningBoardContext==="BASELINE"?planningBaselineNeedsReview(r).overrides:Math.abs(num(r.annual)-num(r.comparison))>=.5);
     if(!visibleRows.length)return;
     const key=direction+"|"+g.id,searching=!!q,filtering=planningBoardNatureFilter!=="ALL"||planningBoardForecastFilter!=="ALL"||planningBoardNoteFilter!=="ALL"||planningBoardContext==="BASELINE"&&planningBaselineReviewFilter!=="ALL";
-    const expanded=planningBoardLevel==="L1_L2"&&(searching||filtering||planningBoardExpandedL1.has(key));
+    const expanded=planningBoardLevel==="L1_L2"&&(searching||filtering||planningBoardOnlyChanged||planningBoardExpandedL1.has(key));
     const annual=visibleRows.reduce(function(s,r){return s+r.annual},0),comparison=visibleRows.reduce(function(s,r){return s+r.comparison},0),deltaAbs=annual-comparison,deltaPct=comparison>0?deltaAbs*100/comparison:(Math.abs(annual)<.5?0:null);
     html+='<tr class="planning-l1-row '+(direction==="INCOME"?"income":"expense")+'">'+
       '<td><div class="planning-category">'+(planningBoardLevel==="L1_L2"?'<button class="planning-caret" data-planning-toggle-l1="'+esc(key)+'">'+(expanded?"▾":"▸")+'</button>':'<span class="planning-caret"></span>')+categoryIconHtml(g.name,direction==="INCOME"?"income":"expense",true)+'<span class="name">'+esc(g.name)+'</span></div></td>'+
@@ -7410,8 +7426,8 @@ function planningSectionHtml(direction,allRows){
 function planningRenderFilterButtons(){
   document.querySelectorAll('[data-planning-horizon="ROLLING_12"]').forEach(function(b){
     const strategy=planningBoardContext==="STRATEGY";
-    b.disabled=strategy;
-    b.title=strategy?"La simulazione confronta Scenario e Baseline dell'anno corrente. Il Rolling Forecast è disponibile nel Tabellone Baseline o Piano.":"";
+    b.disabled=false;
+    b.title=strategy?"Rolling 12 mesi in sola lettura: il draft strategico annuale rimane invariato.":"";
   });
   document.querySelectorAll("[data-planning-filter]").forEach(function(b){b.classList.toggle("ghost",b.dataset.planningFilter!==planningBoardFilter)});document.querySelectorAll("[data-planning-level]").forEach(function(b){b.classList.toggle("ghost",b.dataset.planningLevel!==planningBoardLevel)});document.querySelectorAll("[data-planning-horizon]").forEach(function(b){b.classList.toggle("ghost",b.dataset.planningHorizon!==planningBoardHorizon)});if($("planningNatureFilter"))$("planningNatureFilter").value=planningBoardNatureFilter;if($("planningForecastFilter"))$("planningForecastFilter").value=planningBoardForecastFilter;if($("planningNoteFilter"))$("planningNoteFilter").value=planningBoardNoteFilter;if($("planningBaselineReviewFilter"))$("planningBaselineReviewFilter").value=planningBaselineReviewFilter}
 
@@ -7793,7 +7809,7 @@ function renderPlanningSimulatorView(){
 function renderPlanningBoard(){
   if(!planningBoardData||!planningBoardData.expense||!planningBoardData.income)return;
   // The simulation is annual: do not fall through to Rolling Forecast vs historical.
-  if(planningBoardContext==="STRATEGY"&&planningBoardHorizon!=="CALENDAR")planningBoardHorizon="CALENDAR";
+  // Il rolling 12 mesi resta consultabile anche in Strategia; i target annuali non vengono toccati.
   const liveBoardData=planningBoardData;
   const calendarYear=String(liveBoardData.expense.current_year_start||"").slice(0,4);
   const approved=planningBoardContext==="PLAN"&&planningBoardHorizon==="CALENDAR"
@@ -7842,6 +7858,9 @@ function renderPlanningBoard(){
       view.note="I nuovi importi sono una simulazione temporanea, non modificano la Baseline. Approva il Piano esplicitamente per congelare gli impegni.";
     }
     $("planningBoardView").dataset.boardContext=planningBoardContext;
+    $("planningBoardView").dataset.displayUnit=planningBoardDisplayUnit;
+    if($("planningBoardDisplayUnit"))$("planningBoardDisplayUnit").value=planningBoardDisplayUnit;
+    if($("planningBoardOnlyChanged"))$("planningBoardOnlyChanged").checked=planningBoardOnlyChanged;
     $("planningBoardTitle").textContent=view.title;
     $("planningBoardYear").textContent=view.period;
     $("planningBoardHistoryHead").textContent=rolling?"Storico 12M":"Storico "+def.comparisonLabel;
@@ -7915,7 +7934,7 @@ async function loadPlanningBoard(force){
 }
 function showPlanningBoardView(context){
   planningBoardContext=context==="BASELINE"?"BASELINE":context==="STRATEGY"?"STRATEGY":"PLAN";
-  if(planningBoardContext==="STRATEGY")planningBoardHorizon="CALENDAR";
+
   planningBoardVisible=true;planningSimulatorVisible=false;scenarioVisible=false;hideProcessRoadmap();
   $("standardReportingView").classList.add("hidden");$("scenarioView").classList.add("hidden");$("planningSimulatorView").classList.add("hidden");$("planningBoardView").classList.remove("hidden");
   $("reportingViewTab").classList.toggle("active",planningBoardContext==="BASELINE");
@@ -8039,7 +8058,7 @@ $("processRoadmapFeatures")?.addEventListener("click",function(e){const b=e.targ
 $("planningBoardRefresh").onclick=function(){planningBoardData=null;loadPlanningBoard(true)};
 $("planningBoardView").addEventListener("click",function(e){
   const horizon=e.target.closest("[data-planning-horizon]");
-  if(horizon){if(planningBoardContext==="STRATEGY"&&horizon.dataset.planningHorizon==="ROLLING_12")return;planningBoardHorizon=horizon.dataset.planningHorizon||"CALENDAR";renderPlanningBoard();return}
+  if(horizon){planningBoardHorizon=horizon.dataset.planningHorizon||"CALENDAR";renderPlanningBoard();return}
   const filter=e.target.closest("[data-planning-filter]");
   if(filter){planningBoardFilter=filter.dataset.planningFilter||"ALL";renderPlanningBoard();return}
   const level=e.target.closest("[data-planning-level]");
@@ -8100,6 +8119,8 @@ $("planningSimulatorView").addEventListener("input",function(e){
   const next={MANDATORY:planningSimulation.MANDATORY,NECESSARY:planningSimulation.NECESSARY,DISCRETIONARY:planningSimulation.DISCRETIONARY,FIXED:planningSimulation.FIXED,PREDICTABLE:planningSimulation.PREDICTABLE,VARIABLE:planningSimulation.VARIABLE};
   next[sim.dataset.planningSim]=num(sim.value);planningSimulationSet(next);renderPlanningSimulatorView();
 });
+$("planningBoardOnlyChanged")?.addEventListener("change",function(){planningBoardOnlyChanged=this.checked;renderPlanningBoard()});
+$("planningBoardDisplayUnit")?.addEventListener("change",function(){planningBoardDisplayUnit=this.value;renderPlanningBoard()});
 $("planningBoardSearch").addEventListener("input",function(){planningBoardSearch=this.value||"";renderPlanningBoard()});
 $("planningNatureFilter").addEventListener("change",function(){planningBoardNatureFilter=this.value||"ALL";renderPlanningBoard()});
 $("planningForecastFilter").addEventListener("change",function(){planningBoardForecastFilter=this.value||"ALL";renderPlanningBoard()});
