@@ -114,11 +114,12 @@ function render(originalExp,originalInc,isPlan,context){
 }
 function inlineAmount(row){
  const k=key(row),base=state.originals[k]||row,amount=state.targets[k]===undefined?value(base.annual):Math.max(locked(base),value(state.targets[k]));
- return '<div class="bf-plan-edit-cell"><input type="number" step="1" min="'+locked(base).toFixed(2)+'" data-bf-draft-total="'+escape(k)+'" value="'+amount.toFixed(2)+'" aria-label="Piano annuale '+escape(row.l2_name)+'" title="Budget annuale; già speso '+money(locked(base))+'"><small>Ø '+money(amount/12)+'/mese</small></div>';
+ const monthly=root.document.getElementById("planningBoardView")?.dataset.displayUnit==="MONTH";
+ return '<div class="bf-plan-edit-cell"><input type="number" step="1" min="'+(monthly?locked(base)/12:locked(base)).toFixed(2)+'" '+(monthly?'data-bf-draft-month':'data-bf-draft-total')+'="'+escape(k)+'" value="'+(monthly?amount/12:amount).toFixed(2)+'" aria-label="'+(monthly?'Media mensile':'Totale annuo')+' '+escape(row.l2_name)+'" title="'+(monthly?'Media mese (totale annuo diviso 12)':'Budget annuale')+'; già speso '+money(locked(base))+'"><small>'+(monthly?'Totale '+money(amount):'Ø '+money(amount/12)+'/mese')+'</small></div>';
 }
 function inlineNote(row){
  const k=key(row),note=state.notes[k]||"",baselineNote=row.meta?.rationale_note||"";
- return '<button class="bf-plan-note-button '+(note?'has-note':'')+'" type="button" data-bf-note-open="'+escape(k)+'" title="'+escape('Baseline: '+(baselineNote||'nessuna nota')+' | Piano: '+(note||'aggiungi impegno'))+'">✎'+(note?' ●':'')+'</button>';
+ return '<button class="bf-plan-note-button '+(note?'has-note':'')+'" type="button" data-bf-note-open="'+escape(k)+'" title="'+escape('Baseline: '+(baselineNote||'nessuna nota')+' | Piano: '+(note||'aggiungi impegno'))+'" aria-label="'+escape('Note '+row.l2_name+(baselineNote?' — nota Baseline presente':''))+'">✎'+(baselineNote?' ⓘ':'')+(note?' ●':'')+'</button>';
 }
 function isChanged(row){return state.targets[key(row)]!==undefined && Math.abs(value(state.targets[key(row)])-value(state.originals[key(row)]?.annual))>=.5}
 function showOnlyChanged(){return state.onlyChanged}
