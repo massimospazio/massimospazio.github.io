@@ -105,22 +105,41 @@ function render(originalExp,originalInc,isPlan,context){
  html+='<p class="bf-plan-inline-hint">Stress test avanzo: <strong>'+money(planned+variation)+'</strong> · Modifica gli importi direttamente nelle righe L2. Le categorie con Baseline 0 sono incluse. Gli Actual già registrati sono protetti.</p>';
  if(strategy){
  const goal=state.reserve+state.project,free=planned-goal;
- html+='<div class="bf-strategy-controls"><div class="bf-strategy-goals">'+
- '<label>Fondo da finanziare (€)<input type="number" min="0" max="10000000" step="50" data-bf-draft-goal="reserve" value="'+state.reserve+'"></label>'+
- '<label>Progetto / viaggio (€)<input type="number" min="0" max="10000000" step="100" data-bf-draft-goal="project" value="'+state.project+'"></label>'+
+ html+='<details class="bf-strategy-fund" '+(goal?'open':'')+'><summary>Fondi e obiettivi · '+(goal?money(goal)+' destinati':'configura quando serve')+'</summary><div class="bf-strategy-controls"><div class="bf-strategy-goals">'+
+ '<label>Fondo da finanziare (€)<input type="number" min="0" max="10000000" step="50" data-bf-draft-goal="reserve" value="'+Math.round(state.reserve)+'"></label>'+
+ '<label>Progetto / viaggio (€)<input type="number" min="0" max="10000000" step="100" data-bf-draft-goal="project" value="'+Math.round(state.project)+'"></label>'+
  '<div class="bf-strategy-result"><span>Avanzo dopo obiettivi</span><strong class="'+(free>=0?'bf-pos':'bf-neg')+'">'+money(free)+'</strong>'+
  '<small>Gap da coprire: '+money(Math.max(0,-free))+'</small></div></div>'+
  '<div class="bf-strategy-presets"><span>Leve rapide:</span>'+
  [['RESET','Baseline invariata'],['D25','D −25%'],['D50','D −50%'],['D100','D −100%'],['N10_D50','N −10% · D −50%'],['GOAL','Copri obiettivi con D']].map(([id,label])=>
  '<button type="button" class="btn ghost compact" data-bf-strategy-preset="'+id+'">'+label+'</button>').join('')+
- '</div><p class="bf-plan-inline-hint">Gli obiettivi sono destinazioni di avanzo, non nuove spese. Le leve modificano solo importi futuri delle categorie L2. La simulazione rolling 12m è una bozza di prova distinta dal piano annuale; non è approvabile. Passando da un periodo all’altro le modifiche rimangono in sessione.</p></div>';
+ '</div><p class="bf-plan-inline-hint">Gli obiettivi sono destinazioni di avanzo, non nuove spese. Le leve modificano solo importi futuri delle categorie L2. La simulazione rolling 12m è una bozza di prova distinta dal piano annuale; non è approvabile. Passando da un periodo all’altro le modifiche rimangono in sessione.</p></div></details>';
+ }
+ if(strategy){
+  const cutsN=[0,-5,-10,-15,-20],cutsD=[0,-10,-25,-40,-50];
+  const outcomes=(n,d)=>{
+    const spend=originalExp.reduce((sum,r)=>{
+      const nature=r.meta?.expense_nature;
+      const rate=nature==="NECESSARY"?n:nature==="DISCRETIONARY"?d:0;
+      return sum+value(r.annual)+Math.max(0,value(r.annual)-locked(r))*rate/100;
+    },0);
+    return totals(originalInc)-spend;
+  };
+  html+='<details class="bf-strategy-matrix" open><summary>Scenari N / D · 25 combinazioni</summary>'+
+   '<p class="bf-plan-inline-hint">Riduzioni soltanto sulle quote future di spese Necessarie (N) e Discrezionali (D). Ogni cella mostra l’avanzo del periodo, prima degli obiettivi. Clicca per applicare.</p>'+
+   '<div class="bf-strategy-matrix-scroll"><table><thead><tr><th>N / D</th>'+
+   cutsD.map(d=>'<th>'+d+'%</th>').join('')+'</tr></thead><tbody>'+
+   cutsN.map(n=>'<tr><th>'+n+'%</th>'+cutsD.map(d=>{
+    const outcome=outcomes(n,d);
+    return '<td><button type="button" class="'+(outcome>=0?'positive':'negative')+'" data-bf-matrix-n="'+n+'" data-bf-matrix-d="'+d+'" title="Necessarie '+n+'%, Discrezionali '+d+'%">'+money(outcome)+'</button></td>';
+   }).join('')+'</tr>').join('')+'</tbody></table></div></details>';
  }
  wrapper.innerHTML=html;
 }
 function inlineAmount(row){
  const k=key(row),base=state.originals[k]||row,amount=state.targets[k]===undefined?value(base.annual):Math.max(locked(base),value(state.targets[k]));
  const monthly=root.document.getElementById("planningBoardView")?.dataset.displayUnit==="MONTH";
- return '<div class="bf-plan-edit-cell"><input type="number" step="1" min="'+(monthly?locked(base)/12:locked(base)).toFixed(2)+'" '+(monthly?'data-bf-draft-month':'data-bf-draft-total')+'="'+escape(k)+'" value="'+(monthly?amount/12:amount).toFixed(2)+'" aria-label="'+(monthly?'Media mensile':'Totale annuo')+' '+escape(row.l2_name)+'" title="'+(monthly?'Media mese (totale annuo diviso 12)':'Budget annuale')+'; già speso '+money(locked(base))+'"><small>'+(monthly?'Totale '+money(amount):'Ø '+money(amount/12)+'/mese')+'</small></div>';
+ return '<div class="bf-plan-edit-cell"><input type="number" step="1" min="'+Math.ceil(monthly?locked(base)/12:locked(base))+'" '+(monthly?'data-bf-draft-month':'data-bf-draft-total')+'="'+escape(k)+'" value="'+Math.round(monthly?amount/12:amount)+'" aria-label="'+(monthly?'Media mensile':'Totale annuo')+' '+escape(row.l2_name)+'" title="'+(monthly?'Media mese (totale annuo diviso 12)':'Budget annuale')+'; già speso '+money(locked(base))+'"><small>'+(monthly?'Totale '+money(amount):'Ø '+money(amount/12)+'/mese')+'</small></div>';
 }
 function inlineNote(row){
  const k=key(row),note=state.notes[k]||"",baselineNote=row.meta?.rationale_note||"";
@@ -171,6 +190,15 @@ function init(){
  panel.addEventListener("click",e=>{
   const preset=e.target.closest("[data-bf-strategy-preset]");
   if(preset){scenarioPreset(preset.getAttribute("data-bf-strategy-preset"));return}
+  const matrix=e.target.closest("[data-bf-matrix-n]");if(matrix){
+    const n=Number(matrix.dataset.bfMatrixN),d=Number(matrix.dataset.bfMatrixD);
+    state.targets={};
+    Object.values(state.originals).filter(r=>r.direction==="EXPENSE").forEach(r=>{
+      const nature=r.meta?.expense_nature,rate=nature==="NECESSARY"?n:nature==="DISCRETIONARY"?d:0;
+      if(rate)state.targets[key(r)]=locked(r)+Math.max(0,value(r.annual)-locked(r))*(1+rate/100);
+    });
+    root.renderPlanningBoard?.();return;
+  }
   if(e.target.closest("[data-bf-draft-to-plan]")){root.showPlanningBoardView?.("PLAN");return}
   if(e.target.closest("[data-bf-draft-approve]")){approve();return}
   if(e.target.closest("[data-bf-draft-reset]")){state.targets={};state.notes={};root.renderPlanningBoard?.()}
