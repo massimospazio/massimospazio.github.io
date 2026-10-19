@@ -128,7 +128,14 @@ function render(originalExp,originalInc,isPlan,context){
  const strategy=context==="STRATEGY";
  const wrapper=root.document.getElementById("bfSinglePlanDraft");if(!wrapper)return;
  wrapper.hidden=!isPlan;
- if(!isPlan)return;
+ if(!isPlan){const bar=root.document.getElementById("bfDraftSaveToolbar");if(bar)bar.hidden=true;return;}
+ const quick=root.document.getElementById("bfDraftSaveToolbar");
+ if(quick){
+  quick.hidden=false;
+  const b=quick.querySelector("button"),status=quick.querySelector("[data-bf-save-state]");
+  if(b){b.disabled=!isDirty();b.classList.toggle("bf-draft-pending",isDirty());b.classList.toggle("ghost",!isDirty());}
+  if(status)status.textContent=saveError?"Errore salvataggio":isDirty()?"● Modifiche non salvate":justSaved?"✓ Bozza salvata":"Bozza salvata";
+ }
  const exp=applyRows(originalExp),inc=applyRows(originalInc);
  const baseline=totals(originalInc)-totals(originalExp),planned=totals(inc)-totals(exp),improvement=planned-baseline;
  let html='<div class="bf-plan-inline-head"><div class="bf-strategy-intro"><strong>'+
@@ -139,7 +146,7 @@ function render(originalExp,originalInc,isPlan,context){
  '<option value="BASE"'+(state.bonus==="BASE"?' selected':'')+'>Base</option>'+
  '<option value="HIGH"'+(state.bonus==="HIGH"?' selected':'')+'>Favorevole</option></select></label>'+
 
- '<span class="bf-draft-save-status" role="status">'+(saveError?'⚠ Errore salvataggio':isDirty()?'● Da salvare':justSaved?'✓ Salvata':'')+'</span><button class="btn compact '+(isDirty()?'bf-draft-pending':'ghost')+'" type="button" data-bf-draft-save '+(isDirty()?'':'disabled')+'>Salva bozza</button>'+
+
  '<button type="button" class="btn ghost compact" data-bf-draft-reset>Ripristina target</button>'+
  (strategy?'<button type="button" class="btn compact" data-bf-draft-to-plan>Prosegui al Piano →</button>':
  '<button type="button" class="btn compact" '+(state.horizon==='ROLLING_12'?'disabled title="Approvazione rolling in sviluppo" ':'')+'data-bf-draft-approve>Approva Piano</button>')+'</div></div>';
@@ -224,6 +231,15 @@ function init(){
  const node=root.document.getElementById("planningBoardOverview");if(!node)return;
  const panel=root.document.createElement("section");panel.id="bfSinglePlanDraft";panel.className="bf-single-plan-draft";panel.hidden=true;
  node.parentElement.after(panel);
+ const display=root.document.getElementById("planningBoardDisplayUnit");
+ if(display&&!root.document.getElementById("bfDraftSaveToolbar")){
+   const host=root.document.createElement("span");
+   host.id="bfDraftSaveToolbar";host.className="bf-draft-toolbar";host.hidden=true;
+   host.innerHTML='<span data-bf-save-state></span><button type="button" class="btn compact ghost" disabled data-bf-draft-save>Salva bozza</button>';
+   display.closest("label")?.after(host);
+   host.addEventListener("click",e=>{if(e.target.closest("[data-bf-draft-save]")){saveDraft();root.renderPlanningBoard?.()}});
+ }
+
  panel.addEventListener("change",onChange);
  root.document.getElementById("planningBoardBody")?.addEventListener("change",onChange);
  root.document.getElementById("planningBoardBody")?.addEventListener("click",e=>{
