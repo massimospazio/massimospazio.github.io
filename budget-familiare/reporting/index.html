@@ -2799,10 +2799,10 @@ function setBusy(btn,on,label){if(!btn)return;if(on){btn.dataset.oldText=btn.tex
 const RPC_WARN_MS=2000,RPC_CRITICAL_MS=5000;
 const rpcDiagnostics=new Map();
 function rpcErrorKind(error){const t=String(error&&error.message||error||"").toLowerCase();return /statement timeout|timed out|timeout/.test(t)?"TIMEOUT":"ERROR"}
-function recordRpcMetric(name,duration,status,error){
+function recordRpcMetric(name,duration,status,error,details){
   const prev=rpcDiagnostics.get(name)||{name:name,calls:0,last_ms:0,max_ms:0,total_ms:0,errors:0,timeouts:0,last_status:"OK",last_error:"",last_at:""};
   const ms=Math.max(0,Math.round(Number(duration)||0));
-  const next=Object.assign({},prev,{calls:prev.calls+1,last_ms:ms,max_ms:Math.max(prev.max_ms,ms),total_ms:prev.total_ms+ms,last_status:status,last_error:error?String(error.message||error):"",last_at:new Date().toISOString()});
+  const next=Object.assign({},prev,{calls:prev.calls+1,last_ms:ms,max_ms:Math.max(prev.max_ms,ms),total_ms:prev.total_ms+ms,last_status:status,last_error:error?String(error.message||error):"",last_at:new Date().toISOString(),last_details:details||"1 tentativo"});
   if(status==="ERROR")next.errors++;
   if(status==="TIMEOUT")next.timeouts++;
   rpcDiagnostics.set(name,next);
@@ -2838,7 +2838,7 @@ function renderRpcDiagnostics(){
   const slow=rows.filter(function(x){return !x.errors&&!x.timeouts&&x.max_ms>=RPC_WARN_MS&&x.max_ms<RPC_CRITICAL_MS}).length;
   if($("rpcDiagnosticsSummary"))$("rpcDiagnosticsSummary").innerHTML='<span class="rpc-diag-chip">RPC misurate: <strong>'+rows.length+'</strong></span><span class="rpc-diag-chip rpc-diag-slow">Lente: <strong>'+slow+'</strong></span><span class="rpc-diag-chip rpc-diag-critical">Critiche: <strong>'+critical+'</strong></span><span class="rpc-diag-chip rpc-diag-error">Con errori/timeout: <strong>'+errors+'</strong></span>';
   if(!$("rpcDiagnosticsTable"))return;
-  $("rpcDiagnosticsTable").innerHTML=rows.length?'<div class="table-wrap"><table class="table rpc-diag-table"><thead><tr><th>RPC</th><th>Ultima</th><th>Max sessione</th><th>Media</th><th>Chiamate</th><th>Stato</th><th>Ultimo errore</th></tr></thead><tbody>'+rows.map(function(r){const l=rpcDiagnosticLevel(r);return '<tr><td class="rpc-diag-name">'+esc(r.name)+'</td><td>'+r.last_ms+' ms</td><td><strong>'+r.max_ms+' ms</strong></td><td>'+Math.round(r.total_ms/Math.max(1,r.calls))+' ms</td><td>'+r.calls+'</td><td><strong class="'+l.cls+'">'+l.label+'</strong></td><td class="rpc-diag-error-text">'+esc(r.last_error||"—")+'</td></tr>'}).join("")+'</tbody></table></div>':'<div class="msg">Nessuna RPC misurata in questa sessione.</div>';
+  $("rpcDiagnosticsTable").innerHTML=rows.length?'<div class="table-wrap"><table class="table rpc-diag-table"><thead><tr><th>RPC</th><th>Ultima</th><th>Max sessione</th><th>Media</th><th>Chiamate</th><th>Stato</th><th>Dettaglio chiamata</th><th>Ultimo errore</th></tr></thead><tbody>'+rows.map(function(r){const l=rpcDiagnosticLevel(r);return '<tr><td class="rpc-diag-name">'+esc(r.name)+'</td><td>'+r.last_ms+' ms</td><td><strong>'+r.max_ms+' ms</strong></td><td>'+Math.round(r.total_ms/Math.max(1,r.calls))+' ms</td><td>'+r.calls+'</td><td><strong class="'+l.cls+'">'+l.label+'</strong></td><td class="rpc-diag-error-text">'+esc(r.last_error||"—")+'</td></tr>'}).join("")+'</tbody></table></div>':'<div class="msg">Nessuna RPC misurata in questa sessione.</div>';
 }
 function openRpcDiagnostics(){renderRpcDiagnostics();$("rpcDiagnosticsModal")?.classList.remove("hidden");$("rpcDiagnosticsModal")?.setAttribute("aria-hidden","false")}
 function closeRpcDiagnostics(){$("rpcDiagnosticsModal")?.classList.add("hidden");$("rpcDiagnosticsModal")?.setAttribute("aria-hidden","true")}
@@ -2849,30 +2849,32 @@ function isJwtFutureError(error){
 }
 function waitMs(ms){return new Promise(function(resolve){setTimeout(resolve,ms)})}
 async function rpc(name,args){
-  const started=performance.now();
-  const retryDelays=[0,1800,3200];
-  let lastError=null;
+  const started=performance.now(),retryDelays=[0,1800,3200];
+  let lastError=null,attempts=0,waiting=0,networkTime=0;
   for(let attempt=0;attempt<retryDelays.length;attempt++){
-    if(retryDelays[attempt])await waitMs(retryDelays[attempt]);
+    if(retryDelays[attempt]){await waitMs(retryDelays[attempt]);waiting+=retryDelays[attempt]}
+    attempts++;
+    const callStart=performance.now();
     let r;
-    try{
-      r=await sb.rpc(name,args||{});
-    }catch(error){
+    try{r=await sb.rpc(name,args||{})}
+    catch(error){
+      networkTime+=performance.now()-callStart;
       lastError=error;
       if(isJwtFutureError(error)&&attempt<retryDelays.length-1)continue;
-      recordRpcMetric(name,performance.now()-started,rpcErrorKind(error),error);
+      recordRpcMetric(name,performance.now()-started,rpcErrorKind(error),error,attempts+" tentativi · rete "+Math.round(networkTime)+" ms · attese "+waiting+" ms");
       throw error;
     }
+    networkTime+=performance.now()-callStart;
     if(r.error){
       lastError=r.error;
       if(isJwtFutureError(r.error)&&attempt<retryDelays.length-1)continue;
-      recordRpcMetric(name,performance.now()-started,rpcErrorKind(r.error),r.error);
+      recordRpcMetric(name,performance.now()-started,rpcErrorKind(r.error),r.error,attempts+" tentativi · rete "+Math.round(networkTime)+" ms · attese "+waiting+" ms");
       throw r.error;
     }
-    recordRpcMetric(name,performance.now()-started,"OK");
+    recordRpcMetric(name,performance.now()-started,"OK",null,attempts+" tentativi · rete "+Math.round(networkTime)+" ms · attese "+waiting+" ms");
     return r.data;
   }
-  recordRpcMetric(name,performance.now()-started,rpcErrorKind(lastError),lastError);
+  recordRpcMetric(name,performance.now()-started,rpcErrorKind(lastError),lastError,attempts+" tentativi · rete "+Math.round(networkTime)+" ms · attese "+waiting+" ms");
   throw lastError;
 }
 
