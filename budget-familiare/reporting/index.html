@@ -9,7 +9,7 @@
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
 <script src="../shared/supabase-client.js?v=73.24.0-20261012-1415"></script>
-<script src="../shared/app-config.js?v=73.30.6.3-20261019"></script>
+<script src="../shared/app-config.js?v=73.30.6.4-20261019"></script>
 <script src="../shared/contextual-help.js?v=73.30.1.14-20261014" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <link rel="stylesheet" href="../shared/health-reserve.css?v=73.30.1.28-20261016">
@@ -2023,7 +2023,7 @@ body{font-size:16px;line-height:1.5}
       <div id="processContextStrategy" class="process-context hidden">
         <div class="process-context-copy"><span>Fase 4 · DECIDERE</span><strong>Strategia</strong><small>Provare interventi e scegliere come coprire il funding gap.</small></div>
         <div class="tabs process-subnav">
-          <button id="planningSimulatorTab" class="tab" type="button">Elabora scenario nel Tabellone</button>
+          <button id="planningSimulatorTab" class="tab" type="button">Apri simulatore strategico</button>
           <button class="tab planned hidden" type="button" data-process-feature="scenarios" data-feature-phase="strategy">Scenari <span class="soon">V73.32</span></button>
           <button class="tab planned hidden" type="button" data-process-feature="levers" data-feature-phase="strategy">Leve &amp; allocazione <span class="soon">V73.32</span></button>
         </div>
@@ -2031,7 +2031,7 @@ body{font-size:16px;line-height:1.5}
       <div id="processContextPlan" class="process-context hidden">
         <div class="process-context-copy"><span>Fase 5 · DECIDERE</span><strong>Piano</strong><small>Trasformare la strategia scelta in un benchmark ufficiale.</small></div>
         <div class="tabs process-subnav">
-          <button id="planningBoardTab" class="tab" type="button">Tabellone · Simulazione e Piano</button>
+          <button id="planningBoardTab" class="tab" type="button">Tabellone · Piano</button>
           <button class="tab planned hidden" type="button" data-process-feature="annual-plan" data-feature-phase="plan">Piano annuale <span class="soon">V73.30.2</span></button>
           <button class="tab planned hidden" type="button" data-process-feature="finalize-plan" data-feature-phase="plan">Finalizzazione &amp; versioni <span class="soon">V73.33</span></button>
         </div>
@@ -7898,8 +7898,21 @@ function showPlanningBoardView(context){
   loadPlanningBoard(true);
 }
 function showPlanningSimulatorView(){
-  // Un unico percorso di simulazione e pianificazione: l'ex pagina non è più accessibile.
-  showPlanningBoardView("PLAN");
+  // Strategia esplorativa: usa la Baseline attuale, senza salvare o modificare il Piano approvato.
+  planningSimulatorVisible=true;planningBoardVisible=false;scenarioVisible=false;hideProcessRoadmap();
+  $("standardReportingView").classList.add("hidden");
+  $("scenarioView").classList.add("hidden");
+  $("planningBoardView").classList.add("hidden");
+  $("planningSimulatorView").classList.remove("hidden");
+  $("reportingViewTab").classList.remove("active");
+  $("planningBoardTab").classList.remove("active");
+  $("scenarioViewTab").classList.remove("active");
+  $("planningSimulatorTab").classList.add("active");
+  syncReportingProcessNavigation("strategy");
+  const u=new URL(window.location.href);u.searchParams.set("view","simulator");
+  u.searchParams.delete("phase");u.searchParams.delete("feature");history.replaceState(null,"",u);
+  // La simulazione deve basarsi sui valori piu recenti di entrambe le direzioni.
+  loadPlanningBoard(true);
 }
 function openPlanningRowInAnalysis(category,direction){
   showStandardReportingView();planMode="ANALYSIS";analysisViewMode=direction;analysisTimeMode="PROJECTION";analysisProjectionView=planningBoardHorizon==="ROLLING_12"?"ROLLING_12":"CALENDAR";$("analysisDirection").value=direction;if($("analysisProjectionView"))$("analysisProjectionView").value=analysisProjectionView;renderMode();
