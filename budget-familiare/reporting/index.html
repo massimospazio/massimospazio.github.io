@@ -3738,7 +3738,7 @@ function renderAnalysis(){
       $("analysisPeriodHint").textContent=def.comparisonLabel+" reale · "+def.targetLabel+" consuntivo fino a "+monthLabel(lastActual)+" + previsto da "+monthLabel(data.current_month)+".";
     }
   }else{
-    const start=analysisWorkspace.analysis_start,end=analysisWorkspace.analysis_end;$("analysisPeriodHint").textContent=(start&&end?dateLabel(start)+" → "+dateLabel(end)+" · ":"")+"mesi completi · "+trendBasisLabel()+".";
+    const start=analysisWorkspace.analysis_start,end=analysisWorkspace.analysis_end;$("analysisPeriodHint").textContent=(start&&end?dateLabel(start)+" → "+dateLabel(end)+" · ":"")+"mesi completi · "+analysisPeriodLabel()+".";
   }
   if(analysisViewMode==="BALANCE"){renderAnalysisBalance();return}
   $("analysisBalanceView").classList.add("hidden");$("analysisHierarchyView").classList.remove("hidden");renderAnalysisMaster();if(analysisDetailData)renderAnalysisDetail();
