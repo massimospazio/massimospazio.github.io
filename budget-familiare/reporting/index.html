@@ -8,14 +8,14 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=73.30.10.29-fc98ea50"></script>
-<script src="../shared/app-config.js?v=73.30.10.29-fc98ea50"></script>
-<script src="../shared/contextual-help.js?v=73.30.10.29-fc98ea50" defer></script>
+<script src="../shared/supabase-client.js?v=73.30.10.30-20261019"></script>
+<script src="../shared/app-config.js?v=73.30.10.30-20261019"></script>
+<script src="../shared/contextual-help.js?v=73.30.10.30-20261019" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<link rel="stylesheet" href="../shared/health-reserve.css?v=73.30.10.29-fc98ea50">
-<link rel="stylesheet" href="../shared/approved-plan.css?v=73.30.10.29-fc98ea50">
-<link rel="stylesheet" href="../shared/scenario-strategy.css?v=73.30.10.29-fc98ea50">
-<link rel="stylesheet" href="../shared/single-plan-board.css?v=73.30.10.29-fc98ea50">
+<link rel="stylesheet" href="../shared/health-reserve.css?v=73.30.10.30-20261019">
+<link rel="stylesheet" href="../shared/approved-plan.css?v=73.30.10.30-20261019">
+<link rel="stylesheet" href="../shared/scenario-strategy.css?v=73.30.10.30-20261019">
+<link rel="stylesheet" href="../shared/single-plan-board.css?v=73.30.10.30-20261019">
 <style>
 :root{--bg:#f4f6fa;--card:#fff;--text:#17263e;--muted:#58677d;--line:#dce4ee;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 4px 18px rgba(15,23,42,.045);--sc-blue:#2563eb;--sc-blue-soft:#eff6ff;--sc-green:#0ea87a;--sc-red:#ef5b73;--sc-purple:#7658e6;--sc-ink:#17263e}
 *{box-sizing:border-box}
@@ -2027,6 +2027,49 @@ body{font-size:16px;line-height:1.5}
 </style>
 <style>
 .purchase-financing-detail{margin-top:4px;font-size:14px;line-height:1.5;font-weight:400;color:#425b7c;white-space:normal;min-width:200px}
+
+/* V73.30.10.30 — Analisi Storico (sola lettura), editing esclusivo nel Tabellone */
+#standardReportingView .analysis-time-toggle,#standardReportingView #analysisProjectionWrap{display:none!important}
+#standardReportingView .bf-analysis-to-baseline{display:flex;justify-content:flex-end;margin:0 0 5px}
+#standardReportingView .analysis-forecast-panel,#standardReportingView .analysis-detail-forecast-chip,#standardReportingView .analysis-calibration-panel{display:none!important}
+.planning-board-shell[data-board-context="BASELINE"] .planning-insight-grid{display:none!important}
+.planning-board-shell[data-board-context="BASELINE"] .planning-month-panel{padding:10px 11px}
+.planning-board-shell[data-board-context="BASELINE"] .bf-analysis-to-baseline,
+.planning-board-shell[data-board-context="BASELINE"] .analysis-detail-head,
+.planning-board-shell[data-board-context="BASELINE"] .analysis-calibration-panel{display:none!important}
+.planning-board-shell[data-board-context="BASELINE"] .analysis-detail-card{padding:0;border:0;box-shadow:none}
+.planning-board-shell[data-board-context="BASELINE"] .analysis-chart-box{height:255px;min-height:200px}
+.planning-board-shell[data-board-context="BASELINE"] .analysis-chart-hover-detail{min-height:0;margin:1px 0 4px;padding:3px 6px;font-size:12px}
+.planning-board-shell[data-board-context="BASELINE"] .forecast-panel-head h4,
+.planning-board-shell[data-board-context="BASELINE"] .forecast-panel-head .small,
+.planning-board-shell[data-board-context="BASELINE"] .forecast-plan-type-note,
+.planning-board-shell[data-board-context="BASELINE"] .forecast-type-note,
+.planning-board-shell[data-board-context="BASELINE"] .forecast-explanation,
+.planning-board-shell[data-board-context="BASELINE"] .forecast-axes-note{display:none!important}
+.planning-board-shell[data-board-context="BASELINE"] .forecast-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:5px 0}
+.planning-board-shell[data-board-context="BASELINE"] .forecast-grid .forecast-field{min-width:0;margin:0}
+.planning-board-shell[data-board-context="BASELINE"] .forecast-grid .forecast-field label{margin:0 0 3px}
+.planning-board-shell[data-board-context="BASELINE"] .forecast-grid .forecast-field .input,
+.planning-board-shell[data-board-context="BASELINE"] .forecast-grid .forecast-field .select{min-height:32px}
+.planning-board-shell[data-board-context="BASELINE"] .forecast-semantics{display:contents}
+.planning-board-shell[data-board-context="BASELINE"] .forecast-role-field{display:none!important}
+.planning-board-shell[data-board-context="BASELINE"] .forecast-rationale{grid-column:1/-1}
+.planning-board-shell[data-board-context="BASELINE"] .forecast-rationale textarea{min-height:40px;max-height:110px}
+.planning-board-shell[data-board-context="BASELINE"] .analysis-forecast-panel{padding:8px 10px}
+.planning-board-shell[data-board-context="BASELINE"] .forecast-panel-head{margin-bottom:4px}
+.planning-board-shell[data-board-context="BASELINE"] .analysis-monthly-plan-head p{display:none}
+.planning-board-shell[data-board-context="BASELINE"] .analysis-monthly-plan{margin-top:8px}
+.bf-baseline-context{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;font-size:13px;color:#243653;padding-bottom:4px}
+.bf-baseline-context>span{font-size:12px;color:#60728b}
+.bf-baseline-compact-summary{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 8px}
+.bf-baseline-compact-summary>span{font-size:12px;display:inline-flex;gap:5px;align-items:center;border:1px solid #d8e4f0;border-radius:7px;background:#f7f9fc;padding:4px 7px;font-variant-numeric:tabular-nums}
+.bf-baseline-compact-summary .good{color:#087b55;background:#eaf8f0}
+.bf-baseline-compact-summary .bad{color:#a83333;background:#fff0ef}
+.bf-baseline-compact-summary .neutral{color:#5a687f}
+.bf-l1-chart-button{white-space:nowrap;margin-left:8px;border:1px solid #b7cce8;background:#fff;color:#24539a;border-radius:6px;padding:3px 7px;font-size:12px;font-weight:600;cursor:pointer}
+.bf-l1-chart-button:hover{background:#e9f2ff}
+@media(max-width:760px){.planning-board-shell[data-board-context="BASELINE"] .forecast-grid{grid-template-columns:1fr}.planning-board-shell[data-board-context="BASELINE"] .analysis-chart-box{height:205px}}
+
 </style>
 </head>
 <body>
@@ -2152,9 +2195,9 @@ body{font-size:16px;line-height:1.5}
     <div id="standardReportingView">
     <section class="card section">
       <div class="section-title">
-        <div><h2>Analisi per categoria <button class="context-help-trigger" type="button" data-context-help="forecast-baseline" aria-label="Aiuto: dove trovare e costruire la previsione">?</button></h2><p>Storico, trend e previsione nello stesso spazio. Le correzioni mensili si fanno direttamente nella previsione della categoria L2.</p></div>
+        <div><h2>Analisi Storico <button class="context-help-trigger" type="button" data-context-help="forecast-baseline" aria-label="Aiuto: dove trovare e costruire la previsione">?</button></h2><p>Esplora movimenti reali, trend e categorie L1/L2; per definire le previsioni apri Definizione Baseline.</p></div>
         <div class="toolbar">
-          <button id="analysisOpenBaselineBoard" class="btn compact analysis-baseline-launch" type="button">▦ Tabellone Baseline</button>
+          <button id="analysisOpenBaselineBoard" class="btn compact analysis-baseline-launch" type="button">▦ Definizione Baseline</button>
           <button id="collapseAll" class="btn ghost compact">Comprimi categorie</button>
         </div>
       </div>
@@ -2192,11 +2235,11 @@ body{font-size:16px;line-height:1.5}
                 <tbody id="analysisBody"></tbody>
               </table>
             </div>
-            <div id="analysisLegendNote" class="legend-note">Una sola L1 resta aperta alla volta. Seleziona una L2 per decidere il forecast con storico, grafico, controparti e movimenti nello stesso contesto.</div>
+            <div id="analysisLegendNote" class="legend-note">Una sola L1 resta aperta alla volta. Seleziona L1/L2 per approfondire composizione, trend e movimenti storici.</div>
           </div>
           <div id="categoryDetail" class="analysis-detail-card">
-            <div id="analysisDetailPlaceholder" class="analysis-placeholder">Seleziona una categoria per analizzare composizione, trend e previsione.</div>
-            <div id="analysisDetailContent" class="hidden">
+            <div id="analysisDetailPlaceholder" class="analysis-placeholder">Seleziona una L1/L2 per analizzare lo storico, i trend e i movimenti.</div>
+            <div id="analysisDetailContent" class="hidden"><div class="bf-analysis-to-baseline"><button class="btn ghost compact" type="button" data-analysis-edit-baseline>Apri in Definizione Baseline →</button></div>
               <div class="analysis-detail-head"><div class="analysis-detail-title"><h3 id="detailTitle">Dettaglio</h3><p id="detailSubtitle"></p></div><div id="detailPeriodMetrics" class="analysis-detail-period-metrics"></div><div id="detailStats" class="analysis-detail-stats"></div></div>
               <div id="analysisCalibrationPanel" class="analysis-calibration-panel hidden"></div>
               <div id="analysisChartHoverDetail" class="analysis-chart-hover-detail"><span class="muted">Passa sul grafico per vedere il dettaglio del mese senza coprire le barre.</span></div>
@@ -2221,7 +2264,7 @@ body{font-size:16px;line-height:1.5}
           <p id="planningBoardSubtitle">Previsione per categoria e confronto con lo storico.</p>
         </div>
         <div class="planning-board-hero-actions">
-          <button id="planningBoardBackToAnalysis" class="btn ghost compact hidden" type="button">← Torna ad Analisi</button>
+          <button id="planningBoardBackToAnalysis" class="btn ghost compact hidden" type="button">← Analisi Storico</button>
           <div class="planning-period-box">
             <span>Periodo</span>
             <div class="mode-toggle">
@@ -2697,8 +2740,8 @@ body{font-size:16px;line-height:1.5}
   </div>
 </div>
 
-<script src="../shared/scenario-strategy.js?v=73.30.10.29-fc98ea50"></script>
-<script src="../shared/single-plan-board.js?v=73.30.10.29-fc98ea50"></script>
+<script src="../shared/scenario-strategy.js?v=73.30.10.30-20261019"></script>
+<script src="../shared/single-plan-board.js?v=73.30.10.30-20261019"></script>
 <script>
 const sb=window.appSupabase;
 if(typeof Chart!=="undefined"){
@@ -3405,6 +3448,7 @@ function resetAnalysisSelection(){
   analysisDetailData=null;analysisDetailKey="";analysisCalibrationData=null;analysisCalibrationKey="";analysisForecastEditor=null;analysisForecastEditorKey="";analysisForecastDraft=null;analysisForecastDraftKey="";
 }
 function renderAnalysisModeButtons(){
+  if(!planningBoardVisible&&analysisTimeMode==="PROJECTION")analysisTimeMode="HISTORY";
   document.querySelectorAll("[data-analysis-view]").forEach(function(b){
     const active=b.dataset.analysisView===analysisViewMode;b.className="btn "+(active?"":"ghost ")+"compact";
   });
@@ -3946,7 +3990,7 @@ async function openAnalysisDetail(categoryId,level,selectedMonth){
     const calibrationPromise=detailPeriod===24
       ?detailPromise
       :rpc("dashboard_reporting_analysis_detail_v2",{p_category_id:categoryId,p_direction:direction,p_period_months:24}).catch(function(){return null});
-    const editorPromise=level==="L2"?rpc("dashboard_reporting_forecast_editor_v2",{p_category_id:categoryId,p_direction:direction,p_horizon_months:12}):Promise.resolve(null);
+    const editorPromise=level==="L2"&&planningBoardVisible&&planningBoardContext==="BASELINE"?rpc("dashboard_reporting_forecast_editor_v2",{p_category_id:categoryId,p_direction:direction,p_horizon_months:12}):Promise.resolve(null);
     const projectionPromise=!projectionDataFor(direction)
       ?rpc("dashboard_reporting_analysis_projection_v1",{p_direction:direction}).catch(function(){return null})
       :Promise.resolve(null);
@@ -3959,6 +4003,7 @@ async function openAnalysisDetail(categoryId,level,selectedMonth){
 }
 function selectedAnalysisComponent(){const d=analysisDetailData;if(!d)return null;return (d.components||[]).find(function(x){return String(x.component_id)===String(analysisSelectedComponent)})||null}
 function analysisDetailForecastChipHtml(){
+  if(!planningBoardVisible||planningBoardContext!=="BASELINE")return "";
   if(analysisSelectedLevel!=="L2")return '<span class="analysis-detail-forecast-chip forecast">Forecast · Somma L2</span>';
   if(!analysisForecastEditor)return "";
   const s=analysisForecastEditor.category_setting||{},scope=s.forecast_scope||"CATEGORY";
@@ -4447,12 +4492,12 @@ function forecastControlsHtml(d){
   const method='<div class="forecast-field"><label>Metodo di previsione '+contextualHelpButton('forecast-baseline','metodi e base della previsione')+'</label><select id="forecastMethod" class="select">'+forecastMethodOptions(d.method)+'</select></div>';
   if(d.method==="ZERO")return method+'<div class="forecast-field"><label>Risultato</label><div class="notice">Questa voce resta nello storico ma non contribuisce alla previsione futura.</div></div>';
   const historical=!["FIXED","RANGE","ZERO"].includes(d.method);
-  const variation=historical?'<div class="forecast-field"><label>Variazione attesa %</label><input id="forecastAdjustment" class="input" type="number" min="-100" max="1000" step="1" value="'+esc(num(d.adjustment))+'" /><div class="forecast-type-note">Applica la variazione alla stima base; non è cumulativa mese su mese.</div></div>':"";
+  const variation=historical?'<div class="forecast-field"><label title="La variazione non è cumulativa tra un mese e il successivo.">Variazione attesa % ⓘ</label><input id="forecastAdjustment" class="input" type="number" min="-100" max="1000" step="1" value="'+esc(num(d.adjustment))+'" /><div class="forecast-type-note">Applica la variazione alla stima base; non è cumulativa mese su mese.</div></div>':"";
   let frequency;
   if(d.method==="SAME_MONTH_LAST_YEAR"){
     frequency='<div class="forecast-field"><label>Frequenza prevista</label><div class="forecast-type-note"><strong>Ereditata dallo storico.</strong><br>Ogni mese replica esattamente lo stesso mese A-1, inclusi i mesi a 0 €.</div></div>';
   }else{
-    frequency='<div class="forecast-field"><label>Frequenza prevista</label><select id="forecastFrequency" class="select">'+forecastFrequencyOptions(d.frequency)+'</select><div class="forecast-type-note">Per le frequenze periodiche la cadenza viene agganciata all’ultimo mese in cui la voce è comparsa.</div></div>';
+    frequency='<div class="forecast-field"><label title="La ricorrenza si ancora all’ultimo mese registrato.">Frequenza prevista ⓘ</label><select id="forecastFrequency" class="select">'+forecastFrequencyOptions(d.frequency)+'</select><div class="forecast-type-note">Per le frequenze periodiche la cadenza viene agganciata all’ultimo mese in cui la voce è comparsa.</div></div>';
   }
   const fixed=d.method==="FIXED"?'<div class="forecast-field"><label>Importo previsto €</label><input id="forecastFixedAmount" class="input" type="number" min="0" step="1" value="'+esc(d.fixed_amount==null?"":d.fixed_amount)+'" /></div>':"";
   const range=d.method==="RANGE"?'<div class="forecast-field"><label>Intervallo €</label><div class="forecast-range-fields"><input id="forecastRangeMin" class="input" type="number" min="0" step="1" placeholder="Min" value="'+esc(d.range_min==null?"":d.range_min)+'" /><input id="forecastRangeMax" class="input" type="number" min="0" step="1" placeholder="Max" value="'+esc(d.range_max==null?"":d.range_max)+'" /></div></div>':"";
@@ -4497,8 +4542,8 @@ function forecastCertaintyMeta(level){
 function forecastRationaleHtml(d){
  const id=analysisSelectedCategory,manual=baselineReliabilityEditor(id);
  return '<div class="forecast-semantics forecast">'+
- '<div class="forecast-field"><label>Ruolo del valore</label><div class="forecast-static-value">Baseline</div></div>'+
- '<div class="forecast-field"><label>Affidabilità previsiva (manuale)</label>'+manual+
+ '<div class="forecast-field forecast-role-field"><label>Ruolo del valore</label><div class="forecast-static-value">Baseline</div></div>'+
+ '<div class="forecast-field"><label title="Affidabilità della stima, salvata indipendentemente dalla regola.">Affidabilità previsiva ⓘ</label>'+manual+
  '<div class="forecast-plan-type-note">Da Non valutata a Certa/Alta/Consolidata/Stimata/Incerta. Salvataggio immediato della sola affidabilità, indipendente dalla regola.</div></div>'+
  '<div class="forecast-field forecast-rationale"><label>Motivazione (opzionale)</label>'+
  '<textarea id="forecastRationale" class="input" maxlength="1000" placeholder="Motivo della previsione">'+esc(d?.rationale_note||"")+'</textarea></div>'+
@@ -4563,7 +4608,9 @@ async function saveIntegratedMonthlyOverride(month,amount,input){
   }
 }
 function renderForecastEditor(){
-  const box=$("analysisForecastPanel"),d=analysisDetailData;if(!box)return;if(!d||d.level!=="L2"){box.classList.add("hidden");box.innerHTML="";return}box.classList.remove("hidden");
+  const box=$("analysisForecastPanel");
+  if(!planningBoardVisible||planningBoardContext!=="BASELINE"||!baselinePortalKey){if(box){box.classList.add("hidden");box.innerHTML=""}return}
+  const d=analysisDetailData;if(!box)return;if(!d||d.level!=="L2"){box.classList.add("hidden");box.innerHTML="";return}box.classList.remove("hidden");
   if(!analysisForecastEditor){box.innerHTML='<div class="analysis-loading"><span class="spinner"></span>Carico configurazione forecast…</div>';return}
   const s=analysisForecastEditor.category_setting||{},scope=s.forecast_scope||"CATEGORY",target=currentForecastTarget(),cp=selectedAnalysisComponent(),tracking=!!analysisForecastEditor.tracking_enabled;let controls="",result="";
   if(scope==="COUNTERPARTIES"&&!target){controls='<div class="notice"><strong>Forecast per controparti attivo.</strong><br>La previsione della L2 è la somma delle controparti. Seleziona una controparte sotto per modificarne la regola. “Senza controparte” è una componente esplicita: nessun residuo nascosto.</div>';result=forecastResultHtml(forecastPreviewStats())}
@@ -7353,6 +7400,7 @@ function showScenarioView(subview){
   loadScenarioData(false);applyBalanceSubview();
 }
 function showStandardReportingView(){
+  analysisTimeMode="HISTORY";analysisSelectedMonth=null;
   ++baselinePortalRequest;baselineRestoreAnalysisPanel();
   scenarioVisible=false;planningBoardVisible=false;planningSimulatorVisible=false;hideProcessRoadmap();
   $("scenarioView").classList.add("hidden");$("planningBoardView").classList.add("hidden");$("planningSimulatorView").classList.add("hidden");$("standardReportingView").classList.remove("hidden");
@@ -7445,6 +7493,21 @@ function baselineRestoreAnalysisPanel(){
  if(panel&&baselinePortalHome&&panel.parentNode!==baselinePortalHome)baselinePortalHome.appendChild(panel);
  baselinePortalKey="";
 }
+function baselineRenderCompactSummary(key,direction,id,level){
+ const node=document.querySelector('[data-baseline-summary="'+key+'"]');
+ if(!node||!planningBoardData)return;
+ const data=planningBoardData[direction==="INCOME"?"income":"expense"];
+ const rows=planningBuildRows(data,direction);
+ const selected=rows.filter(r=>String(level==="L1"?r.l1_id:r.category_id)===String(id));
+ if(!selected.length)return;
+ const baseline=selected.reduce((s,r)=>s+num(r.annual),0),historic=selected.reduce((s,r)=>s+num(r.comparison),0);
+ const delta=baseline-historic,pct=historic>.005?delta*100/historic:null;
+ const quality=Math.abs(delta)<.005?"neutral":((direction==="EXPENSE"?delta<0:delta>0)?"good":"bad");
+ node.innerHTML='<span title="Periodo storico di confronto"><b>Storico</b> '+money(historic)+'</span>'+
+   '<span title="Valore della Baseline salvata"><b>Baseline</b> '+money(baseline)+'</span>'+
+   '<span class="bf-baseline-compare '+quality+'" title="Differenza Baseline rispetto allo storico omogeneo"><b>Δ vs storico</b> '+(delta>0?"+":delta<0?"−":"")+money(Math.abs(delta))+
+   (pct===null?' · n.d.':' · '+(pct>0?"+":"")+pct.toLocaleString("it-IT",{maximumFractionDigits:1})+'%')+'</span>';
+}
 async function baselineOpenSharedDetail(key){
  if(planningBoardContext!=="BASELINE")return;
  const slot=document.querySelector('[data-baseline-shared-slot="'+key+'"]'),panel=$("categoryDetail");
@@ -7452,7 +7515,8 @@ async function baselineOpenSharedDetail(key){
  if(!baselinePortalHome)baselinePortalHome=panel.parentNode;
  baselineRestoreAnalysisPanel();
  slot.appendChild(panel);baselinePortalKey=key;
- const request=++baselinePortalRequest,parts=key.split("|"),direction=parts[0],id=parts.slice(1).join("|");
+ const request=++baselinePortalRequest,parts=key.split("|"),direction=parts[0],id=parts[1],level=parts[2]==="L1"?"L1":"L2";
+ baselineRenderCompactSummary(key,direction,id,level);
  analysisViewMode=direction;analysisTimeMode="PROJECTION";
  analysisProjectionView=planningBoardHorizon==="ROLLING_12"?"ROLLING_12":"CALENDAR";
  $("analysisDirection").value=direction;
@@ -7460,7 +7524,7 @@ async function baselineOpenSharedDetail(key){
  try{
   await loadAnalysisWorkspace(false);
   if(request!==baselinePortalRequest||baselinePortalKey!==key)return;
-  await openAnalysisDetail(id,"L2",null);
+  await openAnalysisDetail(id,level,null);
  }catch(e){msg($("planningBoardStatus"),"Errore caricamento Analisi: "+String(e.message||e),true)}
 }
 const quickBaselineEditors=new Map();
@@ -7569,8 +7633,14 @@ function quickBaselineMonth(k,month,value){
  if(!ed.monthChanges)ed.monthChanges={};
  ed.monthChanges[month]=amount;ed.dirty=true;renderPlanningBoard();
 }
+function planningSharedChartSlot(key,name,level){
+ return '<tr class="planning-month-row bf-baseline-detail-row"><td colspan="8"><div class="planning-month-panel">'+
+  '<div class="bf-baseline-context"><strong>'+esc(level==="L1"?"Grafico L1 · "+name:"Dettaglio L2 · "+name)+'</strong><span>Storico e Baseline · clic sul mese per i movimenti reali</span></div>'+
+  '<div class="bf-baseline-compact-summary" data-baseline-summary="'+esc(key)+'"></div>'+
+  '<div data-baseline-shared-slot="'+esc(key)+'"><div class="analysis-loading">Caricamento…</div></div></div></td></tr>';
+}
 function planningMonthPanelHtml(row){
- if(planningBoardContext==="BASELINE")return '<tr class="planning-month-row"><td colspan="8"><div class="planning-month-panel"><div class="planning-month-head"><strong>'+esc(row.l2_name)+' · Analisi e definizione Baseline</strong><span class="small">Pannello originale di Analisi, integrato per prova</span></div><div data-baseline-shared-slot="'+esc(row.direction+"|"+row.category_id)+'"><div class="analysis-loading">Caricamento del pannello…</div></div></div></td></tr>';
+ if(planningBoardContext==="BASELINE")return planningSharedChartSlot(row.direction+"|"+row.category_id,row.l2_name,"L2");
  return '<tr class="planning-month-row"><td colspan="8"><div class="planning-month-panel"><div class="planning-month-head"><div class="small"><strong>'+esc(row.l2_name)+'</strong> · dettaglio mensile del periodo selezionato.</div><button class="btn ghost compact" type="button" data-planning-open-analysis="'+esc(row.category_id)+'" data-planning-open-direction="'+row.direction+'">Apri in Analisi</button></div><div class="planning-month-grid">'+row.months.map(function(m){return '<div class="planning-month-cell '+(m.kind==="actual"?"actual ":"")+(m.override?"override":"")+'"><div class="m">'+esc(monthLabel(m.month))+'</div><div class="a">'+money(m.amount)+'</div><div class="t">'+(m.kind==="actual"?"reale":(m.override?"override":planningBoardContext==="STRATEGY"?"scenario":planningBoardContext==="PLAN"?"piano":"prev."))+'</div></div>'}).join("")+'</div></div></td></tr>';
 }
 function planningComparisonUsesBaseline(){
@@ -7656,10 +7726,11 @@ function planningSectionHtml(direction,allRows){
     const expanded=planningBoardLevel==="L1_L2"&&(searching||filtering||planningBoardOnlyChanged||planningBoardExpandedL1.has(key));
     const annual=visibleRows.reduce(function(s,r){return s+r.annual},0),comparison=visibleRows.reduce(function(s,r){return s+r.comparison},0),deltaAbs=annual-comparison,deltaPct=comparison>0?deltaAbs*100/comparison:(Math.abs(annual)<.5?0:null);
     html+='<tr class="planning-l1-row '+(direction==="INCOME"?"income":"expense")+'">'+
-      '<td><div class="planning-category">'+(planningBoardLevel==="L1_L2"?'<button class="planning-caret" data-planning-toggle-l1="'+esc(key)+'">'+(expanded?"▾":"▸")+'</button>':'<span class="planning-caret"></span>')+categoryIconHtml(g.name,direction==="INCOME"?"income":"expense",true)+'<span class="name">'+esc(g.name)+'</span></div></td>'+
+      '<td><div class="planning-category">'+(planningBoardLevel==="L1_L2"?'<button class="planning-caret" data-planning-toggle-l1="'+esc(key)+'">'+(expanded?"▾":"▸")+'</button>':'<span class="planning-caret"></span>')+categoryIconHtml(g.name,direction==="INCOME"?"income":"expense",true)+'<span class="name">'+esc(g.name)+'</span>'+(planningBoardContext==="BASELINE"?'<button class="bf-l1-chart-button" type="button" data-planning-chart-l1="'+esc(key)+'" title="Grafico L1 impilato per L2, storico e Baseline">▥ Grafico L1</button>':'')+'</div></td>'+
       '<td>'+planningValueHtml(comparison)+'</td><td>'+planningValueHtml(annual)+'</td>'+
       '<td>'+planningDeltaHtml(deltaAbs,deltaPct,direction,comparison)+'</td>'+
       '<td>'+planningL1NatureHtml(visibleRows,direction)+'</td><td>—</td><td>—</td><td></td></tr>';
+    if(planningBoardContext==="BASELINE"&&planningBoardExpandedL2.has(key+"|L1"))html+=planningSharedChartSlot(key+"|L1",g.name,"L1");
     if(!expanded)return;
     (planningBoardContext==="BASELINE"?baselineSortRows(visibleRows):visibleRows.slice().sort(function(a,b){return String(a.l2_name).localeCompare(String(b.l2_name),"it")})).forEach(function(r){
       const l2Key=direction+"|"+r.category_id,open=planningBoardExpandedL2.has(l2Key),
@@ -8220,7 +8291,7 @@ function renderPlanningBoard(){
       (isStrategic?"Piano approvato V"+approved.revision+": confronto con la Baseline congelata alla stessa data.":
        canDraft?(planningBoardContext==="STRATEGY"?"Scenario vs Baseline: gli interventi modificano soltanto le quote future; nessun dato storico o Baseline viene sovrascritto.":"Piano in elaborazione vs Baseline: i target non modificano la Baseline e rimangono una bozza fino all’approvazione."):
        rolling?"Previsione rolling corrente, non Piano annuale.":"Baseline: confronto con periodo storico.");
-    renderPlanningNatureChart(shownExp);renderPlanningMonthlyChart(shownExp,shownInc);
+    if(planningBoardContext!=="BASELINE"){renderPlanningNatureChart(shownExp);renderPlanningMonthlyChart(shownExp,shownInc)}
   }finally{
     planningBoardData=liveBoardData;
   }
@@ -8271,7 +8342,7 @@ function showPlanningSimulatorView(){
   showPlanningBoardView("STRATEGY");
 }
 function openPlanningRowInAnalysis(category,direction){
-  showStandardReportingView();planMode="ANALYSIS";analysisViewMode=direction;analysisTimeMode="PROJECTION";analysisProjectionView=planningBoardHorizon==="ROLLING_12"?"ROLLING_12":"CALENDAR";$("analysisDirection").value=direction;if($("analysisProjectionView"))$("analysisProjectionView").value=analysisProjectionView;renderMode();
+  showStandardReportingView();planMode="ANALYSIS";analysisViewMode=direction;analysisTimeMode="HISTORY";analysisProjectionView=planningBoardHorizon==="ROLLING_12"?"ROLLING_12":"CALENDAR";$("analysisDirection").value=direction;if($("analysisProjectionView"))$("analysisProjectionView").value=analysisProjectionView;renderMode();
   loadAnalysisWorkspace(true).then(function(){openAnalysisDetail(category,"L2",null)});
 }
 
@@ -8374,6 +8445,17 @@ document.querySelectorAll("[data-process-route]").forEach(function(b){
 document.querySelectorAll("[data-process-roadmap]").forEach(function(b){b.onclick=function(){showProcessRoadmap(b.dataset.processRoadmap)}});
 document.querySelectorAll("[data-process-feature]").forEach(function(b){b.onclick=function(){showProcessRoadmap(b.dataset.featurePhase,b.dataset.processFeature)}});
 $("processRoadmapFeatures")?.addEventListener("click",function(e){const b=e.target.closest("[data-roadmap-feature]");if(b)showProcessRoadmap(b.dataset.roadmapPhase,b.dataset.roadmapFeature)});
+
+$("analysisDetailContent").addEventListener("click",function(e){
+ const action=e.target.closest("[data-analysis-edit-baseline]");if(!action||!analysisSelectedCategory)return;
+ const direction=analysisCurrentDirection(),level=analysisSelectedLevel||"L2";
+ const key=direction+"|"+analysisSelectedCategory+(level==="L1"?"|L1":"");
+ const selected=(analysisWorkspace?.rows||[]).find(r=>r.level===level&&String(r.category_id)===String(analysisSelectedCategory));
+ const l1id=level==="L1"?analysisSelectedCategory:selected?.l1_id;
+ if(l1id)planningBoardExpandedL1.add(direction+"|"+l1id);
+ planningBoardExpandedL2.clear();planningBoardExpandedL2.add(key);
+ showPlanningBoardView("BASELINE");
+});
 $("planningBoardRefresh").onclick=function(){planningBoardData=null;loadPlanningBoard(true)};
 document.addEventListener("change",function(e){
  const el=e.target.closest("[data-baseline-reliability]");
@@ -8393,6 +8475,8 @@ $("planningBoardView").addEventListener("click",function(e){
   if(filter){planningBoardFilter=filter.dataset.planningFilter||"ALL";renderPlanningBoard();return}
   const level=e.target.closest("[data-planning-level]");
   if(level){planningBoardLevel=level.dataset.planningLevel||"L1_L2";renderPlanningBoard();return}
+  const l1Chart=e.target.closest("[data-planning-chart-l1]");
+  if(l1Chart&&planningBoardContext==="BASELINE"){const k=l1Chart.dataset.planningChartL1+"|L1";if(planningBoardExpandedL2.has(k))planningBoardExpandedL2.delete(k);else{planningBoardExpandedL2.clear();planningBoardExpandedL2.add(k)}renderPlanningBoard();return}
   const l1=e.target.closest("[data-planning-toggle-l1]");
   if(l1){const k=l1.dataset.planningToggleL1;if(planningBoardExpandedL1.has(k))planningBoardExpandedL1.delete(k);else planningBoardExpandedL1.add(k);renderPlanningBoard();return}
   const l2=e.target.closest("[data-planning-toggle-l2]");
@@ -8796,8 +8880,8 @@ $("rpcDiagnosticsModal")?.addEventListener("click",function(e){if(e.target===$("
 document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!$("rpcDiagnosticsModal")?.classList.contains("hidden"))closeRpcDiagnostics()});
 init();
 </script>
-<script src="../shared/health-reserve.js?v=73.30.10.29-fc98ea50"></script>
-<script src="../shared/approved-plan.js?v=73.30.10.29-fc98ea50"></script>
+<script src="../shared/health-reserve.js?v=73.30.10.30-20261019"></script>
+<script src="../shared/approved-plan.js?v=73.30.10.30-20261019"></script>
 </body>
 </html>
 
