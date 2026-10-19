@@ -9,7 +9,7 @@
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
 <script src="../shared/supabase-client.js?v=73.24.0-20261012-1415"></script>
-<script src="../shared/app-config.js?v=73.30.6.1-20261018"></script>
+<script src="../shared/app-config.js?v=73.30.6.2-20261019"></script>
 <script src="../shared/contextual-help.js?v=73.30.1.14-20261014" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <link rel="stylesheet" href="../shared/health-reserve.css?v=73.30.1.28-20261016">
@@ -3281,6 +3281,36 @@ function analysisPeriodMonths(){return Number($("analysisPeriod")&&$("analysisPe
 function analysisCurrentDirection(){return analysisViewMode==="INCOME"?"INCOME":"EXPENSE"}
 function analysisWorkspaceCacheKey(){return analysisCurrentDirection()+"|"+analysisPeriodMonths()}
 function analysisPeriodLabel(){const p=analysisPeriodMonths();return p===0?"Tutto lo storico":p+" mesi"}
+function analysisTrendMap(){return new Map(((analysisWorkspace&&analysisWorkspace.trend_rows)||[]).map(function(x){return [x.level+"|"+x.category_id,x]}))}
+function trendBasisLabel(){return analysisWorkspace&&analysisWorkspace.trend_basis==="LAST_12_VS_PREVIOUS_12"?"12m vs 12m prec.":"vs stesso periodo A-1"}
+function analysisTrendChip(t){
+  if(!t||t.trend_pct===null||t.trend_pct===undefined)return '<span class="trend-chip trend-neutral" title="'+esc(trendBasisLabel())+'">—</span>';
+  const v=num(t.trend_pct),favorable=analysisCurrentDirection()==="EXPENSE"?v<0:v>0;
+  const cls=Math.abs(v)<1?"trend-neutral":favorable?"trend-good":"trend-bad",arrow=v>0?"↑":v<0?"↓":"→";
+  return '<span class="trend-chip '+cls+'" title="'+esc(trendBasisLabel())+'">'+(v>0?"+":"")+v.toLocaleString("it-IT",{maximumFractionDigits:1})+'% '+arrow+'</span>';
+}
+function analysisTrendHtml(level,categoryId){
+  return analysisTrendChip(analysisTrendMap().get(level+"|"+categoryId));
+}
+function analysisDetailTrendHtml(d){
+  if(d&&d.trend&&d.trend.trend_pct!==undefined&&d.trend.trend_pct!==null){
+    return analysisTrendChip({trend_pct:d.trend.trend_pct});
+  }
+  const rows=analysisWorkspace&&analysisWorkspace.trend_rows||[];
+  let t=rows.find(function(x){return x.level===d.level&&String(x.category_id)===String(d.category_id)});
+  if(!t&&d.level==="L2"){
+    t=rows.find(function(x){
+      return x.level==="L2"&&(
+        String(x.l2_id||"")===String(d.category_id)||
+        (String(x.l2_name||"")===String(d.category_name||"")&&String(x.l1_name||"")===String(d.parent_name||""))
+      );
+    });
+  }
+  if(!t&&d.level==="L1"){
+    t=rows.find(function(x){return x.level==="L1"&&(String(x.l1_id||"")===String(d.category_id)||String(x.l1_name||"")===String(d.category_name||""))});
+  }
+  return analysisTrendChip(t);
+}
 function analysisForecastLabel(v){return forecastMethodLabel(v)}
 function resetAnalysisSelection(){
   analysisSelectedCategory=null;analysisSelectedLevel=null;analysisSelectedComponent=null;analysisSelectedMonth=null;
@@ -3738,7 +3768,7 @@ function renderAnalysis(){
       $("analysisPeriodHint").textContent=def.comparisonLabel+" reale · "+def.targetLabel+" consuntivo fino a "+monthLabel(lastActual)+" + previsto da "+monthLabel(data.current_month)+".";
     }
   }else{
-    const start=analysisWorkspace.analysis_start,end=analysisWorkspace.analysis_end;$("analysisPeriodHint").textContent=(start&&end?dateLabel(start)+" → "+dateLabel(end)+" · ":"")+"mesi completi · "+analysisPeriodLabel()+".";
+    const start=analysisWorkspace.analysis_start,end=analysisWorkspace.analysis_end;$("analysisPeriodHint").textContent=(start&&end?dateLabel(start)+" → "+dateLabel(end)+" · ":"")+"mesi completi · "+trendBasisLabel()+".";
   }
   if(analysisViewMode==="BALANCE"){renderAnalysisBalance();return}
   $("analysisBalanceView").classList.add("hidden");$("analysisHierarchyView").classList.remove("hidden");renderAnalysisMaster();if(analysisDetailData)renderAnalysisDetail();
