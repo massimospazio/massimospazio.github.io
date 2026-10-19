@@ -2004,7 +2004,27 @@ body{font-size:16px;line-height:1.5}
 .bf-reliability-5{background:#fff0f1;color:#a82c46;border-color:#eab0ba}
 
 .bf-manual-reliability{display:inline-flex;align-items:center;margin-right:4px;vertical-align:middle}.bf-manual-reliability i{height:12px;width:12px;border-radius:50%;display:inline-block;border:1px solid #0002}.bf-confidence-editor{width:98px;max-width:98px;font-size:11px!important;padding:3px!important;min-height:25px!important}.bf-plain-delta{font-weight:700;display:block;white-space:nowrap}.bf-plain-delta small{font-size:11px;font-weight:400;color:#64748b;display:block}.bf-value-bar{display:block;height:5px;background:#73a4e5;border-radius:4px;margin-top:4px}.planning-value-cell{min-width:80px}
-#planningBoardView .bf-l1-tag{font-size:11px;font-weight:700;padding:3px 7px;border-radius:7px;white-space:nowrap;margin-right:6px}.bf-sort-head{background:transparent;border:0;color:inherit;font:inherit;font-weight:700;padding:2px;cursor:pointer}.bf-sort-head:hover{text-decoration:underline}.bf-l1-tag{display:inline-flex;background:#e8eefb;color:#245c9d;border-radius:6px;font-size:11px;font-weight:750;padding:2px 4px;margin-left:5px}#planningBoardView .bf-delta-inline{display:inline-flex;align-items:center;justify-content:flex-end;gap:7px;white-space:nowrap;font-size:12px}#planningBoardView .bf-delta-inline b{font-size:12px}#planningBoardView .bf-delta-good{color:#17835c}#planningBoardView .bf-delta-bad{color:#c04153}#planningBoardView .bf-delta-neutral{color:#64748b}#planningBoardView .planning-board-table th,#planningBoardView .planning-board-table td{padding-left:5px;padding-right:5px}#planningBoardView .planning-note{max-width:none;font-size:12px}#planningBoardView .planning-l2-row .planning-category{gap:3px}#planningBoardView .planning-l2-row td:nth-child(8){min-width:145px;max-width:250px}#planningBoardView .bf-l1-tag{max-width:94px;overflow:hidden;text-overflow:ellipsis}#planningBoardView .planning-method-chip{padding:2px 4px;font-size:11px}</style>
+#planningBoardView .bf-l1-tag{font-size:11px;font-weight:700;padding:3px 7px;border-radius:7px;white-space:nowrap;margin-right:6px}.bf-sort-head{background:transparent;border:0;color:inherit;font:inherit;font-weight:700;padding:2px;cursor:pointer}.bf-sort-head:hover{text-decoration:underline}.bf-l1-tag{display:inline-flex;background:#e8eefb;color:#245c9d;border-radius:6px;font-size:11px;font-weight:750;padding:2px 4px;margin-left:5px}#planningBoardView .bf-delta-inline{display:inline-flex;align-items:center;justify-content:flex-end;gap:7px;white-space:nowrap;font-size:12px}#planningBoardView .bf-delta-inline b{font-size:12px}#planningBoardView .bf-delta-good{color:#17835c}#planningBoardView .bf-delta-bad{color:#c04153}#planningBoardView .bf-delta-neutral{color:#64748b}#planningBoardView .planning-board-table th,#planningBoardView .planning-board-table td{padding-left:5px;padding-right:5px}#planningBoardView .planning-note{max-width:none;font-size:12px}#planningBoardView .planning-l2-row .planning-category{gap:3px}#planningBoardView .planning-l2-row td:nth-child(8){min-width:145px;max-width:250px}#planningBoardView .bf-l1-tag{max-width:94px;overflow:hidden;text-overflow:ellipsis}#planningBoardView .planning-method-chip{padding:2px 4px;font-size:11px}
+/* Baseline table density: prioritize the last (notes) column at desktop widths. */
+#planningBoardView[data-board-context="BASELINE"] .bf-reliability-bars{display:inline-flex;gap:2px;align-items:flex-end;min-width:43px;height:16px;vertical-align:middle}
+#planningBoardView[data-board-context="BASELINE"] .bf-reliability-bars i{width:6px;height:13px;border-radius:2px;background:#dce3ec;display:inline-block;border:0}
+#planningBoardView[data-board-context="BASELINE"] .bf-reliability-bars i.on{height:13px}
+#planningBoardView[data-board-context="BASELINE"] .planning-board-table{width:100%;min-width:0;table-layout:fixed}
+#planningBoardView[data-board-context="BASELINE"] .planning-board-table th,#planningBoardView[data-board-context="BASELINE"] .planning-board-table td{padding:5px 4px;min-width:0}
+#planningBoardView[data-board-context="BASELINE"] .planning-board-table th:nth-child(1){width:23%}
+#planningBoardView[data-board-context="BASELINE"] .planning-board-table th:nth-child(2){width:10%}
+#planningBoardView[data-board-context="BASELINE"] .planning-board-table th:nth-child(3){width:10%}
+#planningBoardView[data-board-context="BASELINE"] .planning-board-table th:nth-child(4){width:14%}
+#planningBoardView[data-board-context="BASELINE"] .planning-board-table th:nth-child(5){width:6%}
+#planningBoardView[data-board-context="BASELINE"] .planning-board-table th:nth-child(6){width:13%}
+#planningBoardView[data-board-context="BASELINE"] .planning-board-table th:nth-child(7){width:7%}
+#planningBoardView[data-board-context="BASELINE"] .planning-board-table th:nth-child(8){width:17%}
+#planningBoardView[data-board-context="BASELINE"] .planning-board-table td:nth-child(8){max-width:none!important;min-width:0!important}
+#planningBoardView[data-board-context="BASELINE"] .planning-note{max-width:100%;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#planningBoardView[data-board-context="BASELINE"] .planning-method-chip{font-size:11px;padding:2px 3px}
+#planningBoardView[data-board-context="BASELINE"] .bf-l1-tag{max-width:80px}
+#planningBoardView[data-board-context="BASELINE"] .bf-sort-head{font-size:12px;white-space:normal}
+</style>
 <style>
 .purchase-financing-detail{margin-top:4px;font-size:14px;line-height:1.5;font-weight:400;color:#425b7c;white-space:normal;min-width:200px}
 </style>
@@ -7703,8 +7723,10 @@ function planningForecastReliability(row){
 }
 function planningReliabilityHtml(row){
  if(planningBoardContext!=="BASELINE")return "";
- const a=planningForecastReliability(row);
- return '<span class="bf-manual-reliability" title="'+esc(a.label+" — "+a.reason)+'"><i style="background:'+baselineReliabilityColors[a.level]+'"></i></span>';
+ const a=planningForecastReliability(row),n=Number(a.level)||0,filled=n?6-n:0;
+ const colors=["#64748b","#15803d","#2563eb","#b08900","#ea580c","#dc2626"];
+ return '<span class="bf-reliability-bars" role="img" aria-label="'+esc("Affidabilità "+a.label)+'" title="'+esc(a.label+" — "+a.reason)+'">'+
+ [1,2,3,4,5].map(i=>'<i class="'+(i<=filled?'on':'')+'" style="'+(i<=filled?'background:'+colors[n]:'')+'"></i>').join("")+'</span>';
 }
 async function baselineReliabilityLoad(){
  try{
