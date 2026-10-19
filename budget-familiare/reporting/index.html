@@ -2004,7 +2004,7 @@ body{font-size:16px;line-height:1.5}
 .bf-reliability-5{background:#fff0f1;color:#a82c46;border-color:#eab0ba}
 
 .bf-manual-reliability{display:inline-flex;align-items:center;margin-right:4px;vertical-align:middle}.bf-manual-reliability i{height:12px;width:12px;border-radius:50%;display:inline-block;border:1px solid #0002}.bf-confidence-editor{width:98px;max-width:98px;font-size:11px!important;padding:3px!important;min-height:25px!important}.bf-plain-delta{font-weight:700;display:block;white-space:nowrap}.bf-plain-delta small{font-size:11px;font-weight:400;color:#64748b;display:block}.bf-value-bar{display:block;height:5px;background:#73a4e5;border-radius:4px;margin-top:4px}.planning-value-cell{min-width:80px}
-.bf-sort-head{background:transparent;border:0;color:inherit;font:inherit;font-weight:700;padding:2px;cursor:pointer}.bf-sort-head:hover{text-decoration:underline}.bf-l1-tag{display:inline-flex;background:#e8eefb;color:#245c9d;border-radius:6px;font-size:11px;font-weight:750;padding:2px 4px;margin-left:5px}</style>
+#planningBoardView .bf-l1-tag{font-size:11px;font-weight:700;padding:3px 7px;border-radius:7px;white-space:nowrap;margin-right:6px}.bf-sort-head{background:transparent;border:0;color:inherit;font:inherit;font-weight:700;padding:2px;cursor:pointer}.bf-sort-head:hover{text-decoration:underline}.bf-l1-tag{display:inline-flex;background:#e8eefb;color:#245c9d;border-radius:6px;font-size:11px;font-weight:750;padding:2px 4px;margin-left:5px}</style>
 <style>
 .purchase-financing-detail{margin-top:4px;font-size:14px;line-height:1.5;font-weight:400;color:#425b7c;white-space:normal;min-width:200px}
 </style>
@@ -2267,7 +2267,7 @@ body{font-size:16px;line-height:1.5}
       <section class="planning-board-card">
         <div class="planning-board-table-wrap">
           <table class="planning-board-table">
-            <thead><tr><th><button type="button" class="bf-sort-head" data-baseline-sort="l2_name">L2 ↕</button> <button type="button" class="bf-sort-head" data-baseline-sort="l1_name">L1 ↕</button></th><th id="planningBoardHistoryHead" title="Visualizzazione secondo il selettore Totale periodo / Media mese.">Storico</th><th id="planningBoardYearHead" title="Visualizzazione secondo il selettore Totale periodo / Media mese."><button type="button" class="bf-sort-head" data-baseline-sort="annual">Baseline ↕</button></th><th id="planningBoardDeltaHead" title="Variazione sul periodo confrontato"><button type="button" class="bf-sort-head" data-baseline-sort="deltaPct">Var.% ↕</button> <button type="button" class="bf-sort-head" data-baseline-sort="deltaAbs">€ ↕</button> <span class="planning-header-info" aria-label="Variazione totale e media mensile" title="Importo totale · Ø media mensile">ⓘ</span></th><th>Natura</th><th>Tipo previsione <button type="button" class="bf-sort-head" data-baseline-sort="confidence">Affid. ↕</button> <button class="context-help-trigger" type="button" data-context-help="forecast-baseline" aria-label="Aiuto: previsione e Baseline">?</button></th><th>Note / razionale</th><th></th></tr></thead>
+            <thead><tr><th><button class="bf-sort-head" type="button" data-baseline-sort="l1_name">L1 ↕</button> <button class="bf-sort-head" type="button" data-baseline-sort="l2_name">L2 ↕</button></th><th id="planningBoardHistoryHead"><button class="bf-sort-head" type="button" data-baseline-sort="comparison">Storico ↕</button></th><th id="planningBoardYearHead"><button class="bf-sort-head" type="button" data-baseline-sort="annual">Baseline ↕</button></th><th id="planningBoardDeltaHead"><button class="bf-sort-head" type="button" data-baseline-sort="deltaPct">Var.% ↕</button> <button class="bf-sort-head" type="button" data-baseline-sort="deltaAbs">€ ↕</button></th><th><button class="bf-sort-head" type="button" data-baseline-sort="nature">Natura ↕</button></th><th><button class="bf-sort-head" type="button" data-baseline-sort="method">Tipo previsione ↕</button></th><th><button class="bf-sort-head" type="button" data-baseline-sort="confidence">Affidabilità ↕</button></th><th><button class="bf-sort-head" type="button" data-baseline-sort="note">Note / razionale ↕</button></th></tr></thead>>
             <tbody id="planningBoardBody"><tr><td colspan="8" class="muted">Apri il tabellone per caricare il piano.</td></tr></tbody>
           </table>
         </div>
@@ -7584,11 +7584,17 @@ function planningDeltaHtml(deltaAbs,deltaPct,direction,comparison){
 }
 function baselineSortRows(rows){
  return rows.slice().sort((a,b)=>{
-  const k=baselineSortKey;
-  const av=k==="confidence"?planningForecastReliability(a).level:a[k],bv=k==="confidence"?planningForecastReliability(b).level:b[k];
-  const compare=(k==="l2_name"||k==="l1_name")?String(av||"").localeCompare(String(bv||""),"it"):num(av)-num(bv);
-  return (baselineSortDesc?-1:1)*compare;
+  const k=baselineSortKey,field=r=>k==="confidence"?planningForecastReliability(r).level:k==="nature"?planningNatureValue(r.meta,r.direction):k==="method"?String(r.meta?.forecast_method||""):k==="note"?String(r.meta?.rationale_note||""):r[k];
+  const av=field(a),bv=field(b),asText=["l1_name","l2_name","nature","method","note"].includes(k);
+  const d=asText?String(av||"").localeCompare(String(bv||""),"it"):num(av)-num(bv);
+  return (baselineSortDesc?-1:1)*d||String(a.l2_name).localeCompare(String(b.l2_name),"it");
  });
+}
+function baselineL1Tag(label){
+ const name=String(label||"Altro"),colors=[["#e0ecff","#20589a"],["#e1f5ec","#176c4b"],["#f2e8ff","#7042a4"],["#fff0dc","#97591d"],["#ffe5e8","#a33350"],["#dbf1f4","#136779"]];
+ let hash=0;for(const ch of name)hash=(hash*31+ch.charCodeAt(0))>>>0;
+ const [bg,fg]=colors[hash%colors.length];
+ return '<span class="bf-l1-tag" style="background:'+bg+';color:'+fg+'" title="L1 · '+esc(name)+'">'+esc(name.length>14?name.slice(0,13)+"…":name)+'</span>';
 }
 function planningFlatRows(direction,rows){
  let all=rows.filter(planningForecastFilterMatch).filter(planningNoteFilterMatch).filter(planningBaselineReviewMatches);
@@ -7597,12 +7603,11 @@ function planningFlatRows(direction,rows){
  let html='<tr class="planning-section-label"><td colspan="8">'+(direction==="INCOME"?"Entrate":"Spese")+' · L2 ordinate</td></tr>';
  baselineSortRows(all).forEach(r=>{
   const key=direction+"|"+r.category_id,opened=planningBoardExpandedL2.has(key);
-  html+='<tr class="planning-l2-row"><td><div class="planning-category"><button class="planning-caret" type="button" data-planning-toggle-l2="'+esc(key)+'">'+(opened?"▾":"▸")+'</button><span class="name">'+esc(r.l2_name)+' <span class="bf-l1-tag" title="'+esc(r.l1_name)+'">'+esc(String(r.l1_name||"").slice(0,3).toUpperCase())+'</span></span></div></td>'+
+  html+='<tr class="planning-l2-row"><td><div class="planning-category"><button class="planning-caret" type="button" data-planning-toggle-l2="'+esc(key)+'">'+(opened?"▾":"▸")+'</button>'+baselineL1Tag(r.l1_name)+'<span class="name">'+esc(r.l2_name)+'</span></div></td>'+
   '<td>'+planningValueHtml(r.comparison)+'</td><td>'+planningValueHtml(r.annual)+'</td>'+
   '<td><span class="bf-plain-delta">'+(r.deltaPct===null?'—':(r.deltaPct>0?'+':'')+Math.round(r.deltaPct)+'%')+' <small>'+money(r.deltaAbs)+'</small></span></td>'+
-  '<td>'+planningNatureBadgeHtml(r,direction)+'</td><td>'+planningReliabilityHtml(r)+planningMethodHtml(r)+'</td>'+
-  '<td><div class="planning-note">'+esc(r.meta?.rationale_note||"—")+'</div></td>'+
-  '<td></td></tr>';
+  '<td>'+planningNatureBadgeHtml(r,direction)+'</td><td>'+planningMethodHtml(r)+'</td><td>'+planningReliabilityHtml(r)+'</td>'+
+  '<td><div class="planning-note">'+esc(r.meta?.rationale_note||"—")+'</div></td></tr>';
   if(opened)html+=planningMonthPanelHtml(r);
  });
  return html;
@@ -7638,9 +7643,9 @@ function planningSectionHtml(direction,allRows){
         '<td class="planning-l2-name"><div class="planning-category"><button class="planning-caret" data-planning-toggle-l2="'+esc(l2Key)+'">'+(open?"▾":"▸")+'</button>'+categoryIconHtml(r.l2_name,direction==="INCOME"?"income":"expense",false)+'<span class="name">'+esc(r.l2_name)+'</span></div></td>'+
         '<td>'+planningValueHtml(r.comparison)+'</td><td>'+(draftPlan?window.BudgetFamilySinglePlan.inlineAmount(r):planningValueHtml(r.annual))+'</td>'+
         '<td>'+(planningBoardContext==="BASELINE"?'<span class="bf-plain-delta">'+(r.deltaPct===null?'—':(r.deltaPct>0?'+':'')+Math.round(r.deltaPct)+'%')+' <small>'+money(r.deltaAbs)+'</small></span>':planningDeltaHtml(r.deltaAbs,r.deltaPct,direction,r.comparison))+'</td>'+
-        '<td>'+planningNatureBadgeHtml(r,direction)+'</td><td>'+(planningBoardContext==="BASELINE"?planningReliabilityHtml(r):"")+planningMethodHtml(r)+'</td>'+
-        '<td>'+(draftPlan?window.BudgetFamilySinglePlan.inlineNote(r):'<div class="planning-note" title="'+esc(note)+'">'+esc(note||"—")+'</div>')+'</td>'+
-        '<td>'+(planningBoardContext==="BASELINE"?'':'<button class="planning-open-analysis" type="button" data-planning-open-analysis="'+esc(r.category_id)+'" data-planning-open-direction="'+direction+'" title="Apri la previsione originale in Analisi">›</button>')+'</td></tr>';
+        '<td>'+planningNatureBadgeHtml(r,direction)+'</td><td>'+planningMethodHtml(r)+'</td>'+
+        '<td>'+(planningBoardContext==="BASELINE"?planningReliabilityHtml(r):"")+'</td><td>'+(draftPlan?window.BudgetFamilySinglePlan.inlineNote(r):'<div class="planning-note" title="'+esc(note)+'">'+esc(note||"—")+'</div>')+'</td>'+
+        '</tr>';
       if(open)html+=planningMonthPanelHtml(r);
     });
   });
