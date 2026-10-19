@@ -7906,16 +7906,16 @@ function planningFlatRows(direction,rows){
  baselineSortRows(all).forEach(r=>{
   const key=direction+"|"+r.category_id,opened=planningBoardExpandedL2.has(key);
   html+='<tr class="planning-l2-row"><td><div class="planning-category"><button class="planning-caret" type="button" data-planning-toggle-l2="'+esc(key)+'">'+(opened?"▾":"▸")+'</button>'+baselineL1Tag(r.l1_name)+'<span class="name">'+esc(r.l2_name)+'</span></div></td>'+
-  '<td>'+planningValueHtml(r.comparison)+'</td><td>'+planningValueHtml(r.annual)+'</td>'+
+  '<td>'+(((planningBoardContext==="STRATEGY"||planningBoardContext==="PLAN")&&window.BudgetFamilySinglePlan&&!planningBoardData?.meta?.strategic_plan)?window.BudgetFamilySinglePlan.inlineAmount(r):planningValueHtml(r.annual))+'</td>'+
   '<td>'+baselineDeltaCompactHtml(r)+'</td>'+
   '<td>'+planningNatureBadgeHtml(r,direction)+'</td><td>'+planningMethodHtml(r)+'</td><td>'+planningReliabilityHtml(r)+'</td>'+
-  '<td><div class="planning-note">'+esc(r.meta?.rationale_note||"—")+'</div></td></tr>';
+  '<td>'+(((planningBoardContext==="STRATEGY"||planningBoardContext==="PLAN")&&window.BudgetFamilySinglePlan&&!planningBoardData?.meta?.strategic_plan)?window.BudgetFamilySinglePlan.inlineNote(r):'<div class="planning-note">'+esc(r.meta?.rationale_note||"—")+'</div>')+'</td></tr>';
   if(opened)html+=planningMonthPanelHtml(r);
  });
  return html;
 }
 function planningSectionHtml(direction,allRows){
- if(planningBoardContext==="BASELINE"&&baselineViewMode==="FLAT")return planningFlatRows(direction,allRows);
+ if(baselineViewMode==="FLAT")return planningFlatRows(direction,allRows);
   const q=planningBoardSearch.trim().toLocaleLowerCase("it"),groups=planningGroupRows(allRows);
   let html='<tr class="planning-section-label"><td colspan="8">'+(direction==="INCOME"?"Entrate":"Spese")+'</td></tr>';
   groups.forEach(function(g){
@@ -7955,7 +7955,7 @@ function planningSectionHtml(direction,allRows){
   return html;
 }
 function planningRenderFilterButtons(){
- document.querySelectorAll("[data-baseline-mode]").forEach(b=>{b.classList.toggle("ghost",b.dataset.baselineMode!==baselineViewMode);b.classList.toggle("hidden",planningBoardContext!=="BASELINE")});
+ document.querySelectorAll("[data-baseline-mode]").forEach(b=>{b.classList.toggle("ghost",b.dataset.baselineMode!==baselineViewMode);b.classList.remove("hidden")});
  if($("baselineSort")){$("baselineSort").value=baselineSortKey;$("baselineSort").classList.remove("hidden")}
   document.querySelectorAll('[data-planning-horizon="ROLLING_12"]').forEach(function(b){
     const strategy=planningBoardContext==="STRATEGY";
