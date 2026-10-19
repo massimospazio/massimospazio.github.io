@@ -7407,7 +7407,7 @@ function quickBaselineHtml(row){
  const fixed=ed.method==="FIXED",range=ed.method==="RANGE",rate=!["FIXED","RANGE","ZERO"].includes(ed.method);
  const boxes=monthRows.map(x=>{
    const overridden=x.override_amount!==null&&x.override_amount!==undefined;
-   return '<label class="qbe-month"><span>'+esc(monthLabel(x.month))+'</span><input type="number" min="0" step="1" data-qbe-month="'+esc(x.month)+'" value="'+esc(planInputValue(x.planned_amount))+'" '+(ed.dirty?'disabled title="Salva prima la nuova regola"':'')+'><small>'+(overridden?'Override · ':'Regola · ')+money(x.base_amount)+'</small></label>';
+   return '<label class="qbe-month"><span>'+esc(monthLabel(x.month))+'</span><input type="number" min="0" step="1" data-qbe-month="'+esc(x.month)+'" value="'+esc(planInputValue(x.planned_amount))+'" '+(ed.dirty?'disabled title="Salva prima la nuova regola"':'')+'><small>'+(overridden?'Override · ':'Regola · ')+money(x.base_amount)+'</small>'+(overridden?'<button type="button" class="btn ghost compact" data-qbe-reset-month="'+esc(x.month)+'" '+(ed.dirty?'disabled':'')+'>Ripristina</button>':'')+'</label>';
  }).join("");
  return '<div class="qbe" data-qbe-key="'+esc(k)+'">'+
  '<div class="qbe-head"><strong>Modifica rapida Baseline · '+esc(row.l2_name)+'</strong><span>Le modifiche usano gli stessi salvataggi di Analisi spese</span></div>'+
@@ -7426,7 +7426,7 @@ async function quickBaselineSave(k,button){
  const [direction,id]=k.split("|"),old=ed.data.category_setting||{},method=ed.method;
  const overrides=(ed.data.monthly_plan||[]).filter(x=>x.override_amount!==null&&x.override_amount!==undefined).length;
  const change=method!==String(old.forecast_method||"AVG6");
- if(change&&overrides&&!confirm("Cambiare il metodo cancellerà "+overrides+" override mensili. Confermi?"))return;
+ if(change&&!confirm("Il cambio metodo eliminerà gli override futuri di questa categoria"+(overrides?" (almeno "+overrides+" nei 12 mesi visibili)":" eventualmente presenti")+". Continuare?"))return;
  if(method==="RANGE"&&(Number(ed.low)<0||Number(ed.high)<Number(ed.low))){msg($("planningBoardStatus"),"Intervallo minimo/massimo non valido.",true);return}
  if(method==="FIXED"&&(!Number.isFinite(Number(ed.fixed))||Number(ed.fixed)<0)){msg($("planningBoardStatus"),"Importo fisso non valido.",true);return}
  quickBaselineBusy.add(k);if(button)button.disabled=true;
@@ -7438,7 +7438,7 @@ async function quickBaselineSave(k,button){
     p_amount_model:method==="FIXED"?"FIXED":method==="RANGE"?"RANGE":"ESTIMATED",
     p_fixed_amount:method==="FIXED"?Number(ed.fixed):null,p_range_min:method==="RANGE"?Number(ed.low):null,
     p_range_max:method==="RANGE"?Number(ed.high):null,p_recurrence_pattern:method==="SAME_MONTH_LAST_YEAR"||method==="ZERO"?null:ed.pattern,
-    p_confirm_reset:change&&overrides>0
+    p_confirm_reset:change
    });
    await rpc("dashboard_reporting_save_forecast_semantics_v2",{p_category_id:id,p_entity_type:"CATEGORY",p_merchant_id:null,p_plan_type:"FORECAST",p_certainty_level:old.certainty_level||"ESTIMATED",p_note:ed.note||null});
    quickBaselineEditors.delete(k);
@@ -7450,8 +7450,8 @@ async function quickBaselineSave(k,button){
 }
 async function quickBaselineMonth(k,month,value,input){
  const ed=quickBaselineEditors.get(k);if(!ed||ed.dirty||quickBaselineBusy.has(k))return;
- const [direction,id]=k.split("|"),amount=Number(value);
- if(!Number.isFinite(amount)||amount<0){msg($("planningBoardStatus"),"Importo mensile non valido.",true);return}
+ const [direction,id]=k.split("|"),amount=value===null?null:Number(value);
+ if(amount!==null&&(!Number.isFinite(amount)||amount<0)){msg($("planningBoardStatus"),"Importo mensile non valido.",true);return}
  quickBaselineBusy.add(k);if(input)input.disabled=true;
  try{
   await rpc(direction==="INCOME"?"dashboard_reporting_set_income_category_override_v1":"dashboard_reporting_set_expense_override_v1",{p_month:month,p_category_id:id,p_amount:amount});
@@ -8182,6 +8182,7 @@ $("planningBoardView").addEventListener("click",function(e){
   if(l1){const k=l1.dataset.planningToggleL1;if(planningBoardExpandedL1.has(k))planningBoardExpandedL1.delete(k);else planningBoardExpandedL1.add(k);renderPlanningBoard();return}
   const l2=e.target.closest("[data-planning-toggle-l2]");
   if(l2){const k=l2.dataset.planningToggleL2;if(planningBoardExpandedL2.has(k))planningBoardExpandedL2.delete(k);else{planningBoardExpandedL2.add(k);if(planningBoardContext==="BASELINE"){const direction=k.split("|")[0],id=k.split("|")[1],rows=planningBuildRows(planningBoardData[direction==="INCOME"?"income":"expense"],direction),row=rows.find(r=>String(r.category_id)===id);if(row)quickBaselineLoad(row)}}renderPlanningBoard();return}
+  const reset=e.target.closest("[data-qbe-reset-month]");if(reset){const editor=reset.closest("[data-qbe-key]");if(editor)quickBaselineMonth(editor.dataset.qbeKey,reset.dataset.qbeResetMonth,null,reset);return}
   const save=e.target.closest("[data-qbe-save]");if(save){const editor=save.closest("[data-qbe-key]");if(editor)quickBaselineSave(editor.dataset.qbeKey,save);return}
   const open=e.target.closest("[data-planning-open-analysis]");
   if(open){openPlanningRowInAnalysis(open.dataset.planningOpenAnalysis,open.dataset.planningOpenDirection||"EXPENSE");return}
