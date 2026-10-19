@@ -8,14 +8,14 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=73.30.10.32-20261019"></script>
-<script src="../shared/app-config.js?v=73.30.10.32-20261019"></script>
-<script src="../shared/contextual-help.js?v=73.30.10.32-20261019" defer></script>
+<script src="../shared/supabase-client.js?v=73.30.10.33-20261019"></script>
+<script src="../shared/app-config.js?v=73.30.10.33-20261019"></script>
+<script src="../shared/contextual-help.js?v=73.30.10.33-20261019" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<link rel="stylesheet" href="../shared/health-reserve.css?v=73.30.10.32-20261019">
-<link rel="stylesheet" href="../shared/approved-plan.css?v=73.30.10.32-20261019">
-<link rel="stylesheet" href="../shared/scenario-strategy.css?v=73.30.10.32-20261019">
-<link rel="stylesheet" href="../shared/single-plan-board.css?v=73.30.10.32-20261019">
+<link rel="stylesheet" href="../shared/health-reserve.css?v=73.30.10.33-20261019">
+<link rel="stylesheet" href="../shared/approved-plan.css?v=73.30.10.33-20261019">
+<link rel="stylesheet" href="../shared/scenario-strategy.css?v=73.30.10.33-20261019">
+<link rel="stylesheet" href="../shared/single-plan-board.css?v=73.30.10.33-20261019">
 <style>
 :root{--bg:#f4f6fa;--card:#fff;--text:#17263e;--muted:#58677d;--line:#dce4ee;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 4px 18px rgba(15,23,42,.045);--sc-blue:#2563eb;--sc-blue-soft:#eff6ff;--sc-green:#0ea87a;--sc-red:#ef5b73;--sc-purple:#7658e6;--sc-ink:#17263e}
 *{box-sizing:border-box}
@@ -1287,7 +1287,7 @@ button,input,select{font:inherit}
 .process-roadmap-selected{border-color:#93c5fd;background:#eff6ff}.process-roadmap-note{margin-top:12px;padding:10px 12px;border-radius:10px;background:#f8fafc;border:1px dashed #cbd5e1;color:#475569;font-size:14px;line-height:1.45}
 .balance-section-hidden{display:none!important}.historical-bottom-grid.single-view{grid-template-columns:1fr}
 @media(max-width:850px){.process-roadmap-grid{grid-template-columns:1fr}.process-roadmap-head{flex-direction:column}}
-@media(max-width:900px){.process-nav{grid-template-columns:repeat(7,132px)}.process-context{align-items:flex-start;flex-direction:column}.process-subnav{width:100%;justify-content:flex-start}}
+@media(max-width:900px){.process-nav{grid-template-columns:repeat(6,132px)}.process-context{align-items:flex-start;flex-direction:column}.process-subnav{width:100%;justify-content:flex-start}}
 @media(max-width:650px){.process-shell{padding:8px}.process-overline span{display:none}.process-step{min-width:126px}.process-context-copy{display:grid;gap:2px}.process-subnav .tab{flex:1 1 auto;justify-content:center}}
 .where-period-bar{display:flex;flex-wrap:wrap;min-width:0;align-items:center;gap:12px;padding:12px 14px;border:1px solid #e4eaf2;border-radius:12px;background:#f8fafc}
 .where-period-bar.hidden{display:none}.where-period-bar>span{font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#64748b}
@@ -1341,7 +1341,7 @@ button,a,input,select,textarea{ -webkit-tap-highlight-color:transparent }
 .section-title p,.scenario-card-head p{font-size:14px;line-height:1.5;color:var(--muted)}
 .process-shell{padding:16px;border-color:#dce4ee;border-radius:16px;box-shadow:var(--shadow)}
 .process-overline{margin:0 0 10px}.process-overline strong{font-size:14px}.process-overline span{font-size:14px;color:var(--muted)}
-.process-nav{grid-template-columns:repeat(7,minmax(150px,1fr));gap:7px;min-width:0;scrollbar-width:thin}
+.process-nav{grid-template-columns:repeat(6,minmax(150px,1fr));gap:7px;min-width:0;scrollbar-width:thin}
 .process-step{min-width:0;min-height:56px;padding:9px 10px;gap:9px;background:#f8fafc}
 .process-step .process-no{width:28px;height:28px;font-size:14px}
 .process-step .process-copy strong{font-size:14px;line-height:1.3}
@@ -1411,7 +1411,7 @@ button,a,input,select,textarea{ -webkit-tap-highlight-color:transparent }
 .historical-compare-cp-table th,.historical-compare-cp-table td{font-size:14px;padding:6px 8px}
 .historical-compare-moves th,.historical-compare-moves td{font-size:14px}.historical-period-badge{font-size:14px}
 .process-roadmap-eyebrow,.process-roadmap-status{font-size:14px}.process-roadmap-feature small,.process-roadmap-note{font-size:14px}.process-roadmap-feature .release{font-size:14px}
-@media(max-width:1100px){.process-nav{grid-template-columns:repeat(7,150px)}.where-period-summary{flex-basis:100%;order:3;padding-bottom:0;align-self:auto}.where-filter-scope{margin-left:auto}}
+@media(max-width:1100px){.process-nav{grid-template-columns:repeat(6,150px)}.where-period-summary{flex-basis:100%;order:3;padding-bottom:0;align-self:auto}.where-filter-scope{margin-left:auto}}
 @media(max-width:760px){.wrap{padding:16px}.process-shell{padding:12px}.process-context{gap:10px}.process-context-copy{display:flex}.process-context-copy small{flex-basis:100%}.process-subnav .tab,.process-subnav button.tab{flex:1 1 calc(50% - 8px);min-height:42px;padding:9px 10px}.where-period-bar{padding:12px;align-items:stretch;gap:12px}.where-filter-group{flex:1 1 100%}.where-filter-scope{margin-left:0}.where-period-summary{order:0;padding:0;align-self:auto}.where-period-buttons,.where-filter-scope .scenario-segment{width:100%}.where-period-buttons button{flex:1}.where-filter-scope .scenario-segment button{flex:1}.balance-hub-head h2{font-size:26px}.balance-hub-head p{font-size:14px}.balance-primary-kpis{gap:10px}.balance-primary-kpis .historical-kpi{padding:12px;min-height:94px}.balance-primary-kpis .historical-kpi .value{font-size:25px}.balance-waterfall-card{padding:16px}.balance-waterfall-chart{min-width:760px;height:330px}.balance-erode-wrap{padding:13px}.balance-erode-insights{grid-template-columns:1fr}.balance-erode-insight{min-height:0}.historical-comparison-workspace{padding:12px}.historical-compare-table-rich{min-width:540px}.historical-compare-detail{overflow-x:auto}.process-roadmap-head p{font-size:14px}}
 @media(max-width:380px){.balance-primary-kpis{grid-template-columns:1fr}.process-subnav .tab,.process-subnav button.tab{font-size:14px}.balance-primary-kpis .historical-kpi .value{font-size:28px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}
@@ -1426,7 +1426,7 @@ body{font-size:16px;line-height:1.5}
 .top .userbar{font-size:14px;color:#d6e3f6}.top .btn.ghost{background:#23446e;border-color:#42608a;color:#fff;font-size:14px}.top .btn.ghost:hover{background:#2d5487;border-color:#7aa0d3}
 .process-shell{padding:16px 18px;border-radius:16px;background:#fff}
 .process-overline strong{font-size:16px}.process-overline span{font-size:14px;color:#475a74}
-.process-nav{grid-template-columns:repeat(7,minmax(176px,1fr));gap:8px}
+.process-nav{grid-template-columns:repeat(6,minmax(176px,1fr));gap:8px}
 .process-step{padding:10px;min-height:64px;gap:8px;border-radius:12px}.process-step .process-no{width:28px;height:28px;font-size:14px}
 .process-step .process-copy strong,.process-step .process-copy small{font-size:14px;line-height:1.4}
 .process-step .process-copy small{font-weight:400;color:#52617a}
@@ -1462,7 +1462,7 @@ body{font-size:16px;line-height:1.5}
 .analysis-master-table th,.analysis-master-table td,.analysis-components-table th,.analysis-components-table td,.analysis-moves-table th,.analysis-moves-table td,.planning-board-table th,.planning-board-table td{font-size:14px;padding-top:5px;padding-bottom:5px}
 .analysis-detail-head h3{font-size:22px}.analysis-detail-head p,.analysis-header-metric span,.analysis-stat,.forecast-field label{font-size:14px}
 .input,.select,.plan-input,.method-select,.analysis-plan-month input{font-size:16px}
-@media(max-width:1100px){.process-nav{grid-template-columns:repeat(7,176px)}}
+@media(max-width:1100px){.process-nav{grid-template-columns:repeat(6,176px)}}
 @media(max-width:760px){.top{padding:16px}.brand{padding-left:56px}.brand h1{font-size:25px}.process-overline span{display:none}.process-subnav .tab,.process-subnav button.tab{font-size:16px;padding:9px 10px}.process-context-copy small{display:none}.where-period-buttons button,.scenario-segment button{font-size:16px;padding:7px 9px}.balance-hub-head h2{font-size:29px}.balance-hub-head p{font-size:16px}.balance-waterfall-card{padding:16px}.balance-waterfall-chart{height:auto;min-width:0}.balance-primary-kpis .historical-kpi .value{font-size:34px}.balance-erode-insight strong{font-size:18px}}
 @media(max-width:620px){.balance-primary-kpis{grid-template-columns:1fr}.balance-primary-kpis .historical-kpi{min-height:112px;padding:14px 16px}.brand small{font-size:14px}.userbar{width:100%}.userbar #userEmail{flex-basis:100%}}
 /* V73.30.1.8 — percentuali esplicite e temporalità a colori/trame */
@@ -2094,18 +2094,17 @@ body{font-size:16px;line-height:1.5}
         <a class="process-step" href="../?tab=overview"><span class="process-no">1</span><span class="process-copy"><strong>Dati affidabili</strong><small>operativa</small></span></a>
         <button class="process-step active" type="button" data-process-phase="where" data-process-route="flow"><span class="process-no">2</span><span class="process-copy"><strong>Dove siamo</strong><small>operativa</small></span></button>
         <button class="process-step future" type="button" data-process-phase="goals" data-process-roadmap="goals"><span class="process-no">3</span><span class="process-copy"><strong>Obiettivi</strong><small>roadmap · V73.31</small></span></button>
-        <button class="process-step partial" type="button" data-process-phase="strategy" data-process-route="simulator"><span class="process-no">4</span><span class="process-copy"><strong>Strategia</strong><small>parziale</small></span></button>
-        <button class="process-step partial" type="button" data-process-phase="plan" data-process-route="board"><span class="process-no">5</span><span class="process-copy"><strong>Piano</strong><small>transitorio</small></span></button>
-        <button class="process-step future" type="button" data-process-phase="control" data-process-roadmap="control"><span class="process-no">6</span><span class="process-copy"><strong>Controllo</strong><small>roadmap · V74</small></span></button>
-        <button class="process-step future" type="button" data-process-phase="learning" data-process-roadmap="learning"><span class="process-no">7</span><span class="process-copy"><strong>Apprendimento</strong><small>roadmap · V74.3</small></span></button>
+        <button class="process-step partial" type="button" data-process-phase="strategy" data-process-route="simulator"><span class="process-no">4</span><span class="process-copy"><strong>Strategia e Piano</strong><small>simula · approva</small></span></button>
+        <button class="process-step future" type="button" data-process-phase="control" data-process-roadmap="control"><span class="process-no">5</span><span class="process-copy"><strong>Controllo</strong><small>roadmap · V74</small></span></button>
+        <button class="process-step future" type="button" data-process-phase="learning" data-process-roadmap="learning"><span class="process-no">6</span><span class="process-copy"><strong>Apprendimento</strong><small>roadmap · V74.3</small></span></button>
       </div>
       <div id="processContextWhere" class="process-context">
         <div class="process-context-copy"><span>Fase 2</span><strong>Dove siamo</strong><small>Ogni voce risponde a una domanda diversa sullo stato della famiglia.</small></div>
         <nav class="tabs process-subnav" aria-label="Viste di Dove siamo">
           <button id="scenarioViewTab" class="tab" type="button" data-where-view="flow">Flusso economico</button>
           <button id="cashflowViewTab" class="tab" type="button" data-where-view="cashflow">Cash flow</button>
-          <button id="periodCompareTab" class="tab" type="button" data-where-view="compare">Confronto periodi</button>
-          <button id="reportingViewTab" class="tab active" type="button" data-where-view="analysis">Analisi &amp; Baseline</button>
+          <button id="reportingViewTab" class="tab active" type="button" data-where-view="analysis">Analisi storico</button>
+          <button id="baselineWhereTab" class="tab" type="button" data-where-view="baseline">Creazione Baseline</button>
         </nav>
         <div id="wherePeriodBar" class="where-period-bar">
           <div id="wherePeriodGroup" class="where-filter-group">
@@ -2135,23 +2134,18 @@ body{font-size:16px;line-height:1.5}
         </div>
       </div>
       <div id="processContextStrategy" class="process-context hidden">
-        <div class="process-context-copy"><span>Fase 4 · DECIDERE</span><strong>Strategia</strong><small>Provare interventi e scegliere come coprire il funding gap.</small></div>
-        <div class="tabs process-subnav">
-          <button id="planningSimulatorTab" class="tab" type="button">Simulazione nel Tabellone</button>
+        <div class="process-context-copy"><span>Fase 4 · DECIDERE</span><strong>Strategia e Piano</strong><small>Un unico Tabellone: simula e poi approva le decisioni.</small></div>
+        <div class="tabs process-subnav" aria-label="Modalità Strategia e Piano">
+          <button id="planningSimulatorTab" class="tab" type="button">Simula</button>
+          <button id="planningBoardTab" class="tab" type="button">Piano e approvazione</button>
           <button class="tab planned hidden" type="button" data-process-feature="scenarios" data-feature-phase="strategy">Scenari <span class="soon">V73.32</span></button>
           <button class="tab planned hidden" type="button" data-process-feature="levers" data-feature-phase="strategy">Leve &amp; allocazione <span class="soon">V73.32</span></button>
-        </div>
-      </div>
-      <div id="processContextPlan" class="process-context hidden">
-        <div class="process-context-copy"><span>Fase 5 · DECIDERE</span><strong>Piano</strong><small>Trasformare la strategia scelta in un benchmark ufficiale.</small></div>
-        <div class="tabs process-subnav">
-          <button id="planningBoardTab" class="tab" type="button">Tabellone · Piano</button>
           <button class="tab planned hidden" type="button" data-process-feature="annual-plan" data-feature-phase="plan">Piano annuale <span class="soon">V73.30.2</span></button>
           <button class="tab planned hidden" type="button" data-process-feature="finalize-plan" data-feature-phase="plan">Finalizzazione &amp; versioni <span class="soon">V73.33</span></button>
         </div>
       </div>
       <div id="processContextControl" class="process-context hidden">
-        <div class="process-context-copy"><span>Fase 6 · GOVERNARE</span><strong>Controllo</strong><small>Confrontare Actual, Plan e Forecast e intervenire solo sulle eccezioni.</small></div>
+        <div class="process-context-copy"><span>Fase 5 · GOVERNARE</span><strong>Controllo</strong><small>Confrontare Actual, Plan e Forecast e intervenire solo sulle eccezioni.</small></div>
         <div class="tabs process-subnav">
           <button class="tab planned" type="button" data-process-feature="rolling-forecast" data-feature-phase="control">Rolling Forecast <span class="soon">V73.30.3</span></button>
           <button class="tab planned" type="button" data-process-feature="monthly-cockpit" data-feature-phase="control">Cockpit mensile <span class="soon">V74.0</span></button>
@@ -2160,7 +2154,7 @@ body{font-size:16px;line-height:1.5}
         </div>
       </div>
       <div id="processContextLearning" class="process-context hidden">
-        <div class="process-context-copy"><span>Fase 7 · GOVERNARE</span><strong>Apprendimento</strong><small>Capire cosa ha funzionato e migliorare la Baseline successiva.</small></div>
+        <div class="process-context-copy"><span>Fase 6 · GOVERNARE</span><strong>Apprendimento</strong><small>Capire cosa ha funzionato e migliorare la Baseline successiva.</small></div>
         <div class="tabs process-subnav">
           <button class="tab planned" type="button" data-process-feature="retrospective" data-feature-phase="learning">Retrospettiva <span class="soon">V74.3</span></button>
           <button class="tab planned" type="button" data-process-feature="forecast-accuracy" data-feature-phase="learning">Accuratezza previsioni <span class="soon">V74.3</span></button>
@@ -2740,8 +2734,8 @@ body{font-size:16px;line-height:1.5}
   </div>
 </div>
 
-<script src="../shared/scenario-strategy.js?v=73.30.10.32-20261019"></script>
-<script src="../shared/single-plan-board.js?v=73.30.10.32-20261019"></script>
+<script src="../shared/scenario-strategy.js?v=73.30.10.33-20261019"></script>
+<script src="../shared/single-plan-board.js?v=73.30.10.33-20261019"></script>
 <script>
 const sb=window.appSupabase;
 if(typeof Chart!=="undefined"){
@@ -7274,9 +7268,9 @@ async function loadScenarioData(force){
   }finally{scenarioLoading=false}
 }
 function syncReportingProcessNavigation(phase){
-  const key=phase||"where";
+  const key=phase==="plan"?"strategy":(phase||"where");
   document.querySelectorAll("[data-process-phase]").forEach(function(el){const active=el.dataset.processPhase===key;el.classList.toggle("active",active);el.setAttribute("aria-pressed",String(active))});
-  const contexts={where:"processContextWhere",goals:"processContextGoals",strategy:"processContextStrategy",plan:"processContextPlan",control:"processContextControl",learning:"processContextLearning"};
+  const contexts={where:"processContextWhere",goals:"processContextGoals",strategy:"processContextStrategy",control:"processContextControl",learning:"processContextLearning"};
   Object.keys(contexts).forEach(function(k){const el=$(contexts[k]);if(el)el.classList.toggle("hidden",k!==key)});
 }
 function hideProcessRoadmap(){
@@ -7294,21 +7288,21 @@ const PROCESS_ROADMAP={
     {key:"family-goals",label:"Obiettivi familiari",release:"V73.31",description:"Oggetti distinti dai target di categoria: viaggio, fondo emergenza, debito, investimento figli, progetto di spesa."},
     {key:"funding-gap",label:"Funding gap",release:"V73.31",description:"Confronta risorse della Baseline e fabbisogno degli obiettivi per misurare quanto margine manca realmente."}
   ]},
-  strategy:{no:"4",macro:"DECIDERE",title:"Strategia",release:"V73.32",description:"Scegliere come coprire il funding gap prima di trasformare le decisioni in Plan.",features:[
+  strategy:{no:"4",macro:"DECIDERE",title:"Strategia e Piano",release:"V73.32",description:"Scegliere come coprire il funding gap prima di trasformare le decisioni in Plan.",features:[
     {key:"scenarios",label:"Scenari",release:"V73.32",description:"Salvare e confrontare scenari alternativi senza modificare Baseline o Plan."},
     {key:"levers",label:"Leve & allocazione",release:"V73.32",description:"Valutare interventi per categoria, risparmio prodotto, sacrificio e destinazione del margine liberato."}
   ]},
-  plan:{no:"5",macro:"DECIDERE",title:"Piano",release:"V73.30.2 → V73.33",description:"Formalizzare le decisioni in un riferimento annuale stabile e versionato.",features:[
+  plan:{no:"4",macro:"DECIDERE",title:"Piano · approvazione",release:"V73.30.2 → V73.33",description:"Formalizzare le decisioni in un riferimento annuale stabile e versionato.",features:[
     {key:"annual-plan",label:"Piano annuale",release:"V73.30.2",description:"Plan annuale con Baseline di riferimento, target e phasing mensile."},
     {key:"finalize-plan",label:"Finalizzazione & versioni",release:"V73.33",description:"Approvare il Plan V1, congelarlo e gestire eventuali versioni successive senza riscrivere la storia."}
   ]},
-  control:{no:"6",macro:"GOVERNARE",title:"Controllo",release:"V73.30.3 → V74.2",description:"Governare l'anno confrontando Actual, Plan e Rolling Forecast e intervenendo sulle eccezioni.",features:[
+  control:{no:"5",macro:"GOVERNARE",title:"Controllo",release:"V73.30.3 → V74.2",description:"Governare l'anno confrontando Actual, Plan e Rolling Forecast e intervenendo sulle eccezioni.",features:[
     {key:"rolling-forecast",label:"Rolling Forecast",release:"V73.30.3",description:"Actual mesi chiusi + residuo del mese corrente + previsione aggiornata dei mesi futuri."},
     {key:"monthly-cockpit",label:"Cockpit mensile",release:"V74.0",description:"Poche metriche operative: Plan-to-date, Actual, Forecast a fine mese, residuo e priorità."},
     {key:"recovery",label:"Piano di rientro",release:"V74.1",description:"Redistribuire temporaneamente il futuro per recuperare un target annuale a rischio senza modificare il Plan."},
     {key:"review-snapshot",label:"Review & snapshot",release:"V74.0",description:"Review mensile guidata e snapshot ufficiale del Forecast."}
   ]},
-  learning:{no:"7",macro:"GOVERNARE",title:"Apprendimento",release:"V74.3",description:"Usare gli scostamenti per migliorare previsioni, decisioni e Baseline del ciclo successivo.",features:[
+  learning:{no:"6",macro:"GOVERNARE",title:"Apprendimento",release:"V74.3",description:"Usare gli scostamenti per migliorare previsioni, decisioni e Baseline del ciclo successivo.",features:[
     {key:"retrospective",label:"Retrospettiva",release:"V74.3",description:"Baseline → Plan → Forecast → Actual: capire dove e perché il risultato è cambiato."},
     {key:"forecast-accuracy",label:"Accuratezza previsioni",release:"V74.3",description:"Misurare bias ed errore dei metodi di forecast per categoria."},
     {key:"lessons",label:"Lezioni & nuova Baseline",release:"V74.3",description:"Registrare lezioni utili e usarle per costruire la Baseline dell'anno successivo."}
@@ -7336,9 +7330,10 @@ function wherePeriodValue(){
 }
 function syncWherePeriodUI(){
   const bar=$("wherePeriodBar"),periodGroup=$("wherePeriodGroup"),scopeGroup=$("whereScopeGroup");if(!bar)return;
+  const baselineShown=planningBoardVisible&&planningBoardContext==="BASELINE";
   const projection=balanceSubview==="analysis"&&analysisTimeMode==="PROJECTION";
-  const hidePeriod=balanceSubview==="compare"||balanceSubview==="flow"||projection;
-  const hideScope=balanceSubview==="analysis";
+  const hidePeriod=baselineShown||balanceSubview==="compare"||balanceSubview==="flow"||projection;
+  const hideScope=baselineShown||balanceSubview==="analysis";
   periodGroup?.classList.toggle("hidden",hidePeriod);
   scopeGroup?.classList.toggle("hidden",hideScope);
   bar.classList.toggle("hidden",hidePeriod&&hideScope);
@@ -7394,7 +7389,7 @@ function showScenarioView(subview){
   if(subview)balanceSubview=["flow","cashflow","compare"].includes(subview)?subview:"flow";
   scenarioVisible=true;planningBoardVisible=false;planningSimulatorVisible=false;hideProcessRoadmap();
   $("standardReportingView").classList.add("hidden");$("planningBoardView").classList.add("hidden");$("planningSimulatorView").classList.add("hidden");$("scenarioView").classList.remove("hidden");
-  $("reportingViewTab").classList.remove("active");$("planningBoardTab").classList.remove("active");$("planningSimulatorTab").classList.remove("active");$("scenarioViewTab").classList.add("active");
+  $("reportingViewTab").classList.remove("active");$("baselineWhereTab").classList.remove("active");$("planningBoardTab").classList.remove("active");$("planningSimulatorTab").classList.remove("active");$("scenarioViewTab").classList.add("active");
   syncReportingProcessNavigation("where");
   const u=new URL(window.location.href);u.searchParams.set("view",balanceSubview==="flow"?"flow":balanceSubview);u.searchParams.delete("phase");u.searchParams.delete("feature");history.replaceState(null,"",u);
   loadScenarioData(false);applyBalanceSubview();
@@ -7404,7 +7399,7 @@ function showStandardReportingView(){
   ++baselinePortalRequest;baselineRestoreAnalysisPanel();
   scenarioVisible=false;planningBoardVisible=false;planningSimulatorVisible=false;hideProcessRoadmap();
   $("scenarioView").classList.add("hidden");$("planningBoardView").classList.add("hidden");$("planningSimulatorView").classList.add("hidden");$("standardReportingView").classList.remove("hidden");
-  $("scenarioViewTab").classList.remove("active");$("planningBoardTab").classList.remove("active");$("planningSimulatorTab").classList.remove("active");$("reportingViewTab").classList.add("active");
+  $("scenarioViewTab").classList.remove("active");$("baselineWhereTab").classList.remove("active");$("planningBoardTab").classList.remove("active");$("planningSimulatorTab").classList.remove("active");$("reportingViewTab").classList.add("active");
   syncReportingProcessNavigation("where");
   balanceSubview="analysis";document.querySelectorAll("[data-where-view]").forEach(function(b){const active=b.dataset.whereView==="analysis";b.classList.toggle("active",active);b.setAttribute("aria-pressed",String(active))});syncWherePeriodUI();
   const u=new URL(window.location.href);u.searchParams.delete("view");u.searchParams.delete("phase");u.searchParams.delete("feature");history.replaceState(null,"",u);
@@ -8232,7 +8227,7 @@ function renderPlanningBoard(){
       view.title=rolling?"Tabellone · Simulazione strategica · prossimi 12 mesi":"Tabellone · Simulazione strategica";
       view.column=rolling?"Scenario simulato · 12M":"Scenario in elaborazione · "+year;
       view.subtitle=rolling?"Bozza strategica modificabile sui prossimi 12 mesi; distinta dal piano annuale e non ancora approvabile.":"Un unico scenario di lavoro: dalle leve generali ai target L2 direttamente nel Tabellone.";
-      view.note=rolling?"VERSIONE DI PROVA · Simula e confronta i prossimi 12 mesi con la Baseline dello stesso periodo. Bozza rolling separata dall’anno corrente; non approvabile.":"Stessa bozza L2 di Piano: sperimenta ora, passa a Piano per approvare. Nessuna modifica alla Baseline o ai consuntivi.";
+      view.note=rolling?"VERSIONE DI PROVA · Simula e confronta i prossimi 12 mesi con la Baseline dello stesso periodo. Bozza rolling separata dall’anno corrente; non approvabile.":"La simulazione e la finalizzazione condividono la stessa bozza L2: seleziona «Piano e approvazione» nella fase 4 per consolidarla. La Baseline e i consuntivi non vengono modificati.";
     }
     if(planningBoardContext==="PLAN"&&!isStrategic&&!rolling){
       view.title="Tabellone · Piano in elaborazione";
@@ -8327,11 +8322,14 @@ function showPlanningBoardView(context){
 
   planningBoardVisible=true;planningSimulatorVisible=false;scenarioVisible=false;hideProcessRoadmap();
   $("standardReportingView").classList.add("hidden");$("scenarioView").classList.add("hidden");$("planningSimulatorView").classList.add("hidden");$("planningBoardView").classList.remove("hidden");
-  $("reportingViewTab").classList.toggle("active",planningBoardContext==="BASELINE");
+  $("reportingViewTab").classList.remove("active");
+  $("baselineWhereTab").classList.toggle("active",planningBoardContext==="BASELINE");
   $("planningBoardTab").classList.toggle("active",planningBoardContext==="PLAN");
   $("planningSimulatorTab").classList.toggle("active",planningBoardContext==="STRATEGY");
   $("scenarioViewTab").classList.remove("active");
-  syncReportingProcessNavigation(planningBoardContext==="BASELINE"?"where":planningBoardContext==="STRATEGY"?"strategy":"plan");
+  syncReportingProcessNavigation(planningBoardContext==="BASELINE"?"where":"strategy");
+  document.querySelectorAll("[data-where-view]").forEach(function(el){const active=planningBoardContext==="BASELINE"&&el.dataset.whereView==="baseline";el.classList.toggle("active",active);el.setAttribute("aria-pressed",String(active))});
+  syncWherePeriodUI();
   const u=new URL(window.location.href);u.searchParams.set("view",planningBoardContext==="BASELINE"?"baseline-board":planningBoardContext==="STRATEGY"?"simulator":"board");u.searchParams.delete("phase");u.searchParams.delete("feature");history.replaceState(null,"",u);
   // Rileggi sempre le proiezioni dopo il passaggio da Analisi al Tabellone:
   // la cache di direzione puo essere stata aggiornata solo parzialmente.
@@ -8386,7 +8384,7 @@ function openReportingFromUrl(){
   if(PROCESS_ROADMAP[phase]){reportDeepLinkHandled=true;showProcessRoadmap(phase,feature);return}
   if(params.get("view")==="scenario"||params.get("view")==="balance"||params.get("view")==="flow"){reportDeepLinkHandled=true;showBalanceSubview("flow");return}
   if(params.get("view")==="cashflow"){reportDeepLinkHandled=true;showBalanceSubview("cashflow");return}
-  if(params.get("view")==="compare"){reportDeepLinkHandled=true;showBalanceSubview("compare");return}
+  if(params.get("view")==="compare"){reportDeepLinkHandled=true;showStandardReportingView();void loadAnalysisWorkspace(false);return}
   if(params.get("view")==="baseline-board"){reportDeepLinkHandled=true;showPlanningBoardView("BASELINE");return}
   if(params.get("view")==="board"){reportDeepLinkHandled=true;showPlanningBoardView("PLAN");return}
   if(params.get("view")==="simulator"){reportDeepLinkHandled=true;showPlanningSimulatorView();return}
@@ -8426,14 +8424,14 @@ async function copyFirstMonth(kind,category,btn){
   finally{setBusy(btn,false)}
 }
 
-$("reportingViewTab").onclick=function(){showStandardReportingView()};
+$("reportingViewTab").onclick=function(){showStandardReportingView();renderAnalysis()};
 $("analysisOpenBaselineBoard")?.addEventListener("click",function(){showPlanningBoardView("BASELINE")});
 $("planningBoardBackToAnalysis")?.addEventListener("click",function(){showStandardReportingView();renderAnalysis()});
 $("planningBoardTab").onclick=function(){showPlanningBoardView("PLAN")};
 $("planningSimulatorTab").onclick=function(){showPlanningSimulatorView()};
 $("scenarioViewTab").onclick=function(){showBalanceSubview("flow")};
 $("cashflowViewTab").onclick=function(){showBalanceSubview("cashflow")};
-$("periodCompareTab").onclick=function(){showBalanceSubview("compare")};
+$("baselineWhereTab").onclick=function(){showPlanningBoardView("BASELINE")};
 document.querySelectorAll("[data-process-route]").forEach(function(b){
   b.onclick=function(){
     const route=b.dataset.processRoute;
@@ -8880,8 +8878,8 @@ $("rpcDiagnosticsModal")?.addEventListener("click",function(e){if(e.target===$("
 document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!$("rpcDiagnosticsModal")?.classList.contains("hidden"))closeRpcDiagnostics()});
 init();
 </script>
-<script src="../shared/health-reserve.js?v=73.30.10.32-20261019"></script>
-<script src="../shared/approved-plan.js?v=73.30.10.32-20261019"></script>
+<script src="../shared/health-reserve.js?v=73.30.10.33-20261019"></script>
+<script src="../shared/approved-plan.js?v=73.30.10.33-20261019"></script>
 </body>
 </html>
 
