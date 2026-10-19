@@ -7638,7 +7638,7 @@ function planningSectionHtml(direction,allRows){
         '<td class="planning-l2-name"><div class="planning-category"><button class="planning-caret" data-planning-toggle-l2="'+esc(l2Key)+'">'+(open?"▾":"▸")+'</button>'+categoryIconHtml(r.l2_name,direction==="INCOME"?"income":"expense",false)+'<span class="name">'+esc(r.l2_name)+'</span></div></td>'+
         '<td>'+planningValueHtml(r.comparison)+'</td><td>'+(draftPlan?window.BudgetFamilySinglePlan.inlineAmount(r):planningValueHtml(r.annual))+'</td>'+
         '<td>'+(planningBoardContext==="BASELINE"?'<span class="bf-plain-delta">'+(r.deltaPct===null?'—':(r.deltaPct>0?'+':'')+Math.round(r.deltaPct)+'%')+' <small>'+money(r.deltaAbs)+'</small></span>':planningDeltaHtml(r.deltaAbs,r.deltaPct,direction,r.comparison))+'</td>'+
-        '<td>'+planningNatureBadgeHtml(r,direction)+'</td><td>'+planningMethodHtml(r)+'</td>'+
+        '<td>'+planningNatureBadgeHtml(r,direction)+'</td><td>'+(planningBoardContext==="BASELINE"?planningReliabilityHtml(r):"")+planningMethodHtml(r)+'</td>'+
         '<td>'+(draftPlan?window.BudgetFamilySinglePlan.inlineNote(r):'<div class="planning-note" title="'+esc(note)+'">'+esc(note||"—")+'</div>')+'</td>'+
         '<td>'+(planningBoardContext==="BASELINE"?'':'<button class="planning-open-analysis" type="button" data-planning-open-analysis="'+esc(r.category_id)+'" data-planning-open-direction="'+direction+'" title="Apri la previsione originale in Analisi">›</button>')+'</td></tr>';
       if(open)html+=planningMonthPanelHtml(r);
