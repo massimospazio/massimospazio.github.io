@@ -1,7 +1,7 @@
 // Canonical source: massimospazio/budget-familiare; public files are deployed automatically.
 (function(){
-  const APP_VERSION='V73.30.4.0';
-  const APP_RELEASE='Simulatore: target L2 in euro mensili e annuali';
+  const APP_VERSION='V73.30.6.1';
+  const APP_RELEASE='Tabellone Piano: simulazione L2 e approvazione strategica';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});
