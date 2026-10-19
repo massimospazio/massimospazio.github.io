@@ -7299,6 +7299,7 @@ function showScenarioView(subview){
   loadScenarioData(false);applyBalanceSubview();
 }
 function showStandardReportingView(){
+  ++baselinePortalRequest;baselineRestoreAnalysisPanel();
   scenarioVisible=false;planningBoardVisible=false;planningSimulatorVisible=false;hideProcessRoadmap();
   $("scenarioView").classList.add("hidden");$("planningBoardView").classList.add("hidden");$("planningSimulatorView").classList.add("hidden");$("standardReportingView").classList.remove("hidden");
   $("scenarioViewTab").classList.remove("active");$("planningBoardTab").classList.remove("active");$("planningSimulatorTab").classList.remove("active");$("reportingViewTab").classList.add("active");
@@ -7383,6 +7384,31 @@ function planningValueHtml(value){
 }
 function planningL1NatureHtml(rows,direction){const d=planningDominantNature(rows,direction);if(!d.nature)return '<span class="planning-nature-badge unknown">?</span>';return '<span class="planning-nature-badge '+planningNatureClass(d.nature)+'" title="'+esc(planningNatureLabel(d.nature))+'">'+planningNatureShort(d.nature)+' '+d.pct.toLocaleString("it-IT",{maximumFractionDigits:0})+'%</span>'}
 
+
+let baselinePortalKey="",baselinePortalHome=null,baselinePortalRequest=0;
+function baselineRestoreAnalysisPanel(){
+ const panel=$("categoryDetail");
+ if(panel&&baselinePortalHome&&panel.parentNode!==baselinePortalHome)baselinePortalHome.appendChild(panel);
+ baselinePortalKey="";
+}
+async function baselineOpenSharedDetail(key){
+ if(planningBoardContext!=="BASELINE")return;
+ const slot=document.querySelector('[data-baseline-shared-slot="'+key+'"]'),panel=$("categoryDetail");
+ if(!slot||!panel)return;
+ if(!baselinePortalHome)baselinePortalHome=panel.parentNode;
+ baselineRestoreAnalysisPanel();
+ slot.appendChild(panel);baselinePortalKey=key;
+ const request=++baselinePortalRequest,parts=key.split("|"),direction=parts[0],id=parts.slice(1).join("|");
+ analysisViewMode=direction;analysisTimeMode="PROJECTION";
+ analysisProjectionView=planningBoardHorizon==="ROLLING_12"?"ROLLING_12":"CALENDAR";
+ $("analysisDirection").value=direction;
+ if($("analysisProjectionView"))$("analysisProjectionView").value=analysisProjectionView;
+ try{
+  await loadAnalysisWorkspace(false);
+  if(request!==baselinePortalRequest||baselinePortalKey!==key)return;
+  await openAnalysisDetail(id,"L2",null);
+ }catch(e){msg($("planningBoardStatus"),"Errore caricamento Analisi: "+String(e.message||e),true)}
+}
 const quickBaselineEditors=new Map();
 const quickBaselineBusy=new Set();
 window.addEventListener("beforeunload",function(e){if([...quickBaselineEditors.values()].some(ed=>ed?.dirty)){e.preventDefault();e.returnValue="";}});
@@ -7490,7 +7516,7 @@ function quickBaselineMonth(k,month,value){
  ed.monthChanges[month]=amount;ed.dirty=true;renderPlanningBoard();
 }
 function planningMonthPanelHtml(row){
- if(planningBoardContext==="BASELINE")return '<tr class="planning-month-row"><td colspan="8"><div class="planning-month-panel">'+quickBaselineHtml(row)+'</div></td></tr>';
+ if(planningBoardContext==="BASELINE")return '<tr class="planning-month-row"><td colspan="8"><div class="planning-month-panel"><div class="planning-month-head"><strong>'+esc(row.l2_name)+' · Analisi e definizione Baseline</strong><span class="small">Pannello originale di Analisi, integrato per prova</span></div><div data-baseline-shared-slot="'+esc(row.direction+"|"+row.category_id)+'"><div class="analysis-loading">Caricamento del pannello…</div></div></div></td></tr>';
  return '<tr class="planning-month-row"><td colspan="8"><div class="planning-month-panel"><div class="planning-month-head"><div class="small"><strong>'+esc(row.l2_name)+'</strong> · dettaglio mensile del periodo selezionato.</div><button class="btn ghost compact" type="button" data-planning-open-analysis="'+esc(row.category_id)+'" data-planning-open-direction="'+row.direction+'">Apri in Analisi</button></div><div class="planning-month-grid">'+row.months.map(function(m){return '<div class="planning-month-cell '+(m.kind==="actual"?"actual ":"")+(m.override?"override":"")+'"><div class="m">'+esc(monthLabel(m.month))+'</div><div class="a">'+money(m.amount)+'</div><div class="t">'+(m.kind==="actual"?"reale":(m.override?"override":planningBoardContext==="STRATEGY"?"scenario":planningBoardContext==="PLAN"?"piano":"prev."))+'</div></div>'}).join("")+'</div></div></td></tr>';
 }
 function planningComparisonUsesBaseline(){
@@ -7952,6 +7978,8 @@ function renderPlanningSimulatorView(){
 }
 
 function renderPlanningBoard(){
+  const previousSharedPanel=baselinePortalKey;
+  if(previousSharedPanel){++baselinePortalRequest;baselineRestoreAnalysisPanel()}
   if(!planningBoardData||!planningBoardData.expense||!planningBoardData.income)return;
   // The simulation is annual: do not fall through to Rolling Forecast vs historical.
   // Il rolling 12 mesi resta consultabile anche in Strategia; i target annuali non vengono toccati.
@@ -8058,6 +8086,11 @@ function renderPlanningBoard(){
     planningBoardData=liveBoardData;
   }
   window.BudgetFamilyPlan?.onBoardRendered();
+  if(planningBoardContext==="BASELINE"){
+   const next=previousSharedPanel&&planningBoardExpandedL2.has(previousSharedPanel)?previousSharedPanel:
+     [...planningBoardExpandedL2].find(k=>document.querySelector('[data-baseline-shared-slot="'+k+'"]'));
+   if(next&&document.querySelector('[data-baseline-shared-slot="'+next+'"]'))Promise.resolve().then(()=>baselineOpenSharedDetail(next));
+  }
 }
 
 async function loadPlanningBoard(force){
@@ -8212,7 +8245,7 @@ $("planningBoardView").addEventListener("click",function(e){
   const l1=e.target.closest("[data-planning-toggle-l1]");
   if(l1){const k=l1.dataset.planningToggleL1;if(planningBoardExpandedL1.has(k))planningBoardExpandedL1.delete(k);else planningBoardExpandedL1.add(k);renderPlanningBoard();return}
   const l2=e.target.closest("[data-planning-toggle-l2]");
-  if(l2){const k=l2.dataset.planningToggleL2;if(planningBoardExpandedL2.has(k))planningBoardExpandedL2.delete(k);else{planningBoardExpandedL2.add(k);if(planningBoardContext==="BASELINE"){const direction=k.split("|")[0],id=k.split("|")[1],rows=planningBuildRows(planningBoardData[direction==="INCOME"?"income":"expense"],direction),row=rows.find(r=>String(r.category_id)===id);if(row)quickBaselineLoad(row)}}renderPlanningBoard();return}
+  if(l2){const k=l2.dataset.planningToggleL2;if(planningBoardExpandedL2.has(k))planningBoardExpandedL2.delete(k);else{if(planningBoardContext==="BASELINE")planningBoardExpandedL2.clear();planningBoardExpandedL2.add(k)}renderPlanningBoard();return}
   const retry=e.target.closest("[data-qbe-retry]");if(retry){const wrap=retry.closest("tr");const key=wrap?.previousElementSibling?.querySelector("[data-planning-toggle-l2]")?.dataset.planningToggleL2;if(key){const [direction,id]=key.split("|");quickBaselineEditors.delete(key);const rows=planningBuildRows(planningBoardData[direction==="INCOME"?"income":"expense"],direction),row=rows.find(r=>String(r.category_id)===id);if(row)quickBaselineLoad(row)}return}
   const reset=e.target.closest("[data-qbe-reset-month]");if(reset){const editor=reset.closest("[data-qbe-key]");if(editor)quickBaselineMonth(editor.dataset.qbeKey,reset.dataset.qbeResetMonth,null,reset);return}
   const save=e.target.closest("[data-qbe-save]");if(save){const editor=save.closest("[data-qbe-key]");if(editor)quickBaselineSave(editor.dataset.qbeKey,save);return}
