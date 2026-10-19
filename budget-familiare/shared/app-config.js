@@ -1,7 +1,7 @@
 // Canonical source: massimospazio/budget-familiare; public files are deployed automatically.
 (function(){
-  const APP_VERSION='V73.30.10.0';
-  const APP_RELEASE='Versionamento automatico in attivazione';
+  const APP_VERSION='V73.30.10.1';
+  const APP_RELEASE='Release 73.30.10.1';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});
