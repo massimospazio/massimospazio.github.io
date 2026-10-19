@@ -36,8 +36,8 @@
 .bf-plan-inline-actions select{border-radius:7px;border:1px solid #bdd1e2;background:#fff;padding:7px}
 .bf-plan-inline-hint{font-size:12px;color:#64758b;margin:8px 0 0}
 .bf-board-plan-mode .planning-l2-row:has(input[data-bf-draft-total]) td{vertical-align:middle}
-.bf-plan-edit-cell{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
-.bf-plan-edit-cell input{font:650 15px system-ui,-apple-system,sans-serif;text-align:right;max-width:145px;width:100%;padding:6px 8px;border:1px solid #b8ccdf;border-radius:7px;color:#152d4a;background:#fff;font-variant-numeric:tabular-nums}
+.bf-plan-edit-cell{display:flex;flex-direction:row;align-items:center;justify-content:flex-end;gap:4px;max-width:100%;min-width:0}
+.bf-plan-edit-cell input{font:650 14px system-ui,-apple-system,sans-serif;text-align:right;max-width:88px;width:calc(100% - 28px);min-width:0;flex:1 1 78px;padding:5px 6px;border:1px solid #b8ccdf;border-radius:7px;color:#152d4a;background:#fff;font-variant-numeric:tabular-nums}
 .bf-plan-edit-cell input:focus{outline:2px solid #64a6f3;outline-offset:1px}
 .bf-plan-edit-cell small{font-size:11px;color:#7589a3}
 .bf-plan-note-button{min-width:34px;min-height:32px;border:1px solid #d4e0ec;background:#f8fbff;border-radius:7px;cursor:pointer;color:#526d8b;font-size:17px}
@@ -80,3 +80,12 @@
 .bf-draft-toolbar [data-bf-save-state]{font-size:12px;color:#607187}
 .bf-draft-toolbar .bf-draft-pending{background:#f59e0b!important;color:#17263e!important;border-color:#d97706!important;font-weight:800}
 .bf-draft-toolbar button{min-width:108px}
+
+/* V73.30.10.37 — per-L2 Baseline reset and compact Scenario amount. */
+.bf-plan-row-baseline{display:inline-flex;align-items:center;justify-content:center;flex:0 0 23px;width:23px;height:26px;padding:0;border:1px solid #c5d7e8;border-radius:6px;background:#f5f9ff;color:#275ba0;cursor:pointer;font-size:17px;font-weight:700}
+.bf-plan-row-baseline:hover:not(:disabled){background:#e5f1ff;border-color:#6f9ad4}
+.bf-plan-row-baseline:focus-visible{outline:2px solid #2563eb;outline-offset:1px}
+.bf-plan-row-baseline:disabled{opacity:.28;cursor:default}
+.bf-draft-toolbar .bf-draft-cancel{min-width:70px;background:#fff;color:#475569;border:1px solid #cbd5e1;font-weight:650}
+.bf-draft-toolbar .bf-draft-cancel:hover:not(:disabled){background:#f1f5f9}
+.bf-draft-toolbar .bf-draft-cancel:disabled{opacity:.45}
