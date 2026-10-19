@@ -15,7 +15,7 @@
 <link rel="stylesheet" href="../shared/health-reserve.css?v=73.30.1.28-20261016">
 <link rel="stylesheet" href="../shared/approved-plan.css?v=73.30.2.0-20261017">
 <link rel="stylesheet" href="../shared/scenario-strategy.css?v=73.30.4.0-20261018">
-<link rel="stylesheet" href="../shared/single-plan-board.css?v=73.30.6.7-20261019">
+<link rel="stylesheet" href="../shared/single-plan-board.css?v=73.30.8.0-20261019">
 <style>
 :root{--bg:#f4f6fa;--card:#fff;--text:#17263e;--muted:#58677d;--line:#dce4ee;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 4px 18px rgba(15,23,42,.045);--sc-blue:#2563eb;--sc-blue-soft:#eff6ff;--sc-green:#0ea87a;--sc-red:#ef5b73;--sc-purple:#7658e6;--sc-ink:#17263e}
 *{box-sizing:border-box}
@@ -1965,6 +1965,13 @@ body{font-size:16px;line-height:1.5}
 #planningBoardView[data-display-unit="MONTH"] .planning-value-cell strong{display:none}
 #planningBoardView[data-display-unit="MONTH"] .planning-value-cell span{font-weight:750;color:#17375c;font-size:inherit}
 #planningBoardView[data-display-unit="MONTH"] .bf-plan-edit-cell input{background:#edf4ff}
+
+/* V73.30.8 · KPI sempre visibili, scorrimento locale del Tabellone */
+#planningBoardView .planning-overview-scroll{position:sticky;top:0;z-index:25;background:#f4f6fa;padding:4px 0 7px;box-shadow:0 4px 12px rgba(20,42,78,.09)}
+#planningBoardView .planning-board-table-wrap{overflow:auto;max-height:62vh;overscroll-behavior:contain}
+#planningBoardView .planning-board-table thead th{position:sticky;top:0;z-index:3}
+#planningBoardView .planning-board-toolbar{position:relative;z-index:4}
+@media(max-width:800px){#planningBoardView .planning-board-table-wrap{max-height:57vh}}
 </style>
 <style>
 .purchase-financing-detail{margin-top:4px;font-size:14px;line-height:1.5;font-weight:400;color:#425b7c;white-space:normal;min-width:200px}
@@ -2639,7 +2646,7 @@ body{font-size:16px;line-height:1.5}
 </div>
 
 <script src="../shared/scenario-strategy.js?v=73.30.4.0-20261018"></script>
-<script src="../shared/single-plan-board.js?v=73.30.7.0-20261019"></script>
+<script src="../shared/single-plan-board.js?v=73.30.8.0-20261019"></script>
 <script>
 const sb=window.appSupabase;
 if(typeof Chart!=="undefined"){
