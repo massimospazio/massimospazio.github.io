@@ -7385,6 +7385,7 @@ function planningL1NatureHtml(rows,direction){const d=planningDominantNature(row
 
 const quickBaselineEditors=new Map();
 const quickBaselineBusy=new Set();
+window.addEventListener("beforeunload",function(e){if([...quickBaselineEditors.values()].some(ed=>ed?.dirty)){e.preventDefault();e.returnValue="";}});
 function quickBaselineKey(direction,id){return direction+"|"+id}
 async function quickBaselineLoad(row){
  const k=quickBaselineKey(row.direction,row.category_id);
@@ -8228,7 +8229,7 @@ $("planningBoardView").addEventListener("change",function(e){
 });
 $("planningBoardView").addEventListener("input",function(e){
  const el=e.target,wrap=el.closest("[data-qbe-key]");if(!wrap||!el.matches("textarea[data-qbe-field]"))return;
- const ed=quickBaselineEditors.get(wrap.dataset.qbeKey);if(ed){ed.note=el.value;ed.dirty=true;const btn=wrap.querySelector("[data-qbe-save]");if(btn)btn.disabled=false}
+ const ed=quickBaselineEditors.get(wrap.dataset.qbeKey);if(ed){ed.note=el.value;ed.dirty=true;const btn=wrap.querySelector("[data-qbe-save]");if(btn){btn.disabled=false;btn.style.background="#215de8";btn.style.color="white";btn.style.borderColor="#215de8"}}
 });
 $("planningSimulatorView").addEventListener("click",function(e){
   const resetCat=e.target.closest("[data-bf-category-reset]");
