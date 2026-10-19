@@ -2,7 +2,7 @@
    Draft in sessione, non approvato né persistito. Non modifica Baseline/Actual. */
 (function(root){
 "use strict";
-const state={year:"",targets:{},notes:{},originals:{},bonus:"BASE",showZero:true,onlyChanged:false};
+const state={year:"",targets:{},notes:{},originals:{},bonus:"BASE",showZero:true,onlyChanged:false,reserve:0,project:0};
 const value=r=>Number(r||0);
 const money=n=>new Intl.NumberFormat("it-IT",{style:"currency",currency:"EUR",maximumFractionDigits:0}).format(value(n));
 const escape=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -28,9 +28,32 @@ function applyRows(rows){
  });
 }
 function totals(rows){return rows.reduce((a,r)=>a+value(r.annual),0)}
+function scenarioPreset(preset){
+ const rows=Object.values(state.originals);
+ const exp=rows.filter(r=>r.direction==="EXPENSE");
+ const baseline=rows.filter(r=>r.direction==="INCOME").reduce((n,r)=>n+value(r.annual),0)-exp.reduce((n,r)=>n+value(r.annual),0);
+ const disc=exp.filter(r=>r.meta?.expense_nature==="DISCRETIONARY");
+ const remainingD=disc.reduce((n,r)=>n+Math.max(0,value(r.annual)-locked(r)),0);
+ let d=1,n=1;
+ if(preset==="D25")d=.75;
+ else if(preset==="D50")d=.5;
+ else if(preset==="D100")d=0;
+ else if(preset==="N10_D50"){d=.5;n=.9}
+ else if(preset==="GOAL")d=remainingD>0?Math.max(0,1-Math.max(0,state.reserve+state.project-baseline)/remainingD):1;
+ else if(preset!=="RESET")return;
+ state.targets={};
+ for(const row of exp){
+  const kind=row.meta?.expense_nature;
+  const factor=kind==="DISCRETIONARY"?d:kind==="NECESSARY"?n:1;
+  if(factor===1)continue;
+  const immutable=locked(row),future=Math.max(0,value(row.annual)-immutable);
+  if(future>.005)state.targets[key(row)]=immutable+future*factor;
+ }
+ root.renderPlanningBoard?.();
+}
 function resetIfYearChanged(year){
  if(state.year===year)return;
- state.year=year;state.targets={};state.notes={};state.originals={};state.bonus="BASE";
+ state.year=year;state.targets={};state.notes={};state.originals={};state.bonus="BASE";state.reserve=0;state.project=0;
 }
 async function approve(){
  if(Object.keys(state.targets).length===0){root.alert("Non hai modificato alcun target: non c'è un nuovo Piano strategico da approvare.");return}
@@ -54,22 +77,39 @@ async function approve(){
   root.alert("Approvazione non completata: "+String(error?.message||error));
  }finally{if(button)button.disabled=false}
 }
-function render(originalExp,originalInc,isPlan){
+function render(originalExp,originalInc,isPlan,context){
+ const strategy=context==="STRATEGY";
  const wrapper=root.document.getElementById("bfSinglePlanDraft");if(!wrapper)return;
  wrapper.hidden=!isPlan;
  if(!isPlan)return;
  const exp=applyRows(originalExp),inc=applyRows(originalInc);
  const baseline=totals(originalInc)-totals(originalExp),planned=totals(inc)-totals(exp),improvement=planned-baseline;
- let html='<div class="bf-plan-inline-head"><div class="bf-plan-inline-kpis">'+
- [['Avanzo Baseline',baseline],['Avanzo Piano',planned],['Δ vs Baseline',improvement]].map(([name,n])=>
- '<div class="bf-plan-inline-kpi"><span>'+name+'</span><strong class="'+(n>=0?'bf-pos':'bf-neg')+'">'+money(n)+'</strong></div>').join('')+
- '</div><div class="bf-plan-inline-actions"><label>Entrate <select data-bf-draft-risk><option value="LOW"'+(state.bonus==="LOW"?' selected':'')+'>Prudente</option><option value="BASE"'+(state.bonus==="BASE"?' selected':'')+'>Base</option><option value="HIGH"'+(state.bonus==="HIGH"?' selected':'')+'>Favorevole</option></select></label>'+
- '<button type="button" class="btn ghost compact" data-bf-draft-reset>Ripristina</button>'+
- '<button type="button" class="btn compact" data-bf-draft-approve>Approva Piano</button></div></div>';
+ let html='<div class="bf-plan-inline-head"><div class="bf-strategy-intro"><strong>'+
+ (strategy?'Strategia · Elabora il tuo scenario':'Piano · Rifinisci e approva')+'</strong>'+
+ '<span> '+(strategy?'Usa le leve o modifica i target L2 nella tabella sottostante.':'Lo scenario viene dalla Strategia e mantiene gli stessi target L2.')+'</span></div>'+
+ '<div class="bf-plan-inline-actions"><label>Entrate <select data-bf-draft-risk>'+
+ '<option value="LOW"'+(state.bonus==="LOW"?' selected':'')+'>Prudente</option>'+
+ '<option value="BASE"'+(state.bonus==="BASE"?' selected':'')+'>Base</option>'+
+ '<option value="HIGH"'+(state.bonus==="HIGH"?' selected':'')+'>Favorevole</option></select></label>'+
+ '<button type="button" class="btn ghost compact" data-bf-draft-reset>Ripristina target</button>'+
+ (strategy?'<button type="button" class="btn compact" data-bf-draft-to-plan>Prosegui al Piano →</button>':
+ '<button type="button" class="btn compact" data-bf-draft-approve>Approva Piano</button>')+'</div></div>';
  const low=originalInc.reduce((sum,r)=>sum+value(r.rangeLow===undefined?r.annual:r.rangeLow),0);
  const high=originalInc.reduce((sum,r)=>sum+value(r.rangeHigh===undefined?r.annual:r.rangeHigh),0);
  const variation=state.bonus==="LOW"?low-totals(originalInc):state.bonus==="HIGH"?high-totals(originalInc):0;
  html+='<p class="bf-plan-inline-hint">Stress test avanzo: <strong>'+money(planned+variation)+'</strong> · Modifica gli importi direttamente nelle righe L2. Le categorie con Baseline 0 sono incluse. Gli Actual già registrati sono protetti.</p>';
+ if(strategy){
+ const goal=state.reserve+state.project,free=planned-goal;
+ html+='<div class="bf-strategy-controls"><div class="bf-strategy-goals">'+
+ '<label>Fondo da finanziare (€)<input type="number" min="0" max="10000000" step="50" data-bf-draft-goal="reserve" value="'+state.reserve+'"></label>'+
+ '<label>Progetto / viaggio (€)<input type="number" min="0" max="10000000" step="100" data-bf-draft-goal="project" value="'+state.project+'"></label>'+
+ '<div class="bf-strategy-result"><span>Avanzo dopo obiettivi</span><strong class="'+(free>=0?'bf-pos':'bf-neg')+'">'+money(free)+'</strong>'+
+ '<small>Gap da coprire: '+money(Math.max(0,-free))+'</small></div></div>'+
+ '<div class="bf-strategy-presets"><span>Leve rapide:</span>'+
+ [['RESET','Baseline invariata'],['D25','D −25%'],['D50','D −50%'],['D100','D −100%'],['N10_D50','N −10% · D −50%'],['GOAL','Copri obiettivi con D']].map(([id,label])=>
+ '<button type="button" class="btn ghost compact" data-bf-strategy-preset="'+id+'">'+label+'</button>').join('')+
+ '</div><p class="bf-plan-inline-hint">Gli obiettivi sono destinazioni di avanzo, non nuove spese. Le leve modificano solo importi futuri delle categorie L2. Il draft è condiviso con Piano; il rolling 12m resta una vista di sola lettura.</p></div>';
+ }
  wrapper.innerHTML=html;
 }
 function inlineAmount(row){
@@ -84,6 +124,11 @@ function isChanged(row){return state.targets[key(row)]!==undefined && Math.abs(v
 function showOnlyChanged(){return state.onlyChanged}
 
 function onChange(e){
+ if(e.target.hasAttribute("data-bf-draft-goal")){
+  const name=e.target.getAttribute("data-bf-draft-goal"),n=Number(e.target.value);
+  if((name==="reserve"||name==="project")&&Number.isFinite(n)&&n>=0){state[name]=Math.min(n,10000000);root.renderPlanningBoard?.();}
+  return;
+ }
  if(e.target.hasAttribute("data-bf-only-changed")){state.onlyChanged=!!e.target.checked;root.renderPlanningBoard?.();return}
  if(e.target.hasAttribute("data-bf-draft-zero")){state.showZero=!!e.target.checked;root.renderPlanningBoard?.();return}
  if(e.target.hasAttribute("data-bf-draft-risk")){
@@ -117,13 +162,19 @@ function init(){
   if(note===null)return;
   state.notes[k]=note.slice(0,400);root.renderPlanningBoard?.();
  });
- panel.addEventListener("click",e=>{if(e.target.closest("[data-bf-draft-approve]")){approve();return}if(e.target.closest("[data-bf-draft-reset]")){state.targets={};state.notes={};root.renderPlanningBoard?.()}});
+ panel.addEventListener("click",e=>{
+  const preset=e.target.closest("[data-bf-strategy-preset]");
+  if(preset){scenarioPreset(preset.getAttribute("data-bf-strategy-preset"));return}
+  if(e.target.closest("[data-bf-draft-to-plan]")){root.showPlanningBoardView?.("PLAN");return}
+  if(e.target.closest("[data-bf-draft-approve]")){approve();return}
+  if(e.target.closest("[data-bf-draft-reset]")){state.targets={};state.notes={};root.renderPlanningBoard?.()}
+ });
 }
 root.BudgetFamilySinglePlan={
  prepare(exp,inc,year){resetIfYearChanged(year);[...exp,...inc].forEach(r=>state.originals[key(r)]=r);return {exp:applyRows(exp),inc:applyRows(inc)}},
- render,inlineAmount,inlineNote,isChanged,showOnlyChanged,details(){return {year:state.year,targets:{...state.targets},notes:{...state.notes}}},
+ render,inlineAmount,inlineNote,isChanged,showOnlyChanged,scenarioPreset,details(){return {year:state.year,targets:{...state.targets},notes:{...state.notes}}},
  isDraft(){return Object.keys(state.targets).length>0}
 };
-if(typeof module!=="undefined"&&module.exports)module.exports={locked,applyRows,state};
+if(typeof module!=="undefined"&&module.exports)module.exports={locked,applyRows,scenarioPreset,state};
 if(root.document){if(root.document.getElementById("planningBoardOverview"))init();else if(root.document.readyState==="loading")root.document.addEventListener("DOMContentLoaded",init);else init()}
 })(typeof window!=="undefined"?window:globalThis);

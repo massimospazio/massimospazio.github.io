@@ -1,7 +1,7 @@
 // Canonical source: massimospazio/budget-familiare; public files are deployed automatically.
 (function(){
-  const APP_VERSION='V73.30.6.4';
-  const APP_RELEASE='Strategia: accesso al simulatore esplorativo separato dal Piano';
+  const APP_VERSION='V73.30.6.5';
+  const APP_RELEASE='Strategia e Piano: un unico Tabellone, scenari e target L2 condivisi';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});

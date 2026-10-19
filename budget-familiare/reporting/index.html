@@ -9,7 +9,7 @@
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
 <script src="../shared/supabase-client.js?v=73.24.0-20261012-1415"></script>
-<script src="../shared/app-config.js?v=73.30.6.4-20261019"></script>
+<script src="../shared/app-config.js?v=73.30.6.5-20261019"></script>
 <script src="../shared/contextual-help.js?v=73.30.1.14-20261014" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <link rel="stylesheet" href="../shared/health-reserve.css?v=73.30.1.28-20261016">
@@ -2023,7 +2023,7 @@ body{font-size:16px;line-height:1.5}
       <div id="processContextStrategy" class="process-context hidden">
         <div class="process-context-copy"><span>Fase 4 · DECIDERE</span><strong>Strategia</strong><small>Provare interventi e scegliere come coprire il funding gap.</small></div>
         <div class="tabs process-subnav">
-          <button id="planningSimulatorTab" class="tab" type="button">Apri simulatore strategico</button>
+          <button id="planningSimulatorTab" class="tab" type="button">Simulazione nel Tabellone</button>
           <button class="tab planned hidden" type="button" data-process-feature="scenarios" data-feature-phase="strategy">Scenari <span class="soon">V73.32</span></button>
           <button class="tab planned hidden" type="button" data-process-feature="levers" data-feature-phase="strategy">Leve &amp; allocazione <span class="soon">V73.32</span></button>
         </div>
@@ -2676,7 +2676,7 @@ let scenarioMode="SUMMARY";
 let scenarioExtraMode="ORDINARY";
 let scenarioVisible=false;
 let planningBoardVisible=false;
-let planningBoardContext="PLAN"; // BASELINE | PLAN — shared board, contextual labels
+let planningBoardContext="PLAN"; // BASELINE | STRATEGY | PLAN — unico Tabellone e draft condiviso
 let planningBaselineReviewFilter="ALL";
 let planningSimulatorVisible=false;
 let planningBoardLoading=false;
@@ -7369,7 +7369,7 @@ function planningSectionHtml(direction,allRows){
     let visibleRows=groupMatches?g.rows:g.rows.filter(function(r){return String(r.l2_name||"").toLocaleLowerCase("it").includes(q)});
     if(planningBoardNatureFilter!=="ALL")visibleRows=visibleRows.filter(function(r){return planningNatureValue(r.meta,direction)===planningBoardNatureFilter});
     visibleRows=visibleRows.filter(planningForecastFilterMatch).filter(planningNoteFilterMatch).filter(planningBaselineReviewMatches);
-    const draftPlan=planningBoardContext==="PLAN"&&planningBoardHorizon==="CALENDAR"&&!planningBoardData?.meta?.strategic_plan&&!!window.BudgetFamilySinglePlan;
+    const draftPlan=(planningBoardContext==="PLAN"||planningBoardContext==="STRATEGY")&&planningBoardHorizon==="CALENDAR"&&(planningBoardContext==="STRATEGY"||!planningBoardData?.meta?.strategic_plan)&&!!window.BudgetFamilySinglePlan;
     if(draftPlan&&window.BudgetFamilySinglePlan.showOnlyChanged())visibleRows=visibleRows.filter(r=>window.BudgetFamilySinglePlan.isChanged(r));
     if(!visibleRows.length)return;
     const key=direction+"|"+g.id,searching=!!q,filtering=planningBoardNatureFilter!=="ALL"||planningBoardForecastFilter!=="ALL"||planningBoardNoteFilter!=="ALL"||planningBoardContext==="BASELINE"&&planningBaselineReviewFilter!=="ALL";
@@ -7525,7 +7525,7 @@ function planningOverviewBlock(label,theme,current,history,kind,body,description
 }
 function planningOverviewRenderModel(model,context){
   const b=model.baseline,h=model.history;
-  const baseLabel=context==="BASELINE"?"Baseline":"Previsione";
+  const baseLabel=context==="BASELINE"?"Baseline":context==="STRATEGY"?"Scenario":context==="PLAN"?"Piano":"Previsione";
   const incomeKinds=[["FIXED","F","Fisse"],["PREDICTABLE","P","Prevedibili"],["VARIABLE","V","Variabili"]],
     expenseKinds=[["MANDATORY","O","Obbligatorie"],["NECESSARY","N","Necessarie"],["DISCRETIONARY","D","Discrezionali"]];
   if(Math.abs(b.income.OTHER_INCOME)>.005||Math.abs(h.income.OTHER_INCOME)>.005)
@@ -7812,6 +7812,12 @@ function renderPlanningBoard(){
         view.note="Non esiste ancora una fotografia approvata per l'anno selezionato. I dati rappresentano la Baseline/proiezione corrente, non un Piano ufficiale.";
       }
     }
+    if(planningBoardContext==="STRATEGY"){
+      view.title=rolling?"Tabellone · Previsione 12 mesi":"Tabellone · Simulazione strategica";
+      view.column=rolling?"Previsione 12M":"Scenario in elaborazione · "+year;
+      view.subtitle=rolling?"Proiezione 12 mesi in sola lettura; i target strategici si modificano su Anno corrente.":"Un unico scenario di lavoro: dalle leve generali ai target L2 direttamente nel Tabellone.";
+      view.note=rolling?"La proiezione 12 mesi resta separata dalla bozza annuale; torna ad Anno corrente per riprendere i target senza perderli.":"Stessa bozza L2 di Piano: sperimenta ora, passa a Piano per approvare. Nessuna modifica alla Baseline o ai consuntivi.";
+    }
     if(planningBoardContext==="PLAN"&&!isStrategic&&!rolling){
       view.title="Tabellone · Simulazione e Piano";
       view.column="Piano in elaborazione · "+year;
@@ -7826,8 +7832,8 @@ function renderPlanningBoard(){
     $("planningBoardSubtitle").textContent=view.subtitle;
     $("planningBoardContextNote").textContent=view.note;
     $("planningBoardBackToAnalysis").classList.toggle("hidden",!view.baseline);
-    const canDraft=planningBoardContext==="PLAN"&&planningBoardHorizon==="CALENDAR"&&!isStrategic&&!!window.BudgetFamilySinglePlan;
-    $("planningBoardOverview").parentElement.classList.toggle("hidden",canDraft);
+    const canDraft=(planningBoardContext==="PLAN"||planningBoardContext==="STRATEGY")&&planningBoardHorizon==="CALENDAR"&&!isStrategic&&!!window.BudgetFamilySinglePlan;
+    $("planningBoardOverview").parentElement.classList.remove("hidden");
     $("planningBoardView").classList.toggle("bf-board-plan-mode",canDraft);
     const draft=canDraft&&window.BudgetFamilySinglePlan
       ?window.BudgetFamilySinglePlan.prepare(exp,inc,year):null;
@@ -7846,11 +7852,11 @@ function renderPlanningBoard(){
     const shownInc=canDraft?withBaselineComparison(draft.inc,inc):isStrategic?withBaselineComparison(inc,baseInc):inc;
     if(canDraft||isStrategic){
       $("planningBoardHistoryHead").textContent="Baseline";
-      $("planningBoardYearHead").textContent=isStrategic?"Piano approvato":"Piano simulato";
+      $("planningBoardYearHead").textContent=isStrategic?"Piano approvato":planningBoardContext==="STRATEGY"?"Scenario simulato":"Piano in elaborazione";
     }
     renderPlanningOverview(shownExp,shownInc,view);
     renderPlanningBaselineAudit(exp,inc);
-    window.BudgetFamilySinglePlan?.render(exp,inc,canDraft);
+    window.BudgetFamilySinglePlan?.render(exp,inc,canDraft,planningBoardContext);
     let html="";
     if(planningBoardFilter!=="EXPENSE")html+=planningSectionHtml("INCOME",shownInc);
     if(planningBoardFilter!=="INCOME")html+=planningSectionHtml("EXPENSE",shownExp);
@@ -7885,34 +7891,23 @@ async function loadPlanningBoard(force){
   finally{planningBoardLoading=false}
 }
 function showPlanningBoardView(context){
-  planningBoardContext=context==="BASELINE"?"BASELINE":"PLAN";
+  planningBoardContext=context==="BASELINE"?"BASELINE":context==="STRATEGY"?"STRATEGY":"PLAN";
+  if(planningBoardContext==="STRATEGY")planningBoardHorizon="CALENDAR";
   planningBoardVisible=true;planningSimulatorVisible=false;scenarioVisible=false;hideProcessRoadmap();
   $("standardReportingView").classList.add("hidden");$("scenarioView").classList.add("hidden");$("planningSimulatorView").classList.add("hidden");$("planningBoardView").classList.remove("hidden");
   $("reportingViewTab").classList.toggle("active",planningBoardContext==="BASELINE");
   $("planningBoardTab").classList.toggle("active",planningBoardContext==="PLAN");
-  $("scenarioViewTab").classList.remove("active");$("planningSimulatorTab").classList.remove("active");
-  syncReportingProcessNavigation(planningBoardContext==="BASELINE"?"where":"plan");
-  const u=new URL(window.location.href);u.searchParams.set("view",planningBoardContext==="BASELINE"?"baseline-board":"board");u.searchParams.delete("phase");u.searchParams.delete("feature");history.replaceState(null,"",u);
+  $("planningSimulatorTab").classList.toggle("active",planningBoardContext==="STRATEGY");
+  $("scenarioViewTab").classList.remove("active");
+  syncReportingProcessNavigation(planningBoardContext==="BASELINE"?"where":planningBoardContext==="STRATEGY"?"strategy":"plan");
+  const u=new URL(window.location.href);u.searchParams.set("view",planningBoardContext==="BASELINE"?"baseline-board":planningBoardContext==="STRATEGY"?"simulator":"board");u.searchParams.delete("phase");u.searchParams.delete("feature");history.replaceState(null,"",u);
   // Rileggi sempre le proiezioni dopo il passaggio da Analisi al Tabellone:
   // la cache di direzione puo essere stata aggiornata solo parzialmente.
   loadPlanningBoard(true);
 }
 function showPlanningSimulatorView(){
-  // Strategia esplorativa: usa la Baseline attuale, senza salvare o modificare il Piano approvato.
-  planningSimulatorVisible=true;planningBoardVisible=false;scenarioVisible=false;hideProcessRoadmap();
-  $("standardReportingView").classList.add("hidden");
-  $("scenarioView").classList.add("hidden");
-  $("planningBoardView").classList.add("hidden");
-  $("planningSimulatorView").classList.remove("hidden");
-  $("reportingViewTab").classList.remove("active");
-  $("planningBoardTab").classList.remove("active");
-  $("scenarioViewTab").classList.remove("active");
-  $("planningSimulatorTab").classList.add("active");
-  syncReportingProcessNavigation("strategy");
-  const u=new URL(window.location.href);u.searchParams.set("view","simulator");
-  u.searchParams.delete("phase");u.searchParams.delete("feature");history.replaceState(null,"",u);
-  // La simulazione deve basarsi sui valori piu recenti di entrambe le direzioni.
-  loadPlanningBoard(true);
+  // Fase 4 usa il Tabellone condiviso. Non riattivare la pagina legacy.
+  showPlanningBoardView("STRATEGY");
 }
 function openPlanningRowInAnalysis(category,direction){
   showStandardReportingView();planMode="ANALYSIS";analysisViewMode=direction;analysisTimeMode="PROJECTION";analysisProjectionView=planningBoardHorizon==="ROLLING_12"?"ROLLING_12":"CALENDAR";$("analysisDirection").value=direction;if($("analysisProjectionView"))$("analysisProjectionView").value=analysisProjectionView;renderMode();
