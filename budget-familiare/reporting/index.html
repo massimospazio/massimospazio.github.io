@@ -9,7 +9,7 @@
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
 <script src="../shared/supabase-client.js?v=73.24.0-20261012-1415"></script>
-<script src="../shared/app-config.js?v=73.30.6.5-20261019"></script>
+<script src="../shared/app-config.js?v=73.30.6.6-20261019"></script>
 <script src="../shared/contextual-help.js?v=73.30.1.14-20261014" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <link rel="stylesheet" href="../shared/health-reserve.css?v=73.30.1.28-20261016">
@@ -2214,7 +2214,7 @@ body{font-size:16px;line-height:1.5}
       <section class="planning-board-card">
         <div class="planning-board-table-wrap">
           <table class="planning-board-table">
-            <thead><tr><th>Categoria</th><th id="planningBoardHistoryHead" title="Prima riga: totale del periodo. Seconda riga (Ø): media mensile, totale diviso 12.">Storico</th><th id="planningBoardYearHead" title="Prima riga: totale del periodo. Seconda riga (Ø): media mensile, totale diviso 12.">Previsione</th><th title="Variazione rispetto allo storico: percentuale, differenza totale in euro e differenza media mensile preceduta da Ø.">Var. vs storico <span class="planning-header-info" aria-label="Variazione totale e media mensile" title="Importo totale · Ø media mensile">ⓘ</span></th><th>Natura</th><th>Tipo previsione <button class="context-help-trigger" type="button" data-context-help="forecast-baseline" aria-label="Aiuto: previsione e Baseline">?</button></th><th>Note / razionale</th><th></th></tr></thead>
+            <thead><tr><th>Categoria</th><th id="planningBoardHistoryHead" title="Prima riga: totale del periodo. Seconda riga (Ø): media mensile, totale diviso 12.">Storico</th><th id="planningBoardYearHead" title="Prima riga: totale del periodo. Seconda riga (Ø): media mensile, totale diviso 12.">Previsione</th><th id="planningBoardDeltaHead" title="Variazione sul periodo confrontato">Var. vs storico <span class="planning-header-info" aria-label="Variazione totale e media mensile" title="Importo totale · Ø media mensile">ⓘ</span></th><th>Natura</th><th>Tipo previsione <button class="context-help-trigger" type="button" data-context-help="forecast-baseline" aria-label="Aiuto: previsione e Baseline">?</button></th><th>Note / razionale</th><th></th></tr></thead>
             <tbody id="planningBoardBody"><tr><td colspan="8" class="muted">Apri il tabellone per caricare il piano.</td></tr></tbody>
           </table>
         </div>
@@ -7340,13 +7340,22 @@ function planningValueHtml(value){
     '<span title="'+esc("Media mensile: "+monthly+"/mese (totale del periodo diviso 12)")+'" aria-label="'+esc("Media mensile: "+monthly+"/mese")+'">Ø '+monthly+'</span></div>';
 }
 function planningL1NatureHtml(rows,direction){const d=planningDominantNature(rows,direction);if(!d.nature)return '<span class="planning-nature-badge unknown">?</span>';return '<span class="planning-nature-badge '+planningNatureClass(d.nature)+'" title="'+esc(planningNatureLabel(d.nature))+'">'+planningNatureShort(d.nature)+' '+d.pct.toLocaleString("it-IT",{maximumFractionDigits:0})+'%</span>'}
-function planningMonthPanelHtml(row){return '<tr class="planning-month-row"><td colspan="8"><div class="planning-month-panel"><div class="planning-month-head"><div class="small"><strong>'+esc(row.l2_name)+'</strong> · dettaglio mensile del periodo selezionato.</div><button class="btn ghost compact" type="button" data-planning-open-analysis="'+esc(row.category_id)+'" data-planning-open-direction="'+row.direction+'">Apri in Analisi</button></div><div class="planning-month-grid">'+row.months.map(function(m){return '<div class="planning-month-cell '+(m.kind==="actual"?"actual ":"")+(m.override?"override":"")+'"><div class="m">'+esc(monthLabel(m.month))+'</div><div class="a">'+money(m.amount)+'</div><div class="t">'+(m.kind==="actual"?"reale":(m.override?"override":planningBoardContext==="BASELINE"?"baseline":"prev."))+'</div></div>'}).join("")+'</div></div></td></tr>'}
+function planningMonthPanelHtml(row){return '<tr class="planning-month-row"><td colspan="8"><div class="planning-month-panel"><div class="planning-month-head"><div class="small"><strong>'+esc(row.l2_name)+'</strong> · dettaglio mensile del periodo selezionato.</div><button class="btn ghost compact" type="button" data-planning-open-analysis="'+esc(row.category_id)+'" data-planning-open-direction="'+row.direction+'">Apri in Analisi</button></div><div class="planning-month-grid">'+row.months.map(function(m){return '<div class="planning-month-cell '+(m.kind==="actual"?"actual ":"")+(m.override?"override":"")+'"><div class="m">'+esc(monthLabel(m.month))+'</div><div class="a">'+money(m.amount)+'</div><div class="t">'+(m.kind==="actual"?"reale":(m.override?"override":planningBoardContext==="BASELINE"?"baseline":planningBoardContext==="STRATEGY"?"scenario":planningBoardContext==="PLAN"?"piano":"prev."))+'</div></div>'}).join("")+'</div></div></td></tr>'}
+function planningComparisonUsesBaseline(){
+  return planningBoardHorizon==="CALENDAR"&&(planningBoardContext==="STRATEGY"||planningBoardContext==="PLAN");
+}
+function planningComparisonLabel(){return planningComparisonUsesBaseline()?"Baseline":"Storico"}
+function planningCurrentValueLabel(){
+  return planningBoardContext==="STRATEGY"?"Scenario":
+    planningBoardContext==="PLAN"&&planningBoardHorizon==="CALENDAR"?"Piano":
+    planningBoardContext==="BASELINE"?"Baseline":"Previsione";
+}
 function planningDeltaHtml(deltaAbs,deltaPct,direction,comparison){
   const abs=num(deltaAbs),monthly=abs/12,isNeutral=Math.abs(abs)<.5,
     pct=(deltaPct===null||deltaPct===undefined||!Number.isFinite(Number(deltaPct)))?null:num(deltaPct);
   const signed=function(v){return (v>0?"+":v<0?"−":"")+money(Math.abs(v))};
   const totalText=signed(abs),monthlyText=signed(monthly);
-  const explanation=esc("Variazione totale rispetto allo storico: "+totalText+
+  const explanation=esc("Variazione totale rispetto "+(planningComparisonUsesBaseline()?"alla Baseline":"allo storico")+": "+totalText+
     ". Variazione media mensile: "+monthlyText+"/mese (differenza totale divisa 12).");
   const figures='<span title="'+explanation+'" aria-label="'+explanation+'">'+
     totalText+' · Ø '+monthlyText+'</span>';
@@ -7398,7 +7407,13 @@ function planningSectionHtml(direction,allRows){
   });
   return html;
 }
-function planningRenderFilterButtons(){document.querySelectorAll("[data-planning-filter]").forEach(function(b){b.classList.toggle("ghost",b.dataset.planningFilter!==planningBoardFilter)});document.querySelectorAll("[data-planning-level]").forEach(function(b){b.classList.toggle("ghost",b.dataset.planningLevel!==planningBoardLevel)});document.querySelectorAll("[data-planning-horizon]").forEach(function(b){b.classList.toggle("ghost",b.dataset.planningHorizon!==planningBoardHorizon)});if($("planningNatureFilter"))$("planningNatureFilter").value=planningBoardNatureFilter;if($("planningForecastFilter"))$("planningForecastFilter").value=planningBoardForecastFilter;if($("planningNoteFilter"))$("planningNoteFilter").value=planningBoardNoteFilter;if($("planningBaselineReviewFilter"))$("planningBaselineReviewFilter").value=planningBaselineReviewFilter}
+function planningRenderFilterButtons(){
+  document.querySelectorAll('[data-planning-horizon="ROLLING_12"]').forEach(function(b){
+    const strategy=planningBoardContext==="STRATEGY";
+    b.disabled=strategy;
+    b.title=strategy?"La simulazione confronta Scenario e Baseline dell'anno corrente. Il Rolling Forecast è disponibile nel Tabellone Baseline o Piano.":"";
+  });
+  document.querySelectorAll("[data-planning-filter]").forEach(function(b){b.classList.toggle("ghost",b.dataset.planningFilter!==planningBoardFilter)});document.querySelectorAll("[data-planning-level]").forEach(function(b){b.classList.toggle("ghost",b.dataset.planningLevel!==planningBoardLevel)});document.querySelectorAll("[data-planning-horizon]").forEach(function(b){b.classList.toggle("ghost",b.dataset.planningHorizon!==planningBoardHorizon)});if($("planningNatureFilter"))$("planningNatureFilter").value=planningBoardNatureFilter;if($("planningForecastFilter"))$("planningForecastFilter").value=planningBoardForecastFilter;if($("planningNoteFilter"))$("planningNoteFilter").value=planningBoardNoteFilter;if($("planningBaselineReviewFilter"))$("planningBaselineReviewFilter").value=planningBaselineReviewFilter}
 
 /* V73.30.1.23 — same board, contextual header and baseline health checks.
    Current baseline and provisional plan still use identical forecast data. */
@@ -7503,7 +7518,7 @@ function planningOverviewDelta(current,previous,kind){
   const label=percentage!==null?(percentage>0?"+":"")+percentage.toLocaleString("it-IT",{maximumFractionDigits:1})+"%":
     Math.abs(diff)<.005?"0%":"Δ "+signed;
   return {diff,pct:percentage,quality,label,
-    tooltip:"Baseline "+money(current)+" · storico "+money(previous)+" · variazione "+signed};
+    tooltip:planningCurrentValueLabel()+" "+money(current)+" · "+planningComparisonLabel().toLowerCase()+" "+money(previous)+" · variazione "+signed};
 }
 function planningOverviewChip(code,fullname,baseline,history,kind){
   const delta=planningOverviewDelta(baseline,history,kind);
@@ -7519,13 +7534,13 @@ function planningOverviewBlock(label,theme,current,history,kind,body,description
   return '<div class="planning-overview-item '+theme+'" title="'+esc(label+": "+delta.tooltip+(description?" · "+description:""))+'">'+
     '<div class="po-top"><span class="po-label">'+esc(label)+'</span></div>'+
     '<div class="po-total"><strong class="po-value'+(negative?" negative":"")+'">'+money(current)+'</strong>'+
-    '<span class="po-delta '+delta.quality+'">'+esc("vs storico "+delta.label)+'</span></div>'+
+    '<span class="po-delta '+delta.quality+'">'+esc("vs "+planningComparisonLabel().toLowerCase()+" "+delta.label)+'</span></div>'+
     (body||'<div class="po-explanation">'+esc(description||"")+'</div>')+
     '</div>';
 }
 function planningOverviewRenderModel(model,context){
   const b=model.baseline,h=model.history;
-  const baseLabel=context==="BASELINE"?"Baseline":context==="STRATEGY"?"Scenario":context==="PLAN"?"Piano":"Previsione";
+  const baseLabel=planningCurrentValueLabel();
   const incomeKinds=[["FIXED","F","Fisse"],["PREDICTABLE","P","Prevedibili"],["VARIABLE","V","Variabili"]],
     expenseKinds=[["MANDATORY","O","Obbligatorie"],["NECESSARY","N","Necessarie"],["DISCRETIONARY","D","Discrezionali"]];
   if(Math.abs(b.income.OTHER_INCOME)>.005||Math.abs(h.income.OTHER_INCOME)>.005)
@@ -7540,7 +7555,7 @@ function planningOverviewRenderModel(model,context){
     ["Risparmio/Investimenti",b.expense.SAVINGS,h.expense.SAVINGS],
     ["Altre uscite",b.expense.OTHER,h.expense.OTHER]
   ].filter(x=>Math.abs(x[1])>.005||Math.abs(x[2])>.005);
-  const savingNote=residual.length?'<div class="po-contribution" title="'+esc(residual.map(x=>x[0]+" "+money(x[1])+" (storico "+money(x[2])+")").join(" · "))+'">'+
+  const savingNote=residual.length?'<div class="po-contribution" title="'+esc(residual.map(x=>x[0]+" "+money(x[1])+" ("+planningComparisonLabel().toLowerCase()+" "+money(x[2])+")").join(" · "))+'">'+
     residual.map(x=>esc((x[0]==="Altre uscite"?"Altre":"Risparmio")+": "+money(x[1]))).join(" · ")+'</div>':"";
   return planningOverviewBlock("Entrate · "+baseLabel,"income",b.totalIncome,h.totalIncome,"INCOME",incomeHtml)+
     planningOverviewBlock("Uscite · "+baseLabel,"expense",b.totalExpenses,h.totalExpenses,"EXPENSE",expenseHtml)+
@@ -7777,6 +7792,8 @@ function renderPlanningSimulatorView(){
 
 function renderPlanningBoard(){
   if(!planningBoardData||!planningBoardData.expense||!planningBoardData.income)return;
+  // The simulation is annual: do not fall through to Rolling Forecast vs historical.
+  if(planningBoardContext==="STRATEGY"&&planningBoardHorizon!=="CALENDAR")planningBoardHorizon="CALENDAR";
   const liveBoardData=planningBoardData;
   const calendarYear=String(liveBoardData.expense.current_year_start||"").slice(0,4);
   const approved=planningBoardContext==="PLAN"&&planningBoardHorizon==="CALENDAR"
@@ -7819,7 +7836,7 @@ function renderPlanningBoard(){
       view.note=rolling?"La proiezione 12 mesi resta separata dalla bozza annuale; torna ad Anno corrente per riprendere i target senza perderli.":"Stessa bozza L2 di Piano: sperimenta ora, passa a Piano per approvare. Nessuna modifica alla Baseline o ai consuntivi.";
     }
     if(planningBoardContext==="PLAN"&&!isStrategic&&!rolling){
-      view.title="Tabellone · Simulazione e Piano";
+      view.title="Tabellone · Piano in elaborazione";
       view.column="Piano in elaborazione · "+year;
       view.subtitle="Un solo scenario di lavoro, con target L2 e delte rispetto alla Baseline.";
       view.note="I nuovi importi sono una simulazione temporanea, non modificano la Baseline. Approva il Piano esplicitamente per congelare gli impegni.";
@@ -7829,6 +7846,12 @@ function renderPlanningBoard(){
     $("planningBoardYear").textContent=view.period;
     $("planningBoardHistoryHead").textContent=rolling?"Storico 12M":"Storico "+def.comparisonLabel;
     $("planningBoardYearHead").textContent=view.column;
+    const deltaHead=$("planningBoardDeltaHead");
+    if(deltaHead){
+      const ref=planningComparisonLabel();
+      deltaHead.innerHTML='Var. vs '+ref+' <span class="planning-header-info" aria-label="Variazione totale e media mensile" title="Importo totale · Ø media mensile">ⓘ</span>';
+      deltaHead.title="Variazione vs "+ref+": percentuale e differenza in euro complessiva e media mensile.";
+    }
     $("planningBoardSubtitle").textContent=view.subtitle;
     $("planningBoardContextNote").textContent=view.note;
     $("planningBoardBackToAnalysis").classList.toggle("hidden",!view.baseline);
@@ -7861,9 +7884,9 @@ function renderPlanningBoard(){
     if(planningBoardFilter!=="EXPENSE")html+=planningSectionHtml("INCOME",shownInc);
     if(planningBoardFilter!=="INCOME")html+=planningSectionHtml("EXPENSE",shownExp);
     $("planningBoardBody").innerHTML=html||'<tr><td colspan="8" class="muted">Nessuna voce corrisponde ai filtri.</td></tr>';
-    $("planningBoardLegend").textContent="Valori: totale del periodo; Ø = media mensile (totale / 12). Verde sulle spese = riduzione, verde sulle entrate = aumento. "+
+    $("planningBoardLegend").textContent="Valori: totale del periodo; Ø = media mensile (totale / 12). Confronto con "+planningComparisonLabel()+". Verde sulle spese = riduzione, verde sulle entrate = aumento. "+
       (isStrategic?"Piano approvato V"+approved.revision+": confronto con la Baseline congelata alla stessa data.":
-       canDraft?"Simulazione del Piano: confronto Baseline vs target scelti, senza modificare lo storico. Le modifiche sono ancora una bozza.":
+       canDraft?(planningBoardContext==="STRATEGY"?"Scenario vs Baseline: gli interventi modificano soltanto le quote future; nessun dato storico o Baseline viene sovrascritto.":"Piano in elaborazione vs Baseline: i target non modificano la Baseline e rimangono una bozza fino all’approvazione."):
        rolling?"Previsione rolling corrente, non Piano annuale.":"Baseline: confronto con periodo storico.");
     renderPlanningNatureChart(shownExp);renderPlanningMonthlyChart(shownExp,shownInc);
   }finally{
@@ -8016,7 +8039,7 @@ $("processRoadmapFeatures")?.addEventListener("click",function(e){const b=e.targ
 $("planningBoardRefresh").onclick=function(){planningBoardData=null;loadPlanningBoard(true)};
 $("planningBoardView").addEventListener("click",function(e){
   const horizon=e.target.closest("[data-planning-horizon]");
-  if(horizon){planningBoardHorizon=horizon.dataset.planningHorizon||"CALENDAR";renderPlanningBoard();return}
+  if(horizon){if(planningBoardContext==="STRATEGY"&&horizon.dataset.planningHorizon==="ROLLING_12")return;planningBoardHorizon=horizon.dataset.planningHorizon||"CALENDAR";renderPlanningBoard();return}
   const filter=e.target.closest("[data-planning-filter]");
   if(filter){planningBoardFilter=filter.dataset.planningFilter||"ALL";renderPlanningBoard();return}
   const level=e.target.closest("[data-planning-level]");
