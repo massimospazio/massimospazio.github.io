@@ -2,7 +2,8 @@
    Draft in sessione, non approvato né persistito. Non modifica Baseline/Actual. */
 (function(root){
 "use strict";
-const state={year:"",targets:{},notes:{},originals:{},bonus:"BASE",showZero:true,onlyChanged:false,reserve:0,project:0};
+const state={year:"",horizon:"CALENDAR",targets:{},notes:{},originals:{},bonus:"BASE",showZero:true,onlyChanged:false,reserve:0,project:0};
+const drafts={};
 const value=r=>Number(r||0);
 const money=n=>new Intl.NumberFormat("it-IT",{style:"currency",currency:"EUR",maximumFractionDigits:0}).format(value(n));
 const escape=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -51,11 +52,15 @@ function scenarioPreset(preset){
  }
  root.renderPlanningBoard?.();
 }
-function resetIfYearChanged(year){
- if(state.year===year)return;
- state.year=year;state.targets={};state.notes={};state.originals={};state.bonus="BASE";state.reserve=0;state.project=0;
+function resetIfYearChanged(year,horizon){
+ const next=year+"|"+horizon,prev=state.year+"|"+state.horizon;
+ if(next===prev)return;
+ if(state.year)drafts[prev]={targets:state.targets,notes:state.notes,reserve:state.reserve,project:state.project,bonus:state.bonus};
+ const saved=drafts[next]||{};
+ state.year=year;state.horizon=horizon;state.targets=saved.targets||{};state.notes=saved.notes||{};state.originals={};state.bonus=saved.bonus||"BASE";state.reserve=saved.reserve||0;state.project=saved.project||0;
 }
 async function approve(){
+ if(state.horizon==="ROLLING_12"){root.alert("La simulazione rolling è una bozza di prova: approvazione disabilitata finché il piano pluriennale non è supportato.");return}
  if(Object.keys(state.targets).length===0){root.alert("Non hai modificato alcun target: non c'è un nuovo Piano strategico da approvare.");return}
  if(!root.confirm("Approvare il Piano per "+state.year+"?\\n\\nI target e le note saranno congelati in una nuova versione e la Baseline resterà invariata."))return;
  const reason=root.prompt("Motivo dell'approvazione (8-600 caratteri)","Piano familiare: obiettivi e impegni di spesa concordati");
@@ -93,7 +98,7 @@ function render(originalExp,originalInc,isPlan,context){
  '<option value="HIGH"'+(state.bonus==="HIGH"?' selected':'')+'>Favorevole</option></select></label>'+
  '<button type="button" class="btn ghost compact" data-bf-draft-reset>Ripristina target</button>'+
  (strategy?'<button type="button" class="btn compact" data-bf-draft-to-plan>Prosegui al Piano →</button>':
- '<button type="button" class="btn compact" data-bf-draft-approve>Approva Piano</button>')+'</div></div>';
+ '<button type="button" class="btn compact" '+(state.horizon==='ROLLING_12'?'disabled title="Approvazione rolling in sviluppo" ':'')+'data-bf-draft-approve>Approva Piano</button>')+'</div></div>';
  const low=originalInc.reduce((sum,r)=>sum+value(r.rangeLow===undefined?r.annual:r.rangeLow),0);
  const high=originalInc.reduce((sum,r)=>sum+value(r.rangeHigh===undefined?r.annual:r.rangeHigh),0);
  const variation=state.bonus==="LOW"?low-totals(originalInc):state.bonus==="HIGH"?high-totals(originalInc):0;
@@ -108,7 +113,7 @@ function render(originalExp,originalInc,isPlan,context){
  '<div class="bf-strategy-presets"><span>Leve rapide:</span>'+
  [['RESET','Baseline invariata'],['D25','D −25%'],['D50','D −50%'],['D100','D −100%'],['N10_D50','N −10% · D −50%'],['GOAL','Copri obiettivi con D']].map(([id,label])=>
  '<button type="button" class="btn ghost compact" data-bf-strategy-preset="'+id+'">'+label+'</button>').join('')+
- '</div><p class="bf-plan-inline-hint">Gli obiettivi sono destinazioni di avanzo, non nuove spese. Le leve modificano solo importi futuri delle categorie L2. Il draft è condiviso con Piano; il rolling 12m resta una vista di sola lettura.</p></div>';
+ '</div><p class="bf-plan-inline-hint">Gli obiettivi sono destinazioni di avanzo, non nuove spese. Le leve modificano solo importi futuri delle categorie L2. La simulazione rolling 12m è una bozza di prova distinta dal piano annuale; non è approvabile. Passando da un periodo all’altro le modifiche rimangono in sessione.</p></div>';
  }
  wrapper.innerHTML=html;
 }
@@ -172,7 +177,7 @@ function init(){
  });
 }
 root.BudgetFamilySinglePlan={
- prepare(exp,inc,year){resetIfYearChanged(year);[...exp,...inc].forEach(r=>state.originals[key(r)]=r);return {exp:applyRows(exp),inc:applyRows(inc)}},
+ prepare(exp,inc,year,horizon){resetIfYearChanged(year,horizon||'CALENDAR');[...exp,...inc].forEach(r=>state.originals[key(r)]=r);return {exp:applyRows(exp),inc:applyRows(inc)}},
  render,inlineAmount,inlineNote,isChanged,showOnlyChanged,scenarioPreset,details(){return {year:state.year,targets:{...state.targets},notes:{...state.notes}}},
  isDraft(){return Object.keys(state.targets).length>0}
 };
