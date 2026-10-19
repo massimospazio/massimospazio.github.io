@@ -8,14 +8,14 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=73.30.10.33-20261019"></script>
-<script src="../shared/app-config.js?v=73.30.10.33-20261019"></script>
-<script src="../shared/contextual-help.js?v=73.30.10.33-20261019" defer></script>
+<script src="../shared/supabase-client.js?v=73.30.10.34-20261019"></script>
+<script src="../shared/app-config.js?v=73.30.10.34-20261019"></script>
+<script src="../shared/contextual-help.js?v=73.30.10.34-20261019" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<link rel="stylesheet" href="../shared/health-reserve.css?v=73.30.10.33-20261019">
-<link rel="stylesheet" href="../shared/approved-plan.css?v=73.30.10.33-20261019">
-<link rel="stylesheet" href="../shared/scenario-strategy.css?v=73.30.10.33-20261019">
-<link rel="stylesheet" href="../shared/single-plan-board.css?v=73.30.10.33-20261019">
+<link rel="stylesheet" href="../shared/health-reserve.css?v=73.30.10.34-20261019">
+<link rel="stylesheet" href="../shared/approved-plan.css?v=73.30.10.34-20261019">
+<link rel="stylesheet" href="../shared/scenario-strategy.css?v=73.30.10.34-20261019">
+<link rel="stylesheet" href="../shared/single-plan-board.css?v=73.30.10.34-20261019">
 <style>
 :root{--bg:#f4f6fa;--card:#fff;--text:#17263e;--muted:#58677d;--line:#dce4ee;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 4px 18px rgba(15,23,42,.045);--sc-blue:#2563eb;--sc-blue-soft:#eff6ff;--sc-green:#0ea87a;--sc-red:#ef5b73;--sc-purple:#7658e6;--sc-ink:#17263e}
 *{box-sizing:border-box}
@@ -2070,6 +2070,15 @@ body{font-size:16px;line-height:1.5}
 .bf-l1-chart-button:hover{background:#e9f2ff}
 @media(max-width:760px){.planning-board-shell[data-board-context="BASELINE"] .forecast-grid{grid-template-columns:1fr}.planning-board-shell[data-board-context="BASELINE"] .analysis-chart-box{height:205px}}
 
+
+/* V73.30.10.34 — common economic flow view for historical, baseline and Plan */
+.flow-dataset-picker{border-right:1px solid var(--line);padding-right:10px}
+.flow-compare-controls .flow-future-only select{min-height:36px;border:1px solid #cad7e9;border-radius:7px;background:#fff;color:#1b314c;padding:5px 9px;max-width:240px;font:inherit}
+.flow-unified-panel-head .flow-source-label{display:inline-flex;align-items:center;margin-left:6px;padding:2px 7px;border-radius:6px;background:#ebf2fc;color:#27528b;font-size:12px}
+.flow-compare-status .flow-alert{color:#9b4b04;font-weight:600}
+.flow-compare-status .flow-error{color:#b42332;font-weight:600}
+@media(max-width:750px){.flow-dataset-picker{border-right:none;padding-right:0}.flow-compare-controls .flow-future-only{flex:1 1 145px}.flow-compare-controls .flow-future-only select{max-width:100%;width:100%}}
+
 </style>
 </head>
 <body>
@@ -2495,10 +2504,13 @@ body{font-size:16px;line-height:1.5}
               <span id="balanceWaterfallMode" class="balance-mode-badge">—</span>
             </div>
             <div id="flowUnifiedControls" class="flow-compare-controls">
- <div class="flow-compare-group"><span>Modalità</span><div class="flow-compare-buttons"><button type="button" data-flow-mode="SINGLE">Un periodo</button><button type="button" data-flow-mode="COMPARE">Confronto A/B</button></div></div>
- <label id="flowSinglePeriodWrap" class="flow-compare-group"><span>Periodo</span><select id="flowSinglePeriod"></select></label>
- <label id="flowPeriodAWrap" class="flow-compare-group hidden"><span>Periodo A</span><select id="flowPeriodA"></select></label>
- <label id="flowPeriodBWrap" class="flow-compare-group hidden"><span>Periodo B</span><select id="flowPeriodB"></select></label>
+ <div class="flow-compare-group flow-dataset-picker"><span>Dati</span><div class="flow-compare-buttons" role="group" aria-label="Dataset del flusso economico"><button type="button" data-flow-dataset="HISTORICAL">Storico</button><button type="button" data-flow-dataset="BASELINE">Baseline</button><button type="button" data-flow-dataset="PLAN">Piano</button></div></div>
+ <label class="flow-compare-group flow-future-only hidden"><span>Orizzonte</span><select id="flowFutureHorizon" aria-label="Orizzonte di Baseline e Piano"><option value="ROLLING_12">Prossimi 12 mesi</option><option value="CALENDAR">Anno corrente</option></select></label>
+ <label class="flow-compare-group flow-future-only hidden"><span>Confronto</span><select id="flowFutureReference" aria-label="Confronta la vista selezionata con"></select></label>
+ <div class="flow-compare-group flow-history-only"><span>Modalità</span><div class="flow-compare-buttons"><button type="button" data-flow-mode="SINGLE">Un periodo</button><button type="button" data-flow-mode="COMPARE">Confronto A/B</button></div></div>
+ <label id="flowSinglePeriodWrap" class="flow-compare-group flow-history-only"><span>Periodo</span><select id="flowSinglePeriod"></select></label>
+ <label id="flowPeriodAWrap" class="flow-compare-group flow-history-only hidden"><span>Periodo A</span><select id="flowPeriodA"></select></label>
+ <label id="flowPeriodBWrap" class="flow-compare-group flow-history-only hidden"><span>Periodo B</span><select id="flowPeriodB"></select></label>
  <div class="flow-compare-group"><span>Valori</span><div class="flow-compare-buttons"><button type="button" data-flow-amount="TOTAL">Totale</button><button type="button" data-flow-amount="MONTHLY">Media mensile</button></div></div>
  <div class="flow-compare-group"><span>Quote</span><div class="flow-compare-buttons"><button type="button" data-flow-shares="YES">€ + %</button><button type="button" data-flow-shares="NO">Solo €</button></div></div>
  </div>
@@ -2734,8 +2746,8 @@ body{font-size:16px;line-height:1.5}
   </div>
 </div>
 
-<script src="../shared/scenario-strategy.js?v=73.30.10.33-20261019"></script>
-<script src="../shared/single-plan-board.js?v=73.30.10.33-20261019"></script>
+<script src="../shared/scenario-strategy.js?v=73.30.10.34-20261019"></script>
+<script src="../shared/single-plan-board.js?v=73.30.10.34-20261019"></script>
 <script>
 const sb=window.appSupabase;
 if(typeof Chart!=="undefined"){
@@ -2755,7 +2767,10 @@ let historicalBalanceChart=null;
 let balanceWaterfallObserver=null;
 let balanceWaterfallRenderWidth=0;
 let balanceHubMode="HISTORY";
-let flowPeriodMode="SINGLE",flowPeriodA="PREVIOUS_12",flowPeriodB="ROLLING_12",flowSinglePeriod="ROLLING_12",flowAmountMode="TOTAL",flowShowShares=true,flowDiagnosticFocus="B";
+let flowPeriodMode="COMPARE",flowPeriodA="PREVIOUS_12",flowPeriodB="ROLLING_12",flowSinglePeriod="ROLLING_12",flowAmountMode="TOTAL",flowShowShares=true,flowDiagnosticFocus="B";
+let flowDataset="HISTORICAL",flowFutureHorizon="ROLLING_12";
+const flowFutureReference={BASELINE:"HISTORICAL",PLAN:"BASELINE"};
+let flowApprovedCache={year:"",loaded:false,loading:false,plan:null,error:"",seq:0};
 let flowMonthlyPeriod="B",flowMonthlyUnit="EUR",flowMonthlyLine="NONE",flowMonthlyNatureChart=null;
 let flowMonthlyFocus="ALL",flowMonthlyMode="COMPOSITION",flowMonthlyExtras=[],flowMonthlyFocusMonth=null;
 let flowCompareNature="NECESSARY",flowCompareExpandedL1=new Set(),flowCompareSelectedL2=null,flowCompareSelectedL2Name="",flowCompareSelectedCp="",flowCompareDetails=null,flowCompareDetailLoading=false,flowCompareDetailSeq=0,flowCompareSort="DELTA";
@@ -5659,15 +5674,201 @@ function flowStepsFor(t){
   steps.push({nature:null,name:"Avanzo",value:cur,lo:Math.min(0,cur),hi:Math.max(0,cur),color:cur>=0?"#198e62":"#bb354b",base:"margin"});
   return {steps:steps,income:income,margin:margin,final:cur};
 }
+
+/* Flow datasets v73.30.10.34: different sources, common reconciled waterfall schema.
+   Never treat an unapproved technical snapshot as an approved strategic Plan. */
+function flowFutureFrame(){
+ const d=projectionDataFor("EXPENSE"),i=projectionDataFor("INCOME");
+ if(!d||!i||!scenarioPlanningMeta?.rows)return null;
+ const month=String(d.current_month||""),year=String(d.current_year_start||"").slice(0,4);
+ if(!/^\d{4}-\d{2}-01$/.test(month)||!/^\d{4}$/.test(year))return null;
+ const rolling=flowFutureHorizon==="ROLLING_12";
+ return {expense:d,income:i,meta:scenarioPlanningMeta,year,month,
+   horizon:rolling?"ROLLING_12":"CALENDAR",months:rolling?monthSeries(month,12):monthSeries(year+"-01-01",12)};
+}
+function flowRowsFromProjection(expense,income,horizon,meta){
+ if(!expense||!income)return null;
+ const previous=planningBoardData;
+ try{
+   planningBoardData={expense:expense,income:income,meta:meta||scenarioPlanningMeta||{rows:[]}};
+   return {expense:planningBuildRows(expense,"EXPENSE",horizon),
+     income:planningBuildRows(income,"INCOME",horizon)};
+ }finally{planningBoardData=previous}
+}
+function flowModelFromProjectionRows(rows,months){
+ const totals=planningOverviewModel(rows.expense,rows.income).baseline,e=totals.expense;
+ if(!totals.reconciled)throw new Error("Flusso non riconciliato con il Tabellone");
+ const model={income:totals.totalIncome,operatingOut:totals.totalExpenses-e.SAVINGS,
+   mandatory:e.MANDATORY,necessary:e.NECESSARY,discretionary:e.DISCRETIONARY,
+   unclassified:e.UNCLASSIFIED,otherOperating:e.OTHER,savings:e.SAVINGS,
+   structural:totals.margin,available:totals.surplus,final:totals.surplus,
+   extraNet:0,priorWealth:0,monthCount:months.length};
+ const waterfall=flowStepsFor(model);
+ if(Math.abs(waterfall.final-model.final)>.02)throw new Error("Avanzo del grafico diverso dai KPI della previsione");
+ return model;
+}
+function flowHistoricalReference(months,label){
+ const previousScope=historicalScope;let model;
+ try{historicalScope="ORDINARY";model=flowPeriodModel(months)}
+ finally{historicalScope=previousScope}
+ return {key:"HISTORICAL",months:months,covered:flowAvailableMonths(months),
+   label:label,model:{...model,extraNet:0,final:model.available},kind:"HISTORICAL"};
+}
+function flowFutureSnapshotCandidate(frame){
+ const current=flowApprovedCache.plan;
+ const approved=current?.meta?.strategic_plan?.kind==="STRATEGIC"&&
+   String(current.expense?.current_year_start||"").slice(0,4)===frame.year;
+ if(approved){
+   const frozenMeta={...frame.meta,...(current.meta||{}),
+     rows:Array.isArray(current.meta?.rows)&&current.meta.rows.length?current.meta.rows:frame.meta.rows};
+   const rows=flowRowsFromProjection(current.expense,current.income,"CALENDAR",frozenMeta);
+   return {rows,source:"APPROVED",label:"Piano approvato · V"+current.revision,
+     frozenBaseline:current.meta?.strategic_plan?.baseline_expense&&current.meta?.strategic_plan?.baseline_income
+       ?flowRowsFromProjection(current.meta.strategic_plan.baseline_expense,
+          current.meta.strategic_plan.baseline_income,"CALENDAR",frozenMeta)
+       :null};
+ }
+ const currentRows=flowRowsFromProjection(frame.expense,frame.income,"CALENDAR",frame.meta);
+ const engine=window.BudgetFamilySinglePlan;
+ if(!engine)return null;
+ const draft=engine.prepare(currentRows.expense,currentRows.income,frame.year,"CALENDAR");
+ if(!engine.isDraft())return null;
+ return {rows:{expense:draft.exp,income:draft.inc},source:"DRAFT",label:"Piano in elaborazione · bozza",
+   frozenBaseline:null};
+}
+function flowFutureGroups(){
+ const frame=flowFutureFrame();
+ if(!frame)return {error:"Attendo Baseline, categorie e metadati aggiornati…"};
+ if(flowDataset==="PLAN"&&flowApprovedCache.year!==frame.year)return {loading:true,error:"Verifica delle versioni del Piano…"};
+ if(flowDataset==="PLAN"&&flowApprovedCache.loading)return {loading:true,error:"Carico il Piano approvato o la bozza…"};
+ if(flowDataset==="PLAN"&&flowApprovedCache.error)return {error:"Piano non verificabile: "+flowApprovedCache.error};
+ const baselineRows=flowRowsFromProjection(frame.expense,frame.income,frame.horizon,frame.meta);
+ const baseline={kind:"BASELINE",key:"BASELINE",months:frame.months,covered:frame.months.slice(),
+   label:(frame.horizon==="ROLLING_12"?"Baseline · prossimi 12 mesi":"Baseline · anno "+frame.year),
+   model:flowModelFromProjectionRows(baselineRows,frame.months)};
+ const yearAgo=Number(frame.year)-1;
+ const historicalMonths=frame.horizon==="ROLLING_12"?monthSeries(addMonthsISO(frame.month,-12),12):
+   monthSeries(String(yearAgo)+"-01-01",12);
+ const historical=flowHistoricalReference(historicalMonths,
+   frame.horizon==="ROLLING_12"?"Storico · ultimi 12 mesi completi":"Storico · anno "+yearAgo);
+ let target=baseline,reference=flowFutureReference.BASELINE;
+ if(flowDataset==="PLAN"){
+   const candidate=flowFutureSnapshotCandidate(frame);
+   if(!candidate)return {error:"Nessun Piano strategico approvato e nessuna bozza con target modificati. Crea prima uno scenario nella fase Strategia e Piano."};
+   target={kind:"PLAN",key:"PLAN",months:frame.months,covered:frame.months.slice(),
+     label:candidate.label+" · anno "+frame.year,
+     model:flowModelFromProjectionRows(candidate.rows,frame.months)};
+   reference=flowFutureReference.PLAN;
+   if(candidate.frozenBaseline){
+     baseline.model=flowModelFromProjectionRows(candidate.frozenBaseline,frame.months);
+     baseline.label="Baseline congelata all’approvazione · anno "+frame.year;
+   }
+ }
+ const compared=reference==="HISTORICAL"?historical:reference==="BASELINE"?baseline:null;
+ const groups=compared?[compared,target]:[target];
+ return {groups,frame,target,reference,compare:!!compared};
+}
+async function flowLoadApprovedPlan(force){
+ const frame=flowFutureFrame();
+ if(!frame)return;
+ if(flowApprovedCache.loading)return;
+ if(!force&&flowApprovedCache.loaded&&flowApprovedCache.year===frame.year)return;
+ const request=++flowApprovedCache.seq;
+ flowApprovedCache={year:frame.year,plan:null,error:"",loaded:false,loading:true,seq:request};
+ renderFlowUnified();
+ try{
+   const response=await rpc("dashboard_family_approved_plan_v1",
+     {p_action:"READ",p_year:Number(frame.year),p_revision:null});
+   if(request!==flowApprovedCache.seq)return;
+   flowApprovedCache.plan=response?.plan||null;flowApprovedCache.loaded=true;
+ }catch(err){if(request===flowApprovedCache.seq)flowApprovedCache.error=String(err.message||err)}
+ finally{if(request===flowApprovedCache.seq){flowApprovedCache.loading=false;renderFlowUnified()}}
+}
+function flowFutureResetSecondary(historical){
+ const monthly=$("flowMonthlyNatureSection");
+ monthly?.classList.toggle("hidden",!historical);
+ $("flowDiagnosis")?.classList.toggle("hidden",!historical);
+ $("flowComparisonAnalysis")?.classList.toggle("hidden",!historical);
+ document.querySelector(".balance-waterfall-viewport")?.classList.toggle("hidden",!historical);
+ $("balanceErosionWidget")?.classList.toggle("hidden",!historical);
+ $("balanceWaterfallNote")?.classList.toggle("hidden",!historical);
+ if(!historical){if(monthly)monthly.open=false;closeBalanceNatureDrill()}
+}
+function renderFlowFuture(){
+ const host=$("flowUnifiedCharts"),status=$("flowUnifiedStatus"),delta=$("flowUnifiedDelta");
+ if(!host||!status||!delta)return;
+ let result;
+ try{result=flowFutureGroups()}
+ catch(err){result={error:"Impossibile calcolare il flusso: "+String(err.message||err)+". Nessun dato prospettico mostrato."}}
+ host.innerHTML="";delta.innerHTML="";delta.classList.add("hidden");
+ if(result.error){
+   status.innerHTML='<span class="'+(result.loading?"flow-alert":"flow-error")+'">'+esc(result.error)+'</span>';
+   host.classList.remove("compare");$("balanceWaterfallSubtitle").textContent="Nessun valore simulato o inventato";
+   return;
+ }
+ const {groups,compare}=result;
+ const steps=groups.map(g=>flowStepsFor(g.model));
+ const coords=steps.flatMap(x=>x.steps.flatMap(st=>[st.lo,st.hi]));
+ const limits={min:Math.min(0,...coords),max:Math.max(1,...coords)};
+ host.classList.toggle("compare",compare);
+ host.innerHTML=groups.map((g,i)=>{
+   const code=compare?(i?"B":"A"):"SINGLE";
+   const divisor=flowAmountMode==="MONTHLY"?Math.max(1,g.months.length):1;
+   return '<article class="flow-unified-panel"><div class="flow-unified-panel-head"><strong>'+
+     (compare?(i?"B · ":"A · "):"")+esc(g.label)+'</strong>'+
+     '<span class="flow-source-label">'+(g.kind==="HISTORICAL"?"Actual":g.kind==="BASELINE"?"Previsione":"Target")+'</span>'+
+     '<small>Entrate '+money(g.model.income/divisor)+(flowAmountMode==="MONTHLY"?"/mese":"")+'</small></div>'+
+     '<div class="flow-graph-scroll">'+flowRenderSvg(g.model,limits,code)+'</div></article>';
+ }).join("");
+ if(compare){
+   const a=groups[0].model,b=groups[1].model;
+   const div=flowAmountMode==="MONTHLY"?Math.max(1,result.frame.months.length):1;
+   const diff=(v)=>(v>0?"+":v<0?"−":"")+money(Math.abs(v)/div)+(div!==1?"/mese":"");
+   const dm=b.structural-a.structural,ds=b.final-a.final;
+   delta.classList.remove("hidden");
+   delta.innerHTML='<strong class="'+(ds>=0?"good":"bad")+'">Δ Avanzo '+diff(ds)+'</strong>'+
+     '<strong class="'+(dm>=0?"good":"bad")+'">Δ Margine '+diff(dm)+'</strong>'+
+     '<span>Discrezionali / margine: '+flowPercent(a.discretionary,a.structural)+
+     ' → '+flowPercent(b.discretionary,b.structural)+'</span>';
+ }
+ const historical=groups.find(g=>g.kind==="HISTORICAL");
+ const covered=historical&&historical.covered.length!==historical.months.length?
+   ' · Storico: '+historical.covered.length+'/'+historical.months.length+' mesi con movimenti; copertura effettiva da verificare':"";
+ const disclaimer=flowDataset==="PLAN"?" · Il Piano è distinto dalla Baseline; la bozza non equivale a un Piano approvato.":"";
+ status.textContent=(flowAmountMode==="MONTHLY"?"Media mensile":"Totale su "+result.frame.months.length+" mesi")+
+   ' · Flusso economico ordinario, non liquidità. Investimenti esclusi dai movimenti operativi e conteggiati solo come risparmio.'+
+   disclaimer+covered;
+ $("balanceWaterfallSubtitle").textContent=compare?
+   "Confronto coerente per periodo · valori e scala verticali omogenei":"Flusso "+result.target.label;
+ $("balanceWaterfallMode").textContent=flowAmountMode==="MONTHLY"?"Media mensile":"Totale periodo";
+}
+
 function flowSyncControls(){
+ const future=flowDataset!=="HISTORICAL";
+ document.querySelectorAll("[data-flow-dataset]").forEach(function(b){
+   const active=b.dataset.flowDataset===flowDataset;b.classList.toggle("active",active);b.setAttribute("aria-pressed",String(active));
+ });
+ document.querySelectorAll(".flow-future-only").forEach(el=>el.classList.toggle("hidden",!future));
+ document.querySelectorAll(".flow-history-only").forEach(el=>{
+   if(!el.id)el.classList.toggle("hidden",future);
+ });
+ $("flowFutureHorizon").value=flowFutureHorizon;
+ $("flowFutureHorizon").disabled=flowDataset==="PLAN";
+ $("flowFutureHorizon").title=flowDataset==="PLAN"?"Il Piano approvato è un riferimento annuale: non esiste un Piano rolling approvato.":"";
+ const refOptions=flowDataset==="PLAN"?
+   [["BASELINE","Baseline (preferibilmente congelata)"],["HISTORICAL","Storico anno precedente"],["NONE","Nessuno"]]:
+   [["HISTORICAL","Storico periodo di riferimento"],["NONE","Nessuno"]];
+ const ref=$("flowFutureReference");
+ ref.innerHTML=refOptions.map(([value,label])=>'<option value="'+value+'"'+(flowFutureReference[flowDataset]===value?' selected':'')+'>'+esc(label)+'</option>').join("");
+ ref.value=flowFutureReference[flowDataset]||"NONE";
   const compare=flowPeriodMode==="COMPARE",choices=flowYearChoices();
   [["flowSinglePeriod",flowSinglePeriod],["flowPeriodA",flowPeriodA],["flowPeriodB",flowPeriodB]].forEach(function(entry){
     const el=$(entry[0]);if(!el)return;
     el.innerHTML=choices.map(function(c){return '<option value="'+esc(c[0])+'"'+(entry[1]===c[0]?' selected':'')+'>'+esc(c[1])+'</option>'}).join("");
   });
-  $("flowSinglePeriodWrap")?.classList.toggle("hidden",compare);
-  $("flowPeriodAWrap")?.classList.toggle("hidden",!compare);
-  $("flowPeriodBWrap")?.classList.toggle("hidden",!compare);
+  $("flowSinglePeriodWrap")?.classList.toggle("hidden",future||compare);
+  $("flowPeriodAWrap")?.classList.toggle("hidden",future||!compare);
+  $("flowPeriodBWrap")?.classList.toggle("hidden",future||!compare);
   document.querySelectorAll("[data-flow-mode]").forEach(function(b){const active=b.dataset.flowMode===flowPeriodMode;b.classList.toggle("active",active);b.setAttribute("aria-pressed",String(active))});
   document.querySelectorAll("[data-flow-amount]").forEach(function(b){const active=b.dataset.flowAmount===flowAmountMode;b.classList.toggle("active",active);b.setAttribute("aria-pressed",String(active))});
   document.querySelectorAll("[data-flow-shares]").forEach(function(b){const active=(b.dataset.flowShares==="YES")===flowShowShares;b.classList.toggle("active",active);b.setAttribute("aria-pressed",String(active))});
@@ -5704,7 +5905,7 @@ function flowRenderSvg(t,limits,code){
     const shares=flowStepShares(st,ch);
     const desc=st.name+" · "+signedMoney(st.value)+(flowShowShares?" · "+shares.tooltip:"");
     const focus=st.nature||(st.name==="Margine"?"MARGIN":st.name==="Avanzo"?"SURPLUS":st.name==="Eventi E"?"EVENTS":null);
-    const actionable=!!focus;
+    const actionable=!!focus&&flowDataset==="HISTORICAL";
     svg+='<g class="flow-unified-step'+(flowMonthlyFocus===focus&&(!flowPeriodMode||flowPeriodMode!=="COMPARE"||flowMonthlyPeriod===code)?" selected":"")+'"'+(actionable?' data-flow-focus="'+esc(focus)+'"'+(st.nature?' data-balance-nature="'+esc(st.nature)+'"':'')+' data-flow-period="'+esc(code)+'" role="button" tabindex="0" aria-label="'+esc(desc+' · Apri andamento e dettaglio')+'"':'')+'>'+
       '<title>'+esc(desc)+'</title>'+
       (actionable?'<rect class="flow-unified-hit" x="'+(left+i*col)+'" y="22" width="'+col+'" height="'+(bottom-17)+'" rx="7" fill="transparent"/>':'')+
@@ -5723,8 +5924,16 @@ function flowRenderSvg(t,limits,code){
 }
 function renderFlowUnified(){
   if(balanceSubview!=="flow"||!Array.isArray(scenarioActualRows))return;
-  const host=$("flowUnifiedCharts");if(!host)return;
   flowSyncControls();
+  flowFutureResetSecondary(flowDataset==="HISTORICAL");
+  if(flowDataset!=="HISTORICAL"){
+    if(flowDataset==="PLAN"){
+      const frame=flowFutureFrame();
+      if(frame&&flowApprovedCache.year!==frame.year&&!flowApprovedCache.loading){void flowLoadApprovedPlan(false);return}
+    }
+    renderFlowFuture();return;
+  }
+  const host=$("flowUnifiedCharts");if(!host)return;
   const compare=flowPeriodMode==="COMPARE",keys=compare?[flowPeriodA,flowPeriodB]:[flowSinglePeriod];
   const groups=keys.map(function(key){
     const months=flowMonthsFor(key);
@@ -5857,6 +6066,7 @@ function flowMonthlyFormulaContent(rows,focus,month){
     (partHtml?'<div class="flow-formula-parts">'+partHtml+'</div>':"");
 }
 function flowOpenFocus(focus,code,month,options){
+  if(flowDataset!=="HISTORICAL")return;
   const box=$("flowMonthlyNatureSection");
   if(balanceSubview!=="flow"||!box||focus!=="ALL"&&!FLOW_MONTHLY_SERIES[focus])return;
   const opt=options||{},compare=flowPeriodMode==="COMPARE";
@@ -8619,6 +8829,16 @@ $("scenarioView").addEventListener("click",async function(e){
   if(removeSeries){flowMonthlyExtras=flowMonthlyExtras.filter(k=>k!==removeSeries.dataset.flowRemoveSeries);renderFlowMonthlyNature(flowComparisonCurrentGroups());return}
   const monthlyUnit=e.target.closest("[data-flow-monthly-unit]");
   if(monthlyUnit){flowMonthlyUnit=monthlyUnit.dataset.flowMonthlyUnit==="PCT"?"PCT":"EUR";renderFlowMonthlyNature(flowComparisonCurrentGroups());return}
+  const dataset=e.target.closest("[data-flow-dataset]");
+  if(dataset){
+    const next=dataset.dataset.flowDataset;
+    if(!["HISTORICAL","BASELINE","PLAN"].includes(next))return;
+    flowDataset=next;
+    if(next==="PLAN")flowFutureHorizon="CALENDAR";
+    flowCompareResetDetail(true);closeBalanceNatureDrill();renderFlowUnified();
+    if(next==="PLAN")void flowLoadApprovedPlan(true);
+    return;
+  }
   const mode=e.target.closest("[data-flow-mode]");
   if(mode){
     flowPeriodMode=mode.dataset.flowMode==="COMPARE"?"COMPARE":"SINGLE";
@@ -8738,6 +8958,16 @@ $("flowMonthlyAddSeries")?.addEventListener("change",function(){
   renderFlowMonthlyNature(flowComparisonCurrentGroups());
 });
 $("flowMonthlyNatureSection")?.addEventListener("toggle",function(){if(balanceSubview==="flow"){if(!this.open)closeBalanceNatureDrill();renderFlowMonthlyNature(flowComparisonCurrentGroups())}});
+$("flowFutureHorizon")?.addEventListener("change",function(){
+ if(flowDataset==="PLAN")return;
+ flowFutureHorizon=this.value==="CALENDAR"?"CALENDAR":"ROLLING_12";
+ closeBalanceNatureDrill();renderFlowUnified();
+});
+$("flowFutureReference")?.addEventListener("change",function(){
+ if(flowDataset==="BASELINE"&&["NONE","HISTORICAL"].includes(this.value))flowFutureReference.BASELINE=this.value;
+ if(flowDataset==="PLAN"&&["NONE","HISTORICAL","BASELINE"].includes(this.value))flowFutureReference.PLAN=this.value;
+ renderFlowUnified();
+});
 ["flowSinglePeriod","flowPeriodA","flowPeriodB"].forEach(function(id){
   $(id)?.addEventListener("change",function(){
     if(id==="flowSinglePeriod")flowSinglePeriod=this.value;
@@ -8878,8 +9108,8 @@ $("rpcDiagnosticsModal")?.addEventListener("click",function(e){if(e.target===$("
 document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!$("rpcDiagnosticsModal")?.classList.contains("hidden"))closeRpcDiagnostics()});
 init();
 </script>
-<script src="../shared/health-reserve.js?v=73.30.10.33-20261019"></script>
-<script src="../shared/approved-plan.js?v=73.30.10.33-20261019"></script>
+<script src="../shared/health-reserve.js?v=73.30.10.34-20261019"></script>
+<script src="../shared/approved-plan.js?v=73.30.10.34-20261019"></script>
 </body>
 </html>
 
