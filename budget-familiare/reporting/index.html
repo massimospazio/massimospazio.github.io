@@ -4534,10 +4534,13 @@ async function saveForecastRule(btn){
   if(method==="FIXED"&&(fixed===null||fixed===""||!Number.isFinite(Number(fixed)))){msg($("analysisStatus"),"Inserisci l'importo previsto.",true);return}
   if(method==="RANGE"&&(!Number.isFinite(Number(rmin))||!Number.isFinite(Number(rmax))||Number(rmin)>Number(rmax))){msg($("analysisStatus"),"Inserisci un intervallo valido.",true);return}
   if(d.frequency==="MONTHS"&&method!=="SAME_MONTH_LAST_YEAR"&&method!=="ZERO"&&!pattern){msg($("analysisStatus"),"Seleziona almeno un mese previsto.",true);return}
+  const methodChanged=entity==="CATEGORY"&&method!==String(s.forecast_method||"AVG6");
+  const overrideCount=methodChanged?(analysisForecastEditor.monthly_plan||[]).filter(x=>x.override_amount!==null&&x.override_amount!==undefined).length:0;
+  if(overrideCount&&!window.confirm("Cambiare metodo di previsione eliminerà "+overrideCount+" override mensili presenti nella Baseline. Potrai inserirli nuovamente dopo il salvataggio. Vuoi continuare?"))return;
   analysisForecastSaving=true;setBusy(btn,true,"Salvo");
   try{
     const merchantId=entity==="COUNTERPARTY"?(cp.component_merchant_id||null):null;
-    await rpc("dashboard_reporting_save_forecast_setting_v1",{p_category_id:analysisSelectedCategory,p_direction:analysisCurrentDirection(),p_entity_type:entity,p_merchant_id:merchantId,p_forecast_scope:scope,p_forecast_source:source,p_forecast_method:method,p_adjustment_pct:adj,p_amount_model:model,p_fixed_amount:fixed===null?null:Number(fixed),p_range_min:rmin===null?null:Number(rmin),p_range_max:rmax===null?null:Number(rmax),p_recurrence_pattern:pattern});
+    await rpc("dashboard_reporting_save_forecast_reset_overrides_v1",{p_category_id:analysisSelectedCategory,p_direction:analysisCurrentDirection(),p_entity_type:entity,p_merchant_id:merchantId,p_forecast_scope:scope,p_forecast_source:source,p_forecast_method:method,p_adjustment_pct:adj,p_amount_model:model,p_fixed_amount:fixed===null?null:Number(fixed),p_range_min:rmin===null?null:Number(rmin),p_range_max:rmax===null?null:Number(rmax),p_recurrence_pattern:pattern,p_confirm_reset:overrideCount>0});
     await rpc("dashboard_reporting_save_forecast_semantics_v2",{p_category_id:analysisSelectedCategory,p_entity_type:entity,p_merchant_id:merchantId,p_plan_type:"FORECAST",p_certainty_level:d.certainty_level||"ESTIMATED",p_note:d.rationale_note||null});
     scenarioForecastRationales=null;
     await refreshForecastAfterSave();msg($("analysisStatus"),analysisForecastEditor&&analysisForecastEditor.tracking_enabled?"Previsione/target aggiornato e tracciato.":"Previsione/target aggiornato in modalità test: nessuna cronologia ufficiale registrata.");
