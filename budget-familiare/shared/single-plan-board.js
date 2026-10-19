@@ -19,6 +19,24 @@ function isDirty(){
  const saved=savedDrafts[k]||{targets:{},notes:{},reserve:0,project:0,bonus:"BASE",targetUnit:"TOTAL"};
  return JSON.stringify(snapshot())!==JSON.stringify(saved);
 }
+function discardUnsaved(){
+ if(!isDirty())return false;
+ const label=state.horizon==="ROLLING_12"?"prossimi 12 mesi":"anno "+state.year;
+ if(!root.confirm("Annullare le modifiche non salvate per "+label+"?\n\nVerrà ripristinata l’ultima bozza salvata (oppure la Baseline se non ne esiste una)."))return false;
+ const saved=savedDrafts[state.year+"|"+state.horizon]||{targets:{},notes:{},reserve:0,project:0,bonus:"BASE",targetUnit:"TOTAL"};
+ state.targets={...saved.targets};state.notes={...saved.notes};
+ state.reserve=saved.reserve||0;state.project=saved.project||0;
+ state.bonus=saved.bonus||"BASE";state.targetUnit=saved.targetUnit||"TOTAL";
+ persist();saveError=false;
+ root.renderPlanningBoard?.();
+ return true;
+}
+function resetCategoryToBaseline(id){
+ if(!Object.prototype.hasOwnProperty.call(state.originals,id)||!Object.prototype.hasOwnProperty.call(state.targets,id))return false;
+ delete state.targets[id];
+ persist();root.renderPlanningBoard?.();
+ return true;
+}
 function saveDraft(){
  persist();
  try{
@@ -132,8 +150,9 @@ function render(originalExp,originalInc,isPlan,context){
  const quick=root.document.getElementById("bfDraftSaveToolbar");
  if(quick){
   quick.hidden=false;
-  const b=quick.querySelector("button"),status=quick.querySelector("[data-bf-save-state]");
+  const b=quick.querySelector("[data-bf-draft-save]"),cancel=quick.querySelector("[data-bf-draft-cancel]"),status=quick.querySelector("[data-bf-save-state]");
   if(b){b.disabled=!isDirty();b.classList.toggle("bf-draft-pending",isDirty());b.classList.toggle("ghost",!isDirty());}
+  if(cancel)cancel.disabled=!isDirty();
   if(status)status.textContent=saveError?"Errore salvataggio":isDirty()?"● Modifiche non salvate":justSaved?"✓ Bozza salvata":"Bozza salvata";
  }
  const exp=applyRows(originalExp),inc=applyRows(originalInc);
@@ -191,7 +210,10 @@ function render(originalExp,originalInc,isPlan,context){
 function inlineAmount(row){
  const k=key(row),base=state.originals[k]||row,amount=state.targets[k]===undefined?value(base.annual):Math.max(locked(base),value(state.targets[k]));
  const monthly=root.document.getElementById("planningBoardDisplayUnit")?.value==="MONTH";
- return '<div class="bf-plan-edit-cell"><input type="text" inputmode="numeric" pattern="[0-9.]*" '+(monthly?'data-bf-draft-month':'data-bf-draft-total')+'="'+escape(k)+'" value="'+integer(monthly?amount/12:amount)+'" aria-label="'+(monthly?'Media mensile':'Totale annuo')+' '+escape(row.l2_name)+'" title="'+(monthly?'Media mese (totale annuo diviso 12)':'Budget annuale')+'; già speso '+money(locked(base))+'"></div>';
+ const changed=state.targets[k]!==undefined&&Math.abs(value(state.targets[k])-value(base.annual))>=.5;
+ const title='Ripristina importo Baseline per '+row.l2_name+' ('+money(base.annual)+')';
+ return '<div class="bf-plan-edit-cell"><input type="text" inputmode="numeric" pattern="[0-9.]*" '+(monthly?'data-bf-draft-month':'data-bf-draft-total')+'="'+escape(k)+'" value="'+integer(monthly?amount/12:amount)+'" aria-label="'+(monthly?'Media mensile':'Totale annuo')+' '+escape(row.l2_name)+'" title="'+(monthly?'Media mese (totale annuo diviso 12)':'Budget annuale')+'; già speso '+money(locked(base))+'">'+
+ '<button type="button" class="bf-plan-row-baseline" data-bf-draft-row-reset="'+escape(k)+'" title="'+escape(title)+'" aria-label="'+escape(title)+'" '+(changed?'':'disabled ')+'>&#8634;</button></div>';
 }
 function inlineNote(row){
  const k=key(row),note=state.notes[k]||"",baselineNote=row.meta?.rationale_note||"";
@@ -224,7 +246,9 @@ function onChange(e){
  const n=parseInteger(e.target.value);
  if(!Number.isFinite(n)||n<0){e.target.setCustomValidity("Inserisci un importo valido (es. 2.419)");e.target.reportValidity();return}
  e.target.setCustomValidity("");
- state.targets[id]=Math.max(locked(base),monthly?n*12:n);
+ const chosen=Math.max(locked(base),monthly?n*12:n);
+ if(Math.abs(chosen-value(base.annual))<.5)delete state.targets[id];
+ else state.targets[id]=chosen;
  persist();root.renderPlanningBoard?.();
 }
 function init(){
@@ -235,14 +259,19 @@ function init(){
  if(display&&!root.document.getElementById("bfDraftSaveToolbar")){
    const host=root.document.createElement("span");
    host.id="bfDraftSaveToolbar";host.className="bf-draft-toolbar";host.hidden=true;
-   host.innerHTML='<span data-bf-save-state></span><button type="button" class="btn compact ghost" disabled data-bf-draft-save>Salva bozza</button>';
+   host.innerHTML='<span data-bf-save-state></span><button type="button" class="btn compact ghost" disabled data-bf-draft-save>Salva bozza</button><button type="button" class="btn compact ghost bf-draft-cancel" disabled data-bf-draft-cancel title="Scarta solo le modifiche non salvate">Annulla</button>';
    display.closest("label")?.after(host);
-   host.addEventListener("click",e=>{if(e.target.closest("[data-bf-draft-save]")){saveDraft();root.renderPlanningBoard?.()}});
+   host.addEventListener("click",e=>{
+    if(e.target.closest("[data-bf-draft-save]")){saveDraft();root.renderPlanningBoard?.();return}
+    if(e.target.closest("[data-bf-draft-cancel]"))discardUnsaved();
+   });
  }
 
  panel.addEventListener("change",onChange);
  root.document.getElementById("planningBoardBody")?.addEventListener("change",onChange);
  root.document.getElementById("planningBoardBody")?.addEventListener("click",e=>{
+  const reset=e.target.closest("[data-bf-draft-row-reset]");
+  if(reset){resetCategoryToBaseline(reset.getAttribute("data-bf-draft-row-reset"));return}
   const k=e.target.closest("[data-bf-note-open]")?.getAttribute("data-bf-note-open");if(!k)return;
   const row=state.originals[k];if(!row)return;
   const baseline=row.meta?.rationale_note||"Nessuna nota";
@@ -270,7 +299,7 @@ function init(){
 }
 root.BudgetFamilySinglePlan={
  prepare(exp,inc,year,horizon){resetIfYearChanged(year,horizon||'CALENDAR');[...exp,...inc].forEach(r=>state.originals[key(r)]=r);return {exp:applyRows(exp),inc:applyRows(inc)}},
- render,inlineAmount,inlineNote,isChanged,showOnlyChanged,scenarioPreset,details(){return {year:state.year,targets:{...state.targets},notes:{...state.notes},reserve:state.reserve,project:state.project,targetUnit:state.targetUnit}},
+ render,inlineAmount,inlineNote,isChanged,showOnlyChanged,scenarioPreset,saveDraft,discardUnsaved,resetCategoryToBaseline,details(){return {year:state.year,targets:{...state.targets},notes:{...state.notes},reserve:state.reserve,project:state.project,targetUnit:state.targetUnit}},
  isDraft(){return Object.keys(state.targets).length>0}
 };
 if(typeof module!=="undefined"&&module.exports)module.exports={locked,applyRows,scenarioPreset,state};
