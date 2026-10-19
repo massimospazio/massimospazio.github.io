@@ -7397,42 +7397,73 @@ async function quickBaselineLoad(row){
  }catch(e){quickBaselineEditors.set(k,{error:String(e.message||e)});msg($("planningBoardStatus"),"Editor rapido non disponibile: "+String(e.message||e),true)}
  finally{quickBaselineBusy.delete(k);renderPlanningBoard()}
 }
+
+function quickBaselinePreview(ed,x){
+ const existing=ed.data?.category_setting||{},same=ed.method===(existing.forecast_method||"AVG6")&&Number(ed.adjustment)===num(existing.adjustment_pct);
+ const preview=(ed.data?.category_preview||[]).find(p=>String(p.month)===String(x.month))||x;
+ const factor=Math.max(0,1+num(ed.adjustment)/100);
+ const fields={AVG6:"avg6",AVG12:"avg12",MEDIAN12:"median12",SAME_MONTH_LAST_YEAR:"same_month_last_year",LAST_VALUE:"last_value"};
+ let base;
+ if(ed.method==="ZERO")base=0;
+ else if(ed.method==="FIXED")base=num(ed.fixed);
+ else if(ed.method==="RANGE")base=(num(ed.low)+num(ed.high))/2;
+ else if(same)return num(x.base_amount);
+ else if(Object.prototype.hasOwnProperty.call(preview,fields[ed.method])&&preview[fields[ed.method]]!==null)base=num(preview[fields[ed.method]]);
+ else return null;
+ if(!["ZERO","FIXED","RANGE"].includes(ed.method))base*=factor;
+ return Math.max(0,base);
+}
+function quickBaselineMonthValue(ed,x){
+ const pending=ed.monthChanges||{};
+ if(Object.prototype.hasOwnProperty.call(pending,x.month))return pending[x.month]===null?quickBaselinePreview(ed,x):pending[x.month];
+ const overridden=x.override_amount!==null&&x.override_amount!==undefined;
+ return overridden?num(x.override_amount):quickBaselinePreview(ed,x);
+}
 function quickBaselineHtml(row){
  if(planningBoardContext!=="BASELINE")return "";
  const k=quickBaselineKey(row.direction,row.category_id),ed=quickBaselineEditors.get(k);
  if(!ed){if(!quickBaselineBusy.has(k))quickBaselineLoad(row);return '<div class="qbe">Caricamento editor rapido…</div>'}
  if(ed.error)return '<div class="qbe">Impossibile caricare editor: '+esc(ed.error)+' <button class="btn ghost compact" type="button" data-qbe-retry>Riprova</button></div>';
- const setting=ed.data?.category_setting||{},scope=setting.forecast_scope||"CATEGORY";
- if(scope==="COUNTERPARTIES")return '<div class="qbe"><strong>Previsione gestita per controparti.</strong> Per evitare di sovrascrivere le regole delle singole controparti, modifica questa categoria in Analisi spese.</div>';
- const monthRows=ed.data?.monthly_plan||[],overrides=monthRows.filter(x=>x.override_amount!==null&&x.override_amount!==undefined).length;
- const changed=ed.method!==String(setting.forecast_method||"AVG6");
- const fixed=ed.method==="FIXED",range=ed.method==="RANGE",rate=!["FIXED","RANGE","ZERO"].includes(ed.method);
- const boxes=monthRows.map(x=>{
-   const overridden=x.override_amount!==null&&x.override_amount!==undefined;
-   return '<label class="qbe-month"><span>'+esc(monthLabel(x.month))+'</span><input type="number" min="0" step="1" data-qbe-month="'+esc(x.month)+'" value="'+esc(planInputValue(x.planned_amount))+'" '+(ed.dirty?'disabled title="Salva prima la nuova regola"':'')+'><small>'+(overridden?'Override · ':'Regola · ')+money(x.base_amount)+'</small>'+(overridden?'<button type="button" class="btn ghost compact" data-qbe-reset-month="'+esc(x.month)+'" '+(ed.dirty?'disabled':'')+'>Ripristina</button>':'')+'</label>';
+ const setting=ed.data?.category_setting||{};
+ if((setting.forecast_scope||"CATEGORY")==="COUNTERPARTIES")return '<div class="qbe"><strong>Previsione per controparti.</strong> Modifica le singole regole in Analisi spese.</div>';
+ const months=row.months||[],saved=ed.data?.monthly_plan||[],byMonth=new Map(saved.map(x=>[String(x.month),x]));
+ const methodChange=ed.method!==String(setting.forecast_method||"AVG6");
+ const overrides=saved.filter(x=>x.override_amount!==null&&x.override_amount!==undefined).length;
+ const fixed=ed.method==="FIXED",range=ed.method==="RANGE",rate=!(fixed||range||ed.method==="ZERO");
+ const boxes=months.map(m=>{
+  const x=byMonth.get(String(m.month))||m;
+  if(m.kind==="actual")return '<div class="qbe-month"><span>'+esc(monthLabel(m.month))+'</span><strong>'+money(m.amount)+'</strong><small>Consuntivo · sola lettura</small></div>';
+  const pending=ed.monthChanges||{},modified=Object.prototype.hasOwnProperty.call(pending,m.month);
+  const overridden=modified?pending[m.month]!==null:x.override_amount!==null&&x.override_amount!==undefined;
+  const value=quickBaselineMonthValue(ed,x);
+  return '<label class="qbe-month"><span>'+esc(monthLabel(m.month))+'</span><input type="number" min="0" step="0.01" data-qbe-month="'+esc(m.month)+'" value="'+(value===null?'':esc(String(Math.round(value*100)/100)))+'" placeholder="—" '+(value===null?'disabled title="Anteprima non disponibile: apri Analisi completa"':'')+'><small>'+(overridden?'Override':'Calcolato dalla regola')+(modified?' · non salvato':'')+'</small>'+(overridden?'<button type="button" class="btn ghost compact" data-qbe-reset-month="'+esc(m.month)+'">Ripristina</button>':'')+'</label>';
  }).join("");
  return '<div class="qbe" data-qbe-key="'+esc(k)+'">'+
- '<div class="qbe-head"><strong>Modifica rapida Baseline · '+esc(row.l2_name)+'</strong><span>Le modifiche usano gli stessi salvataggi di Analisi spese</span></div>'+
+ '<div class="qbe-head"><strong>Modifica rapida Baseline · '+esc(row.l2_name)+'</strong><span>Consuntivi e previsioni nello stesso calendario</span></div>'+
  '<div class="qbe-controls"><label>Metodo<select data-qbe-field="method">'+forecastMethodOptions(ed.method)+'</select></label>'+
  (rate?'<label>Variazione %<input type="number" min="-100" max="1000" step="1" data-qbe-field="adjustment" value="'+esc(ed.adjustment)+'"></label>':'')+
  (fixed?'<label>Importo fisso €<input type="number" min="0" step="1" data-qbe-field="fixed" value="'+esc(ed.fixed??0)+'"></label>':'')+
  (range?'<label>Minimo €<input type="number" min="0" data-qbe-field="low" value="'+esc(ed.low??0)+'"></label><label>Massimo €<input type="number" min="0" data-qbe-field="high" value="'+esc(ed.high??0)+'"></label>':'')+
  '<label class="qbe-note">Nota / motivazione<textarea rows="2" data-qbe-field="note">'+esc(ed.note)+'</textarea></label>'+
- '<button class="btn compact" type="button" data-qbe-save '+(!ed.dirty?'disabled':'')+'>Salva regola e note</button></div>'+
- (changed&&overrides?'<div class="qbe-warning">Il nuovo metodo eliminerà '+overrides+' override esistenti, previa conferma.</div>':'')+
- '<div class="qbe-month-title">Piano mensile · mese corrente e prossimi 11 mesi · '+(ed.dirty?'salva prima la regola per aggiornare i mesi':'modifica un importo per salvare un override')+'</div><div class="qbe-months">'+boxes+'</div>'+
+ '<button class="btn compact" type="button" data-qbe-save '+(!ed.dirty?'disabled':'style="background:#215de8;color:white;border-color:#215de8"')+'>'+(quickBaselineBusy.has(k)?'Salvataggio…':'Salva modifiche')+'</button></div>'+
+ (methodChange&&overrides?'<div class="qbe-warning">Il cambio metodo azzererà '+overrides+' override salvati: conferma richiesta al salvataggio.</div>':'')+
+ '<div class="qbe-month-title">Periodo selezionato · valori modificabili solo per i mesi di previsione'+(ed.dirty?' · Modifiche non salvate':'')+'</div>'+
+ '<div class="qbe-months">'+boxes+'</div>'+
  '<div class="qbe-actions"><button type="button" class="btn ghost compact" data-planning-open-analysis="'+esc(row.category_id)+'" data-planning-open-direction="'+row.direction+'">Apri in Analisi completa</button></div></div>';
 }
 async function quickBaselineSave(k,button){
  const ed=quickBaselineEditors.get(k);if(!ed||!ed.dirty||quickBaselineBusy.has(k))return;
  const [direction,id]=k.split("|"),old=ed.data.category_setting||{},method=ed.method;
- const overrides=(ed.data.monthly_plan||[]).filter(x=>x.override_amount!==null&&x.override_amount!==undefined).length;
+ const changes=Object.entries(ed.monthChanges||{}),ruleChanged=ed.method!==(old.forecast_method||"AVG6")||num(ed.adjustment)!==num(old.adjustment_pct)||num(ed.fixed)!==num(old.fixed_amount)||num(ed.low)!==num(old.range_min)||num(ed.high)!==num(old.range_max);
  const change=method!==String(old.forecast_method||"AVG6");
- if(change&&!confirm("Il cambio metodo eliminerà gli override futuri di questa categoria"+(overrides?" (almeno "+overrides+" nei 12 mesi visibili)":" eventualmente presenti")+". Continuare?"))return;
- if(method==="RANGE"&&(Number(ed.low)<0||Number(ed.high)<Number(ed.low))){msg($("planningBoardStatus"),"Intervallo minimo/massimo non valido.",true);return}
+ const overrides=(ed.data.monthly_plan||[]).filter(x=>x.override_amount!==null&&x.override_amount!==undefined).length;
+ if(change&&overrides&&!confirm("Il nuovo metodo elimina gli override salvati della categoria ("+overrides+" nei 12 mesi). Gli override modificati nella bozza saranno poi riapplicati. Continuare?"))return;
+ if(method==="RANGE"&&(num(ed.low)<0||num(ed.high)<num(ed.low))){msg($("planningBoardStatus"),"Intervallo non valido.",true);return}
  if(method==="FIXED"&&(!Number.isFinite(Number(ed.fixed))||Number(ed.fixed)<0)){msg($("planningBoardStatus"),"Importo fisso non valido.",true);return}
- quickBaselineBusy.add(k);if(button)button.disabled=true;
+ if(changes.some(([m,v])=>v!==null&&(!Number.isFinite(v)||v<0))){msg($("planningBoardStatus"),"Importo mensile non valido.",true);return}
+ quickBaselineBusy.add(k);if(button){button.disabled=true;button.textContent="Salvataggio…"}
  try{
+  if(ruleChanged){
    await rpc("dashboard_reporting_save_forecast_reset_overrides_v1",{
     p_category_id:id,p_direction:direction,p_entity_type:"CATEGORY",p_merchant_id:null,
     p_forecast_scope:"CATEGORY",p_forecast_source:forecastSourceForMethod(method),
@@ -7442,28 +7473,25 @@ async function quickBaselineSave(k,button){
     p_range_max:method==="RANGE"?Number(ed.high):null,p_recurrence_pattern:method==="SAME_MONTH_LAST_YEAR"||method==="ZERO"?null:ed.pattern,
     p_confirm_reset:change
    });
-   await rpc("dashboard_reporting_save_forecast_semantics_v2",{p_category_id:id,p_entity_type:"CATEGORY",p_merchant_id:null,p_plan_type:"FORECAST",p_certainty_level:old.certainty_level||"ESTIMATED",p_note:ed.note||null});
-   quickBaselineEditors.delete(k);
-   invalidateAnalysisProjection(direction);
-   await loadPlanningBoard(true);
-   msg($("planningBoardStatus"),"Baseline aggiornata: metodo e note salvati.");
- }catch(e){msg($("planningBoardStatus"),"Errore salvataggio: "+String(e.message||e),true)}
+  }
+  if(ed.note!==String(old.rationale_note||""))await rpc("dashboard_reporting_save_forecast_semantics_v2",{p_category_id:id,p_entity_type:"CATEGORY",p_merchant_id:null,p_plan_type:"FORECAST",p_certainty_level:old.certainty_level||"ESTIMATED",p_note:ed.note||null});
+  for(const [month,value] of changes)await rpc(direction==="INCOME"?"dashboard_reporting_set_income_category_override_v1":"dashboard_reporting_set_expense_override_v1",{p_month:month,p_category_id:id,p_amount:value});
+  quickBaselineEditors.delete(k);invalidateAnalysisProjection(direction);await loadPlanningBoard(true);
+  msg($("planningBoardStatus"),"Baseline e override salvati.");
+ }catch(e){msg($("planningBoardStatus"),"Salvataggio parziale o fallito: "+String(e.message||e)+". Verificare in Analisi prima di riprovare.",true)}
  finally{quickBaselineBusy.delete(k);renderPlanningBoard()}
 }
-async function quickBaselineMonth(k,month,value,input){
- const ed=quickBaselineEditors.get(k);if(!ed||ed.dirty||quickBaselineBusy.has(k))return;
- const [direction,id]=k.split("|"),amount=value===null?null:Number(value);
+function quickBaselineMonth(k,month,value){
+ const ed=quickBaselineEditors.get(k);if(!ed||quickBaselineBusy.has(k))return;
+ const amount=value===null?null:Number(value);
  if(amount!==null&&(!Number.isFinite(amount)||amount<0)){msg($("planningBoardStatus"),"Importo mensile non valido.",true);return}
- quickBaselineBusy.add(k);if(input)input.disabled=true;
- try{
-  await rpc(direction==="INCOME"?"dashboard_reporting_set_income_category_override_v1":"dashboard_reporting_set_expense_override_v1",{p_month:month,p_category_id:id,p_amount:amount});
-  quickBaselineEditors.delete(k);invalidateAnalysisProjection(direction);
-  await loadPlanningBoard(true);
-  msg($("planningBoardStatus"),"Override di "+monthLabel(month)+" salvato.");
- }catch(e){msg($("planningBoardStatus"),"Override non salvato: "+String(e.message||e),true)}
- finally{quickBaselineBusy.delete(k);renderPlanningBoard()}
+ if(!ed.monthChanges)ed.monthChanges={};
+ ed.monthChanges[month]=amount;ed.dirty=true;renderPlanningBoard();
 }
-function planningMonthPanelHtml(row){return '<tr class="planning-month-row"><td colspan="8"><div class="planning-month-panel"><div class="planning-month-head"><div class="small"><strong>'+esc(row.l2_name)+'</strong> · dettaglio mensile del periodo selezionato.</div><button class="btn ghost compact" type="button" data-planning-open-analysis="'+esc(row.category_id)+'" data-planning-open-direction="'+row.direction+'">Apri in Analisi</button></div><div class="planning-month-grid">'+row.months.map(function(m){return '<div class="planning-month-cell '+(m.kind==="actual"?"actual ":"")+(m.override?"override":"")+'"><div class="m">'+esc(monthLabel(m.month))+'</div><div class="a">'+money(m.amount)+'</div><div class="t">'+(m.kind==="actual"?"reale":(m.override?"override":planningBoardContext==="BASELINE"?"baseline":planningBoardContext==="STRATEGY"?"scenario":planningBoardContext==="PLAN"?"piano":"prev."))+'</div></div>'}).join("")+'</div>'+quickBaselineHtml(row)+'</div></td></tr>'}
+function planningMonthPanelHtml(row){
+ if(planningBoardContext==="BASELINE")return '<tr class="planning-month-row"><td colspan="8"><div class="planning-month-panel">'+quickBaselineHtml(row)+'</div></td></tr>';
+ return '<tr class="planning-month-row"><td colspan="8"><div class="planning-month-panel"><div class="planning-month-head"><div class="small"><strong>'+esc(row.l2_name)+'</strong> · dettaglio mensile del periodo selezionato.</div><button class="btn ghost compact" type="button" data-planning-open-analysis="'+esc(row.category_id)+'" data-planning-open-direction="'+row.direction+'">Apri in Analisi</button></div><div class="planning-month-grid">'+row.months.map(function(m){return '<div class="planning-month-cell '+(m.kind==="actual"?"actual ":"")+(m.override?"override":"")+'"><div class="m">'+esc(monthLabel(m.month))+'</div><div class="a">'+money(m.amount)+'</div><div class="t">'+(m.kind==="actual"?"reale":(m.override?"override":planningBoardContext==="STRATEGY"?"scenario":planningBoardContext==="PLAN"?"piano":"prev."))+'</div></div>'}).join("")+'</div></div></td></tr>';
+}
 function planningComparisonUsesBaseline(){
   return planningBoardContext==="STRATEGY"||(planningBoardContext==="PLAN"&&planningBoardHorizon==="CALENDAR");
 }
@@ -8193,7 +8221,7 @@ $("planningBoardView").addEventListener("click",function(e){
 $("planningBoardView").addEventListener("change",function(e){
  const el=e.target,wrap=el.closest("[data-qbe-key]");if(!wrap)return;
  const k=wrap.dataset.qbeKey,ed=quickBaselineEditors.get(k);if(!ed)return;
- if(el.hasAttribute("data-qbe-month")){quickBaselineMonth(k,el.dataset.qbeMonth,el.value,el);return}
+ if(el.hasAttribute("data-qbe-month")){quickBaselineMonth(k,el.dataset.qbeMonth,el.value);return}
  const field=el.dataset.qbeField;if(!field)return;
  ed[field]=["adjustment","fixed","low","high"].includes(field)?Number(el.value):el.value;ed.dirty=true;
  renderPlanningBoard();
