@@ -2639,7 +2639,7 @@ body{font-size:16px;line-height:1.5}
 </div>
 
 <script src="../shared/scenario-strategy.js?v=73.30.4.0-20261018"></script>
-<script src="../shared/single-plan-board.js?v=73.30.6.7-20261019"></script>
+<script src="../shared/single-plan-board.js?v=73.30.7.0-20261019"></script>
 <script>
 const sb=window.appSupabase;
 if(typeof Chart!=="undefined"){
@@ -7394,7 +7394,7 @@ function planningSectionHtml(direction,allRows){
     let visibleRows=groupMatches?g.rows:g.rows.filter(function(r){return String(r.l2_name||"").toLocaleLowerCase("it").includes(q)});
     if(planningBoardNatureFilter!=="ALL")visibleRows=visibleRows.filter(function(r){return planningNatureValue(r.meta,direction)===planningBoardNatureFilter});
     visibleRows=visibleRows.filter(planningForecastFilterMatch).filter(planningNoteFilterMatch).filter(planningBaselineReviewMatches);
-    const draftPlan=(planningBoardContext==="PLAN"||planningBoardContext==="STRATEGY")&&planningBoardHorizon==="CALENDAR"&&(planningBoardContext==="STRATEGY"||!planningBoardData?.meta?.strategic_plan)&&!!window.BudgetFamilySinglePlan;
+    const draftPlan=(planningBoardContext==="PLAN"||planningBoardContext==="STRATEGY")&&(planningBoardContext==="STRATEGY"||!planningBoardData?.meta?.strategic_plan)&&!!window.BudgetFamilySinglePlan;
     if(planningBoardOnlyChanged)visibleRows=visibleRows.filter(r=>draftPlan?window.BudgetFamilySinglePlan.isChanged(r):planningBoardContext==="BASELINE"?planningBaselineNeedsReview(r).overrides:Math.abs(num(r.annual)-num(r.comparison))>=.5);
     if(!visibleRows.length)return;
     const key=direction+"|"+g.id,searching=!!q,filtering=planningBoardNatureFilter!=="ALL"||planningBoardForecastFilter!=="ALL"||planningBoardNoteFilter!=="ALL"||planningBoardContext==="BASELINE"&&planningBaselineReviewFilter!=="ALL";
@@ -7846,10 +7846,10 @@ function renderPlanningBoard(){
       }
     }
     if(planningBoardContext==="STRATEGY"){
-      view.title=rolling?"Tabellone · Previsione 12 mesi":"Tabellone · Simulazione strategica";
-      view.column=rolling?"Previsione 12M":"Scenario in elaborazione · "+year;
-      view.subtitle=rolling?"Proiezione 12 mesi in sola lettura; i target strategici si modificano su Anno corrente.":"Un unico scenario di lavoro: dalle leve generali ai target L2 direttamente nel Tabellone.";
-      view.note=rolling?"La proiezione 12 mesi resta separata dalla bozza annuale; torna ad Anno corrente per riprendere i target senza perderli.":"Stessa bozza L2 di Piano: sperimenta ora, passa a Piano per approvare. Nessuna modifica alla Baseline o ai consuntivi.";
+      view.title=rolling?"Tabellone · Simulazione strategica · prossimi 12 mesi":"Tabellone · Simulazione strategica";
+      view.column=rolling?"Scenario simulato · 12M":"Scenario in elaborazione · "+year;
+      view.subtitle=rolling?"Bozza strategica modificabile sui prossimi 12 mesi; distinta dal piano annuale e non ancora approvabile.":"Un unico scenario di lavoro: dalle leve generali ai target L2 direttamente nel Tabellone.";
+      view.note=rolling?"VERSIONE DI PROVA · Simula e confronta i prossimi 12 mesi con la Baseline dello stesso periodo. Bozza rolling separata dall’anno corrente; non approvabile.":"Stessa bozza L2 di Piano: sperimenta ora, passa a Piano per approvare. Nessuna modifica alla Baseline o ai consuntivi.";
     }
     if(planningBoardContext==="PLAN"&&!isStrategic&&!rolling){
       view.title="Tabellone · Piano in elaborazione";
@@ -7874,11 +7874,11 @@ function renderPlanningBoard(){
     $("planningBoardSubtitle").textContent=view.subtitle;
     $("planningBoardContextNote").textContent=view.note;
     $("planningBoardBackToAnalysis").classList.toggle("hidden",!view.baseline);
-    const canDraft=(planningBoardContext==="PLAN"||planningBoardContext==="STRATEGY")&&planningBoardHorizon==="CALENDAR"&&!isStrategic&&!!window.BudgetFamilySinglePlan;
+    const canDraft=(planningBoardContext==="PLAN"||planningBoardContext==="STRATEGY")&&!isStrategic&&!!window.BudgetFamilySinglePlan;
     $("planningBoardOverview").parentElement.classList.remove("hidden");
     $("planningBoardView").classList.toggle("bf-board-plan-mode",canDraft);
     const draft=canDraft&&window.BudgetFamilySinglePlan
-      ?window.BudgetFamilySinglePlan.prepare(exp,inc,year):null;
+      ?window.BudgetFamilySinglePlan.prepare(exp,inc,year,planningBoardHorizon):null;
     function withBaselineComparison(targetRows,referenceRows){
       const reference=new Map(referenceRows.map(r=>[String(r.category_id),num(r.annual)]));
       return targetRows.map(r=>{
