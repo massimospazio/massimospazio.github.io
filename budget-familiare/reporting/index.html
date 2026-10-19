@@ -7937,7 +7937,7 @@ function planningSectionHtml(direction,allRows){
       '<td>'+planningL1NatureHtml(visibleRows,direction)+'</td><td>—</td><td>—</td><td></td></tr>';
     if(planningBoardContext==="BASELINE"&&planningBoardExpandedL2.has(key+"|L1"))html+=planningSharedChartSlot(key+"|L1",g.name,"L1");
     if(!expanded)return;
-    (planningBoardContext==="BASELINE"?baselineSortRows(visibleRows):visibleRows.slice().sort(function(a,b){return String(a.l2_name).localeCompare(String(b.l2_name),"it")})).forEach(function(r){
+    baselineSortRows(visibleRows).forEach(function(r){
       const l2Key=direction+"|"+r.category_id,open=planningBoardExpandedL2.has(l2Key),
       baselineNote=r.meta&&r.meta.rationale_note||"",
       planNote=planningBoardContext==="PLAN"&&planningBoardData?.meta?.strategic_plan?.notes?.[direction+":"+String(r.category_id)]||"",
@@ -7945,9 +7945,9 @@ function planningSectionHtml(direction,allRows){
       html+='<tr class="planning-l2-row">'+
         '<td class="planning-l2-name"><div class="planning-category"><button class="planning-caret" data-planning-toggle-l2="'+esc(l2Key)+'">'+(open?"▾":"▸")+'</button>'+categoryIconHtml(r.l2_name,direction==="INCOME"?"income":"expense",false)+'<span class="name">'+esc(r.l2_name)+'</span></div></td>'+
         '<td>'+planningValueHtml(r.comparison)+'</td><td>'+(draftPlan?window.BudgetFamilySinglePlan.inlineAmount(r):planningValueHtml(r.annual))+'</td>'+
-        '<td>'+(planningBoardContext==="BASELINE"?baselineDeltaCompactHtml(r):planningDeltaHtml(r.deltaAbs,r.deltaPct,direction,r.comparison))+'</td>'+
+        '<td>'+(baselineDeltaCompactHtml(r))+'</td>'+
         '<td>'+planningNatureBadgeHtml(r,direction)+'</td><td>'+planningMethodHtml(r)+'</td>'+
-        '<td>'+(planningBoardContext==="BASELINE"?planningReliabilityHtml(r):"")+'</td><td>'+(draftPlan?window.BudgetFamilySinglePlan.inlineNote(r):'<div class="planning-note" title="'+esc(note)+'">'+esc(note||"—")+'</div>')+'</td>'+
+        '<td>'+(planningReliabilityHtml(r))+'</td><td>'+(draftPlan?window.BudgetFamilySinglePlan.inlineNote(r):'<div class="planning-note" title="'+esc(note)+'">'+esc(note||"—")+'</div>')+'</td>'+
         '</tr>';
       if(open)html+=planningMonthPanelHtml(r);
     });
@@ -7956,7 +7956,7 @@ function planningSectionHtml(direction,allRows){
 }
 function planningRenderFilterButtons(){
  document.querySelectorAll("[data-baseline-mode]").forEach(b=>{b.classList.toggle("ghost",b.dataset.baselineMode!==baselineViewMode);b.classList.toggle("hidden",planningBoardContext!=="BASELINE")});
- if($("baselineSort")){$("baselineSort").value=baselineSortKey;$("baselineSort").classList.toggle("hidden",planningBoardContext!=="BASELINE")}
+ if($("baselineSort")){$("baselineSort").value=baselineSortKey;$("baselineSort").classList.remove("hidden")}
   document.querySelectorAll('[data-planning-horizon="ROLLING_12"]').forEach(function(b){
     const strategy=planningBoardContext==="STRATEGY";
     b.disabled=false;
@@ -8451,12 +8451,12 @@ function renderPlanningBoard(){
     if($("planningBoardOnlyChanged"))$("planningBoardOnlyChanged").checked=planningBoardOnlyChanged;
     $("planningBoardTitle").textContent=view.title;
     $("planningBoardYear").textContent=view.period;
-    $("planningBoardHistoryHead").innerHTML=planningBoardContext==="BASELINE"?'<button type="button" class="bf-sort-head" data-baseline-sort="comparison">'+esc(rolling?"Storico 12M":"Storico "+def.comparisonLabel)+' ↕</button>':esc(rolling?"Storico 12M":"Storico "+def.comparisonLabel);
-    $("planningBoardYearHead").innerHTML=planningBoardContext==="BASELINE"?'<button type="button" class="bf-sort-head" data-baseline-sort="annual">'+esc(view.column)+' ↕</button>':esc(view.column);
+    $("planningBoardHistoryHead").innerHTML='<button type="button" class="bf-sort-head" data-baseline-sort="comparison">'+esc(rolling?"Storico 12M":"Storico "+def.comparisonLabel)+' ↕</button>';
+    $("planningBoardYearHead").innerHTML='<button type="button" class="bf-sort-head" data-baseline-sort="annual">'+esc(view.column)+' ↕</button>';
     const deltaHead=$("planningBoardDeltaHead");
     if(deltaHead){
       const ref=planningComparisonLabel();
-      deltaHead.innerHTML=planningBoardContext==="BASELINE"?'<button type="button" class="bf-sort-head" data-baseline-sort="deltaPct">Var.% ↕</button> <button type="button" class="bf-sort-head" data-baseline-sort="deltaAbs">Var. € ↕</button>':'Var. vs '+ref+' <span class="planning-header-info" title="Importo totale e media mensile">ⓘ</span>';
+      deltaHead.innerHTML='<button type="button" class="bf-sort-head" data-baseline-sort="deltaPct">Var.% ↕</button> <button type="button" class="bf-sort-head" data-baseline-sort="deltaAbs">Var. € ↕</button>';
       deltaHead.title="Variazione vs "+ref+": percentuale e differenza in euro complessiva e media mensile.";
     }
     $("planningBoardSubtitle").textContent=view.subtitle;
@@ -8481,10 +8481,10 @@ function renderPlanningBoard(){
     const shownExp=canDraft?withBaselineComparison(draft.exp,exp):isStrategic?withBaselineComparison(exp,baseExp):exp;
     const shownInc=canDraft?withBaselineComparison(draft.inc,inc):isStrategic?withBaselineComparison(inc,baseInc):inc;
     if(canDraft||isStrategic){
-      $("planningBoardHistoryHead").textContent="Baseline";
-      $("planningBoardYearHead").textContent=isStrategic?"Piano approvato":planningBoardContext==="STRATEGY"?"Scenario simulato":"Piano in elaborazione";
+      $("planningBoardHistoryHead").innerHTML='<button type="button" class="bf-sort-head" data-baseline-sort="comparison">Baseline ↕</button>';
+      $("planningBoardYearHead").innerHTML='<button type="button" class="bf-sort-head" data-baseline-sort="annual">'+esc(isStrategic?"Piano approvato":planningBoardContext==="STRATEGY"?"Scenario simulato":"Piano in elaborazione")+' ↕</button>';
     }
-    $("planningBoardDeltaHead").firstChild.textContent="Var. vs "+(canDraft||isStrategic?"Baseline":"storico")+" ";
+    $("planningBoardDeltaHead").title="Variazione vs "+(canDraft||isStrategic?"Baseline":"storico")+" (ordinabile per € e %)";
     renderPlanningOverview(shownExp,shownInc,view);
     renderPlanningBaselineAudit(exp,inc);
     window.BudgetFamilySinglePlan?.render(exp,inc,canDraft,planningBoardContext);
@@ -8675,7 +8675,7 @@ $("planningBoardView").addEventListener("change",function(e){
 });
 $("planningBoardView").addEventListener("click",function(e){
  const reverse=e.target.closest("[data-baseline-sort-direction]");if(reverse){baselineSortDesc=!baselineSortDesc;renderPlanningBoard();return}
- const head=e.target.closest("[data-baseline-sort]");if(head&&planningBoardContext==="BASELINE"){const k=head.dataset.baselineSort;baselineSortDesc=baselineSortKey===k?!baselineSortDesc:!(k==="l1_name"||k==="l2_name");baselineSortKey=k;renderPlanningBoard();return}
+ const head=e.target.closest("[data-baseline-sort]");if(head){const k=head.dataset.baselineSort;baselineSortDesc=baselineSortKey===k?!baselineSortDesc:!(k==="l1_name"||k==="l2_name");baselineSortKey=k;renderPlanningBoard();return}
  const mode=e.target.closest("[data-baseline-mode]");if(mode){baselineViewMode=mode.dataset.baselineMode;renderPlanningBoard();return}
   const horizon=e.target.closest("[data-planning-horizon]");
   if(horizon){planningBoardHorizon=horizon.dataset.planningHorizon||"CALENDAR";renderPlanningBoard();return}
