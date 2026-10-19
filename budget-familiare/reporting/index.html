@@ -1977,6 +1977,12 @@ body{font-size:16px;line-height:1.5}
 #planningBoardView .planning-goals-available strong.positive{color:#15803d}
 #planningBoardView .planning-goals-available strong.negative{color:#b91c1c}
 #planningBoardView .planning-goals-available small{color:#546680}
+#planningBoardView .planning-value-cell{min-height:0!important;gap:0!important}
+#planningBoardView .planning-value-cell span{display:none!important}
+#planningBoardView .planning-board-table td{padding-top:4px!important;padding-bottom:4px!important}
+#planningBoardView .bf-plan-edit-cell{min-height:0!important;gap:0!important}
+#planningBoardView .bf-plan-edit-cell input{height:29px!important}
+#planningBoardView .bf-draft-pending{background:#e99a25!important;border-color:#e99a25!important;color:#17263e!important;font-weight:800}
 </style>
 <style>
 .purchase-financing-detail{margin-top:4px;font-size:14px;line-height:1.5;font-weight:400;color:#425b7c;white-space:normal;min-width:200px}
@@ -2240,7 +2246,7 @@ body{font-size:16px;line-height:1.5}
       <section class="planning-board-card">
         <div class="planning-board-table-wrap">
           <table class="planning-board-table">
-            <thead><tr><th>Categoria</th><th id="planningBoardHistoryHead" title="Prima riga: totale del periodo. Seconda riga (Ø): media mensile, totale diviso 12.">Storico</th><th id="planningBoardYearHead" title="Prima riga: totale del periodo. Seconda riga (Ø): media mensile, totale diviso 12.">Previsione</th><th id="planningBoardDeltaHead" title="Variazione sul periodo confrontato">Var. vs storico <span class="planning-header-info" aria-label="Variazione totale e media mensile" title="Importo totale · Ø media mensile">ⓘ</span></th><th>Natura</th><th>Tipo previsione <button class="context-help-trigger" type="button" data-context-help="forecast-baseline" aria-label="Aiuto: previsione e Baseline">?</button></th><th>Note / razionale</th><th></th></tr></thead>
+            <thead><tr><th>Categoria</th><th id="planningBoardHistoryHead" title="Visualizzazione secondo il selettore Totale periodo / Media mese.">Storico</th><th id="planningBoardYearHead" title="Visualizzazione secondo il selettore Totale periodo / Media mese.">Previsione</th><th id="planningBoardDeltaHead" title="Variazione sul periodo confrontato">Var. vs Baseline <span class="planning-header-info" aria-label="Variazione totale e media mensile" title="Importo totale · Ø media mensile">ⓘ</span></th><th>Natura</th><th>Tipo previsione <button class="context-help-trigger" type="button" data-context-help="forecast-baseline" aria-label="Aiuto: previsione e Baseline">?</button></th><th>Note / razionale</th><th></th></tr></thead>
             <tbody id="planningBoardBody"><tr><td colspan="8" class="muted">Apri il tabellone per caricare il piano.</td></tr></tbody>
           </table>
         </div>
@@ -7366,14 +7372,13 @@ function planningNoteFilterMatch(row){
   return filter==="WITH"?has:!has;
 }
 function planningValueHtml(value){
-  const monthly=money(num(value)/12);
-  return '<div class="planning-value-cell"><strong>'+money(value)+'</strong>'+
-    '<span title="'+esc("Media mensile: "+monthly+"/mese (totale del periodo diviso 12)")+'" aria-label="'+esc("Media mensile: "+monthly+"/mese")+'">Ø '+monthly+'</span></div>';
+  const monthly=planningBoardDisplayUnit==="MONTH";
+  return '<div class="planning-value-cell"><strong title="'+esc(monthly?"Media mensile (totale diviso 12)":"Totale del periodo")+'">'+money(monthly?num(value)/12:value)+'</strong></div>';
 }
 function planningL1NatureHtml(rows,direction){const d=planningDominantNature(rows,direction);if(!d.nature)return '<span class="planning-nature-badge unknown">?</span>';return '<span class="planning-nature-badge '+planningNatureClass(d.nature)+'" title="'+esc(planningNatureLabel(d.nature))+'">'+planningNatureShort(d.nature)+' '+d.pct.toLocaleString("it-IT",{maximumFractionDigits:0})+'%</span>'}
 function planningMonthPanelHtml(row){return '<tr class="planning-month-row"><td colspan="8"><div class="planning-month-panel"><div class="planning-month-head"><div class="small"><strong>'+esc(row.l2_name)+'</strong> · dettaglio mensile del periodo selezionato.</div><button class="btn ghost compact" type="button" data-planning-open-analysis="'+esc(row.category_id)+'" data-planning-open-direction="'+row.direction+'">Apri in Analisi</button></div><div class="planning-month-grid">'+row.months.map(function(m){return '<div class="planning-month-cell '+(m.kind==="actual"?"actual ":"")+(m.override?"override":"")+'"><div class="m">'+esc(monthLabel(m.month))+'</div><div class="a">'+money(m.amount)+'</div><div class="t">'+(m.kind==="actual"?"reale":(m.override?"override":planningBoardContext==="BASELINE"?"baseline":planningBoardContext==="STRATEGY"?"scenario":planningBoardContext==="PLAN"?"piano":"prev."))+'</div></div>'}).join("")+'</div></div></td></tr>'}
 function planningComparisonUsesBaseline(){
-  return planningBoardHorizon==="CALENDAR"&&(planningBoardContext==="STRATEGY"||planningBoardContext==="PLAN");
+  return planningBoardContext==="STRATEGY"||(planningBoardContext==="PLAN"&&planningBoardHorizon==="CALENDAR");
 }
 function planningComparisonLabel(){return planningComparisonUsesBaseline()?"Baseline":"Storico"}
 function planningCurrentValueLabel(){
@@ -7920,6 +7925,7 @@ function renderPlanningBoard(){
       $("planningBoardHistoryHead").textContent="Baseline";
       $("planningBoardYearHead").textContent=isStrategic?"Piano approvato":planningBoardContext==="STRATEGY"?"Scenario simulato":"Piano in elaborazione";
     }
+    $("planningBoardDeltaHead").firstChild.textContent="Var. vs "+(canDraft||isStrategic?"Baseline":"storico")+" ";
     renderPlanningOverview(shownExp,shownInc,view);
     renderPlanningBaselineAudit(exp,inc);
     window.BudgetFamilySinglePlan?.render(exp,inc,canDraft,planningBoardContext);
