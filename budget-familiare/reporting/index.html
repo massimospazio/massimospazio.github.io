@@ -2002,6 +2002,8 @@ body{font-size:16px;line-height:1.5}
 .bf-reliability-3{background:#fff6db;color:#806019;border-color:#ebd395}
 .bf-reliability-4{background:#fff0df;color:#99531d;border-color:#ecc39d}
 .bf-reliability-5{background:#fff0f1;color:#a82c46;border-color:#eab0ba}
+
+.bf-manual-reliability{display:inline-flex;align-items:center;margin-right:4px;vertical-align:middle}.bf-manual-reliability i{height:12px;width:12px;border-radius:50%;display:inline-block;border:1px solid #0002}.bf-confidence-editor{width:98px;max-width:98px;font-size:11px!important;padding:3px!important;min-height:25px!important}.bf-plain-delta{font-weight:700;display:block;white-space:nowrap}.bf-plain-delta small{font-size:11px;font-weight:400;color:#64748b;display:block}.bf-value-bar{display:block;height:5px;background:#73a4e5;border-radius:4px;margin-top:4px}.planning-value-cell{min-width:80px}
 </style>
 <style>
 .purchase-financing-detail{margin-top:4px;font-size:14px;line-height:1.5;font-weight:400;color:#425b7c;white-space:normal;min-width:200px}
@@ -2227,14 +2229,14 @@ body{font-size:16px;line-height:1.5}
         <div class="planning-board-toolbar-right">
           <div class="mode-toggle">
             <button class="btn compact" type="button" data-planning-level="L1_L2">L1 e L2</button>
-            <button class="btn ghost compact" type="button" data-planning-level="L1">Solo L1</button>
+            <button class="btn ghost compact" type="button" data-planning-level="L1">Solo L1</button><button class="btn ghost compact" type="button" data-baseline-mode="FLAT">Vista piatta</button><button class="btn ghost compact" type="button" data-baseline-mode="TREE">Gerarchica</button><select id="baselineSort" class="select" aria-label="Ordina Baseline"><option value="annual">Baseline €</option><option value="deltaAbs">Variazione €</option><option value="deltaPct">Variazione %</option><option value="confidence">Affidabilità</option><option value="l2_name">Nome L2</option></select>
           </div>
           <label class="small">Natura <select id="planningNatureFilter" class="select" style="min-height:34px;padding:5px 8px">
             <option value="ALL">Tutte</option>
             <optgroup label="Uscite"><option value="MANDATORY">O · Obbligatorie</option><option value="NECESSARY">N · Necessarie</option><option value="DISCRETIONARY">D · Discrezionali</option></optgroup>
             <optgroup label="Entrate"><option value="FIXED">F · Fisse</option><option value="PREDICTABLE">P · Prevedibili</option><option value="VARIABLE">V · Variabili</option></optgroup>
           </select></label>
-          <label id="planningBaselineReviewFilterWrap" class="small hidden">Revisione <select id="planningBaselineReviewFilter" class="select planning-filter-select"><option value="ALL">Tutte</option><option value="MISSING_METHOD">Metodo non esplicito</option><option value="ZERO_HISTORICAL">Zero con storico</option><option value="OVERRIDES">Con override mensile</option><option value="LOW_RELIABILITY">Affidabilità stimata/incerta</option></select></label>
+          <label id="planningBaselineReviewFilterWrap" class="small hidden">Revisione <select id="planningBaselineReviewFilter" class="select planning-filter-select"><option value="ALL">Tutte</option><option value="MISSING_METHOD">Metodo non esplicito</option><option value="ZERO_HISTORICAL">Zero con storico</option><option value="OVERRIDES">Con override mensile</option><option value="LOW_RELIABILITY">Non valutata / Stimata / Incerta</option></select></label>
           <label class="small">Previsione <select id="planningForecastFilter" class="select planning-filter-select">
             <option value="ALL">Tutti i tipi</option>
             <optgroup label="Livello">
@@ -2752,6 +2754,7 @@ let planningSimulationCategoryUnit="MONTH";
 let planningSimulationCategoryNature="DISCRETIONARY";
 const planningBoardExpandedL1=new Set();
 const planningBoardExpandedL2=new Set();
+let baselineViewMode="FLAT",baselineSortKey="annual",baselineSortDesc=true;
 let scenarioLoading=false;
 let scenarioActualRows=null;
 let scenarioActualCategories=[];
@@ -7418,7 +7421,7 @@ function planningNoteFilterMatch(row){
 }
 function planningValueHtml(value){
   const monthly=planningBoardDisplayUnit==="MONTH";
-  return '<div class="planning-value-cell"><strong title="'+esc(monthly?"Media mensile (totale diviso 12)":"Totale del periodo")+'">'+money(monthly?num(value)/12:value)+'</strong></div>';
+  return '<div class="planning-value-cell"><strong title="'+esc(monthly?"Media mensile (totale diviso 12)":"Totale del periodo")+'">'+money(monthly?num(value)/12:value)+'</strong>'+(planningBoardContext==="BASELINE"?'<span class="bf-value-bar" style="width:'+Math.max(0,Math.min(100,num(value)/Math.max(1,window.baselineDisplayMax||1)*100))+'%"></span>':'')+'</div>';
 }
 function planningL1NatureHtml(rows,direction){const d=planningDominantNature(rows,direction);if(!d.nature)return '<span class="planning-nature-badge unknown">?</span>';return '<span class="planning-nature-badge '+planningNatureClass(d.nature)+'" title="'+esc(planningNatureLabel(d.nature))+'">'+planningNatureShort(d.nature)+' '+d.pct.toLocaleString("it-IT",{maximumFractionDigits:0})+'%</span>'}
 
@@ -7586,7 +7589,33 @@ function planningDeltaHtml(deltaAbs,deltaPct,direction,comparison){
     '<i class="planning-delta-fill '+pos+' '+quality+'" style="width:'+width.toFixed(1)+'%"></i></div>'+
     '<div class="planning-delta-text"><strong class="'+quality+'">'+(rounded>0?"+":"")+rounded+'%</strong>'+figures+'</div></div>';
 }
+function baselineSortRows(rows){
+ return rows.slice().sort((a,b)=>{
+  const k=baselineSortKey;
+  const av=k==="confidence"?planningForecastReliability(a).level:a[k],bv=k==="confidence"?planningForecastReliability(b).level:b[k];
+  const compare=k==="l2_name"?String(av||"").localeCompare(String(bv||""),"it"):num(av)-num(bv);
+  return (baselineSortDesc?-1:1)*compare;
+ });
+}
+function planningFlatRows(direction,rows){
+ let all=rows.filter(planningForecastFilterMatch).filter(planningNoteFilterMatch).filter(planningBaselineReviewMatches);
+ if(planningBoardNatureFilter!=="ALL")all=all.filter(r=>planningNatureValue(r.meta,direction)===planningBoardNatureFilter);
+ if(planningBoardSearch.trim()){const q=planningBoardSearch.trim().toLowerCase();all=all.filter(r=>(r.l1_name+" "+r.l2_name).toLowerCase().includes(q))}
+ let html='<tr class="planning-section-label"><td colspan="8">'+(direction==="INCOME"?"Entrate":"Spese")+' · L2 ordinate</td></tr>';
+ baselineSortRows(all).forEach(r=>{
+  const key=direction+"|"+r.category_id,opened=planningBoardExpandedL2.has(key);
+  html+='<tr class="planning-l2-row"><td><div class="planning-category"><button class="planning-caret" type="button" data-planning-toggle-l2="'+esc(key)+'">'+(opened?"▾":"▸")+'</button><span class="name">'+esc(r.l2_name)+' <small style="color:#64748b">'+esc(r.l1_name)+'</small></span></div></td>'+
+  '<td>'+planningValueHtml(r.comparison)+'</td><td>'+planningValueHtml(r.annual)+'</td>'+
+  '<td><span class="bf-plain-delta">'+(r.deltaPct===null?'—':(r.deltaPct>0?'+':'')+Math.round(r.deltaPct)+'%')+' <small>'+money(r.deltaAbs)+'</small></span></td>'+
+  '<td>'+planningNatureBadgeHtml(r,direction)+'</td><td>'+planningMethodHtml(r)+'</td>'+
+  '<td><div class="planning-note">'+esc(r.meta?.rationale_note||"—")+'</div></td>'+
+  '<td>'+planningReliabilityHtml(r)+baselineReliabilityEditor(r.category_id)+'</td></tr>';
+  if(opened)html+=planningMonthPanelHtml(r);
+ });
+ return html;
+}
 function planningSectionHtml(direction,allRows){
+ if(planningBoardContext==="BASELINE"&&baselineViewMode==="FLAT")return planningFlatRows(direction,allRows);
   const q=planningBoardSearch.trim().toLocaleLowerCase("it"),groups=planningGroupRows(allRows);
   let html='<tr class="planning-section-label"><td colspan="8">'+(direction==="INCOME"?"Entrate":"Spese")+'</td></tr>';
   groups.forEach(function(g){
@@ -7594,7 +7623,7 @@ function planningSectionHtml(direction,allRows){
     let visibleRows=groupMatches?g.rows:g.rows.filter(function(r){return String(r.l2_name||"").toLocaleLowerCase("it").includes(q)});
     if(planningBoardNatureFilter!=="ALL")visibleRows=visibleRows.filter(function(r){return planningNatureValue(r.meta,direction)===planningBoardNatureFilter});
     visibleRows=visibleRows.filter(planningForecastFilterMatch).filter(planningNoteFilterMatch).filter(planningBaselineReviewMatches);
-    if(planningBoardContext==="BASELINE"&&planningBaselineReviewFilter==="LOW_RELIABILITY")visibleRows=visibleRows.filter(r=>planningForecastReliability(r).level>=4);
+    if(planningBoardContext==="BASELINE"&&planningBaselineReviewFilter==="LOW_RELIABILITY")visibleRows=visibleRows.filter(r=>[0,4,5].includes(planningForecastReliability(r).level));
     const draftPlan=(planningBoardContext==="PLAN"||planningBoardContext==="STRATEGY")&&(planningBoardContext==="STRATEGY"||!planningBoardData?.meta?.strategic_plan)&&!!window.BudgetFamilySinglePlan;
     if(planningBoardOnlyChanged)visibleRows=visibleRows.filter(r=>draftPlan?window.BudgetFamilySinglePlan.isChanged(r):planningBoardContext==="BASELINE"?planningBaselineNeedsReview(r).overrides:Math.abs(num(r.annual)-num(r.comparison))>=.5);
     if(!visibleRows.length)return;
@@ -7615,16 +7644,18 @@ function planningSectionHtml(direction,allRows){
       html+='<tr class="planning-l2-row">'+
         '<td class="planning-l2-name"><div class="planning-category"><button class="planning-caret" data-planning-toggle-l2="'+esc(l2Key)+'">'+(open?"▾":"▸")+'</button>'+categoryIconHtml(r.l2_name,direction==="INCOME"?"income":"expense",false)+'<span class="name">'+esc(r.l2_name)+'</span></div></td>'+
         '<td>'+planningValueHtml(r.comparison)+'</td><td>'+(draftPlan?window.BudgetFamilySinglePlan.inlineAmount(r):planningValueHtml(r.annual))+'</td>'+
-        '<td>'+planningDeltaHtml(r.deltaAbs,r.deltaPct,direction,r.comparison)+'</td>'+
-        '<td>'+planningNatureBadgeHtml(r,direction)+'</td><td>'+(planningBoardContext==="BASELINE"?planningReliabilityHtml(r)+planningMethodHtml(r):planningMethodHtml(r))+'</td>'+
+        '<td>'+(planningBoardContext==="BASELINE"?'<span class="bf-plain-delta">'+(r.deltaPct===null?'—':(r.deltaPct>0?'+':'')+Math.round(r.deltaPct)+'%')+' <small>'+money(r.deltaAbs)+'</small></span>':planningDeltaHtml(r.deltaAbs,r.deltaPct,direction,r.comparison))+'</td>'+
+        '<td>'+planningNatureBadgeHtml(r,direction)+'</td><td>'+planningMethodHtml(r)+'</td>'+
         '<td>'+(draftPlan?window.BudgetFamilySinglePlan.inlineNote(r):'<div class="planning-note" title="'+esc(note)+'">'+esc(note||"—")+'</div>')+'</td>'+
-        '<td><button class="planning-open-analysis" type="button" data-planning-open-analysis="'+esc(r.category_id)+'" data-planning-open-direction="'+direction+'" title="Apri la previsione originale in Analisi">›</button></td></tr>';
+        '<td>'+(planningBoardContext==="BASELINE"?planningReliabilityHtml(r)+baselineReliabilityEditor(r.category_id):'<button class="planning-open-analysis" type="button" data-planning-open-analysis="'+esc(r.category_id)+'" data-planning-open-direction="'+direction+'" title="Apri la previsione originale in Analisi">›</button>')+'</td></tr>';
       if(open)html+=planningMonthPanelHtml(r);
     });
   });
   return html;
 }
 function planningRenderFilterButtons(){
+ document.querySelectorAll("[data-baseline-mode]").forEach(b=>{b.classList.toggle("ghost",b.dataset.baselineMode!==baselineViewMode);b.classList.toggle("hidden",planningBoardContext!=="BASELINE")});
+ if($("baselineSort")){$("baselineSort").value=baselineSortKey;$("baselineSort").classList.toggle("hidden",planningBoardContext!=="BASELINE")}
   document.querySelectorAll('[data-planning-horizon="ROLLING_12"]').forEach(function(b){
     const strategy=planningBoardContext==="STRATEGY";
     b.disabled=false;
@@ -7657,34 +7688,40 @@ function planningBaselineNeedsReview(row){
   return {missingMethod:!explicit,zeroWithHistory:num(row.annual)<=.005&&num(row.comparison)>.005,overrides:num(row.overrideCount)>0};
 }
 /* Heuristic, not a contractual assurance or measured prediction accuracy. */
+const baselineManualReliability=new Map();
+let baselineReliabilityLoaded=false;
+const baselineReliabilityNames=["Non valutata","Certa","Alta","Consolidata","Stimata","Incerta"];
+const baselineReliabilityColors=["#94a3b8","#198660","#479a76","#b99630","#cd8540","#c45462"];
 function planningForecastReliability(row){
- const m=row.meta||{},method=String(m.forecast_method||""),scope=String(m.forecast_scope||"CATEGORY");
- const certainty=String(m.certainty_level||"").toUpperCase();
- const future=(row.months||[]).filter(x=>x.kind!=="actual");
- const manual=future.length?future.filter(x=>x.override).length/future.length:0;
- const label=String(row.l2_name||"").toLowerCase();
- let level=5,reason="Dati insufficienti per valutare la previsione.";
- if(scope==="COUNTERPARTIES"){level=4;reason="Metodi per controparte: da verificare individualmente."}
- else if(method==="FIXED"){level=2;reason="Importo fisso configurato; verificare che sia realmente contrattuale."}
- else if(method==="RANGE"){level=4;reason="Stima a intervallo, soggetta a incertezza."}
- else if(method==="AVG12"||method==="MEDIAN12"){level=3;reason="Previsione basata su dodici mesi di storico."}
- else if(method==="AVG6"||method==="SAME_MONTH_LAST_YEAR"){level=3;reason="Previsione basata su storico; verificare stabilità e stagionalità."}
- else if(method==="LAST_VALUE"){level=4;reason="Ultimo valore osservato: la continuità non è garantita."}
- else if(method==="ZERO"){level=4;reason="Evento considerato non ripetibile: scelta da confermare."}
- if(certainty==="KNOWN"||certainty==="CONFIRMED"||certainty==="CONTRACTUAL"){
-   level=method==="FIXED"?1:2;reason="Previsione dichiarata certa; verificare gli importi e le condizioni.";
- }
- if(/medic|sanitar|manutenzion|imprevist/.test(label)&&level<4&&certainty!=="KNOWN"&&certainty!=="CONFIRMED"&&certainty!=="CONTRACTUAL"){level=4;reason="Spesa variabile o occasionale: lo storico non garantisce il valore futuro."}
- if(manual>.34&&level<4){level=4;reason="Diversi override mensili richiedono verifica della regola."}
- if(!method&&scope!=="COUNTERPARTIES"){level=5;reason="Nessun metodo di previsione esplicitato."}
- const names={1:"Certa*",2:"Alta",3:"Consolidata",4:"Stimata",5:"Incerta"};
- const priority=Math.round(Math.max(0,num(row.annual))*[0,.02,.06,.15,.3,.5][level]);
- return {level:level,label:names[level],reason:reason,priority:priority};
+ const level=baselineManualReliability.get(String(row.category_id))||0;
+ return {level,label:baselineReliabilityNames[level],reason:level?"Valutazione assegnata manualmente.":"Affidabilità non ancora valutata."};
 }
 function planningReliabilityHtml(row){
  if(planningBoardContext!=="BASELINE")return "";
  const a=planningForecastReliability(row);
- return '<span class="bf-reliability bf-reliability-'+a.level+'" title="'+esc(a.reason)+' · Priorità indicativa: '+money(a.priority)+'">'+esc(a.label)+'</span>';
+ return '<span class="bf-manual-reliability" title="'+esc(a.label+" — "+a.reason)+'"><i style="background:'+baselineReliabilityColors[a.level]+'"></i></span>';
+}
+async function baselineReliabilityLoad(){
+ try{
+  const result=await rpc("dashboard_reporting_list_baseline_reliability_v1");
+  baselineManualReliability.clear();
+  Object.entries(result||{}).forEach(([id,level])=>{if(Number(level)>=1&&Number(level)<=5)baselineManualReliability.set(id,Number(level))});
+  baselineReliabilityLoaded=true;
+  if(planningBoardVisible)renderPlanningBoard();
+ }catch(e){msg($("planningBoardStatus"),"Affidabilità non caricata: "+String(e.message||e),true)}
+}
+async function baselineReliabilitySave(id,level,el){
+ if(el)el.disabled=true;
+ try{
+  await rpc("dashboard_reporting_set_baseline_reliability_v1",{p_category_id:id,p_level:level?Number(level):null});
+  if(level)baselineManualReliability.set(id,Number(level));else baselineManualReliability.delete(id);
+  renderPlanningBoard();
+ }catch(e){if(el)el.disabled=false;msg($("planningBoardStatus"),"Errore salvataggio affidabilità: "+String(e.message||e),true)}
+}
+function baselineReliabilityEditor(id){
+ const level=baselineManualReliability.get(String(id))||0;
+ return '<select class="select bf-confidence-editor" data-baseline-reliability="'+esc(id)+'" title="Affidabilità previsiva: assegnazione esclusivamente manuale">'+
+ baselineReliabilityNames.map((label,i)=>'<option value="'+i+'"'+(i===level?' selected':'')+'>'+esc(label)+'</option>').join("")+'</select>';
 }
 function planningBaselineAudit(rows){
   const a=(rows||[]).map(planningBaselineNeedsReview);
@@ -7696,7 +7733,7 @@ function planningBaselineReviewMatches(row){
   return planningBaselineReviewFilter==="MISSING_METHOD"?m.missingMethod:
     planningBaselineReviewFilter==="ZERO_HISTORICAL"?m.zeroWithHistory:
     planningBaselineReviewFilter==="OVERRIDES"?m.overrides:
-    planningBaselineReviewFilter==="LOW_RELIABILITY"?planningForecastReliability(row).level>=4:true;
+    planningBaselineReviewFilter==="LOW_RELIABILITY"?([4,5].includes(planningForecastReliability(row).level)||planningForecastReliability(row).level===0):true;
 }
 function renderPlanningBaselineAudit(exp,inc){
   const box=$("planningBaselineReview");if(!box)return;
@@ -7706,13 +7743,13 @@ function renderPlanningBaselineAudit(exp,inc){
   if(!baseline){box.innerHTML="";return}
   const r=planningBaselineAudit(exp.concat(inc));
   const all=exp.concat(inc),future=all.reduce((s,x)=>s+(x.months||[]).filter(m=>m.kind!=="actual").reduce((a,m)=>a+num(m.futureAmount),0),0);
-  const reliable=all.reduce((s,x)=>s+(planningForecastReliability(x).level<=3?(x.months||[]).filter(m=>m.kind!=="actual").reduce((a,m)=>a+num(m.futureAmount),0):0),0);
-  const risky=all.filter(x=>planningForecastReliability(x).level>=4).length;
+  const reliable=all.reduce((s,x)=>s+((planningForecastReliability(x).level>=1&&planningForecastReliability(x).level<=3)?(x.months||[]).filter(m=>m.kind!=="actual").reduce((a,m)=>a+num(m.futureAmount),0):0),0);
+  const risky=all.filter(x=>[0,4,5].includes(planningForecastReliability(x).level)).length;
   box.innerHTML='<strong>Revisione baseline · '+r.total+' voci L2</strong>'+
     '<span><b class="review-count">'+r.missingMethod+'</b> senza metodo esplicito</span>'+
     '<span><b class="review-count">'+r.zeroWithHistory+'</b> con previsione zero ma storico positivo</span>'+
     '<span><b>'+r.overrides+'</b> con override mensile</span>'+
-    '<span title="Quota degli importi futuri stimati con livello da Certa a Consolidata; non è una probabilità di accuratezza"><b>'+ (future>0?Math.round(100*reliable/future):0) +'%</b> copertura affidabilità ≥ consolidata</span>'+ '<span><b>'+risky+'</b> voci da rivedere (stimate/incerte)</span>'+
+    '<span title="Quota degli importi futuri stimati con livello da Certa a Consolidata; non è una probabilità di accuratezza"><b>'+ (future>0?Math.round(100*reliable/future):0) +'%</b> copertura affidabilità ≥ consolidata</span>'+ '<span><b>'+risky+'</b> voci non valutate o a bassa affidabilità</span>'+
     '<span>Indicatori di controllo, non attestazioni di approvazione.</span>';
 }
 
@@ -8070,6 +8107,7 @@ function renderPlanningBoard(){
       balance=incTotals.planned-expTotals.planned,def=planningDefinition(planningBoardData.expense),
       year=String(planningBoardData.expense.current_year_start||"").slice(0,4)||String(new Date().getFullYear()),
       rolling=planningBoardHorizon==="ROLLING_12";
+    window.baselineDisplayMax=Math.max(1,...exp.concat(inc).map(r=>num(r.annual)));
     const view=planningBoardPresentation(planningBoardContext,planningBoardHorizon,year,def.comparisonLabel);
     if(approved&&approved.meta?.strategic_plan?.kind==="STRATEGIC"){
       view.title="Tabellone · Piano approvato V"+approved.revision;
@@ -8186,6 +8224,7 @@ async function loadPlanningBoard(force){
   finally{planningBoardLoading=false}
 }
 function showPlanningBoardView(context){
+ if(context==="BASELINE"&&!baselineReliabilityLoaded)baselineReliabilityLoad();
   planningBoardContext=context==="BASELINE"?"BASELINE":context==="STRATEGY"?"STRATEGY":"PLAN";
 
   planningBoardVisible=true;planningSimulatorVisible=false;scenarioVisible=false;hideProcessRoadmap();
@@ -8309,7 +8348,12 @@ document.querySelectorAll("[data-process-roadmap]").forEach(function(b){b.onclic
 document.querySelectorAll("[data-process-feature]").forEach(function(b){b.onclick=function(){showProcessRoadmap(b.dataset.featurePhase,b.dataset.processFeature)}});
 $("processRoadmapFeatures")?.addEventListener("click",function(e){const b=e.target.closest("[data-roadmap-feature]");if(b)showProcessRoadmap(b.dataset.roadmapPhase,b.dataset.roadmapFeature)});
 $("planningBoardRefresh").onclick=function(){planningBoardData=null;loadPlanningBoard(true)};
+$("planningBoardView").addEventListener("change",function(e){
+ const level=e.target.closest("[data-baseline-reliability]");if(level){baselineReliabilitySave(level.dataset.baselineReliability,level.value,level);return}
+ if(e.target.id==="baselineSort"){baselineSortKey=e.target.value;renderPlanningBoard();return}
+});
 $("planningBoardView").addEventListener("click",function(e){
+ const mode=e.target.closest("[data-baseline-mode]");if(mode){baselineViewMode=mode.dataset.baselineMode;renderPlanningBoard();return}
   const horizon=e.target.closest("[data-planning-horizon]");
   if(horizon){planningBoardHorizon=horizon.dataset.planningHorizon||"CALENDAR";renderPlanningBoard();return}
   const filter=e.target.closest("[data-planning-filter]");
