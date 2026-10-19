@@ -57,3 +57,19 @@
 .bf-strategy-presets>span{color:#586d83;font-size:12px;font-weight:650;margin-right:5px}
 .bf-strategy-intro{font-size:13px;color:#3d5069}
 @media(max-width:760px){.bf-strategy-goals{grid-template-columns:repeat(2,minmax(0,1fr))}.bf-strategy-result{grid-column:1 / -1}}
+
+/* V73.30.8 · compact strategy / scenario matrix */
+.bf-strategy-fund,.bf-strategy-matrix{border:1px solid #dce5f0;border-radius:8px;margin-top:7px;background:#fcfdff}
+.bf-strategy-fund>summary,.bf-strategy-matrix>summary{padding:8px 11px;font-weight:750;color:#23476d;cursor:pointer}
+.bf-strategy-fund .bf-strategy-controls{border:0!important;margin:0!important;padding:8px!important}
+.bf-strategy-presets{margin-top:8px}
+.bf-strategy-matrix{padding-bottom:8px}
+.bf-strategy-matrix>p{padding:0 10px}
+.bf-strategy-matrix-scroll{overflow-x:auto;padding:0 8px}
+.bf-strategy-matrix table{width:100%;min-width:560px;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.bf-strategy-matrix th{background:#eaf1fa;color:#24446d;font-size:12px;padding:7px 8px;text-align:center;border:1px solid #e0e8f2}
+.bf-strategy-matrix td{padding:3px;border:1px solid #e0e8f2}
+.bf-strategy-matrix td button{width:100%;padding:8px 5px;border:0;border-radius:5px;background:#f3f7fc;font-weight:750;font-size:13px;cursor:pointer}
+.bf-strategy-matrix td button.positive{background:#eaf7f0;color:#166c43}
+.bf-strategy-matrix td button.negative{background:#fff0ef;color:#ac2c34}
+.bf-strategy-matrix td button:hover{outline:2px solid #3579e8}
