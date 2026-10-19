@@ -7629,7 +7629,7 @@ function planningSectionHtml(direction,allRows){
       '<td>'+planningDeltaHtml(deltaAbs,deltaPct,direction,comparison)+'</td>'+
       '<td>'+planningL1NatureHtml(visibleRows,direction)+'</td><td>—</td><td>—</td><td></td></tr>';
     if(!expanded)return;
-    visibleRows.slice().sort(function(a,b){return String(a.l2_name).localeCompare(String(b.l2_name),"it")}).forEach(function(r){
+    (planningBoardContext==="BASELINE"?baselineSortRows(visibleRows):visibleRows.slice().sort(function(a,b){return String(a.l2_name).localeCompare(String(b.l2_name),"it")})).forEach(function(r){
       const l2Key=direction+"|"+r.category_id,open=planningBoardExpandedL2.has(l2Key),
       baselineNote=r.meta&&r.meta.rationale_note||"",
       planNote=planningBoardContext==="PLAN"&&planningBoardData?.meta?.strategic_plan?.notes?.[direction+":"+String(r.category_id)]||"",
