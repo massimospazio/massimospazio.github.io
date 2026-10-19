@@ -4,15 +4,27 @@
 "use strict";
 const state={year:"",horizon:"CALENDAR",targets:{},notes:{},originals:{},bonus:"BASE",targetUnit:"TOTAL",showZero:true,onlyChanged:false,reserve:0,project:0};
 const drafts={};
+const savedDrafts={};
+let justSaved=false;
 const STORAGE_KEY="budget-family-scenario-drafts-v1";
 let saveError=false;
 function snapshot(){return {targets:{...state.targets},notes:{...state.notes},reserve:state.reserve,project:state.project,bonus:state.bonus,targetUnit:state.targetUnit}}
 function persist(){
  if(!state.year)return false;
- drafts[state.year+"|"+state.horizon]=snapshot();
+ drafts[state.year+"|"+state.horizon]=snapshot();justSaved=false;return true;
+}
+function isDirty(){
+ if(!state.year)return false;
+ const k=state.year+"|"+state.horizon;
+ const saved=savedDrafts[k]||{targets:{},notes:{},reserve:0,project:0,bonus:"BASE",targetUnit:"TOTAL"};
+ return JSON.stringify(snapshot())!==JSON.stringify(saved);
+}
+function saveDraft(){
+ persist();
  try{
-  root.localStorage?.setItem(STORAGE_KEY,JSON.stringify({format:1,drafts}));
-  saveError=false;return true;
+  root.localStorage.setItem(STORAGE_KEY,JSON.stringify({format:1,drafts}));
+  savedDrafts[state.year+"|"+state.horizon]=JSON.parse(JSON.stringify(snapshot()));
+  saveError=false;justSaved=true;return true;
  }catch(e){saveError=true;return false}
 }
 function restore(){
@@ -26,6 +38,7 @@ function restore(){
     if(/^(EXPENSE|INCOME):[a-f0-9-]{36}$/i.test(id)&&Number.isFinite(Number(amount))&&Number(amount)>=0)targets[id]=Number(amount);
    }
    drafts[k]={targets,notes:v.notes||{},reserve:Number(v.reserve)||0,project:Number(v.project)||0,bonus:["LOW","BASE","HIGH"].includes(v.bonus)?v.bonus:"BASE",targetUnit:v.targetUnit==="MONTH"?"MONTH":"TOTAL"};
+   savedDrafts[k]=JSON.parse(JSON.stringify(drafts[k]));
   }
  }catch(e){saveError=true}
 }
@@ -102,7 +115,7 @@ async function approve(){
    p_year:Number(state.year),p_note:reason.trim(),p_targets:state.targets,p_notes:state.notes
   });
   if(!result||!result.plan)throw new Error("La risposta non contiene il Piano approvato");
-  state.targets={};state.notes={};persist();
+  state.targets={};state.notes={};saveDraft();
   await root.BudgetFamilyPlan?.reload?.();
   root.renderPlanningBoard?.();
   root.alert("Piano approvato come versione V"+result.plan.revision+". Gli importi e le note sono congelati.");
@@ -124,7 +137,7 @@ function render(originalExp,originalInc,isPlan,context){
  '<option value="LOW"'+(state.bonus==="LOW"?' selected':'')+'>Prudente</option>'+
  '<option value="BASE"'+(state.bonus==="BASE"?' selected':'')+'>Base</option>'+
  '<option value="HIGH"'+(state.bonus==="HIGH"?' selected':'')+'>Favorevole</option></select></label>'+
- '<label>Target L2 <select data-bf-target-unit><option value="TOTAL"'+(state.targetUnit==="TOTAL"?" selected":"")+'>Totale periodo</option><option value="MONTH"'+(state.targetUnit==="MONTH"?" selected":"")+'>Media mensile</option></select></label>'+
+
  '<button type="button" class="btn ghost compact" data-bf-draft-reset>Ripristina target</button>'+
  (strategy?'<button type="button" class="btn compact" data-bf-draft-to-plan>Prosegui al Piano →</button>':
  '<button type="button" class="btn compact" '+(state.horizon==='ROLLING_12'?'disabled title="Approvazione rolling in sviluppo" ':'')+'data-bf-draft-approve>Approva Piano</button>')+'</div></div>';
@@ -163,13 +176,13 @@ function render(originalExp,originalInc,isPlan,context){
     return '<td><button type="button" class="'+(outcome>=0?'positive':'negative')+'" data-bf-matrix-n="'+n+'" data-bf-matrix-d="'+d+'" title="Necessarie '+n+'%, Discrezionali '+d+'%">'+money(outcome)+'</button></td>';
    }).join('')+'</tr>').join('')+'</tbody></table></div></details>';
  }
- html+='<div class="bf-draft-save-status" role="status">'+(saveError?'⚠ Salvataggio automatico non disponibile in questo browser':'✓ Bozza salvata automaticamente su questo dispositivo')+' · <button class="btn ghost compact" type="button" data-bf-draft-save>Salva bozza</button></div>';
+ html+='<div class="bf-draft-save-status" role="status">'+(saveError?'⚠ Salvataggio non riuscito':isDirty()?'● Modifiche da salvare':justSaved?'✓ Bozza salvata':'Bozza salvata')+' · <button class="btn compact '+(isDirty()?'bf-draft-pending':'ghost')+'" type="button" data-bf-draft-save '+(isDirty()?'':'disabled')+'>Salva bozza</button></div>';
  wrapper.innerHTML=html;
 }
 function inlineAmount(row){
  const k=key(row),base=state.originals[k]||row,amount=state.targets[k]===undefined?value(base.annual):Math.max(locked(base),value(state.targets[k]));
- const monthly=state.targetUnit==="MONTH";
- return '<div class="bf-plan-edit-cell"><input type="text" inputmode="numeric" pattern="[0-9.]*" '+(monthly?'data-bf-draft-month':'data-bf-draft-total')+'="'+escape(k)+'" value="'+integer(monthly?amount/12:amount)+'" aria-label="'+(monthly?'Media mensile':'Totale annuo')+' '+escape(row.l2_name)+'" title="'+(monthly?'Media mese (totale annuo diviso 12)':'Budget annuale')+'; già speso '+money(locked(base))+'"><small>'+(monthly?'Totale '+money(amount):'Ø '+money(amount/12)+'/mese')+'</small></div>';
+ const monthly=root.document.getElementById("planningBoardDisplayUnit")?.value==="MONTH";
+ return '<div class="bf-plan-edit-cell"><input type="text" inputmode="numeric" pattern="[0-9.]*" '+(monthly?'data-bf-draft-month':'data-bf-draft-total')+'="'+escape(k)+'" value="'+integer(monthly?amount/12:amount)+'" aria-label="'+(monthly?'Media mensile':'Totale annuo')+' '+escape(row.l2_name)+'" title="'+(monthly?'Media mese (totale annuo diviso 12)':'Budget annuale')+'; già speso '+money(locked(base))+'"></div>';
 }
 function inlineNote(row){
  const k=key(row),note=state.notes[k]||"",baselineNote=row.meta?.rationale_note||"";
@@ -233,7 +246,7 @@ function init(){
   }
   if(e.target.closest("[data-bf-draft-to-plan]")){root.showPlanningBoardView?.("PLAN");return}
   if(e.target.closest("[data-bf-draft-approve]")){approve();return}
-  if(e.target.closest("[data-bf-draft-save]")){persist();root.renderPlanningBoard?.();return}
+  if(e.target.closest("[data-bf-draft-save]")){saveDraft();root.renderPlanningBoard?.();return}
   if(e.target.closest("[data-bf-draft-reset]")){state.targets={};state.notes={};persist();root.renderPlanningBoard?.()}
  });
 }
