@@ -8,15 +8,16 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=73.30.10.46-20261020"></script>
-<script src="../shared/app-config.js?v=73.30.10.46-20261020"></script>
-<script src="../shared/contextual-help.js?v=73.30.10.46-20261020" defer></script>
+<script src="../shared/supabase-client.js?v=73.30.10.47-20261020"></script>
+<script src="../shared/app-config.js?v=73.30.10.47-20261020"></script>
+<script src="../shared/contextual-help.js?v=73.30.10.47-20261020" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<link rel="stylesheet" href="../shared/health-reserve.css?v=73.30.10.46-20261020">
-<link rel="stylesheet" href="../shared/approved-plan.css?v=73.30.10.46-20261020">
-<link rel="stylesheet" href="../shared/scenario-strategy.css?v=73.30.10.46-20261020">
-<link rel="stylesheet" href="../shared/scenario-uncertainty.css?v=73.30.10.46-20261020">
-<link rel="stylesheet" href="../shared/single-plan-board.css?v=73.30.10.46-20261020">
+<link rel="stylesheet" href="../shared/health-reserve.css?v=73.30.10.47-20261020">
+<link rel="stylesheet" href="../shared/approved-plan.css?v=73.30.10.47-20261020">
+<link rel="stylesheet" href="../shared/scenario-strategy.css?v=73.30.10.47-20261020">
+<link rel="stylesheet" href="../shared/scenario-uncertainty.css?v=73.30.10.47-20261020">
+<link rel="stylesheet" href="../shared/baseline-uncertainty.css?v=73.30.10.47-20261020">
+<link rel="stylesheet" href="../shared/single-plan-board.css?v=73.30.10.47-20261020">
 <style>
 :root{--bg:#f4f6fa;--card:#fff;--text:#17263e;--muted:#58677d;--line:#dce4ee;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 4px 18px rgba(15,23,42,.045);--sc-blue:#2563eb;--sc-blue-soft:#eff6ff;--sc-green:#0ea87a;--sc-red:#ef5b73;--sc-purple:#7658e6;--sc-ink:#17263e}
 *{box-sizing:border-box}
@@ -2784,9 +2785,10 @@ body{font-size:16px;line-height:1.5}
   </div>
 </div>
 
-<script src="../shared/scenario-strategy.js?v=73.30.10.46-20261020"></script>
-<script src="../shared/scenario-uncertainty.js?v=73.30.10.46-20261020"></script>
-<script src="../shared/single-plan-board.js?v=73.30.10.46-20261020"></script>
+<script src="../shared/scenario-strategy.js?v=73.30.10.47-20261020"></script>
+<script src="../shared/scenario-uncertainty.js?v=73.30.10.47-20261020"></script>
+<script src="../shared/baseline-uncertainty.js?v=73.30.10.47-20261020"></script>
+<script src="../shared/single-plan-board.js?v=73.30.10.47-20261020"></script>
 <script>
 const sb=window.appSupabase;
 if(typeof Chart!=="undefined"){
@@ -4592,12 +4594,21 @@ function forecastCertaintyMeta(level){
 }
 function forecastRationaleHtml(d){
  const id=analysisSelectedCategory,manual=baselineReliabilityEditor(id);
+ const direction=analysisCurrentDirection();
+ const rows=planningBoardData?.[direction==="INCOME"?"income":"expense"]?
+  planningBuildRows(planningBoardData[direction==="INCOME"?"income":"expense"],direction,planningBoardHorizon):[];
+ const r=rows.find(x=>String(x.category_id)===String(id));
+ const uncertainty=window.BudgetFamilyBaselineUncertainty?.editorHtml({
+  direction,categoryId:id,months:r?.months||[],
+  label:r?.l2_name||analysisDetailData?.name||""
+ })||"";
  return '<div class="forecast-semantics forecast">'+
  '<div class="forecast-field forecast-role-field"><label>Ruolo del valore</label><div class="forecast-static-value">Baseline</div></div>'+
  '<div class="forecast-field"><label title="Affidabilità della stima, salvata indipendentemente dalla regola.">Affidabilità previsiva ⓘ</label>'+manual+
  '<div class="forecast-plan-type-note">Da Non valutata a Certa/Alta/Consolidata/Stimata/Incerta. Salvataggio immediato della sola affidabilità, indipendente dalla regola.</div></div>'+
  '<div class="forecast-field forecast-rationale"><label>Motivazione (opzionale)</label>'+
  '<textarea id="forecastRationale" class="input" maxlength="1000" placeholder="Motivo della previsione">'+esc(d?.rationale_note||"")+'</textarea></div>'+
+ '<div class="forecast-field" style="grid-column:1/-1">'+uncertainty+'</div>'+
  '</div>';
 }
 function planInputValue(v){
@@ -7838,6 +7849,7 @@ function quickBaselineHtml(row){
  (range?'<label>Minimo €<input type="number" min="0" data-qbe-field="low" value="'+esc(ed.low??0)+'"></label><label>Massimo €<input type="number" min="0" data-qbe-field="high" value="'+esc(ed.high??0)+'"></label>':'')+
  '<label class="qbe-note">Nota / motivazione<textarea rows="2" data-qbe-field="note">'+esc(ed.note)+'</textarea></label>'+
  '<button class="btn compact" type="button" data-qbe-save '+(!ed.dirty?'disabled':'style="background:#215de8;color:white;border-color:#215de8"')+'>'+(quickBaselineBusy.has(k)?'Salvataggio…':'Salva modifiche')+'</button></div>'+
+ (window.BudgetFamilyBaselineUncertainty?.editorHtml({direction:row.direction,categoryId:row.category_id,months:row.months,label:row.l2_name})||"")+
  (methodChange&&overrides?'<div class="qbe-warning">Il cambio metodo azzererà '+overrides+' override salvati: conferma richiesta al salvataggio.</div>':'')+
  '<div class="qbe-month-title">Periodo selezionato · valori modificabili solo per i mesi di previsione'+(ed.dirty?' · Modifiche non salvate':'')+'</div>'+
  '<div class="qbe-months">'+boxes+'</div>'+
@@ -8678,6 +8690,10 @@ async function loadPlanningBoard(force){
 }
 function showPlanningBoardView(context){
  if(!baselineReliabilityLoaded)baselineReliabilityLoad();
+ window.BudgetFamilyBaselineUncertainty?.load(rpc,()=>{
+  if(planningBoardVisible)renderPlanningBoard();
+  if(planningBoardContext==="BASELINE"&&analysisForecastEditor)renderForecastEditor();
+ });
   planningBoardContext=context==="BASELINE"?"BASELINE":context==="STRATEGY"?"STRATEGY":"PLAN";
 
   planningBoardVisible=true;planningSimulatorVisible=false;scenarioVisible=false;hideProcessRoadmap();
@@ -9259,8 +9275,8 @@ $("rpcDiagnosticsModal")?.addEventListener("click",function(e){if(e.target===$("
 document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!$("rpcDiagnosticsModal")?.classList.contains("hidden"))closeRpcDiagnostics()});
 init();
 </script>
-<script src="../shared/health-reserve.js?v=73.30.10.46-20261020"></script>
-<script src="../shared/approved-plan.js?v=73.30.10.46-20261020"></script>
+<script src="../shared/health-reserve.js?v=73.30.10.47-20261020"></script>
+<script src="../shared/approved-plan.js?v=73.30.10.47-20261020"></script>
 </body>
 </html>
 

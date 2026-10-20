@@ -1,0 +1,20 @@
+/* V73.30.10.47 – Baseline uncertainty independent of forecast method. */
+.bf-baseline-range{box-sizing:border-box;margin:10px 0;padding:0 12px;border:1px solid #b9d3f1;border-radius:9px;background:#fafdff;color:#243c5b;font-size:13px;max-width:100%}
+.bf-baseline-range>summary{display:list-item;cursor:pointer;font-weight:730;padding:11px 2px}
+.bf-baseline-range-indicator{margin-left:8px;font-weight:550;color:#537295;font-size:12px}
+.bf-baseline-range-body{border-top:1px solid #deebf6;padding:10px 0}
+.bf-baseline-range-help,.bf-baseline-range-body small{font-size:12px;color:#5c718c;line-height:1.5;display:block;margin:4px 0 8px}
+.bf-baseline-range-pcts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;max-width:620px}
+.bf-baseline-range label{font-size:12px;color:#385472;font-weight:600}
+.bf-baseline-range input,.bf-baseline-range select{display:block;min-width:0;box-sizing:border-box;width:100%;padding:8px 7px;margin-top:5px;border:1px solid #b5c9e0;border-radius:6px;color:#193959;background:#fff;font:inherit}
+.bf-baseline-range-exceptions{border-top:1px solid #e0eaf5;padding-top:8px;margin-top:10px}
+.bf-baseline-range-exceptions>summary{cursor:pointer;font-weight:700;color:#2d558a;padding:6px 0}
+.bf-baseline-range-exception{display:flex;gap:10px;align-items:center;padding:7px;border-bottom:1px solid #e7edf4;flex-wrap:wrap}
+.bf-baseline-range-exception>strong{font-size:12px;flex:1;min-width:130px}
+.bf-baseline-range-add{display:flex;flex-wrap:wrap;align-items:flex-end;gap:8px;padding:10px 0}
+.bf-baseline-range-add label{flex:1 1 115px;max-width:190px}
+.bf-baseline-range-add button{white-space:nowrap}
+.bf-baseline-range-actions{display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap;margin-top:10px}
+.bf-baseline-range-actions>span{flex:1;min-width:120px;font-size:12px}
+.bf-baseline-range-error{color:#b91c1c!important}
+@media(max-width:650px){.bf-baseline-range-pcts{grid-template-columns:1fr}.bf-baseline-range-add label{max-width:none}}
