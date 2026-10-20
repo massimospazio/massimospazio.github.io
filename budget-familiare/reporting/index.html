@@ -8,16 +8,16 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=73.30.10.51-20261020"></script>
-<script src="../shared/app-config.js?v=73.30.10.51-20261020"></script>
-<script src="../shared/contextual-help.js?v=73.30.10.51-20261020" defer></script>
+<script src="../shared/supabase-client.js?v=73.30.10.52-20261020"></script>
+<script src="../shared/app-config.js?v=73.30.10.52-20261020"></script>
+<script src="../shared/contextual-help.js?v=73.30.10.52-20261020" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<link rel="stylesheet" href="../shared/health-reserve.css?v=73.30.10.51-20261020">
-<link rel="stylesheet" href="../shared/approved-plan.css?v=73.30.10.51-20261020">
-<link rel="stylesheet" href="../shared/scenario-strategy.css?v=73.30.10.51-20261020">
-<link rel="stylesheet" href="../shared/scenario-uncertainty.css?v=73.30.10.51-20261020">
-<link rel="stylesheet" href="../shared/baseline-uncertainty.css?v=73.30.10.51-20261020">
-<link rel="stylesheet" href="../shared/single-plan-board.css?v=73.30.10.51-20261020">
+<link rel="stylesheet" href="../shared/health-reserve.css?v=73.30.10.52-20261020">
+<link rel="stylesheet" href="../shared/approved-plan.css?v=73.30.10.52-20261020">
+<link rel="stylesheet" href="../shared/scenario-strategy.css?v=73.30.10.52-20261020">
+<link rel="stylesheet" href="../shared/scenario-uncertainty.css?v=73.30.10.52-20261020">
+<link rel="stylesheet" href="../shared/baseline-uncertainty.css?v=73.30.10.52-20261020">
+<link rel="stylesheet" href="../shared/single-plan-board.css?v=73.30.10.52-20261020">
 <style>
 :root{--bg:#f4f6fa;--card:#fff;--text:#17263e;--muted:#58677d;--line:#dce4ee;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 4px 18px rgba(15,23,42,.045);--sc-blue:#2563eb;--sc-blue-soft:#eff6ff;--sc-green:#0ea87a;--sc-red:#ef5b73;--sc-purple:#7658e6;--sc-ink:#17263e}
 *{box-sizing:border-box}
@@ -2805,10 +2805,10 @@ body{font-size:16px;line-height:1.5}
   </div>
 </div>
 
-<script src="../shared/scenario-strategy.js?v=73.30.10.51-20261020"></script>
-<script src="../shared/scenario-uncertainty.js?v=73.30.10.51-20261020"></script>
-<script src="../shared/baseline-uncertainty.js?v=73.30.10.51-20261020"></script>
-<script src="../shared/single-plan-board.js?v=73.30.10.51-20261020"></script>
+<script src="../shared/scenario-strategy.js?v=73.30.10.52-20261020"></script>
+<script src="../shared/scenario-uncertainty.js?v=73.30.10.52-20261020"></script>
+<script src="../shared/baseline-uncertainty.js?v=73.30.10.52-20261020"></script>
+<script src="../shared/single-plan-board.js?v=73.30.10.52-20261020"></script>
 <script>
 const sb=window.appSupabase;
 if(typeof Chart!=="undefined"){
@@ -4387,9 +4387,12 @@ function forecastFrequencyOptions(v){
     ["EVERY_2_MONTHS","Ogni 2 mesi"],
     ["QUARTERLY","Trimestrale"],
     ["SEMIANNUAL","Semestrale"],
-    ["ANNUAL","Annuale"],
-    ["MONTHS","Mesi specifici"]
+    ["ANNUAL","Annuale"]
   ];
+  // Le vecchie ricorrenze per mese dell'anno restano leggibili e preservate.
+  // Le nuove selezioni di mesi avvengono esclusivamente nel calendario inferiore,
+  // tramite override per anno/mese, senza generare automaticamente una ricorrenza annuale.
+  if(base==="MONTHS")opts.push(["MONTHS","Mesi specifici (regola precedente)"]);
   return opts.map(function(o){return '<option value="'+o[0]+'"'+(base===o[0]?" selected":"")+'>'+o[1]+'</option>'}).join("");
 }
 function forecastMonthsFromPattern(v){
@@ -4516,7 +4519,7 @@ function forecastFrequencyExplanation(d){
   if(d.frequency==="ANNUAL")return "L’importo viene applicato ogni 12 mesi, mantenendo la cadenza rispetto all’ultima occorrenza.";
   if(d.frequency==="MONTHS"){
     const names=["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"],sel=(d.specific_months||[]).map(function(m){return names[m-1]}).filter(Boolean);
-    return sel.length?"L’importo viene applicato solo nei mesi selezionati: "+sel.join(", ")+".":"Seleziona almeno un mese in cui applicare la previsione.";
+    return sel.length?"Regola annuale preesistente: "+sel.join(", ")+". Per cambiare i valori del periodo usa esclusivamente i mesi del calendario sotto; la vecchia ricorrenza annuale resta invariata.":"La precedente regola per mesi non ha occorrenze: imposta direttamente i valori del periodo nel calendario sotto.";
   }
   return "L’importo viene applicato ogni mese.";
 }
@@ -4576,12 +4579,12 @@ function forecastControlsHtml(d){
   }
   const fixed=d.method==="FIXED"?'<div class="forecast-field"><label>Importo previsto €</label><input id="forecastFixedAmount" class="input" type="number" min="0" step="1" value="'+esc(d.fixed_amount==null?"":d.fixed_amount)+'" /></div>':"";
   const range=d.method==="RANGE"?'<div class="forecast-field"><label>Intervallo €</label><div class="forecast-range-fields"><input id="forecastRangeMin" class="input" type="number" min="0" step="1" placeholder="Min" value="'+esc(d.range_min==null?"":d.range_min)+'" /><input id="forecastRangeMax" class="input" type="number" min="0" step="1" placeholder="Max" value="'+esc(d.range_max==null?"":d.range_max)+'" /></div></div>':"";
-  let months="";
-  if(d.method!=="SAME_MONTH_LAST_YEAR"&&d.frequency==="MONTHS"){
-    const names=["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
-    months='<div class="forecast-field" style="grid-column:1/-1"><label>Mesi previsti</label><div class="forecast-months">'+names.map(function(n,i){const m=i+1;return '<label class="forecast-month-check"><input type="checkbox" data-forecast-month="'+m+'"'+((d.specific_months||[]).includes(m)?" checked":"")+' />'+n+'</label>'}).join("")+'</div></div>';
-  }
-  return method+frequency+variation+fixed+range+months;
+  // Un solo calendario operativo: quello con importi per mese/anno qui sotto.
+  // Le selezioni generiche Gen-Dic duplicate non sono più presentate.
+  const legacyMonths=d.frequency==="MONTHS"
+    ?'<div class="forecast-field" style="grid-column:1/-1"><div class="forecast-type-note">Regola annuale precedente mantenuta per compatibilità. I valori di questo periodo si modificano unicamente nel calendario in basso; gli anni futuri continueranno a seguire la regola storica finché non la cambierai.</div></div>'
+    :'';
+  return method+frequency+variation+fixed+range+legacyMonths;
 }
 function forecastDraftRuleSignature(d){
   if(!d)return "";
@@ -4665,7 +4668,7 @@ function integratedMonthlyPlanHtml(){
   }).join("");
   const title=manualMode?'Baseline manuale L2 · mese in corso + prossimi 11 mesi':'Baseline mensile L2 · mese in corso + prossimi 11 mesi';
   const desc=manualMode
-    ?'Il primo valore è il piano totale del mese in corso; il reale già registrato resta separato. Gli altri mesi seguono lo standard della regola salvo modifiche.'
+    ?'Modifica direttamente qui il mese desiderato, senza selezionarlo anche sopra. Il primo valore è il piano totale del mese corrente; il reale resta separato. Gli altri mesi seguono la regola, salvo modifica.'
     :'Il primo valore è il piano totale del mese in corso. Il reale già registrato non viene sommato di nuovo; se supera il piano, la proiezione non può scendere sotto il reale.';
   const changedChip=changed?'<span class="analysis-plan-summary-chip">'+changed+' '+(manualMode?'mesi modificati':'override')+'</span>':"";
   const warning=dirty?'<div class="analysis-plan-unsaved"><strong>Regola modificata ma non ancora salvata.</strong> Il piano sotto usa ancora l’ultima regola salvata. Salva la previsione per ricalcolarlo e abilitarne la modifica.</div>':"";
@@ -9289,17 +9292,7 @@ $("analysisForecastPanel").addEventListener("change",async function(e){
   }
   if(e.target.id==="forecastFrequency"){
     d.frequency=e.target.value;
-    if(d.frequency==="MONTHS"&&!(d.specific_months||[]).length){
-      const last=forecastLastActiveMonth(),md=monthDate(last);
-      d.specific_months=md?[md.getMonth()+1]:[];
-    }
     renderForecastEditor();return;
-  }
-  const monthCheck=e.target.closest("[data-forecast-month]");
-  if(monthCheck){
-    const m=Number(monthCheck.dataset.forecastMonth),set=new Set(d.specific_months||[]);
-    if(monthCheck.checked)set.add(m);else set.delete(m);
-    d.specific_months=Array.from(set).sort(function(a,b){return a-b});updateForecastLiveResult();return;
   }
   if(e.target.id==="forecastAdjustment"){d.adjustment=Number(e.target.value||0);updateForecastLiveResult()}
 });
@@ -9344,8 +9337,8 @@ $("rpcDiagnosticsModal")?.addEventListener("click",function(e){if(e.target===$("
 document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!$("rpcDiagnosticsModal")?.classList.contains("hidden"))closeRpcDiagnostics()});
 init();
 </script>
-<script src="../shared/health-reserve.js?v=73.30.10.51-20261020"></script>
-<script src="../shared/approved-plan.js?v=73.30.10.51-20261020"></script>
+<script src="../shared/health-reserve.js?v=73.30.10.52-20261020"></script>
+<script src="../shared/approved-plan.js?v=73.30.10.52-20261020"></script>
 </body>
 </html>
 
