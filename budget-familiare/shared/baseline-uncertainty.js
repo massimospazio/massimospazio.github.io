@@ -1,4 +1,4 @@
-/* V73.30.10.50 Incertezza mensile in euro; periodo derivato o ripartito sui mesi. */
+/* V73.30.10.53 Incertezza: solo mesi scelti, aggiunta esplicita, riepilogo € per periodo. */
 (function(root){
 "use strict";
 const numerical=x=>Number.isFinite(Number(x))?Number(x):0;
@@ -133,8 +133,9 @@ function periodInputs(direction,id,value,label){
  '</div><div class="bf-baseline-range-derived">Variazioni calcolate: Min '+esc(percentDelta(totals.min,totals.base))+
  ' · Max '+esc(percentDelta(totals.max,totals.base))+
  ' · '+totals.monthCount+' mesi configurati.</div>'+
- '<button class="btn ghost compact" type="button" data-range-period-apply>Distribuisci Min/Max sui mesi futuri</button>'+
- '<small>La distribuzione sostituisce i valori mensili visibili. Viceversa, quando cambi un singolo mese, i totali del periodo si aggiornano da soli. Gli Actual restano invariati.</small>';
+ '<details class="bf-baseline-range-distribute"><summary>Distribuisci l’intervallo del periodo (facoltativo)</summary>'+
+ '<small>Solo se vuoi ripartire Min/Max su tutti i mesi futuri: sostituisce le ipotesi già inserite nel periodo. Per pochi mesi usa «Aggiungi mese» sotto.</small>'+
+ '<button class="btn ghost compact" type="button" data-range-period-apply>Distribuisci Min/Max su tutti i mesi</button></details>';
 }
 // Compatibilità: le vecchie percentuali sono convertite una sola volta in importi
 // mensili espliciti quando l’utente inizia a modificare o salva questa categoria.
@@ -199,27 +200,39 @@ function previousLocal(direction,id){
  }catch(_){return {}}
 }
 
+
 function editorHtml({direction,categoryId,months=[],label=""}){
  if(!["INCOME","EXPENSE"].includes(direction)||!categoryId)return "";
  const id=k(direction,categoryId);
  monthLists[id]=(months||[]).map(m=>({month:String(m.month),kind:String(m.kind||"plan"),
-  amount:numerical(m.amount),futureAmount:numerical(m.futureAmount)}));
+   amount:numerical(m.amount),futureAmount:numerical(m.futureAmount)}));
  const view=drafts[id]||settingsFor(direction,categoryId);
+ const special=view.exceptions||{};
  const available=monthLists[id].filter(m=>m.kind!=="actual");
+ const knownMonths=new Map(monthLists[id].map(m=>[m.month,m]));
  const legacy=Object.entries(previousLocal(direction,categoryId)).filter(([month])=>available.some(m=>m.month===month));
  const lower=direction==="INCOME"?"Prudente":"Favorevole";
  const upper=direction==="INCOME"?"Favorevole":"Prudente";
  const info=periodSummary(direction,categoryId,view,label);
  const configured=info.monthCount||(view.min_pct!==null&&view.min_pct!==undefined);
- const rows=available.map(m=>{
-  const b=monthBounds(m,view);
-  const paid=floor(m);
-  return '<div class="bf-baseline-range-month-row '+(b.active?'is-configured':'')+'" data-range-month-row="'+esc(m.month)+'">'+
-   '<span class="bf-baseline-range-month-name">'+esc(monthName(m.month))+(b.active?' <b title="Intervallo definito">●</b>':'')+'</span>'+
-   '<span class="bf-baseline-range-base" title="Di cui già registrati: '+esc(money(paid))+'">Base '+money(m.amount)+'</span>'+
-   '<label>'+lower+' · Min €<input type="text" inputmode="decimal" data-range-month-min value="'+esc(euroInput(b.min))+'"></label>'+
-   '<label>'+upper+' · Max €<input type="text" inputmode="decimal" data-range-month-max value="'+esc(euroInput(b.max))+'"></label>'+
-   '<button type="button" class="btn ghost compact" data-range-month-clear '+(!b.active?'disabled':'')+' title="Riporta Min e Max alla Baseline del mese">↺</button></div>';
+ const chosen=available.find(m=>!special[m.month])||available[0];
+ const selection=chosen&&special[chosen.month];
+ const selectedMin=selection?(selection.type==="SALARY"?numerical(selection.fixed)+numerical(selection.variableMin):numerical(selection.min)):null;
+ const selectedMax=selection?(selection.type==="SALARY"?numerical(selection.fixed)+numerical(selection.variableMax):numerical(selection.max)):null;
+ const entries=Object.entries(special).sort(([a],[b])=>a.localeCompare(b)).map(([month,entry])=>{
+  const m=knownMonths.get(month),totalMin=entry.type==="SALARY"?
+   numerical(entry.fixed)+numerical(entry.variableMin):numerical(entry.min);
+  const totalMax=entry.type==="SALARY"?
+   numerical(entry.fixed)+numerical(entry.variableMax):numerical(entry.max);
+  const archived=m?.kind==="actual",outside=!m;
+  return '<div class="bf-baseline-range-exception">'+
+   '<span class="bf-baseline-range-exception-month">'+esc(monthName(month))+'</span>'+
+   '<strong>'+lower+' '+money(totalMin)+' · Base '+(m?money(m.amount):'non disponibile')+
+   ' · '+upper+' '+money(totalMax)+'</strong>'+
+   (archived||outside?'<small>'+(archived?'Mese consuntivato: escluso dal calcolo':'Fuori dal periodo: conservato')+'</small>':'')+
+   (m&&!archived?'<button class="btn ghost compact" type="button" data-range-edit="'+esc(month)+'">Modifica</button>':'')+
+   '<button class="btn ghost compact" type="button" data-range-remove="'+esc(month)+'">Rimuovi</button>'+
+   '</div>';
  }).join("");
  return '<details class="bf-baseline-range" data-baseline-range="'+esc(id)+'" data-baseline-range-label="'+esc(label)+'">'+
  '<summary>Incertezza della previsione <span class="bf-baseline-range-indicator">'+
@@ -228,30 +241,62 @@ function editorHtml({direction,categoryId,months=[],label=""}){
  '<div class="bf-baseline-range-body">'+
  (loadError?'<p class="bf-baseline-range-error">Caricamento non riuscito: '+esc(loadError)+'</p>':'')+
  (!loaded?'<p class="bf-baseline-range-help">Caricamento impostazioni…</p>':'')+
- '<p class="bf-baseline-range-help">Base = Baseline. Min/Max sono ipotesi plausibili, non limiti garantiti. La percentuale è solo un indicatore calcolato; nessun intervallo si ripete automaticamente negli anni.</p>'+
+ '<p class="bf-baseline-range-help">Base = Baseline. Min e Max sono ipotesi plausibili, non limiti garantiti e non ricorrenti negli anni.</p>'+
  periodInputs(direction,categoryId,view,label)+
- '<div class="bf-baseline-range-months"><strong>Valori per mese</strong>'+
- '<small>Modifica direttamente Min e Max sulla riga del mese: non serve selezionare o aggiungere il mese altrove. I mesi consuntivati sono bloccati.</small>'+
- (available.length?rows:'<p>Nessun mese futuro modificabile.</p>')+'</div>'+
+ '<details class="bf-baseline-range-exceptions" open><summary>Mesi con incertezza ('+Object.keys(special).length+')</summary>'+
+ (entries||'<p class="bf-baseline-range-empty">Nessun mese specifico aggiunto.</p>')+
+ (available.length?'<div class="bf-baseline-range-add">'+
+ '<label>Mese <select data-range-month>'+
+ available.map(m=>'<option value="'+esc(m.month)+'"'+(chosen?.month===m.month?' selected':'')+'>'+
+ esc(monthName(m.month))+' · Base '+esc(money(m.amount))+'</option>').join("")+'</select></label>'+
+ '<label>'+lower+' · Min totale €<input type="text" inputmode="decimal" data-range-monthmin value="'+(selectedMin===null?'':esc(euroInput(selectedMin)))+'" placeholder="Min €"></label>'+
+ '<label>'+upper+' · Max totale €<input type="text" inputmode="decimal" data-range-monthmax value="'+(selectedMax===null?'':esc(euroInput(selectedMax)))+'" placeholder="Max €"></label>'+
+ '<button class="btn ghost compact" type="button" data-range-add>'+(selection?'Aggiorna mese':'Aggiungi mese')+'</button></div>'+
+ '<small>Seleziona soltanto i mesi incerti. Il valore Base è preso dalla Baseline e non va reinserito. Ogni importo rappresenta il totale del mese, non una variazione percentuale.</small>':
+ '<p>Nessun mese futuro modificabile.</p>')+
+ '</details>'+
  (view.min_pct!==null&&view.min_pct!==undefined?
- '<small class="bf-baseline-range-legacy">Sono presenti vecchie percentuali generali. Alla modifica o al salvataggio vengono trasformate in valori mensili soltanto per i mesi futuri mostrati.</small>':'')+
+ '<small class="bf-baseline-range-legacy">Vecchie percentuali generali ancora presenti: al prossimo salvataggio saranno convertite in importi per i mesi futuri visualizzati.</small>':'')+
  (legacy.length?'<button type="button" class="btn ghost compact" data-range-import>Importa '+legacy.length+' vecchie ipotesi locali di questa categoria</button>':'')+
  '<div class="bf-baseline-range-actions"><span data-range-feedback></span>'+
  '<button type="button" class="btn ghost compact" data-range-reset>Ripristina</button>'+
  '<button type="button" class="btn compact" data-range-save '+(!loaded?'disabled':'')+'>Salva incertezza</button></div>'+
- '<small>Salvataggio condiviso Supabase, separato da «Salva previsione». I valori del periodo sono la somma dei mesi e degli Actual.</small></div></details>';
+ '<small>Salvataggio condiviso Supabase, distinto da «Salva previsione». Il riepilogo del periodo somma Actual e mesi selezionati.</small></div></details>';
 }
-
+function populateSelectedMonth(panel){
+ const id=panel.getAttribute("data-baseline-range"),month=panel.querySelector("[data-range-month]")?.value;
+ const config=drafts[id]||settings[id]||{};
+ const entry=config.exceptions?.[month];
+ const lo=entry?.type==="SALARY"?numerical(entry.fixed)+numerical(entry.variableMin):entry?.type==="TOTAL"?numerical(entry.min):null;
+ const hi=entry?.type==="SALARY"?numerical(entry.fixed)+numerical(entry.variableMax):entry?.type==="TOTAL"?numerical(entry.max):null;
+ const a=panel.querySelector("[data-range-monthmin]"),b=panel.querySelector("[data-range-monthmax]");
+ if(a)a.value=lo===null?"":euroInput(lo);
+ if(b)b.value=hi===null?"":euroInput(hi);
+ const add=panel.querySelector("[data-range-add]");
+ if(add)add.textContent=entry?"Aggiorna mese":"Aggiungi mese";
+}
 function updatePanels(id){
  if(!root.document)return;
  for(const el of root.document.querySelectorAll("[data-baseline-range]")){
   if(el.getAttribute("data-baseline-range")!==id)continue;
-  const opened=el.open,[direction,categoryId]=id.split(":");
+  const opened=el.open;
+  const openedExceptions=el.querySelector(".bf-baseline-range-exceptions")?.open;
+  const priorMonth=el.querySelector("[data-range-month]")?.value;
+  const [direction,categoryId]=id.split(":");
   const label=el.getAttribute("data-baseline-range-label")||"";
   const host=root.document.createElement("div");
   host.innerHTML=editorHtml({direction,categoryId,months:monthLists[id],label});
   const next=host.firstElementChild;
-  if(next){next.open=opened;el.replaceWith(next)}
+  if(next){
+   next.open=opened;
+   const detail=next.querySelector(".bf-baseline-range-exceptions");
+   if(detail&&openedExceptions!==undefined)detail.open=openedExceptions;
+   const picker=next.querySelector("[data-range-month]");
+   if(picker&&priorMonth&&Array.from(picker.options).some(o=>o.value===priorMonth)){
+    picker.value=priorMonth;populateSelectedMonth(next);
+   }
+   el.replaceWith(next);
+  }
  }
 }
 function getDraft(id){
@@ -263,53 +308,61 @@ function message(panel,s,isError=false){
  if(el){el.textContent=s;el.style.color=isError?"#b91c1c":"#166534"}
 }
 
+
 function install(){
  const doc=root.document;if(!doc)return;
  doc.addEventListener("change",e=>{
-  const input=e.target.closest?.("[data-range-month-min],[data-range-month-max]");
-  if(!input)return;
-  const panel=input.closest("[data-baseline-range]");
-  const row=input.closest("[data-range-month-row]");
-  if(!panel||!row)return;
-  const id=panel.getAttribute("data-baseline-range"),month=row.getAttribute("data-range-month-row");
-  const m=monthLists[id]?.find(x=>x.month===month&&x.kind!=="actual");if(!m)return;
-  try{
-   const a=row.querySelector("[data-range-month-min]")?.value.trim();
-   const b=row.querySelector("[data-range-month-max]")?.value.trim();
-   if(a===""||b==="")throw Error("Inserisci entrambi i valori Min e Max del mese.");
-   const lo=parseEuroInput(a),hi=parseEuroInput(b),base=numerical(m.amount),paid=floor(m);
-   if(!Number.isFinite(lo)||!Number.isFinite(hi)||lo<paid-.005||lo>base+.005||hi<base-.005||hi<lo-.005||hi>100000000)
-    throw Error("Serve quota già consuntivata ≤ Min ≤ Base ≤ Max.");
-   const draft=upgradeLegacy(getDraft(id),monthLists[id]);
-   if(Math.abs(lo-base)<.005&&Math.abs(hi-base)<.005)delete draft.exceptions[month];
-   else draft.exceptions[month]={type:"TOTAL",min:round(lo),max:round(hi)};
-   updatePanels(id);
-  }catch(err){message(panel,err.message||String(err),true)}
+  const selector=e.target.closest?.("[data-range-month]");
+  if(selector){const panel=selector.closest("[data-baseline-range]");if(panel)populateSelectedMonth(panel)}
  });
  doc.addEventListener("click",async e=>{
-  const button=e.target.closest?.("[data-range-save],[data-range-period-apply],[data-range-month-clear],[data-range-reset],[data-range-import]");
+  const button=e.target.closest?.("[data-range-save],[data-range-period-apply],[data-range-add],[data-range-edit],[data-range-remove],[data-range-reset],[data-range-import]");
   if(!button)return;
   const panel=button.closest("[data-baseline-range]");if(!panel)return;
   const id=panel.getAttribute("data-baseline-range"),[direction,categoryId]=id.split(":");
   try{
+   if(button.hasAttribute("data-range-edit")){
+    const picker=panel.querySelector("[data-range-month]");
+    if(picker){picker.value=button.getAttribute("data-range-edit");populateSelectedMonth(panel);
+     panel.querySelector("[data-range-monthmin]")?.focus()}
+    return;
+   }
+   if(button.hasAttribute("data-range-add")){
+    const month=panel.querySelector("[data-range-month]")?.value;
+    const m=monthLists[id]?.find(x=>x.month===month&&x.kind!=="actual");
+    if(!m)throw Error("Seleziona un mese futuro valido.");
+    const a=panel.querySelector("[data-range-monthmin]")?.value.trim()||"";
+    const b=panel.querySelector("[data-range-monthmax]")?.value.trim()||"";
+    if(!a||!b)throw Error("Inserisci Min e Max del mese selezionato.");
+    const lo=parseEuroInput(a),hi=parseEuroInput(b),base=numerical(m.amount),paid=floor(m);
+    if(!Number.isFinite(lo)||!Number.isFinite(hi)||lo<paid-.005||lo>base+.005||hi<base-.005||hi<lo-.005||hi>100000000)
+     throw Error("Serve quota già consuntivata ≤ Min ≤ Base ≤ Max.");
+    if(Math.abs(lo-base)<.005&&Math.abs(hi-base)<.005)throw Error("Min e Max coincidono con la Base: nessuna incertezza da aggiungere.");
+    const draft=upgradeLegacy(getDraft(id),monthLists[id]);
+    draft.exceptions[month]={type:"TOTAL",min:round(lo),max:round(hi)};
+    updatePanels(id);
+    message(root.document.querySelector('[data-baseline-range="'+id+'"]'),"Mese impostato nella bozza: premi Salva incertezza.");
+    return;
+   }
    if(button.hasAttribute("data-range-period-apply")){
     const a=panel.querySelector("[data-range-periodmin]")?.value.trim();
     const b=panel.querySelector("[data-range-periodmax]")?.value.trim();
     if(!a||!b)throw Error("Indica Min e Max del periodo.");
+    const newMonths=distributePeriod(monthLists[id],parseEuroInput(a),parseEuroInput(b));
     const draft=upgradeLegacy(getDraft(id),monthLists[id]);
     const visible=new Set(monthLists[id].filter(m=>m.kind!=="actual").map(m=>m.month));
     const hasOld=Object.keys(draft.exceptions).some(m=>visible.has(m));
-    if(hasOld&&root.confirm&&!root.confirm("Distribuire gli importi Min/Max su tutti i mesi futuri visibili? I valori mensili già impostati nel periodo saranno sostituiti."))return;
-    const newMonths=distributePeriod(monthLists[id],parseEuroInput(a),parseEuroInput(b));
+    if(hasOld&&root.confirm&&!root.confirm("Distribuire Min/Max su tutti i mesi futuri? Sostituirà i mesi già configurati in questo periodo."))return;
     for(const month of visible)delete draft.exceptions[month];
     Object.assign(draft.exceptions,newMonths);
-    updatePanels(id);message(root.document.querySelector('[data-baseline-range="'+id+'"]'),"Valori distribuiti. Controlla i mesi e premi Salva incertezza.");return;
+    updatePanels(id);
+    message(root.document.querySelector('[data-baseline-range="'+id+'"]'),"Totali distribuiti. Verifica i mesi aggiunti e premi Salva incertezza.");
+    return;
    }
-   if(button.hasAttribute("data-range-month-clear")){
-    const month=button.closest("[data-range-month-row]")?.getAttribute("data-range-month-row");
-    if(!month)return;
+   if(button.hasAttribute("data-range-remove")){
     const draft=upgradeLegacy(getDraft(id),monthLists[id]);
-    delete draft.exceptions[month];updatePanels(id);return;
+    delete draft.exceptions[button.getAttribute("data-range-remove")];
+    updatePanels(id);return;
    }
    if(button.hasAttribute("data-range-reset")){
     const draft=getDraft(id);draft.min_pct=null;draft.max_pct=null;draft.exceptions={};
@@ -331,19 +384,17 @@ function install(){
    if(button.hasAttribute("data-range-save")){
     if(!loaded||!readRpc)throw Error("Database non disponibile: riprova dopo il caricamento.");
     const draft=upgradeLegacy(getDraft(id),monthLists[id]);
-    const checkRow={direction,category_id:categoryId,l2_name:panel.getAttribute("data-baseline-range-label")||"",
-      months:monthLists[id]};
+    const checkRow={direction,category_id:categoryId,l2_name:panel.getAttribute("data-baseline-range-label")||"",months:monthLists[id]};
     const effective=buildAssumptions(direction==="EXPENSE"?[checkRow]:[],direction==="INCOME"?[checkRow]:[],{[id]:draft});
-    if(effective.invalid.length)throw Error("Ci sono intervalli incompatibili con la Baseline: correggi i mesi evidenziati.");
+    if(effective.invalid.length)throw Error("Ci sono intervalli incompatibili con la Baseline: rivedi Min/Max dei mesi configurati.");
     button.disabled=true;
     await readRpc("dashboard_reporting_baseline_uncertainty_v1",{
      p_action:"SAVE",p_category_id:categoryId,p_direction:direction,
      p_min_pct:null,p_max_pct:null,p_exceptions:draft.exceptions
     });
     settings[id]=JSON.parse(JSON.stringify(draft));delete drafts[id];updatePanels(id);
-    message(root.document.querySelector('[data-baseline-range="'+id+'"]'),"Intervalli mensili salvati in Supabase.");
-    changeListener();
-    return;
+    message(root.document.querySelector('[data-baseline-range="'+id+'"]'),"Intervalli salvati in Supabase.");
+    changeListener();return;
    }
   }catch(err){message(panel,err.message||String(err),true)}
   finally{button.disabled=false}
