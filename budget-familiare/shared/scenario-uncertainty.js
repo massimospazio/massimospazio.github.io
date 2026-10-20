@@ -207,7 +207,11 @@ function formatAssumption(r,m){
 }
 function renderUI(){
  const panel=doc.getElementById(state.mountId);if(!panel||!state.key)return;
- const assumptions=selectedEntries(),result=evaluate(state.exp,state.inc,assumptions,state.adjustments,{categoryTargets:state.targets,plannedRows:state.plannedRows});
+ const readOnly=state.mountId==="planningBoardRiskScenarios";
+ const baselineRanges=readOnly?root.BudgetFamilyBaselineUncertainty?.buildAssumptions(state.exp,state.inc):null;
+ const assumptions=readOnly?(baselineRanges?.assumptions||{}):selectedEntries();
+ const result=evaluate(state.exp,state.inc,assumptions,state.adjustments,
+  {categoryTargets:state.targets,plannedRows:state.plannedRows});
  const ready=result.validCount>0;
  const goal=numeric(state.goals);
  const s=result.scenarios;
@@ -243,24 +247,33 @@ function renderUI(){
   '<td>'+money(floor(m))+'</td><td>'+formatAssumption(current,m)+'</td></tr>').join(""):"";
  const reliabilityLabels=["Non valutata","Certa","Alta","Consolidata","Stimata","Incerta"];
  const reliability=current?reliabilityLabels[Number(state.reliability[current.category_id])||0]||reliabilityLabels[0]:"";
+ const configHtml=readOnly?
+  '<div><h4>Intervalli definiti nella Baseline</h4><p class="bf-risk-tip">Min/Max si impostano una sola volta per categoria L2 nella <strong>Definizione Baseline</strong>; si applicano alle quote future. I mesi specifici sono eccezioni facoltative.</p>'+
+  '<p class="bf-risk-tip">Qui puoi valutare l’effetto dei target della Strategia prima di approvare il Piano: nessuna modifica della Baseline.</p>'+
+  '<button type="button" class="btn ghost compact" data-risk-open-baseline>Vai alla Baseline per modificare l’incertezza →</button></div>':
+  '<div><h4>Configura le assunzioni mensili (modalità precedente)</h4><div class="bf-risk-toolbar"><label>Categoria L2 <select id="bfRiskCategory">'+
+  choices.map(r=>'<option value="'+escape(r.direction+":"+r.category_id)+'" '+(current===r?'selected':'')+'>'+escape((r.direction==="INCOME"?"Entrate · ":"Spese · ")+r.l2_name)+'</option>').join("")+
+  '</select></label><span>Affidabilità Baseline: <b>'+escape(reliability)+'</b></span></div>'+
+  '<p class="bf-risk-tip">'+(salary?'Stipendio: inserisci la quota <b>fissa</b> e il Min/Max della sola <b>variabile</b>.':
+   'Min e Max totali per il singolo mese.')+'</p>'+
+  '<div class="bf-risk-table-wrap"><table class="bf-risk-table"><thead><tr><th>Mese</th><th>Baseline</th><th>Già registrato</th><th>'+(salary?'Fissa · Min/Max variabile':'Min / Max totali')+'</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
  panel.innerHTML=
-  '<div class="bf-risk-title"><div><h3>Scenari realistici · prima del Piano</h3><p><strong>Scenario Base = Baseline.</strong> Prudente e Favorevole modificano soltanto le quote future per cui hai indicato intervalli plausibili.</p></div><span class="bf-risk-status">Ipotesi '+result.validCount+' · '+(changed()?'Modifiche da salvare':'Bozza salvata/localmente')+'</span></div>'+
+  '<div class="bf-risk-title"><div><h3>Scenari realistici · prima del Piano</h3><p><strong>Scenario Base = Baseline.</strong> Prudente e Favorevole usano gli intervalli per categoria definiti nella Baseline.</p></div><span class="bf-risk-status">Quote future con intervallo '+result.validCount+(readOnly?' · configurazione Baseline':changed()?' · modifiche da salvare':' · ipotesi locali')+'</span></div>'+
   '<div class="bf-risk-cards">'+cards+'</div>'+
   '<p class="bf-risk-help">Forbice complessiva '+money(result.beforeSpread)+
   (acts?' · dopo le leve '+money(result.afterSpread):'')+
   '. Sono estremi costruiti dalle ipotesi impostate, <strong>non probabilità statistiche</strong>. Il valore Prudente che combina tutti gli estremi negativi può rappresentare uno stress test severo. Risultato del Tabellone, da riconciliare con il Flusso economico (investimenti inclusi secondo le regole correnti).</p>'+
   '<div class="bf-risk-two"><div><h4>Fattori che cambiano l’avanzo</h4><table class="bf-risk-driver"><thead><tr><th>Categoria</th><th>Prudente vs Base</th><th>Favorevole vs Base</th></tr></thead><tbody>'+ranks+'</tbody></table></div>'+
-  '<div><h4>Configura le assunzioni mensili</h4><div class="bf-risk-toolbar"><label>Categoria L2 <select id="bfRiskCategory">'+
-  choices.map(r=>'<option value="'+escape(r.direction+":"+r.category_id)+'" '+(current===r?'selected':'')+'>'+escape((r.direction==="INCOME"?"Entrate · ":"Spese · ")+r.l2_name)+'</option>').join("")+
-  '</select></label><span>Affidabilità Baseline: <b>'+escape(reliability)+'</b></span></div>'+
-  '<p class="bf-risk-tip">'+(salary?'Stipendio: inserisci la quota <b>fissa</b> e il Min/Max della sola <b>variabile</b>. L’importo atteso è quello già nella Baseline. Nessuna nuova entrata viene sommata.':
-   'Inserisci Min e Max totali per ogni mese. Il valore centrale è già nella Baseline, senza fare la media degli estremi.')+'</p>'+
-  '<div class="bf-risk-table-wrap"><table class="bf-risk-table"><thead><tr><th>Mese</th><th>Baseline</th><th>Già registrato</th><th>'+(salary?'Fissa · Min/Max variabile':'Min / Max totali')+'</th></tr></thead><tbody>'+rows+'</tbody></table></div></div></div>'+
-  '<div class="bf-risk-actions"><span>'+(result.staleCount?'⚠ '+result.staleCount+' ipotesi non valide/obsolete ignorate.':'Gli Actual e il mese corrente già incassato/speso sono protetti.')+'</span>'+
-  '<button class="btn ghost compact" type="button" data-risk-discard '+(!changed()?'disabled':'')+'>Annulla modifiche</button>'+
-  '<button class="btn compact" type="button" data-risk-save '+(!changed()?'disabled':'')+'>Salva ipotesi</button></div>'+
+  configHtml+'</div>'+
+  '<div class="bf-risk-actions"><span>'+(result.staleCount||baselineRanges?.invalid?.length?
+   '⚠ Verifica '+(result.staleCount+(baselineRanges?.invalid?.length||0))+' ipotesi fuori intervallo o obsolete.':
+   'Gli Actual restano protetti e non vengono modificati.')+'</span>'+
+  (readOnly?'':'<button class="btn ghost compact" type="button" data-risk-discard '+(!changed()?'disabled':'')+'>Annulla modifiche</button>'+
+  '<button class="btn compact" type="button" data-risk-save '+(!changed()?'disabled':'')+'>Salva ipotesi</button>')+
+  '</div>'+
   (state.notice?'<p class="bf-risk-message" role="status">'+escape(state.notice)+'</p>':'')+
-  '<p class="bf-risk-local">Le ipotesi sono conservate solo in questo browser, separate da Baseline e Piano. La sincronizzazione familiare arriverà dopo il collaudo del prototipo.</p>';
+  (readOnly?'<p class="bf-risk-local">Intervalli condivisi in Supabase; i target restano una bozza separata fino all’approvazione del Piano.</p>':
+   '<p class="bf-risk-local">Vecchia modalità locale: importa le eccezioni nella Baseline prima di usarle in Strategia.</p>');
 }
 function rerender(){renderUI()}
 function update(payload){
@@ -299,6 +312,7 @@ function init(){
  doc.addEventListener("click",e=>{
   if(!validHost(e))return;
   const b=e.target.closest("button");if(!b)return;
+  if(b.hasAttribute("data-risk-open-baseline")){root.showPlanningBoardView?.("BASELINE");return}
   if(b.hasAttribute("data-risk-apply")){applyMonth(b);return}
   if(b.hasAttribute("data-risk-remove")){
    const row=selectedRow(),month=b.getAttribute("data-risk-remove");
