@@ -8,16 +8,16 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=73.30.10.53-20261021"></script>
-<script src="../shared/app-config.js?v=73.30.10.53-20261021"></script>
-<script src="../shared/contextual-help.js?v=73.30.10.53-20261021" defer></script>
+<script src="../shared/supabase-client.js?v=73.30.10.54-20261021"></script>
+<script src="../shared/app-config.js?v=73.30.10.54-20261021"></script>
+<script src="../shared/contextual-help.js?v=73.30.10.54-20261021" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<link rel="stylesheet" href="../shared/health-reserve.css?v=73.30.10.53-20261021">
-<link rel="stylesheet" href="../shared/approved-plan.css?v=73.30.10.53-20261021">
-<link rel="stylesheet" href="../shared/scenario-strategy.css?v=73.30.10.53-20261021">
-<link rel="stylesheet" href="../shared/scenario-uncertainty.css?v=73.30.10.53-20261021">
-<link rel="stylesheet" href="../shared/baseline-uncertainty.css?v=73.30.10.53-20261021">
-<link rel="stylesheet" href="../shared/single-plan-board.css?v=73.30.10.53-20261021">
+<link rel="stylesheet" href="../shared/health-reserve.css?v=73.30.10.54-20261021">
+<link rel="stylesheet" href="../shared/approved-plan.css?v=73.30.10.54-20261021">
+<link rel="stylesheet" href="../shared/scenario-strategy.css?v=73.30.10.54-20261021">
+<link rel="stylesheet" href="../shared/scenario-uncertainty.css?v=73.30.10.54-20261021">
+<link rel="stylesheet" href="../shared/baseline-uncertainty.css?v=73.30.10.54-20261021">
+<link rel="stylesheet" href="../shared/single-plan-board.css?v=73.30.10.54-20261021">
 <style>
 :root{--bg:#f4f6fa;--card:#fff;--text:#17263e;--muted:#58677d;--line:#dce4ee;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 4px 18px rgba(15,23,42,.045);--sc-blue:#2563eb;--sc-blue-soft:#eff6ff;--sc-green:#0ea87a;--sc-red:#ef5b73;--sc-purple:#7658e6;--sc-ink:#17263e}
 *{box-sizing:border-box}
@@ -2805,10 +2805,10 @@ body{font-size:16px;line-height:1.5}
   </div>
 </div>
 
-<script src="../shared/scenario-strategy.js?v=73.30.10.53-20261021"></script>
-<script src="../shared/scenario-uncertainty.js?v=73.30.10.53-20261021"></script>
-<script src="../shared/baseline-uncertainty.js?v=73.30.10.53-20261021"></script>
-<script src="../shared/single-plan-board.js?v=73.30.10.53-20261021"></script>
+<script src="../shared/scenario-strategy.js?v=73.30.10.54-20261021"></script>
+<script src="../shared/scenario-uncertainty.js?v=73.30.10.54-20261021"></script>
+<script src="../shared/baseline-uncertainty.js?v=73.30.10.54-20261021"></script>
+<script src="../shared/single-plan-board.js?v=73.30.10.54-20261021"></script>
 <script>
 const sb=window.appSupabase;
 if(typeof Chart!=="undefined"){
@@ -3276,7 +3276,7 @@ function forecastMethodLabel(v){
   return "Media 6m";
 }
 function forecastFrequencyLabel(v){
-  v=v||"MONTHLY";
+  v=v||"MONTHLY";if(v==="MANUAL_MONTHS")return "Personalizzata per mese";
   if(v==="EVERY_2_MONTHS")return "Ogni 2 mesi";
   if(v==="QUARTERLY")return "Trimestrale";
   if(v==="SEMIANNUAL")return "Semestrale";
@@ -3286,6 +3286,7 @@ function forecastFrequencyLabel(v){
 }
 function forecastSummaryLabel(r){
   if(!r)return "—";
+  if(r.recurrence_pattern==="MANUAL_MONTHS")return "Personalizzata per mese";
   if(r.forecast_scope==="COUNTERPARTIES"||r.provenance==="COUNTERPARTIES")return "Somma controparti";
   if(r.forecast_method==="ZERO"||r.forecast_source==="NON_REPEAT")return "Non si ripeterà";
   let out=forecastMethodLabel(r.forecast_method);
@@ -4381,19 +4382,10 @@ function forecastMethodOptions(v){
   return legacy+opts.map(function(o){return '<option value="'+o[0]+'"'+(v===o[0]?" selected":"")+'>'+o[1]+'</option>'}).join("");
 }
 function forecastFrequencyOptions(v){
-  const base=String(v||"MONTHLY").startsWith("MONTHS:")?"MONTHS":(v||"MONTHLY");
-  const opts=[
-    ["MONTHLY","Mensile"],
-    ["EVERY_2_MONTHS","Ogni 2 mesi"],
-    ["QUARTERLY","Trimestrale"],
-    ["SEMIANNUAL","Semestrale"],
-    ["ANNUAL","Annuale"]
-  ];
-  // Le vecchie ricorrenze per mese dell'anno restano leggibili e preservate.
-  // Le nuove selezioni di mesi avvengono esclusivamente nel calendario inferiore,
-  // tramite override per anno/mese, senza generare automaticamente una ricorrenza annuale.
-  if(base==="MONTHS")opts.push(["MONTHS","Mesi specifici (regola precedente)"]);
-  return opts.map(function(o){return '<option value="'+o[0]+'"'+(base===o[0]?" selected":"")+'>'+o[1]+'</option>'}).join("");
+ const selected=String(v||"MONTHLY"),options=[["MONTHLY","Mensile"]];
+ if(!forecastUsesCounterpartyTarget())options.push(["MANUAL_MONTHS","Personalizzata per mese"]);
+ if(!options.some(o=>o[0]===selected))options.push([selected,"Frequenza precedente"]);
+ return options.map(o=>'<option value="'+o[0]+'"'+(selected===o[0]?' selected':'')+'>'+o[1]+'</option>').join("");
 }
 function forecastMonthsFromPattern(v){
   if(!String(v||"").startsWith("MONTHS:"))return [];
@@ -4401,6 +4393,7 @@ function forecastMonthsFromPattern(v){
 }
 function forecastPatternFromDraft(d){
   if(d.method==="SAME_MONTH_LAST_YEAR"||d.method==="ZERO")return null;
+  if(d.frequency==="MANUAL_MONTHS")return "MANUAL_MONTHS";
   if(d.frequency==="MONTHS"){
     const m=(d.specific_months||[]).slice().sort(function(a,b){return a-b});
     return m.length?"MONTHS:"+m.join(","):null;
@@ -4480,6 +4473,7 @@ function forecastLastActiveMonth(){
 }
 function forecastMonthIndex(v){const d=monthDate(v);return d?d.getFullYear()*12+d.getMonth():0}
 function forecastDraftFrequencyActive(month,d){
+  if(d.frequency==="MANUAL_MONTHS")return false;
   if(d.method==="ZERO")return false;
   if(d.method==="SAME_MONTH_LAST_YEAR")return true;
   if(d.frequency==="MONTHLY"||!d.frequency)return true;
@@ -4491,6 +4485,12 @@ function forecastDraftFrequencyActive(month,d){
 }
 function forecastDraftPreview(){
   const d=ensureForecastDraft(),rows=forecastDraftRows();if(!d||!rows.length)return null;
+  if(d.frequency==="MANUAL_MONTHS"){
+    const saved=new Map((analysisForecastEditor?.monthly_plan||[]).map(m=>[String(m.month),num(m.planned_amount)]));
+    const amounts=rows.map(r=>saved.get(String(r.month))||0);
+    const avg=amounts.reduce((a,b)=>a+b,0)/amounts.length;
+    return {next:amounts[0],nextBase:0,avg,low:avg,high:avg,prudent:avg,adjustment:0,source:"MANUAL",method:"FIXED"};
+  }
   const values=rows.map(function(row){
     let expected=0,low=0,high=0,base=0;
     const active=forecastDraftFrequencyActive(row.month,d);
@@ -4517,6 +4517,7 @@ function forecastFrequencyExplanation(d){
   if(d.frequency==="QUARTERLY")return "L’importo viene applicato ogni 3 mesi, mantenendo la cadenza rispetto all’ultima occorrenza.";
   if(d.frequency==="SEMIANNUAL")return "L’importo viene applicato ogni 6 mesi, mantenendo la cadenza rispetto all’ultima occorrenza.";
   if(d.frequency==="ANNUAL")return "L’importo viene applicato ogni 12 mesi, mantenendo la cadenza rispetto all’ultima occorrenza.";
+  if(d.frequency==="MANUAL_MONTHS")return "Inserisci importi nei mesi interessati: tutti gli altri rimangono a zero, senza ripetizione nell'anno seguente.";
   if(d.frequency==="MONTHS"){
     const names=["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"],sel=(d.specific_months||[]).map(function(m){return names[m-1]}).filter(Boolean);
     return sel.length?"Regola annuale preesistente: "+sel.join(", ")+". Per cambiare i valori del periodo usa esclusivamente i mesi del calendario sotto; la vecchia ricorrenza annuale resta invariata.":"La precedente regola per mesi non ha occorrenze: imposta direttamente i valori del periodo nel calendario sotto.";
@@ -4567,18 +4568,19 @@ function updateForecastLiveResult(){
   const help=$("forecastExplanation");if(help)help.outerHTML='<div id="forecastExplanation">'+forecastExplanationHtml(ensureForecastDraft())+'</div>';
 }
 function forecastControlsHtml(d){
-  const method='<div class="forecast-field"><label>Metodo di previsione '+contextualHelpButton('forecast-baseline','metodi e base della previsione')+'</label><select id="forecastMethod" class="select">'+forecastMethodOptions(d.method)+'</select></div>';
+  const direct=d.frequency==="MANUAL_MONTHS";
+  const method='<div class="forecast-field"><label>Metodo di previsione '+contextualHelpButton('forecast-baseline','metodi e base della previsione')+'</label><select id="forecastMethod" class="select"'+(direct?' disabled title="Per cambiare metodo torna prima a Mensile"':'')+'>'+forecastMethodOptions(d.method)+'</select></div>';
   if(d.method==="ZERO")return method+'<div class="forecast-field"><label>Risultato</label><div class="notice">Questa voce resta nello storico ma non contribuisce alla previsione futura.</div></div>';
-  const historical=!["FIXED","RANGE","ZERO"].includes(d.method);
+  const historical=!direct&&!["FIXED","RANGE","ZERO"].includes(d.method);
   const variation=historical?'<div class="forecast-field"><label title="La variazione non è cumulativa tra un mese e il successivo.">Variazione attesa % ⓘ</label><input id="forecastAdjustment" class="input" type="number" min="-100" max="1000" step="1" value="'+esc(num(d.adjustment))+'" /><div class="forecast-type-note">Applica la variazione alla stima base; non è cumulativa mese su mese.</div></div>':"";
   let frequency;
   if(d.method==="SAME_MONTH_LAST_YEAR"){
     frequency='<div class="forecast-field"><label>Frequenza prevista</label><div class="forecast-type-note"><strong>Ereditata dallo storico.</strong><br>Ogni mese replica esattamente lo stesso mese A-1, inclusi i mesi a 0 €.</div></div>';
   }else{
-    frequency='<div class="forecast-field"><label title="La ricorrenza si ancora all’ultimo mese registrato.">Frequenza prevista ⓘ</label><select id="forecastFrequency" class="select">'+forecastFrequencyOptions(d.frequency)+'</select><div class="forecast-type-note">Per le frequenze periodiche la cadenza viene agganciata all’ultimo mese in cui la voce è comparsa.</div></div>';
+    frequency='<div class="forecast-field"><label>Frequenza prevista ⓘ</label><select id="forecastFrequency" class="select">'+forecastFrequencyOptions(d.frequency)+'</select><div class="forecast-type-note">'+(direct?'Nessuno standard: indica gli importi nei mesi sotto. Nessuna ripetizione futura.':'Lo stesso valore ogni mese, modificabile con override nel calendario.')+'</div></div>';
   }
-  const fixed=d.method==="FIXED"?'<div class="forecast-field"><label>Importo previsto €</label><input id="forecastFixedAmount" class="input" type="number" min="0" step="1" value="'+esc(d.fixed_amount==null?"":d.fixed_amount)+'" /></div>':"";
-  const range=d.method==="RANGE"?'<div class="forecast-field"><label>Intervallo €</label><div class="forecast-range-fields"><input id="forecastRangeMin" class="input" type="number" min="0" step="1" placeholder="Min" value="'+esc(d.range_min==null?"":d.range_min)+'" /><input id="forecastRangeMax" class="input" type="number" min="0" step="1" placeholder="Max" value="'+esc(d.range_max==null?"":d.range_max)+'" /></div></div>':"";
+  const fixed=d.method==="FIXED"&&!direct?'<div class="forecast-field"><label>Importo previsto €</label><input id="forecastFixedAmount" class="input" type="number" min="0" step="1" value="'+esc(d.fixed_amount==null?"":d.fixed_amount)+'" /></div>':"";
+  const range=d.method==="RANGE"&&!direct?'<div class="forecast-field"><label>Intervallo €</label><div class="forecast-range-fields"><input id="forecastRangeMin" class="input" type="number" min="0" step="1" placeholder="Min" value="'+esc(d.range_min==null?"":d.range_min)+'" /><input id="forecastRangeMax" class="input" type="number" min="0" step="1" placeholder="Max" value="'+esc(d.range_max==null?"":d.range_max)+'" /></div></div>':"";
   // Un solo calendario operativo: quello con importi per mese/anno qui sotto.
   // Le selezioni generiche Gen-Dic duplicate non sono più presentate.
   const legacyMonths=d.frequency==="MONTHS"
@@ -4646,13 +4648,14 @@ function integratedMonthlyPlanHtml(){
   const baseTotal=rows.reduce(function(s,x){return s+num(x.base_amount)},0);
   const plannedTotal=rows.reduce(function(s,x){return s+num(x.planned_amount)},0);
   const changed=rows.filter(function(x){return x.override_amount!==null&&x.override_amount!==undefined}).length;
+  const directMode=analysisForecastEditor.category_setting?.recurrence_pattern==="MANUAL_MONTHS";
   const manualMode=savedPlanIsManual(),dirty=forecastDraftIsDirty();
   const months=rows.map(function(x){
     const modified=x.override_amount!==null&&x.override_amount!==undefined,base=num(x.base_amount),planned=num(x.planned_amount),isCurrent=!!x.is_current_month;
     const actual=isCurrent?num(x.actual_to_date):0,remaining=isCurrent?Math.max(0,planned-actual):0,over=isCurrent?Math.max(0,actual-planned):0;
     const cardClass=(dirty?" disabled":(!manualMode&&modified?" override":""))+(isCurrent?" current":"");
-    const label=modified?(manualMode?'Valore standard '+money(base):'Override · base '+money(base)):'';
-    const resetTitle=manualMode?"Ripristina il valore standard della regola":"Rimuovi override e ripristina il valore della regola";
+    const label=directMode?(modified?'Importo inserito':''):(modified?(manualMode?'Valore standard '+money(base):'Override · base '+money(base)):'');
+    const resetTitle=directMode?"Azzera importo del mese":manualMode?"Ripristina il valore standard della regola":"Rimuovi override e ripristina il valore della regola";
     const currentStatus=isCurrent
       ?'<div class="analysis-plan-current-live"><span>Reale ordinario <strong>'+money(actual)+'</strong></span>'+
         (over>.004?'<span class="over">Superato di <strong>'+money(over)+'</strong></span>':'<span class="remaining">Residuo <strong>'+money(remaining)+'</strong></span>')+
@@ -4660,35 +4663,38 @@ function integratedMonthlyPlanHtml(){
       :"";
     return '<div class="analysis-plan-month'+cardClass+'" data-plan-card-month="'+esc(x.month)+'">'+
       '<div class="month">'+esc(monthLabel(x.month))+(isCurrent?' <span class="current-badge">mese in corso</span>':'')+'</div>'+
-      '<div class="base">'+(manualMode?'Standard ':'Regola ')+money(base)+'</div>'+
+      (directMode?'':'<div class="base">'+(manualMode?'Standard ':'Regola ')+money(base)+'</div>')+
       '<div class="analysis-plan-month-input-row"><input class="input" type="number" min="0" step="1" value="'+esc(planInputValue(planned))+'" data-analysis-plan-month="'+esc(x.month)+'" data-analysis-plan-base="'+esc(base)+'" aria-label="Piano '+esc(monthLabel(x.month))+'"'+(dirty?' disabled':'')+' />'+
       (modified&&!dirty?'<button class="analysis-plan-reset" type="button" data-reset-analysis-plan="'+esc(x.month)+'" title="'+esc(resetTitle)+'">↺</button>':"")+
       '</div>'+currentStatus+(label?'<div class="override-label">'+esc(label)+'</div>':'<div class="override-label" style="visibility:hidden">Base</div>')+
       '</div>';
   }).join("");
-  const title=manualMode?'Baseline manuale L2 · mese in corso + prossimi 11 mesi':'Baseline mensile L2 · mese in corso + prossimi 11 mesi';
-  const desc=manualMode
+  const title=directMode?'Baseline personalizzata · mese in corso + prossimi 11 mesi':manualMode?'Baseline manuale L2 · mese in corso + prossimi 11 mesi':'Baseline mensile L2 · mese in corso + prossimi 11 mesi';
+  const desc=directMode
+    ?'Inserisci gli importi direttamente nei mesi scelti; tutti gli altri restano 0 €. Nessuno standard né ripetizione automatica nell’anno successivo. Consuntivi protetti.'
+    :manualMode
     ?'Modifica direttamente qui il mese desiderato, senza selezionarlo anche sopra. Il primo valore è il piano totale del mese corrente; il reale resta separato. Gli altri mesi seguono la regola, salvo modifica.'
     :'Il primo valore è il piano totale del mese in corso. Il reale già registrato non viene sommato di nuovo; se supera il piano, la proiezione non può scendere sotto il reale.';
-  const changedChip=changed?'<span class="analysis-plan-summary-chip">'+changed+' '+(manualMode?'mesi modificati':'override')+'</span>':"";
+  const changedChip=changed?'<span class="analysis-plan-summary-chip">'+changed+' '+(directMode?'mesi inseriti':manualMode?'mesi modificati':'override')+'</span>':"";
   const warning=dirty?'<div class="analysis-plan-unsaved"><strong>Regola modificata ma non ancora salvata.</strong> Il piano sotto usa ancora l’ultima regola salvata. Salva la previsione per ricalcolarlo e abilitarne la modifica.</div>':"";
-  return '<div class="analysis-monthly-plan"><div class="analysis-monthly-plan-head"><div><h5>'+title+'</h5><p>'+desc+'</p></div><div class="analysis-monthly-plan-summary"><span class="analysis-plan-summary-chip">'+(manualMode?'Standard ':'Base ')+money(baseTotal)+'</span><span class="analysis-plan-summary-chip">Piano '+money(plannedTotal)+'</span>'+changedChip+'</div></div>'+warning+'<div class="analysis-plan-months">'+months+'</div></div>';
+  return '<div class="analysis-monthly-plan"><div class="analysis-monthly-plan-head"><div><h5>'+title+'</h5><p>'+desc+'</p></div><div class="analysis-monthly-plan-summary">'+(directMode?'':'<span class="analysis-plan-summary-chip">'+(manualMode?'Standard ':'Base ')+money(baseTotal)+'</span>')+'<span class="analysis-plan-summary-chip">'+(directMode?'Totale ':'Piano ')+money(plannedTotal)+'</span>'+changedChip+'</div></div>'+warning+'<div class="analysis-plan-months">'+months+'</div></div>';
 }
 async function saveIntegratedMonthlyOverride(month,amount,input){
   if(!analysisSelectedCategory||!analysisForecastEditor)return;
   const direction=analysisCurrentDirection(),rpcName=direction==="INCOME"?"dashboard_reporting_set_income_category_override_v1":"dashboard_reporting_set_expense_override_v1";
   if(input)input.disabled=true;
   try{
-    await rpc(rpcName,{p_month:month,p_category_id:analysisSelectedCategory,p_amount:amount});
-    updateCellLocal(direction==="INCOME"?"income":"expense",analysisSelectedCategory,month,amount);
+    const chosen=analysisForecastEditor?.category_setting?.recurrence_pattern==="MANUAL_MONTHS"&&amount===0?null:amount;
+    await rpc(rpcName,{p_month:month,p_category_id:analysisSelectedCategory,p_amount:chosen});
+    updateCellLocal(direction==="INCOME"?"income":"expense",analysisSelectedCategory,month,chosen);
     analysisForecastEditor=await rpc("dashboard_reporting_forecast_editor_v2",{p_category_id:analysisSelectedCategory,p_direction:direction,p_horizon_months:12});
     invalidateAnalysisProjection(direction);
     renderForecastEditor();renderPlan();renderProjection();
     if(analysisTimeMode==="PROJECTION")await loadAnalysisProjection(true);
-    const manualMode=savedPlanIsManual();
-    msg($("analysisStatus"),amount===null
-      ?(manualMode?"Valore mensile ripristinato allo standard della regola.":"Override rimosso: il mese torna al valore calcolato dalla regola.")
-      :(manualMode?"Valore mensile del piano salvato.":"Override mensile salvato."));
+    const manualMode=savedPlanIsManual(),direct=analysisForecastEditor?.category_setting?.recurrence_pattern==="MANUAL_MONTHS";
+    msg($("analysisStatus"),chosen===null
+      ?(direct?"Mese azzerato.":manualMode?"Valore mensile ripristinato allo standard della regola.":"Override rimosso: il mese torna al valore calcolato dalla regola.")
+      :(direct?"Importo mensile salvato.":manualMode?"Valore mensile del piano salvato.":"Override mensile salvato."));
   }catch(e){
     msg($("analysisStatus"),e.message||"Errore salvataggio override",true);
     if(input)input.disabled=false;
@@ -4705,7 +4711,7 @@ function renderForecastEditor(){
   const targetLabel=scope==="COUNTERPARTIES"?(cp?"Controparte: "+cp.component_name:"Somma controparti"):"Categoria L2";
   const methodChanged=target&&scope==="CATEGORY"&&ensureForecastDraft().method!==String(s.forecast_method||"AVG6");
   const overrideCount=(analysisForecastEditor.monthly_plan||[]).filter(x=>x.override_amount!==null&&x.override_amount!==undefined).length;
-  const resetWarning=methodChanged&&overrideCount?'<div class="forecast-reset-warning" role="alert"><strong>Attenzione: '+overrideCount+' override mensili presenti</strong><div>Se salvi il nuovo metodo, gli override verranno rimossi dopo la tua conferma. Potrai reinserirli sulla nuova Baseline.</div></div>':"";
+  const resetWarning=methodChanged&&ensureForecastDraft().frequency!=="MANUAL_MONTHS"&&overrideCount?'<div class="forecast-reset-warning" role="alert"><strong>Attenzione: '+overrideCount+' override mensili presenti</strong><div>Se salvi il nuovo metodo, gli override verranno rimossi dopo la tua conferma. Potrai reinserirli sulla nuova Baseline.</div></div>':"";
   box.innerHTML='<div class="forecast-panel-head"><div><h4>Previsione</h4><div class="small muted">Definisci la regola strutturale e rifinisci direttamente sotto i singoli mesi del piano.</div></div><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">'+(!tracking?'<span class="forecast-test-badge">Modalità test · tracking OFF</span>':'')+'<div class="forecast-scope-buttons"><button class="btn '+(scope==="CATEGORY"?"":"ghost ")+'compact" type="button" data-forecast-scope="CATEGORY">Categoria L2</button><button class="btn '+(scope==="COUNTERPARTIES"?"":"ghost ")+'compact" type="button" data-forecast-scope="COUNTERPARTIES">Controparti</button></div></div></div>'+controls+resetWarning+result+'<div class="forecast-actions"><span class="forecast-target">'+esc(targetLabel)+'</span>'+(target?'<button class="btn compact" type="button" data-save-forecast>Salva previsione</button>':'')+'</div>'+integratedMonthlyPlanHtml();
 }
 function canonicalSavedSetting(s,scope){
@@ -4740,12 +4746,17 @@ async function saveForecastRule(btn){
   if(method==="RANGE"&&(!Number.isFinite(Number(rmin))||!Number.isFinite(Number(rmax))||Number(rmin)>Number(rmax))){msg($("analysisStatus"),"Inserisci un intervallo valido.",true);return}
   if(d.frequency==="MONTHS"&&method!=="SAME_MONTH_LAST_YEAR"&&method!=="ZERO"&&!pattern){msg($("analysisStatus"),"Seleziona almeno un mese previsto.",true);return}
   const methodChanged=entity==="CATEGORY"&&method!==String(s.forecast_method||"AVG6");
-  const overrideCount=methodChanged?(analysisForecastEditor.monthly_plan||[]).filter(x=>x.override_amount!==null&&x.override_amount!==undefined).length:0;
+  const overrideCount=methodChanged&&pattern!=="MANUAL_MONTHS"?(analysisForecastEditor.monthly_plan||[]).filter(x=>x.override_amount!==null&&x.override_amount!==undefined).length:0;
   if(overrideCount&&!window.confirm("Cambiare metodo di previsione eliminerà "+overrideCount+" override mensili presenti nella Baseline. Potrai inserirli nuovamente dopo il salvataggio. Vuoi continuare?"))return;
   analysisForecastSaving=true;setBusy(btn,true,"Salvo");
   try{
     const merchantId=entity==="COUNTERPARTY"?(cp.component_merchant_id||null):null;
-    const saveResult=await rpc("dashboard_reporting_save_forecast_reset_overrides_v1",{p_category_id:analysisSelectedCategory,p_direction:analysisCurrentDirection(),p_entity_type:entity,p_merchant_id:merchantId,p_forecast_scope:scope,p_forecast_source:source,p_forecast_method:method,p_adjustment_pct:adj,p_amount_model:model,p_fixed_amount:fixed===null?null:Number(fixed),p_range_min:rmin===null?null:Number(rmin),p_range_max:rmax===null?null:Number(rmax),p_recurrence_pattern:pattern,p_confirm_reset:overrideCount>0});
+    if(pattern==="MANUAL_MONTHS"&&entity!=="CATEGORY")throw Error("La modalità personalizzata richiede una categoria L2.");
+    const args={p_category_id:analysisSelectedCategory,p_direction:analysisCurrentDirection(),p_entity_type:entity,p_merchant_id:merchantId,p_forecast_scope:scope,p_forecast_source:source,p_forecast_method:method,p_adjustment_pct:adj,p_amount_model:model,p_fixed_amount:fixed===null?null:Number(fixed),p_range_min:rmin===null?null:Number(rmin),p_range_max:rmax===null?null:Number(rmax),p_recurrence_pattern:pattern};
+    // In modalità diretta, preserva gli importi già specificati, anche se cambia il metodo.
+    const saveResult=pattern==="MANUAL_MONTHS"
+      ?await rpc("dashboard_reporting_save_forecast_setting_v1",args)
+      :await rpc("dashboard_reporting_save_forecast_reset_overrides_v1",{...args,p_confirm_reset:overrideCount>0});
     await rpc("dashboard_reporting_save_forecast_semantics_v2",{p_category_id:analysisSelectedCategory,p_entity_type:entity,p_merchant_id:merchantId,p_plan_type:"FORECAST",p_certainty_level:d.certainty_level||"ESTIMATED",p_note:d.rationale_note||null});
     scenarioForecastRationales=null;
     await refreshForecastAfterSave();const removed=Number(saveResult?.reset_override_count||0);msg($("analysisStatus"),removed?"Metodo aggiornato e "+removed+" override rimossi. Puoi ora inserire nuovi valori mensili.":analysisForecastEditor&&analysisForecastEditor.tracking_enabled?"Previsione aggiornata e tracciata.":"Previsione aggiornata. Nessun override eliminato.");
@@ -7857,18 +7868,19 @@ function quickBaselineHtml(row){
  const months=row.months||[],saved=ed.data?.monthly_plan||[],byMonth=new Map(saved.map(x=>[String(x.month),x]));
  const methodChange=ed.method!==String(setting.forecast_method||"AVG6");
  const overrides=saved.filter(x=>x.override_amount!==null&&x.override_amount!==undefined).length;
- const fixed=ed.method==="FIXED",range=ed.method==="RANGE",rate=!(fixed||range||ed.method==="ZERO");
+ const direct=setting.recurrence_pattern==="MANUAL_MONTHS";
+ const fixed=ed.method==="FIXED"&&!direct,range=ed.method==="RANGE"&&!direct,rate=!(ed.method==="FIXED"||ed.method==="RANGE"||ed.method==="ZERO");
  const boxes=months.map(m=>{
   const x=byMonth.get(String(m.month))||m;
   if(m.kind==="actual")return '<div class="qbe-month"><span>'+esc(monthLabel(m.month))+'</span><strong>'+money(m.amount)+'</strong><small>Consuntivo · sola lettura</small></div>';
   const pending=ed.monthChanges||{},modified=Object.prototype.hasOwnProperty.call(pending,m.month);
   const overridden=modified?pending[m.month]!==null:x.override_amount!==null&&x.override_amount!==undefined;
   const value=quickBaselineMonthValue(ed,x);
-  return '<label class="qbe-month"><span>'+esc(monthLabel(m.month))+'</span><input type="number" min="0" step="0.01" data-qbe-month="'+esc(m.month)+'" value="'+(value===null?'':esc(String(Math.round(value*100)/100)))+'" placeholder="—" '+(value===null?'disabled title="Anteprima non disponibile: apri Analisi completa"':'')+'><small>'+(overridden?'Override':'Calcolato dalla regola')+(modified?' · non salvato':'')+'</small>'+(overridden?'<button type="button" class="btn ghost compact" data-qbe-reset-month="'+esc(m.month)+'">Ripristina</button>':'')+'</label>';
+  return '<label class="qbe-month"><span>'+esc(monthLabel(m.month))+'</span><input type="number" min="0" step="0.01" data-qbe-month="'+esc(m.month)+'" value="'+(value===null?'':esc(String(Math.round(value*100)/100)))+'" placeholder="—" '+(value===null?'disabled title="Anteprima non disponibile: apri Analisi completa"':'')+'><small>'+(direct?(overridden?'Importo inserito':'Mese a zero'):(overridden?'Override':'Calcolato dalla regola'))+(modified?' · non salvato':'')+'</small>'+(overridden?'<button type="button" class="btn ghost compact" data-qbe-reset-month="'+esc(m.month)+'">'+(direct?'Azzera':'Ripristina')+'</button>':'')+'</label>';
  }).join("");
  return '<div class="qbe" data-qbe-key="'+esc(k)+'">'+
- '<div class="qbe-head"><strong>Modifica rapida Baseline · '+esc(row.l2_name)+'</strong><span>Consuntivi e previsioni nello stesso calendario</span></div>'+
- '<div class="qbe-controls"><label>Metodo<select data-qbe-field="method">'+forecastMethodOptions(ed.method)+'</select></label>'+
+ '<div class="qbe-head"><strong>Modifica rapida Baseline · '+esc(row.l2_name)+'</strong><span>'+(direct?'Valori diretti, nessuna ricorrenza':'Consuntivi e previsioni nello stesso calendario')+'</span></div>'+
+ '<div class="qbe-controls"><label>Metodo<select data-qbe-field="method"'+(direct?' disabled title="Cambia modalità dall’editor completo"':'')+'>'+forecastMethodOptions(ed.method)+'</select></label>'+
  (rate?'<label>Variazione %<input type="number" min="-100" max="1000" step="1" data-qbe-field="adjustment" value="'+esc(ed.adjustment)+'"></label>':'')+
  (fixed?'<label>Importo fisso €<input type="number" min="0" step="1" data-qbe-field="fixed" value="'+esc(ed.fixed??0)+'"></label>':'')+
  (range?'<label>Minimo €<input type="number" min="0" data-qbe-field="low" value="'+esc(ed.low??0)+'"></label><label>Massimo €<input type="number" min="0" data-qbe-field="high" value="'+esc(ed.high??0)+'"></label>':'')+
@@ -7885,6 +7897,7 @@ async function quickBaselineSave(k,button){
  const [direction,id]=k.split("|"),old=ed.data.category_setting||{},method=ed.method;
  const changes=Object.entries(ed.monthChanges||{}),ruleChanged=ed.method!==(old.forecast_method||"AVG6")||num(ed.adjustment)!==num(old.adjustment_pct)||num(ed.fixed)!==num(old.fixed_amount)||num(ed.low)!==num(old.range_min)||num(ed.high)!==num(old.range_max);
  const change=method!==String(old.forecast_method||"AVG6");
+ if(old.recurrence_pattern==="MANUAL_MONTHS"&&method!=="FIXED"){msg($("planningBoardStatus"),"Per cambiare modalità apri l’editor completo.",true);return}
  const overrides=(ed.data.monthly_plan||[]).filter(x=>x.override_amount!==null&&x.override_amount!==undefined).length;
  if(change&&overrides&&!confirm("Il nuovo metodo elimina gli override salvati della categoria ("+overrides+" nei 12 mesi). Gli override modificati nella bozza saranno poi riapplicati. Continuare?"))return;
  if(method==="RANGE"&&(num(ed.low)<0||num(ed.high)<num(ed.low))){msg($("planningBoardStatus"),"Intervallo non valido.",true);return}
@@ -9283,6 +9296,7 @@ $("analysisForecastPanel").addEventListener("change",async function(e){
   const d=ensureForecastDraft();if(!d)return;
   
   if(e.target.id==="forecastMethod"){
+    if(d.frequency==="MANUAL_MONTHS")d.frequency="MONTHLY";
     d.method=e.target.value;d.source=forecastSourceForMethod(d.method);
     if(["FIXED","RANGE","ZERO"].includes(d.method))d.adjustment=0;
     if(d.method==="FIXED"&&d.fixed_amount===null)d.fixed_amount=0;
@@ -9292,6 +9306,9 @@ $("analysisForecastPanel").addEventListener("change",async function(e){
   }
   if(e.target.id==="forecastFrequency"){
     d.frequency=e.target.value;
+    if(d.frequency==="MANUAL_MONTHS"){
+      d.method="FIXED";d.source="MANUAL";d.fixed_amount=0;d.adjustment=0;
+    }
     renderForecastEditor();return;
   }
   if(e.target.id==="forecastAdjustment"){d.adjustment=Number(e.target.value||0);updateForecastLiveResult()}
@@ -9337,8 +9354,8 @@ $("rpcDiagnosticsModal")?.addEventListener("click",function(e){if(e.target===$("
 document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!$("rpcDiagnosticsModal")?.classList.contains("hidden"))closeRpcDiagnostics()});
 init();
 </script>
-<script src="../shared/health-reserve.js?v=73.30.10.53-20261021"></script>
-<script src="../shared/approved-plan.js?v=73.30.10.53-20261021"></script>
+<script src="../shared/health-reserve.js?v=73.30.10.54-20261021"></script>
+<script src="../shared/approved-plan.js?v=73.30.10.54-20261021"></script>
 </body>
 </html>
 
