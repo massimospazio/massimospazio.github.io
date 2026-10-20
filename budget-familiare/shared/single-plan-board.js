@@ -192,10 +192,10 @@ function render(originalExp,originalInc,isPlan,context,extra={}){
  let html='<div class="bf-plan-inline-head"><div class="bf-strategy-intro"><strong>'+
  (strategy?'Strategia · Elabora il tuo scenario':'Piano · Rifinisci e approva')+'</strong>'+
  '<span> '+(strategy?'Usa le leve o modifica i target L2 nella tabella sottostante.':'Lo scenario viene dalla Strategia e mantiene gli stessi target L2.')+'</span></div>'+
- '<div class="bf-plan-inline-actions"><label>Entrate <select data-bf-draft-risk>'+
+ '<div class="bf-plan-inline-actions">'+(strategy?'':'<label>Entrate <select data-bf-draft-risk>'+
  '<option value="LOW"'+(state.bonus==="LOW"?' selected':'')+'>Prudente</option>'+
  '<option value="BASE"'+(state.bonus==="BASE"?' selected':'')+'>Base</option>'+
- '<option value="HIGH"'+(state.bonus==="HIGH"?' selected':'')+'>Favorevole</option></select></label>'+
+ '<option value="HIGH"'+(state.bonus==="HIGH"?' selected':'')+'>Favorevole</option></select></label>')+
 
 
  '<button type="button" class="btn ghost compact" data-bf-draft-reset>Ripristina target</button>'+
@@ -204,7 +204,9 @@ function render(originalExp,originalInc,isPlan,context,extra={}){
  const low=originalInc.reduce((sum,r)=>sum+value(r.rangeLow===undefined?r.annual:r.rangeLow),0);
  const high=originalInc.reduce((sum,r)=>sum+value(r.rangeHigh===undefined?r.annual:r.rangeHigh),0);
  const variation=state.bonus==="LOW"?low-totals(originalInc):state.bonus==="HIGH"?high-totals(originalInc):0;
- html+='<p class="bf-plan-inline-hint">Stress test avanzo: <strong>'+money(planned+variation)+'</strong> · Modifica gli importi direttamente nelle righe L2. Le categorie con Baseline 0 sono incluse. Gli Actual già registrati sono protetti.</p>';
+ html+=strategy?
+ '<p class="bf-plan-inline-hint">Avanzo della bozza: <strong>'+money(planned)+'</strong> · Baseline '+money(baseline)+' · '+(improvement>=0?'Miglioramento ':'Peggioramento ')+money(Math.abs(improvement))+'. La verifica Prudente / Base / Favorevole è nel pannello seguente; gli Actual non cambiano.</p>':
+ '<p class="bf-plan-inline-hint">Stress test tecnico sulle entrate: <strong>'+money(planned+variation)+'</strong> · Gli Actual già registrati sono protetti.</p>';
  if(strategy){
  const goal=state.reserve+state.project,free=planned-goal;
  html+='<details class="bf-strategy-fund" '+(goal?'open':'')+'><summary>Fondi e obiettivi · '+(goal?money(goal)+' destinati':'configura quando serve')+'</summary><div class="bf-strategy-controls"><div class="bf-strategy-goals">'+
