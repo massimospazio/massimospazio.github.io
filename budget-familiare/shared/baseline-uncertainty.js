@@ -1,4 +1,4 @@
-/* V73.30.10.53 Incertezza: solo mesi scelti, aggiunta esplicita, riepilogo € per periodo. */
+/* V73.30.10.55: salvataggio diretto dei Min/Max di periodo in euro. */
 (function(root){
 "use strict";
 const numerical=x=>Number.isFinite(Number(x))?Number(x):0;
@@ -133,9 +133,10 @@ function periodInputs(direction,id,value,label){
  '</div><div class="bf-baseline-range-derived">Variazioni calcolate: Min '+esc(percentDelta(totals.min,totals.base))+
  ' · Max '+esc(percentDelta(totals.max,totals.base))+
  ' · '+totals.monthCount+' mesi configurati.</div>'+
- '<details class="bf-baseline-range-distribute"><summary>Distribuisci l’intervallo del periodo (facoltativo)</summary>'+
- '<small>Solo se vuoi ripartire Min/Max su tutti i mesi futuri: sostituisce le ipotesi già inserite nel periodo. Per pochi mesi usa «Aggiungi mese» sotto.</small>'+
- '<button class="btn ghost compact" type="button" data-range-period-apply>Distribuisci Min/Max su tutti i mesi</button></details>';
+ '<small class="bf-baseline-range-period-help">Modifica Min/Max del periodo e premi direttamente <strong>Salva incertezza</strong>: la differenza viene ripartita proporzionalmente tra i mesi con spesa prevista. Nessun altro pulsante necessario.</small>'+ 
+ '<details class="bf-baseline-range-distribute"><summary>Anteprima ripartizione sui mesi (facoltativa)</summary>'+
+ '<small>Mostra i nuovi valori mensili nella bozza prima del salvataggio. Se sono già presenti intervalli mensili, la ripartizione del periodo li sostituisce dopo conferma.</small>'+
+ '<button class="btn ghost compact" type="button" data-range-period-apply>Visualizza ripartizione sui mesi</button></details>';
 }
 // Compatibilità: le vecchie percentuali sono convertite una sola volta in importi
 // mensili espliciti quando l’utente inizia a modificare o salva questa categoria.
@@ -185,6 +186,16 @@ function distributePeriod(months,min,max){
    result[m.month]={type:"TOTAL",min:round(low),max:round(high)};
  }
  return result;
+}
+// Salva direttamente i campi Min/Max del periodo: nessun click su
+// «Distribuisci» deve essere necessario per rendere persistenti gli importi.
+// Se non sono variati, rispetta gli intervalli mensili gia' configurati.
+function preparePeriodEdit(months,minText,maxText,currentMin,currentMax){
+ const lo=parseEuroInput(minText),hi=parseEuroInput(maxText);
+ if(!Number.isFinite(lo)||!Number.isFinite(hi))
+  throw Error("Inserisci valori Min e Max del periodo validi in euro.");
+ const changed=Math.abs(lo-currentMin)>.005||Math.abs(hi-currentMax)>.005;
+ return {changed,min:lo,max:hi,months:changed?distributePeriod(months,lo,hi):null};
 }
 function previousLocal(direction,id){
  try{
@@ -311,6 +322,12 @@ function message(panel,s,isError=false){
 
 function install(){
  const doc=root.document;if(!doc)return;
+ doc.addEventListener("input",e=>{
+  const input=e.target.closest?.("[data-range-periodmin],[data-range-periodmax]");
+  if(!input)return;
+  const panel=input.closest("[data-baseline-range]");if(!panel)return;
+  message(panel,"Valori del periodo modificati: premi Salva incertezza per applicarli ai mesi.",false);
+ });
  doc.addEventListener("change",e=>{
   const selector=e.target.closest?.("[data-range-month]");
   if(selector){const panel=selector.closest("[data-baseline-range]");if(panel)populateSelectedMonth(panel)}
@@ -384,7 +401,19 @@ function install(){
    if(button.hasAttribute("data-range-save")){
     if(!loaded||!readRpc)throw Error("Database non disponibile: riprova dopo il caricamento.");
     const draft=upgradeLegacy(getDraft(id),monthLists[id]);
-    const checkRow={direction,category_id:categoryId,l2_name:panel.getAttribute("data-baseline-range-label")||"",months:monthLists[id]};
+    const label=panel.getAttribute("data-baseline-range-label")||"";
+    const current=periodSummary(direction,categoryId,draft,label);
+    const lowText=panel.querySelector("[data-range-periodmin]")?.value??"";
+    const highText=panel.querySelector("[data-range-periodmax]")?.value??"";
+    const change=preparePeriodEdit(monthLists[id],lowText,highText,current.min,current.max);
+    if(change.changed){
+      const visible=new Set(monthLists[id].filter(m=>m.kind!=="actual").map(m=>m.month));
+      const already=Object.keys(draft.exceptions||{}).some(m=>visible.has(m));
+      if(already&&root.confirm&&!root.confirm("I nuovi Min/Max del periodo sostituiranno gli intervalli mensili già configurati nei mesi visibili. Vuoi continuare?"))return;
+      for(const month of visible)delete draft.exceptions[month];
+      Object.assign(draft.exceptions,change.months);
+    }
+    const checkRow={direction,category_id:categoryId,l2_name:label,months:monthLists[id]};
     const effective=buildAssumptions(direction==="EXPENSE"?[checkRow]:[],direction==="INCOME"?[checkRow]:[],{[id]:draft});
     if(effective.invalid.length)throw Error("Ci sono intervalli incompatibili con la Baseline: rivedi Min/Max dei mesi configurati.");
     button.disabled=true;
@@ -393,7 +422,9 @@ function install(){
      p_min_pct:null,p_max_pct:null,p_exceptions:draft.exceptions
     });
     settings[id]=JSON.parse(JSON.stringify(draft));delete drafts[id];updatePanels(id);
-    message(root.document.querySelector('[data-baseline-range="'+id+'"]'),"Intervalli salvati in Supabase.");
+    message(root.document.querySelector('[data-baseline-range="'+id+'"]'),change.changed
+      ?"Min/Max del periodo salvati in Supabase e ripartiti nei mesi interessati."
+      :"Intervalli salvati in Supabase.");
     changeListener();return;
    }
   }catch(err){message(panel,err.message||String(err),true)}
@@ -401,7 +432,7 @@ function install(){
  });
 }
 
-const api={buildAssumptions,validPcts,editorHtml,load,settings:()=>settings,settingsFor,summarize,status,distributePeriod,upgradeLegacy,euroInput,parseEuroInput};
+const api={buildAssumptions,validPcts,editorHtml,load,settings:()=>settings,settingsFor,summarize,status,distributePeriod,upgradeLegacy,euroInput,parseEuroInput,preparePeriodEdit};
 root.BudgetFamilyBaselineUncertainty=api;
 if(typeof module!=="undefined"&&module.exports)module.exports=api;
 if(root.document){if(root.document.readyState==="loading")root.document.addEventListener("DOMContentLoaded",install);else install()}
