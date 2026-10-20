@@ -1,7 +1,7 @@
 // Canonical source: massimospazio/budget-familiare; public files are deployed automatically.
 (function(){
-  const APP_VERSION='V73.30.10.49';
-  const APP_RELEASE='Tabellone · indicatore Intervallo dopo Affidabilità';
+  const APP_VERSION='V73.30.10.50';
+  const APP_RELEASE='Baseline · Min/Max in euro per mese e periodo';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});
