@@ -8,14 +8,15 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=73.30.10.43-20261020"></script>
-<script src="../shared/app-config.js?v=73.30.10.43-20261020"></script>
-<script src="../shared/contextual-help.js?v=73.30.10.43-20261020" defer></script>
+<script src="../shared/supabase-client.js?v=73.30.10.44-20261020"></script>
+<script src="../shared/app-config.js?v=73.30.10.44-20261020"></script>
+<script src="../shared/contextual-help.js?v=73.30.10.44-20261020" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<link rel="stylesheet" href="../shared/health-reserve.css?v=73.30.10.43-20261020">
-<link rel="stylesheet" href="../shared/approved-plan.css?v=73.30.10.43-20261020">
-<link rel="stylesheet" href="../shared/scenario-strategy.css?v=73.30.10.43-20261020">
-<link rel="stylesheet" href="../shared/single-plan-board.css?v=73.30.10.43-20261020">
+<link rel="stylesheet" href="../shared/health-reserve.css?v=73.30.10.44-20261020">
+<link rel="stylesheet" href="../shared/approved-plan.css?v=73.30.10.44-20261020">
+<link rel="stylesheet" href="../shared/scenario-strategy.css?v=73.30.10.44-20261020">
+<link rel="stylesheet" href="../shared/scenario-uncertainty.css?v=73.30.10.44-20261020">
+<link rel="stylesheet" href="../shared/single-plan-board.css?v=73.30.10.44-20261020">
 <style>
 :root{--bg:#f4f6fa;--card:#fff;--text:#17263e;--muted:#58677d;--line:#dce4ee;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 4px 18px rgba(15,23,42,.045);--sc-blue:#2563eb;--sc-blue-soft:#eff6ff;--sc-green:#0ea87a;--sc-red:#ef5b73;--sc-purple:#7658e6;--sc-ink:#17263e}
 *{box-sizing:border-box}
@@ -2395,7 +2396,7 @@ body{font-size:16px;line-height:1.5}
     <div id="planningSimulatorView" class="hidden planning-simulator-page">
       <div class="planning-board-hero">
         <div>
-          <h1>Simulatore · dalla Baseline agli obiettivi</h1>
+          <h1>Simulatore · scenari realistici e leve volontarie</h1>
           <p>Verifica se il margine strutturale copre discrezionali, altre uscite e investimenti. Poi costruisci scenari sulle quote ancora future, senza modificare Baseline o Piano approvato.</p>
         </div>
         <div class="planning-board-hero-actions">
@@ -2411,6 +2412,7 @@ body{font-size:16px;line-height:1.5}
       <div id="planningSimulatorStatus"></div>
 
       <section id="planningSimDiagnostic" class="planning-insight-card bf-scenario-diagnosis" aria-live="polite"></section>
+      <section id="planningRiskScenarios" class="bf-risk-scenarios" aria-label="Scenari Prudente Base Favorevole prima del Piano"></section>
       <section class="planning-insight-card bf-scenario-goals">
         <div class="bf-scenario-section-heading"><div><h3>Obiettivi annuali</h3><p>Prima il pareggio, poi la prudenza e un progetto familiare. Sono ipotesi di simulazione, non importi già impegnati.</p></div></div>
         <div class="bf-scenario-goal-fields">
@@ -2500,13 +2502,14 @@ body{font-size:16px;line-height:1.5}
           </section>
         </div>
 
-        <div class="planning-sim-matrix-wrap">
+        <details class="planning-sim-matrix-collapsed"><summary>Leve di risparmio · combinazioni Necessarie × Discrezionali (azioni volontarie)</summary><div class="planning-sim-matrix-wrap">
           <div class="planning-sim-matrix-head">
             <div><strong>Combinazioni rapide Necessarie × Discrezionali</strong><span>Le entrate e le Obbligatorie mantengono i valori impostati negli slider.</span></div>
             <span id="planningSimMatrixNote"></span>
           </div>
           <div id="planningSimMatrix"></div>
         </div>
+        </details>
         <div class="planning-sim-note">Gli importi fuori O/N/D (NC, investimenti e altre uscite) non cambiano con gli slider: sono visibili nella diagnosi. Una riduzione simulata non è ancora un Piano né una decisione approvata. Il saldo può differire dal Flusso economico per investimenti finanziati da patrimonio pregresso o coperture.</div>
       </section>
       <section class="planning-insight-card bf-scenario-compare">
@@ -2781,8 +2784,9 @@ body{font-size:16px;line-height:1.5}
   </div>
 </div>
 
-<script src="../shared/scenario-strategy.js?v=73.30.10.43-20261020"></script>
-<script src="../shared/single-plan-board.js?v=73.30.10.43-20261020"></script>
+<script src="../shared/scenario-strategy.js?v=73.30.10.44-20261020"></script>
+<script src="../shared/scenario-uncertainty.js?v=73.30.10.44-20261020"></script>
+<script src="../shared/single-plan-board.js?v=73.30.10.44-20261020"></script>
 <script>
 const sb=window.appSupabase;
 if(typeof Chart!=="undefined"){
@@ -8520,6 +8524,14 @@ function renderPlanningSimulatorView(){
   html+='</tbody></table>';$("planningSimMatrix").innerHTML=html;
   renderPlanningSimCategoryPanel(exp,calc);
   planningSimSavedHtml(calc);
+  window.BudgetFamilyUncertainty?.render({
+    exp,inc,adjustments:planningSimulation,
+    categoryTargets:planningSimulationCategoryTargets,
+    goal:planningSimReserve+planningSimProject,
+    horizon:planningSimulatorHorizon,
+    currentMonth:planningBoardData.expense.current_month,
+    reliability:Object.fromEntries(baselineManualReliability)
+  });
 }
 
 function renderPlanningBoard(){
@@ -9242,8 +9254,8 @@ $("rpcDiagnosticsModal")?.addEventListener("click",function(e){if(e.target===$("
 document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!$("rpcDiagnosticsModal")?.classList.contains("hidden"))closeRpcDiagnostics()});
 init();
 </script>
-<script src="../shared/health-reserve.js?v=73.30.10.43-20261020"></script>
-<script src="../shared/approved-plan.js?v=73.30.10.43-20261020"></script>
+<script src="../shared/health-reserve.js?v=73.30.10.44-20261020"></script>
+<script src="../shared/approved-plan.js?v=73.30.10.44-20261020"></script>
 </body>
 </html>
 
