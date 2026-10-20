@@ -174,7 +174,7 @@ async function approve(){
   root.alert("Approvazione non completata: "+String(error?.message||error));
  }finally{if(button)button.disabled=false}
 }
-function render(originalExp,originalInc,isPlan,context){
+function render(originalExp,originalInc,isPlan,context,extra={}){
  const strategy=context==="STRATEGY";
  const wrapper=root.document.getElementById("bfSinglePlanDraft");if(!wrapper)return;
  wrapper.hidden=!isPlan;
@@ -218,6 +218,7 @@ function render(originalExp,originalInc,isPlan,context){
  '</div><p class="bf-plan-inline-hint">Gli obiettivi sono destinazioni di avanzo, non nuove spese. Le leve modificano solo importi futuri delle categorie L2. La simulazione rolling 12m è una bozza di prova distinta dal piano annuale; non è approvabile. Passando da un periodo all’altro le modifiche rimangono in sessione.</p>';
  }
  if(strategy){
+  html+='<section id="planningBoardRiskScenarios" class="bf-risk-scenarios" aria-label="Scenari realistici prima della definizione del Piano"></section>';
   const cutsN=[0,-5,-10,-15,-20],cutsD=[0,-10,-25,-40,-50];
   const outcomes=(n,d)=>{
     const spend=originalExp.reduce((sum,r)=>{
@@ -227,7 +228,7 @@ function render(originalExp,originalInc,isPlan,context){
     },0);
     return totals(originalInc)-spend;
   };
-  html+='<details class="bf-strategy-matrix" open><summary>Scenari N / D · 25 combinazioni</summary>'+
+  html+='<details class="bf-strategy-matrix"><summary>Leve di risparmio N / D · 25 combinazioni (azioni volontarie)</summary>'+
    '<p class="bf-plan-inline-hint">Riduzioni soltanto sulle quote future di spese Necessarie (N) e Discrezionali (D). Ogni cella mostra l’avanzo del periodo, prima degli obiettivi. Clicca per applicare.</p>'+
    '<div class="bf-strategy-matrix-scroll"><table><thead><tr><th>N / D</th>'+
    cutsD.map(d=>'<th>'+d+'%</th>').join('')+'</tr></thead><tbody>'+
@@ -238,6 +239,18 @@ function render(originalExp,originalInc,isPlan,context){
  }
  
  wrapper.innerHTML=html;
+ if(strategy&&root.BudgetFamilyUncertainty?.render){
+  const kindExp=r=>({...r,kind:r.meta?.expense_nature||"OTHER"});
+  const kindInc=r=>({...r,kind:r.meta?.income_nature||"OTHER_INCOME"});
+  const current=extra.currentMonth||
+   originalExp.flatMap(r=>r.months||[]).find(m=>m.kind!=="actual")?.month||"";
+  root.BudgetFamilyUncertainty.render({
+   mountId:"planningBoardRiskScenarios",exp:originalExp.map(kindExp),inc:originalInc.map(kindInc),
+   plannedRows:{expenses:exp.map(kindExp),income:inc.map(kindInc)},
+   horizon:state.horizon,currentMonth:current,
+   reliability:extra.reliability||{},goal:state.reserve+state.project
+  });
+ }
 }
 function inlineAmount(row){
  const k=key(row),base=state.originals[k]||row,amount=state.targets[k]===undefined?value(base.annual):Math.max(locked(base),value(state.targets[k]));
