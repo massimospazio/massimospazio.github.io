@@ -11,7 +11,7 @@ const money=x=>new Intl.NumberFormat("it-IT",{style:"currency",currency:"EUR",ma
 const signed=x=>(x>0?"+":x<0?"−":"")+money(Math.abs(numeric(x)));
 function accepted(entry,m,salary){
  if(!entry||m.kind==="actual"||Math.abs(numeric(entry.expected)-numeric(m.amount))>0.01)return false;
- if(salary){
+ if(salary&&(entry.type==="SALARY"||(entry.type==null&&entry.fixed!==undefined&&entry.variableMin!==undefined&&entry.variableMax!==undefined))){
   const fixed=Number(entry.fixed),lo=Number(entry.variableMin),hi=Number(entry.variableMax),expected=numeric(m.amount)-fixed;
   return [fixed,lo,hi].every(x=>Number.isFinite(x)&&x>=0)&&fixed<=numeric(m.amount)+.005&&
    lo<=expected+.005&&hi>=expected-.005&&lo<=hi&&fixed+lo>=floor(m)-.005;
@@ -22,7 +22,7 @@ function accepted(entry,m,salary){
 }
 function amountFor(m,entry,mode,salary){
  if(mode==="BASE"||!accepted(entry,m,salary))return numeric(m.amount);
- if(salary){
+ if(salary&&(entry.type==="SALARY"||(entry.type==null&&entry.fixed!==undefined&&entry.variableMin!==undefined&&entry.variableMax!==undefined))){
   const fixed=Number(entry.fixed);
   return round(fixed+Number(mode==="PRUDENT"?entry.variableMin:entry.variableMax));
  }
