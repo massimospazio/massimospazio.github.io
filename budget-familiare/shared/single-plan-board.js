@@ -1,14 +1,14 @@
 /* Pianificazione: un unico scenario di lavoro nel Tabellone.
-   Bozza salvata automaticamente nel browser, non approvata. Non modifica Baseline/Actual. */
+   Bozza salvata esplicitamente nel browser, non approvata. Non modifica Baseline/Actual. */
 (function(root){
 "use strict";
-const state={year:"",horizon:"CALENDAR",targets:{},notes:{},originals:{},bonus:"BASE",targetUnit:"TOTAL",showZero:true,onlyChanged:false,reserve:0,project:0};
+const state={year:"",horizon:"CALENDAR",targets:{},monthTargets:{},notes:{},originals:{},bonus:"BASE",targetUnit:"TOTAL",showZero:true,onlyChanged:false,reserve:0,project:0};
 const drafts={};
 const savedDrafts={};
 let justSaved=false;
 const STORAGE_KEY="budget-family-scenario-drafts-v1";
 let saveError=false;
-function snapshot(){return {targets:{...state.targets},notes:{...state.notes},reserve:state.reserve,project:state.project,bonus:state.bonus,targetUnit:state.targetUnit}}
+function snapshot(){return {targets:{...state.targets},monthTargets:JSON.parse(JSON.stringify(state.monthTargets)),notes:{...state.notes},reserve:state.reserve,project:state.project,bonus:state.bonus,targetUnit:state.targetUnit}}
 function persist(){
  if(!state.year)return false;
  drafts[state.year+"|"+state.horizon]=snapshot();justSaved=false;return true;
@@ -16,15 +16,15 @@ function persist(){
 function isDirty(){
  if(!state.year)return false;
  const k=state.year+"|"+state.horizon;
- const saved=savedDrafts[k]||{targets:{},notes:{},reserve:0,project:0,bonus:"BASE",targetUnit:"TOTAL"};
+ const saved=savedDrafts[k]||{targets:{},monthTargets:{},notes:{},reserve:0,project:0,bonus:"BASE",targetUnit:"TOTAL"};
  return JSON.stringify(snapshot())!==JSON.stringify(saved);
 }
 function discardUnsaved(){
  if(!isDirty())return false;
  const label=state.horizon==="ROLLING_12"?"prossimi 12 mesi":"anno "+state.year;
  if(!root.confirm("Annullare le modifiche non salvate per "+label+"?\n\nVerrà ripristinata l’ultima bozza salvata (oppure la Baseline se non ne esiste una)."))return false;
- const saved=savedDrafts[state.year+"|"+state.horizon]||{targets:{},notes:{},reserve:0,project:0,bonus:"BASE",targetUnit:"TOTAL"};
- state.targets={...saved.targets};state.notes={...saved.notes};
+ const saved=savedDrafts[state.year+"|"+state.horizon]||{targets:{},monthTargets:{},notes:{},reserve:0,project:0,bonus:"BASE",targetUnit:"TOTAL"};
+ state.targets={...saved.targets};state.monthTargets=JSON.parse(JSON.stringify(saved.monthTargets||{}));state.notes={...saved.notes};
  state.reserve=saved.reserve||0;state.project=saved.project||0;
  state.bonus=saved.bonus||"BASE";state.targetUnit=saved.targetUnit||"TOTAL";
  persist();saveError=false;
@@ -32,8 +32,9 @@ function discardUnsaved(){
  return true;
 }
 function resetCategoryToBaseline(id){
- if(!Object.prototype.hasOwnProperty.call(state.originals,id)||!Object.prototype.hasOwnProperty.call(state.targets,id))return false;
- delete state.targets[id];
+ if(!Object.prototype.hasOwnProperty.call(state.originals,id)||
+   (!Object.prototype.hasOwnProperty.call(state.targets,id)&&!Object.prototype.hasOwnProperty.call(state.monthTargets,id)))return false;
+ delete state.targets[id];delete state.monthTargets[id];
  persist();root.renderPlanningBoard?.();
  return true;
 }
@@ -56,7 +57,16 @@ function restore(){
    for(const [id,amount] of Object.entries(v.targets||{})){
     if(/^(EXPENSE|INCOME):[a-f0-9-]{36}$/i.test(id)&&Number.isFinite(Number(amount))&&Number(amount)>=0)targets[id]=Number(amount);
    }
-   drafts[k]={targets,notes:v.notes||{},reserve:Number(v.reserve)||0,project:Number(v.project)||0,bonus:["LOW","BASE","HIGH"].includes(v.bonus)?v.bonus:"BASE",targetUnit:v.targetUnit==="MONTH"?"MONTH":"TOTAL"};
+   const monthTargets={};
+   for(const [id,calendar] of Object.entries(v.monthTargets||{})){
+    if(!/^(EXPENSE|INCOME):[a-f0-9-]{36}$/i.test(id)||!calendar||typeof calendar!=="object"||Array.isArray(calendar))continue;
+    const months={};
+    for(const [m,amount] of Object.entries(calendar)){
+     if(/^\d{4}-\d{2}-01$/.test(m)&&Number.isFinite(Number(amount))&&Number(amount)>=0&&Number(amount)<=100000000)months[m]=Number(amount);
+    }
+    if(Object.keys(months).length)monthTargets[id]=months;
+   }
+   drafts[k]={targets,monthTargets,notes:v.notes||{},reserve:Number(v.reserve)||0,project:Number(v.project)||0,bonus:["LOW","BASE","HIGH"].includes(v.bonus)?v.bonus:"BASE",targetUnit:v.targetUnit==="MONTH"?"MONTH":"TOTAL"};
    savedDrafts[k]=JSON.parse(JSON.stringify(drafts[k]));
   }
  }catch(e){saveError=true}
@@ -69,23 +79,37 @@ const money=n=>new Intl.NumberFormat("it-IT",{style:"currency",currency:"EUR",ma
 const escape=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 function key(r){return String(r.direction)+":"+String(r.category_id)}
 function locked(r){return (r.months||[]).reduce((s,m)=>s+(m.kind==="actual"?value(m.amount):value(m.amount)-Math.max(0,value(m.futureAmount))),0)}
+function round2(n){return Math.round((value(n)+Number.EPSILON)*100)/100}
+function fixedMonth(m){return m.kind==="actual"?value(m.amount):Math.max(0,value(m.amount)-Math.max(0,value(m.futureAmount)))}
 function applyRows(rows){
  return rows.map(r=>{
-  const k=key(r),target=state.targets[k];
-  if(target===undefined)return r;
-  const immutable=locked(r),planned=Math.max(immutable,value(target));
-  const available=(r.months||[]).reduce((s,m)=>s+(m.kind==="actual"?0:Math.max(0,value(m.futureAmount))),0);
-  const remaining=Math.max(0,planned-immutable);
+  const k=key(r),target=state.targets[k],manual=state.monthTargets[k]||{};
+  if(target===undefined&&!Object.keys(manual).length)return r;
+  const editable=(r.months||[]).filter(m=>m.kind!=="actual");
+  const fixed=round2(locked(r));
+  const manualFuture=round2(editable.reduce((sum,m)=>sum+
+   (Object.prototype.hasOwnProperty.call(manual,m.month)?
+    Math.max(0,value(manual[m.month])-fixedMonth(m)):0),0));
+  const planned=round2(Math.max(fixed+manualFuture,value(target===undefined?r.annual:target)));
+  const auto=editable.filter(m=>!Object.prototype.hasOwnProperty.call(manual,m.month));
+  const autoWeight=auto.reduce((sum,m)=>sum+Math.max(0,value(m.futureAmount)),0);
+  const remaining=round2(Math.max(0,planned-fixed-manualFuture));
   let left=remaining;
-  const eligible=r.months.filter(m=>m.kind!=="actual");
-  const months=r.months.map(m=>{
-    if(m.kind==="actual")return {...m};
-    const share=available>0?Math.max(0,value(m.futureAmount))/available:1/Math.max(1,eligible.length);
-    const allocated=eligible[eligible.length-1]===m?left:Math.min(left,remaining*share);
-    left-=allocated;
-    return {...m,amount:value(m.amount)-Math.max(0,value(m.futureAmount))+allocated,futureAmount:allocated};
+  const months=(r.months||[]).map(m=>{
+   if(m.kind==="actual")return {...m};
+   const own=Object.prototype.hasOwnProperty.call(manual,m.month);
+   if(own){
+    const amount=round2(Math.max(fixedMonth(m),value(manual[m.month])));
+    return {...m,amount,futureAmount:round2(amount-fixedMonth(m)),scenarioOverride:true};
+   }
+   const share=autoWeight>.00001?Math.max(0,value(m.futureAmount))/autoWeight:1/Math.max(1,auto.length);
+   const allocated=auto[auto.length-1]===m?left:Math.min(left,round2(remaining*share));
+   left=round2(left-allocated);
+   return {...m,amount:round2(fixedMonth(m)+allocated),futureAmount:allocated,scenarioOverride:false};
   });
-  return {...r,annual:planned,deltaAbs:planned-value(r.comparison),deltaPct:value(r.comparison)>0?(planned/value(r.comparison)-1)*100:null,months};
+  const annual=round2(months.reduce((sum,m)=>sum+value(m.amount),0));
+  return {...r,annual,deltaAbs:annual-value(r.comparison),
+    deltaPct:value(r.comparison)>0?(annual/value(r.comparison)-1)*100:null,months};
  });
 }
 function totals(rows){return rows.reduce((a,r)=>a+value(r.annual),0)}
@@ -102,7 +126,7 @@ function scenarioPreset(preset){
  else if(preset==="N10_D50"){d=.5;n=.9}
  else if(preset==="GOAL")d=remainingD>0?Math.max(0,1-Math.max(0,state.reserve+state.project-baseline)/remainingD):1;
  else if(preset!=="RESET")return;
- state.targets={};
+ state.targets={};state.monthTargets={};
  for(const row of exp){
   const kind=row.meta?.expense_nature;
   const factor=kind==="DISCRETIONARY"?d:kind==="NECESSARY"?n:1;
@@ -117,11 +141,11 @@ function resetIfYearChanged(year,horizon){
  if(next===prev)return;
  if(state.year)persist();
  const saved=drafts[next]||{};
- state.year=year;state.horizon=horizon;state.targets=saved.targets||{};state.notes=saved.notes||{};state.originals={};state.bonus=saved.bonus||"BASE";state.targetUnit=saved.targetUnit||"TOTAL";state.reserve=saved.reserve||0;state.project=saved.project||0;
+ state.year=year;state.horizon=horizon;state.targets={...(saved.targets||{})};state.monthTargets=JSON.parse(JSON.stringify(saved.monthTargets||{}));state.notes={...(saved.notes||{})};state.originals={};state.bonus=saved.bonus||"BASE";state.targetUnit=saved.targetUnit||"TOTAL";state.reserve=saved.reserve||0;state.project=saved.project||0;
 }
 async function approve(){
  if(state.horizon==="ROLLING_12"){root.alert("La simulazione rolling è una bozza di prova: approvazione disabilitata finché il piano pluriennale non è supportato.");return}
- if(Object.keys(state.targets).length===0){root.alert("Non hai modificato alcun target: non c'è un nuovo Piano strategico da approvare.");return}
+ if(Object.keys(state.targets).length===0&&Object.keys(state.monthTargets).length===0){root.alert("Non hai modificato alcun target: non c'è un nuovo Piano strategico da approvare.");return}
  if(!root.confirm("Approvare il Piano per "+state.year+"?\\n\\nI target e le note saranno congelati in una nuova versione e la Baseline resterà invariata."))return;
  const reason=root.prompt("Motivo dell'approvazione (8-600 caratteri)","Piano familiare: obiettivi e impegni di spesa concordati");
  if(reason===null)return;
@@ -130,11 +154,19 @@ async function approve(){
  if(button)button.disabled=true;
  try{
   if(!root.budgetFamilyPlanRpc)throw new Error("Connessione al database non disponibile");
-  const result=await root.budgetFamilyPlanRpc("dashboard_family_strategic_plan_v1",{
-   p_year:Number(state.year),p_note:reason.trim(),p_targets:state.targets,p_notes:state.notes
+  const monthMaps={};
+  for(const id of Object.keys(state.monthTargets)){
+   const base=state.originals[id];if(!base)throw new Error("Categoria mensile non disponibile: "+id);
+   const row=applyRows([base])[0];
+   monthMaps[id]=Object.fromEntries(row.months.filter(m=>m.kind!=="actual").map(m=>[m.month,round2(m.amount)]));
+  }
+  const hasMonthTargets=Object.keys(monthMaps).length>0;
+  const result=await root.budgetFamilyPlanRpc(hasMonthTargets?"dashboard_family_strategic_plan_v2":"dashboard_family_strategic_plan_v1",{
+   p_year:Number(state.year),p_note:reason.trim(),p_targets:state.targets,p_notes:state.notes,
+   ...(hasMonthTargets?{p_months:monthMaps}:{})
   });
   if(!result||!result.plan)throw new Error("La risposta non contiene il Piano approvato");
-  state.targets={};state.notes={};saveDraft();
+  state.targets={};state.monthTargets={};state.notes={};saveDraft();
   await root.BudgetFamilyPlan?.reload?.();
   root.renderPlanningBoard?.();
   root.alert("Piano approvato come versione V"+result.plan.revision+". Gli importi e le note sono congelati.");
@@ -210,7 +242,7 @@ function render(originalExp,originalInc,isPlan,context){
 function inlineAmount(row){
  const k=key(row),base=state.originals[k]||row,amount=state.targets[k]===undefined?value(base.annual):Math.max(locked(base),value(state.targets[k]));
  const monthly=root.document.getElementById("planningBoardDisplayUnit")?.value==="MONTH";
- const changed=state.targets[k]!==undefined&&Math.abs(value(state.targets[k])-value(base.annual))>=.5;
+ const changed=isChanged(row);
  const title='Ripristina importo Baseline per '+row.l2_name+' ('+money(base.annual)+')';
  return '<div class="bf-plan-edit-cell"><input type="text" inputmode="numeric" pattern="[0-9.]*" '+(monthly?'data-bf-draft-month':'data-bf-draft-total')+'="'+escape(k)+'" value="'+integer(monthly?amount/12:amount)+'" aria-label="'+(monthly?'Media mensile':'Totale annuo')+' '+escape(row.l2_name)+'" title="'+(monthly?'Media mese (totale annuo diviso 12)':'Budget annuale')+'; già speso '+money(locked(base))+'">'+
  '<button type="button" class="bf-plan-row-baseline" data-bf-draft-row-reset="'+escape(k)+'" title="'+escape(title)+'" aria-label="'+escape(title)+'" '+(changed?'':'disabled ')+'>&#8634;</button></div>';
@@ -219,7 +251,11 @@ function inlineNote(row){
  const k=key(row),note=state.notes[k]||"",baselineNote=row.meta?.rationale_note||"";
  return '<button class="bf-plan-note-button '+(note?'has-note':'')+'" type="button" data-bf-note-open="'+escape(k)+'" title="'+escape('Baseline: '+(baselineNote||'nessuna nota')+' | Piano: '+(note||'aggiungi impegno'))+'" aria-label="'+escape('Note '+row.l2_name+(baselineNote?' — nota Baseline presente':''))+'">✎'+(baselineNote?' ⓘ':'')+(note?' ●':'')+'</button>';
 }
-function isChanged(row){return state.targets[key(row)]!==undefined && Math.abs(value(state.targets[key(row)])-value(state.originals[key(row)]?.annual))>=.5}
+function isChanged(row){
+ const id=key(row);
+ return Object.keys(state.monthTargets[id]||{}).length>0||
+   (state.targets[id]!==undefined&&Math.abs(value(state.targets[id])-value(state.originals[id]?.annual))>=.005);
+}
 function showOnlyChanged(){return state.onlyChanged}
 
 function onChange(e){
@@ -241,13 +277,43 @@ function onChange(e){
   state.notes[e.target.getAttribute("data-bf-draft-note")]=e.target.value;persist();
   return;
  }
+ if(e.target.hasAttribute("data-bf-draft-month-amount")){
+  const id=e.target.getAttribute("data-bf-draft-month-amount"),month=e.target.getAttribute("data-bf-draft-month-id");
+  const base=state.originals[id];if(!base)return;
+  const original=base.months.find(m=>m.month===month);
+  if(!original||original.kind==="actual")return;
+  const n=parseInteger(e.target.value),minimum=round2(fixedMonth(original));
+  if(!Number.isFinite(n)||n<minimum-.005||n>100000000){
+   e.target.setCustomValidity("Importo non valido: minimo già registrato "+money(minimum));
+   e.target.reportValidity();return;
+  }
+  e.target.setCustomValidity("");
+  const previous=applyRows([base])[0],old=previous.months.find(m=>m.month===month);
+  if(!old)return;
+  const revised=round2(n),nextTotal=round2(previous.annual+revised-value(old.amount));
+  if(!state.monthTargets[id])state.monthTargets[id]={};
+  if(Math.abs(revised-value(original.amount))<.005)delete state.monthTargets[id][month];
+  else state.monthTargets[id][month]=revised;
+  if(!Object.keys(state.monthTargets[id]).length)delete state.monthTargets[id];
+  if(Math.abs(nextTotal-value(base.annual))<.005&&!state.monthTargets[id])delete state.targets[id];
+  else state.targets[id]=nextTotal;
+  persist();root.renderPlanningBoard?.();return;
+ }
  if(!attr)return;
  const id=e.target.getAttribute(attr),base=state.originals[id];if(!base)return;
  const n=parseInteger(e.target.value);
  if(!Number.isFinite(n)||n<0){e.target.setCustomValidity("Inserisci un importo valido (es. 2.419)");e.target.reportValidity();return}
  e.target.setCustomValidity("");
- const chosen=Math.max(locked(base),monthly?n*12:n);
- if(Math.abs(chosen-value(base.annual))<.5)delete state.targets[id];
+ const manual=state.monthTargets[id]||{};
+ const fixedMin=locked(base)+(base.months||[]).filter(m=>m.kind!=="actual"&&Object.prototype.hasOwnProperty.call(manual,m.month))
+  .reduce((sum,m)=>sum+Math.max(0,value(manual[m.month])-fixedMonth(m)),0);
+ const desired=round2(monthly?n*12:n);
+ if(desired<fixedMin-.005){
+  e.target.setCustomValidity("Per ridurre sotto "+money(fixedMin)+" ripristina prima uno o più mesi manuali.");
+  e.target.reportValidity();return;
+ }
+ const chosen=Math.max(round2(fixedMin),desired);
+ if(Math.abs(chosen-value(base.annual))<.005&&!Object.keys(manual).length)delete state.targets[id];
  else state.targets[id]=chosen;
  persist();root.renderPlanningBoard?.();
 }
@@ -284,7 +350,7 @@ function init(){
   if(preset){scenarioPreset(preset.getAttribute("data-bf-strategy-preset"));return}
   const matrix=e.target.closest("[data-bf-matrix-n]");if(matrix){
     const n=Number(matrix.dataset.bfMatrixN),d=Number(matrix.dataset.bfMatrixD);
-    state.targets={};
+    state.targets={};state.monthTargets={};
     Object.values(state.originals).filter(r=>r.direction==="EXPENSE").forEach(r=>{
       const nature=r.meta?.expense_nature,rate=nature==="NECESSARY"?n:nature==="DISCRETIONARY"?d:0;
       if(rate)state.targets[key(r)]=locked(r)+Math.max(0,value(r.annual)-locked(r))*(1+rate/100);
@@ -294,13 +360,13 @@ function init(){
   if(e.target.closest("[data-bf-draft-to-plan]")){root.showPlanningBoardView?.("PLAN");return}
   if(e.target.closest("[data-bf-draft-approve]")){approve();return}
   if(e.target.closest("[data-bf-draft-save]")){saveDraft();root.renderPlanningBoard?.();return}
-  if(e.target.closest("[data-bf-draft-reset]")){state.targets={};state.notes={};persist();root.renderPlanningBoard?.()}
+  if(e.target.closest("[data-bf-draft-reset]")){state.targets={};state.monthTargets={};state.notes={};persist();root.renderPlanningBoard?.()}
  });
 }
 root.BudgetFamilySinglePlan={
  prepare(exp,inc,year,horizon){resetIfYearChanged(year,horizon||'CALENDAR');[...exp,...inc].forEach(r=>state.originals[key(r)]=r);return {exp:applyRows(exp),inc:applyRows(inc)}},
- render,inlineAmount,inlineNote,isChanged,showOnlyChanged,scenarioPreset,saveDraft,discardUnsaved,resetCategoryToBaseline,details(){return {year:state.year,targets:{...state.targets},notes:{...state.notes},reserve:state.reserve,project:state.project,targetUnit:state.targetUnit}},
- isDraft(){return Object.keys(state.targets).length>0}
+ render,inlineAmount,inlineNote,isChanged,showOnlyChanged,scenarioPreset,saveDraft,discardUnsaved,resetCategoryToBaseline,details(){return {year:state.year,targets:{...state.targets},monthTargets:JSON.parse(JSON.stringify(state.monthTargets)),notes:{...state.notes},reserve:state.reserve,project:state.project,targetUnit:state.targetUnit}},
+ isDraft(){return Object.keys(state.targets).length>0||Object.keys(state.monthTargets).length>0}
 };
 if(typeof module!=="undefined"&&module.exports)module.exports={locked,applyRows,scenarioPreset,state};
 if(root.document){if(root.document.getElementById("planningBoardOverview"))init();else if(root.document.readyState==="loading")root.document.addEventListener("DOMContentLoaded",init);else init()}
