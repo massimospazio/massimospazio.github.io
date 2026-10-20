@@ -63,6 +63,29 @@ function applyActions(baselines,varied,adjustments,targets){
   return {...r,months,annual:round(months.reduce((s,m)=>s+numeric(m.amount),0))};
  });
 }
+function applyPlannedRows(baselines,varied,planned){
+ if(!Array.isArray(planned)||planned.length!==baselines.length)throw Error("Piano mensile non coerente con la Baseline");
+ return varied.map((r,i)=>{
+  const original=baselines[i],target=planned[i];
+  if(String(original.category_id)!==String(target?.category_id)||String(original.direction)!==String(target?.direction))
+   throw Error("Identità L2 differente tra Baseline e Piano");
+  const ref=new Map((original.months||[]).map(m=>[m.month,m]));
+  const plan=new Map((target.months||[]).map(m=>[m.month,m]));
+  const months=r.months.map(m=>{
+   const b=ref.get(m.month),p=plan.get(m.month);
+   if(!b||!p)throw Error("Mesi del Piano non corrispondenti alla Baseline");
+   if(m.kind==="actual")return {...m};
+   const paid=floor(b),baseFuture=Math.max(0,numeric(b.futureAmount));
+   const plannedFuture=Math.max(0,round(numeric(p.amount)-paid));
+   const changedFuture=Math.max(0,numeric(m.futureAmount));
+   const adjustedFuture=baseFuture>.005?
+     Math.max(0,round(changedFuture*(plannedFuture/baseFuture))):plannedFuture;
+   const amount=round(paid+adjustedFuture);
+   return {...m,amount,futureAmount:adjustedFuture};
+  });
+  return {...r,months,annual:round(months.reduce((sum,m)=>sum+numeric(m.amount),0))};
+ });
+}
 function valueFrom(rows){return rows.reduce((s,r)=>s+numeric(r.annual),0)}
 function drivers(baseExp,baseInc,caseExp,caseInc){
  const all=[];
@@ -84,8 +107,12 @@ function evaluate(exp,inc,assumptions={},adjustments={},opts={}){
  const variants={};
  for(const mode of modes){
   const vExp=vary(baselines[0],mode,assumptions),vInc=vary(baselines[1],mode,assumptions);
-  const aExp=applyActions(baselines[0],vExp,adjustments,targets);
-  const aInc=applyActions(baselines[1],vInc,adjustments,{});
+  const aExp=opts.plannedRows?
+   applyPlannedRows(baselines[0],vExp,opts.plannedRows.expenses):
+   applyActions(baselines[0],vExp,adjustments,targets);
+  const aInc=opts.plannedRows?
+   applyPlannedRows(baselines[1],vInc,opts.plannedRows.income):
+   applyActions(baselines[1],vInc,adjustments,{});
   const before=strategy.calculate(vExp,vInc);
   const after=strategy.calculate(aExp,aInc);
   variants[mode]={before:before.baselineBalance,after:after.baselineBalance,
@@ -126,12 +153,12 @@ function validate(r,m,values,salary){
  if(!accepted(entry,m,salary))return {error:"Intervallo incoerente con il valore del mese."};
  return {entry};
 }
-const api={evaluate,vary,validate,accepted,floor,applyActions,drivers};
+const api={evaluate,vary,validate,accepted,floor,applyActions,applyPlannedRows,drivers};
 if(typeof module!=="undefined"&&module.exports)module.exports=api;
 root.BudgetFamilyUncertainty=api;
 const doc=root.document;if(!doc)return;
 const storeKey="budget-family-uncertainty-v1";
-const state={cache:{},saved:{},key:"",selected:"",notice:"",exp:[],inc:[],adjustments:{},targets:{},reliability:{},goals:0};
+const state={cache:{},saved:{},key:"",selected:"",mountId:"planningRiskScenarios",notice:"",exp:[],inc:[],plannedRows:null,adjustments:{},targets:{},reliability:{},goals:0};
 function persisted(){
  try{const data=JSON.parse(root.localStorage?.getItem(storeKey)||"{}");return data&&typeof data==="object"?data:{}}catch(_){return {}}
 }
@@ -179,17 +206,20 @@ function formatAssumption(r,m){
   (found&&!valid?'<small class="bf-risk-error">Intervallo da ricontrollare: la Baseline è cambiata o i valori non sono validi.</small>':'');
 }
 function renderUI(){
- const panel=doc.getElementById("planningRiskScenarios");if(!panel||!state.key)return;
- const assumptions=selectedEntries(),result=evaluate(state.exp,state.inc,assumptions,state.adjustments,{categoryTargets:state.targets});
+ const panel=doc.getElementById(state.mountId);if(!panel||!state.key)return;
+ const assumptions=selectedEntries(),result=evaluate(state.exp,state.inc,assumptions,state.adjustments,{categoryTargets:state.targets,plannedRows:state.plannedRows});
  const ready=result.validCount>0;
  const goal=numeric(state.goals);
  const s=result.scenarios;
- const acts=Object.values(state.adjustments).some(x=>Math.abs(numeric(x))>.005)||Object.keys(state.targets).length>0;
+ const acts=state.plannedRows?
+   state.exp.some((r,i)=>Math.abs(numeric(r.annual)-numeric(state.plannedRows.expenses[i]?.annual))>.005)||
+   state.inc.some((r,i)=>Math.abs(numeric(r.annual)-numeric(state.plannedRows.income[i]?.annual))>.005):
+   Object.values(state.adjustments).some(x=>Math.abs(numeric(x))>.005)||Object.keys(state.targets).length>0;
  const cards=[["PRUDENT","Prudente","Ipotesi cautelative"],["BASE","Base = Baseline","Previsione senza interventi"],["FAVORABLE","Favorevole","Ipotesi favorevoli"]]
   .map(([id,name,subtitle])=>{
    const x=s[id];return '<div class="bf-risk-card '+id.toLowerCase()+'"><strong>'+name+'</strong><small>'+subtitle+'</small>'+
     '<span class="bf-risk-number">'+money(x.before)+'</span>'+
-    '<span class="bf-risk-after">'+(acts?'Dopo leve: '+money(x.after)+' <b>('+signed(x.deltaActions)+')</b>':'Nessuna leva volontaria selezionata')+'</span>'+
+    '<span class="bf-risk-after">'+(acts?'Dopo interventi: ' +money(x.after)+' <b>('+signed(x.deltaActions)+')</b>':'Nessuna leva volontaria selezionata')+'</span>'+
     (goal>0?'<small>'+(x.after<goal?'Gap obiettivi '+money(goal-x.after):'Obiettivi coperti')+'</small>':'')+
     '</div>';
   }).join("");
@@ -232,10 +262,10 @@ function renderUI(){
   (state.notice?'<p class="bf-risk-message" role="status">'+escape(state.notice)+'</p>':'')+
   '<p class="bf-risk-local">Le ipotesi sono conservate solo in questo browser, separate da Baseline e Piano. La sincronizzazione familiare arriverà dopo il collaudo del prototipo.</p>';
 }
-function rerender(){root.renderPlanningSimulatorView?.()}
+function rerender(){renderUI()}
 function update(payload){
  if(!payload||!Array.isArray(payload.exp)||!Array.isArray(payload.inc))return;
- state.exp=payload.exp;state.inc=payload.inc;state.adjustments=payload.adjustments||{};
+ state.exp=payload.exp;state.inc=payload.inc;state.mountId=payload.mountId||"planningRiskScenarios";state.plannedRows=payload.plannedRows||null;state.adjustments=payload.adjustments||{};
  state.targets=payload.categoryTargets||{};state.goals=numeric(payload.goal);
  state.reliability=payload.reliability||{};
  const current=String(payload.currentMonth||"");
@@ -261,9 +291,13 @@ function applyMonth(button){
  selectedEntries()[key(row,m)]=checked.entry;state.notice="Ipotesi applicata alla simulazione. Premi «Salva ipotesi» per conservarla.";rerender();
 }
 function init(){
- const panel=doc.getElementById("planningRiskScenarios");if(!panel)return;
- panel.addEventListener("change",e=>{if(e.target.id==="bfRiskCategory"){state.selected=e.target.value;state.notice="";renderUI()}});
- panel.addEventListener("click",e=>{
+ const validHost=e=>!!e.target?.closest?.("#planningRiskScenarios,#planningBoardRiskScenarios");
+ doc.addEventListener("change",e=>{
+  if(!validHost(e))return;
+  if(e.target.id==="bfRiskCategory"){state.selected=e.target.value;state.notice="";renderUI()}
+ });
+ doc.addEventListener("click",e=>{
+  if(!validHost(e))return;
   const b=e.target.closest("button");if(!b)return;
   if(b.hasAttribute("data-risk-apply")){applyMonth(b);return}
   if(b.hasAttribute("data-risk-remove")){
