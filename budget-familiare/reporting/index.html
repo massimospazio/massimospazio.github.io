@@ -2055,10 +2055,29 @@ body{font-size:16px;line-height:1.5}
 #planningBoardView .bf-l1-tag{max-width:80px}
 #planningBoardView .bf-sort-head{font-size:12px;white-space:normal}
 
-/* V73.30.10.42 — structural guards for eight-column shared table. */
+/* V73.30.10.49 — nine-column shared table */
+/* V73.30.10.49: compact 9-column Baseline / Strategia / Piano */
+#planningBoardView .planning-board-table th:nth-child(1){width:20%}
+#planningBoardView .planning-board-table th:nth-child(2){width:8%}
+#planningBoardView .planning-board-table th:nth-child(3){width:11%}
+#planningBoardView .planning-board-table th:nth-child(4){width:12%}
+#planningBoardView .planning-board-table th:nth-child(5){width:6%}
+#planningBoardView .planning-board-table th:nth-child(6){width:12%}
+#planningBoardView .planning-board-table th:nth-child(7){width:6%}
+#planningBoardView .planning-board-table th:nth-child(8){width:8%;text-align:center}
+#planningBoardView .planning-board-table th:nth-child(9){width:17%;text-align:left}
+#planningBoardView .planning-board-table tbody tr.planning-l2-row>td:nth-child(8){text-align:center}
+#planningBoardView .planning-board-table tbody tr.planning-l2-row>td:nth-child(9){text-align:left;min-width:0}
+#planningBoardView .planning-board-table td:nth-child(9){max-width:none!important;min-width:0!important}
+#planningBoardView .bf-interval-badge{display:inline-block;padding:2px 4px;border-radius:5px;font-size:11px;font-weight:700;line-height:1.2;white-space:nowrap}
+#planningBoardView .bf-interval-badge.is-none,#planningBoardView .bf-interval-badge.is-pending{color:#8994a6;background:#f0f3f7}
+#planningBoardView .bf-interval-badge.is-period{color:#225da8;background:#e6f1fe}
+#planningBoardView .bf-interval-badge.is-months{color:#995a14;background:#fff1da}
+#planningBoardView .bf-interval-badge.is-mixed{color:#6b39a7;background:#eee7ff}
+
 #planningBoardView .planning-board-table tbody tr.planning-l2-row>td:nth-child(3){text-align:right}
 #planningBoardView .planning-board-table tbody tr.planning-l2-row>td:nth-child(7){text-align:center}
-#planningBoardView .planning-board-table tbody tr.planning-l2-row>td:nth-child(8){text-align:left}
+#planningBoardView .planning-board-table tbody tr.planning-l2-row>td:nth-child(9){text-align:left}
 #planningBoardView .planning-board-table .bf-plan-edit-cell{max-width:100%;min-width:0}
 #planningBoardView .planning-board-table .bf-plan-edit-cell input{max-width:88px;min-width:0;flex:1 1 78px;width:calc(100% - 28px);padding:5px 6px}
 </style>
@@ -7973,7 +7992,9 @@ function baselineSortRows(rows){
     const delta=reference(b)-reference(a);
     return delta||String(a.l2_name).localeCompare(String(b.l2_name),"it");
   }
-  const field=r=>k==="confidence"?planningForecastReliability(r).level:k==="nature"?planningNatureValue(r.meta,r.direction):k==="method"?String(r.meta?.forecast_method||""):k==="note"?String(r.meta?.rationale_note||""):r[k];
+  const field=r=>k==="confidence"?planningForecastReliability(r).level:
+   k==="interval"?planningIntervalRank(r):
+   k==="nature"?planningNatureValue(r.meta,r.direction):k==="method"?String(r.meta?.forecast_method||""):k==="note"?String(r.meta?.rationale_note||""):r[k];
   const av=field(a),bv=field(b),asText=["l1_name","l2_name","nature","method","note"].includes(k);
   const d=asText?String(av||"").localeCompare(String(bv||""),"it"):num(av)-num(bv);
   return (baselineSortDesc?-1:1)*d||String(a.l2_name).localeCompare(String(b.l2_name),"it");
@@ -7998,7 +8019,7 @@ function planningBaselinePositiveFilterMatch(row){
  return !planningBoardBaselinePositiveOnly||!planningComparisonUsesBaseline()||num(row.comparison)>.005;
 }
 function planningFlatRows(direction,rows){
- let all=rows.filter(planningForecastFilterMatch).filter(planningNoteFilterMatch).filter(planningBaselineReviewMatches).filter(planningBaselinePositiveFilterMatch);
+ let all=rows.filter(planningForecastFilterMatch).filter(planningNoteFilterMatch).filter(planningIntervalFilterMatch).filter(planningBaselineReviewMatches).filter(planningBaselinePositiveFilterMatch);
  if(planningBoardNatureFilter!=="ALL")all=all.filter(r=>planningNatureValue(r.meta,direction)===planningBoardNatureFilter);
  if(planningBoardSearch.trim()){const q=planningBoardSearch.trim().toLowerCase();all=all.filter(r=>(r.l1_name+" "+r.l2_name).toLowerCase().includes(q))}
  if(planningBoardOnlyChanged){
@@ -8014,6 +8035,7 @@ function planningFlatRows(direction,rows){
   '<td>'+(((planningBoardContext==="STRATEGY"||planningBoardContext==="PLAN")&&window.BudgetFamilySinglePlan&&!planningBoardData?.meta?.strategic_plan)?window.BudgetFamilySinglePlan.inlineAmount(r):planningValueHtml(r.annual))+'</td>'+
   '<td>'+baselineDeltaCompactHtml(r)+'</td>'+
   '<td>'+planningNatureBadgeHtml(r,direction)+'</td><td>'+planningMethodHtml(r)+'</td><td>'+planningReliabilityHtml(r)+'</td>'+
+  '<td>'+planningIntervalHtml(r)+'</td>'+
   '<td>'+(((planningBoardContext==="STRATEGY"||planningBoardContext==="PLAN")&&window.BudgetFamilySinglePlan&&!planningBoardData?.meta?.strategic_plan)?window.BudgetFamilySinglePlan.inlineNote(r):'<div class="planning-note" title="'+esc(displayNote||"—")+'">'+esc(displayNote||"—")+'</div>')+'</td></tr>';
   if(opened)html+=planningMonthPanelHtml(r);
  });
@@ -8028,20 +8050,20 @@ function planningSectionHtml(direction,allRows){
     const groupMatches=!q||String(g.name||"").toLocaleLowerCase("it").includes(q);
     let visibleRows=groupMatches?g.rows:g.rows.filter(function(r){return String(r.l2_name||"").toLocaleLowerCase("it").includes(q)});
     if(planningBoardNatureFilter!=="ALL")visibleRows=visibleRows.filter(function(r){return planningNatureValue(r.meta,direction)===planningBoardNatureFilter});
-    visibleRows=visibleRows.filter(planningForecastFilterMatch).filter(planningNoteFilterMatch).filter(planningBaselineReviewMatches).filter(planningBaselinePositiveFilterMatch);
+    visibleRows=visibleRows.filter(planningForecastFilterMatch).filter(planningNoteFilterMatch).filter(planningIntervalFilterMatch).filter(planningBaselineReviewMatches).filter(planningBaselinePositiveFilterMatch);
     if(planningBoardContext==="BASELINE"&&planningBaselineReviewFilter==="LOW_RELIABILITY")visibleRows=visibleRows.filter(r=>[0,4,5].includes(planningForecastReliability(r).level));
     const draftPlan=(planningBoardContext==="PLAN"||planningBoardContext==="STRATEGY")&&(planningBoardContext==="STRATEGY"||!planningBoardData?.meta?.strategic_plan)&&!!window.BudgetFamilySinglePlan;
     if(planningBoardOnlyChanged)visibleRows=visibleRows.filter(r=>draftPlan?window.BudgetFamilySinglePlan.isChanged(r):planningBoardContext==="BASELINE"?planningBaselineNeedsReview(r).overrides:Math.abs(num(r.annual)-num(r.comparison))>=.5);
     if(!visibleRows.length)return;
     hasVisibleGroups=true;
-    const key=direction+"|"+g.id,searching=!!q,filtering=planningBoardNatureFilter!=="ALL"||planningBoardForecastFilter!=="ALL"||planningBoardNoteFilter!=="ALL"||planningBoardContext==="BASELINE"&&planningBaselineReviewFilter!=="ALL"||planningBoardBaselinePositiveOnly&&planningComparisonUsesBaseline();
+    const key=direction+"|"+g.id,searching=!!q,filtering=planningBoardNatureFilter!=="ALL"||planningBoardForecastFilter!=="ALL"||planningBoardNoteFilter!=="ALL"||planningBoardIntervalFilter!=="ALL"||planningBoardContext==="BASELINE"&&planningBaselineReviewFilter!=="ALL"||planningBoardBaselinePositiveOnly&&planningComparisonUsesBaseline();
     const expanded=planningBoardLevel==="L1_L2"&&(searching||filtering||planningBoardOnlyChanged||planningBoardExpandedL1.has(key));
     const annual=visibleRows.reduce(function(s,r){return s+r.annual},0),comparison=visibleRows.reduce(function(s,r){return s+r.comparison},0),deltaAbs=annual-comparison,deltaPct=comparison>0?deltaAbs*100/comparison:(Math.abs(annual)<.5?0:null);
     html+='<tr class="planning-l1-row '+(direction==="INCOME"?"income":"expense")+'">'+
       '<td><div class="planning-category">'+(planningBoardLevel==="L1_L2"?'<button class="planning-caret" data-planning-toggle-l1="'+esc(key)+'">'+(expanded?"▾":"▸")+'</button>':'<span class="planning-caret"></span>')+categoryIconHtml(g.name,direction==="INCOME"?"income":"expense",true)+'<span class="name">'+esc(g.name)+'</span>'+(planningBoardContext==="BASELINE"?'<button class="bf-l1-chart-button" type="button" data-planning-chart-l1="'+esc(key)+'" title="Grafico L1 impilato per L2, storico e Baseline">▥ Grafico L1</button>':'')+'</div></td>'+
       '<td>'+planningValueHtml(comparison)+'</td><td>'+planningValueHtml(annual)+'</td>'+
       '<td>'+planningDeltaHtml(deltaAbs,deltaPct,direction,comparison)+'</td>'+
-      '<td>'+planningL1NatureHtml(visibleRows,direction)+'</td><td>—</td><td>—</td><td></td></tr>';
+      '<td>'+planningL1NatureHtml(visibleRows,direction)+'</td><td>—</td><td>—</td><td>—</td><td></td></tr>';
     if(planningBoardContext==="BASELINE"&&planningBoardExpandedL2.has(key+"|L1"))html+=planningSharedChartSlot(key+"|L1",g.name,"L1");
     if(!expanded)return;
     baselineSortRows(visibleRows).forEach(function(r){
@@ -8054,7 +8076,7 @@ function planningSectionHtml(direction,allRows){
         '<td>'+planningValueHtml(r.comparison)+'</td><td>'+(draftPlan?window.BudgetFamilySinglePlan.inlineAmount(r):planningValueHtml(r.annual))+'</td>'+
         '<td>'+(baselineDeltaCompactHtml(r))+'</td>'+
         '<td>'+planningNatureBadgeHtml(r,direction)+'</td><td>'+planningMethodHtml(r)+'</td>'+
-        '<td>'+(planningReliabilityHtml(r))+'</td><td>'+(draftPlan?window.BudgetFamilySinglePlan.inlineNote(r):'<div class="planning-note" title="'+esc(note)+'">'+esc(note||"—")+'</div>')+'</td>'+
+        '<td>'+(planningReliabilityHtml(r))+'</td><td>'+planningIntervalHtml(r)+'</td><td>'+(draftPlan?window.BudgetFamilySinglePlan.inlineNote(r):'<div class="planning-note" title="'+esc(note)+'">'+esc(note||"—")+'</div>')+'</td>'+
         '</tr>';
       if(open)html+=planningMonthPanelHtml(r);
     });
@@ -8069,7 +8091,7 @@ function planningRenderFilterButtons(){
     b.disabled=false;
     b.title=strategy?"Rolling 12 mesi in sola lettura: il draft strategico annuale rimane invariato.":"";
   });
-  document.querySelectorAll("[data-planning-filter]").forEach(function(b){b.classList.toggle("ghost",b.dataset.planningFilter!==planningBoardFilter)});document.querySelectorAll("[data-planning-level]").forEach(function(b){b.classList.toggle("ghost",b.dataset.planningLevel!==planningBoardLevel)});document.querySelectorAll("[data-planning-horizon]").forEach(function(b){b.classList.toggle("ghost",b.dataset.planningHorizon!==planningBoardHorizon)});if($("planningNatureFilter"))$("planningNatureFilter").value=planningBoardNatureFilter;if($("planningForecastFilter"))$("planningForecastFilter").value=planningBoardForecastFilter;if($("planningNoteFilter"))$("planningNoteFilter").value=planningBoardNoteFilter;if($("planningBaselineReviewFilter"))$("planningBaselineReviewFilter").value=planningBaselineReviewFilter}
+  document.querySelectorAll("[data-planning-filter]").forEach(function(b){b.classList.toggle("ghost",b.dataset.planningFilter!==planningBoardFilter)});document.querySelectorAll("[data-planning-level]").forEach(function(b){b.classList.toggle("ghost",b.dataset.planningLevel!==planningBoardLevel)});document.querySelectorAll("[data-planning-horizon]").forEach(function(b){b.classList.toggle("ghost",b.dataset.planningHorizon!==planningBoardHorizon)});if($("planningNatureFilter"))$("planningNatureFilter").value=planningBoardNatureFilter;if($("planningForecastFilter"))$("planningForecastFilter").value=planningBoardForecastFilter;if($("planningNoteFilter"))$("planningNoteFilter").value=planningBoardNoteFilter;if($("planningIntervalFilter"))$("planningIntervalFilter").value=planningBoardIntervalFilter;if($("planningBaselineReviewFilter"))$("planningBaselineReviewFilter").value=planningBaselineReviewFilter}
 
 /* V73.30.1.23 — same board, contextual header and baseline health checks.
    Current baseline and provisional plan still use identical forecast data. */
@@ -8110,6 +8132,48 @@ function planningReliabilityHtml(row){
  const colors=["#64748b","#15803d","#2563eb","#b08900","#ea580c","#dc2626"];
  return '<span class="bf-reliability-bars" role="img" aria-label="'+esc("Affidabilità "+a.label)+'" title="'+esc(a.label+" — "+a.reason)+'">'+
  [1,2,3,4,5].map(i=>'<i class="'+(i<=filled?'on':'')+'" style="'+(i<=filled?'background:'+colors[n]:'')+'"></i>').join("")+'</span>';
+}
+/* V73.30.10.49: period-scoped coverage of Baseline uncertainty, never of draft targets. */
+function planningIntervalSummary(row){
+ const baseline=planningIntervalBaselineRows.get(row.direction+":"+row.category_id)||row;
+ return window.BudgetFamilyBaselineUncertainty?.summarize?.(baseline)||null;
+}
+function planningIntervalRank(row){
+ const x=planningIntervalSummary(row);
+ return !x?0:x.kind==="MIXED"?3:x.kind==="PERIOD"?2:x.kind==="MONTHS"?1:0;
+}
+function planningIntervalFilterMatch(row){
+ if(planningBoardIntervalFilter==="ALL")return true;
+ const source=window.BudgetFamilyBaselineUncertainty;
+ if(!source?.status?.().loaded)return true; // unknown ≠ no range
+ const value=planningIntervalSummary(row);
+ if(!value)return true;
+ if(planningBoardIntervalFilter==="WITH")return value.configured;
+ if(planningBoardIntervalFilter==="WITHOUT")return !value.configured;
+ if(planningBoardIntervalFilter==="MONTHS")return value.monthCount>0;
+ return true;
+}
+function planningIntervalHtml(row){
+ const source=window.BudgetFamilyBaselineUncertainty,status=source?.status?.();
+ if(!status?.loaded){
+  const failed=!!status?.error;
+  return '<span class="bf-interval-badge is-pending" role="status" title="'+esc(failed?"Intervalli non caricati: "+status.error:"Caricamento intervalli in corso")+'">'+(failed?'!':'…')+'</span>';
+ }
+ const v=planningIntervalSummary(row);
+ if(!v?.configured)return '<span class="bf-interval-badge is-none" title="Nessun intervallo attivo nel periodo selezionato">—</span>';
+ const parts=[];
+ if(v.hasPeriod)parts.push("P");
+ if(v.monthCount)parts.push("M"+v.monthCount);
+ const label=v.kind==="MIXED"?"Intervallo generale e eccezioni mensili":
+   v.kind==="PERIOD"?"Intervallo generale di categoria":"Solo eccezioni mensili";
+ const dates=v.months.map(m=>monthLabel(m)).join(", ");
+ const explanation=label+" · Base "+money(v.base)+" · Min "+money(v.min)+" · Max "+money(v.max)+
+   (dates?" · Mesi: "+dates:"")+
+   (v.invalidCount?" · "+v.invalidCount+" ipotesi non applicabili: verifica nella Baseline":"")+
+   ". Questi estremi non sono minimi o massimi garantiti.";
+ return '<span class="bf-interval-badge '+(v.kind==="MIXED"?"is-mixed":v.kind==="PERIOD"?"is-period":"is-months")+
+   '" role="img" aria-label="'+esc(explanation)+'" title="'+esc(explanation)+'">'+parts.join("·")+
+   (v.invalidCount?' !':'')+'</span>';
 }
 async function baselineReliabilityLoad(){
  try{
@@ -8640,6 +8704,7 @@ function renderPlanningBoard(){
     const strategicBase=isStrategic?approved.meta.strategic_plan:null;
     const baseExp=strategicBase?planningBuildRows(strategicBase.baseline_expense,"EXPENSE"):exp;
     const baseInc=strategicBase?planningBuildRows(strategicBase.baseline_income,"INCOME"):inc;
+    planningIntervalBaselineRows=new Map(baseExp.concat(baseInc).map(r=>[r.direction+":"+r.category_id,r]));
     const shownExp=canDraft?withBaselineComparison(draft.exp,exp):isStrategic?withBaselineComparison(exp,baseExp):exp;
     const shownInc=canDraft?withBaselineComparison(draft.inc,inc):isStrategic?withBaselineComparison(inc,baseInc):inc;
     if(canDraft||isStrategic){
@@ -8932,6 +8997,7 @@ $("planningBoardSearch").addEventListener("input",function(){planningBoardSearch
 $("planningNatureFilter").addEventListener("change",function(){planningBoardNatureFilter=this.value||"ALL";renderPlanningBoard()});
 $("planningForecastFilter").addEventListener("change",function(){planningBoardForecastFilter=this.value||"ALL";renderPlanningBoard()});
 $("planningNoteFilter").addEventListener("change",function(){planningBoardNoteFilter=this.value||"ALL";renderPlanningBoard()});
+$("planningIntervalFilter")?.addEventListener("change",function(){planningBoardIntervalFilter=this.value||"ALL";renderPlanningBoard()});
 $("planningBaselineReviewFilter")?.addEventListener("change",function(){planningBaselineReviewFilter=this.value||"ALL";renderPlanningBoard()});
 $("balanceDrillSort")?.addEventListener("change",function(){balanceDrillSort=this.value||"AMOUNT";renderBalanceDrill()});
 $("balanceDrillL2Sort")?.addEventListener("change",function(){balanceDrillL2Sort=this.value||"AMOUNT";renderBalanceDrill()});
