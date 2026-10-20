@@ -1,6 +1,6 @@
 // Canonical source: massimospazio/budget-familiare; public files are deployed automatically.
 (function(){
-  const APP_VERSION='V73.30.10.50';
+  const APP_VERSION='V73.30.10.51';
   const APP_RELEASE='Baseline · Min/Max in euro per mese e periodo';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){

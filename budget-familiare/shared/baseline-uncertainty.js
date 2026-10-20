@@ -4,6 +4,12 @@
 const numerical=x=>Number.isFinite(Number(x))?Number(x):0;
 const money=x=>new Intl.NumberFormat("it-IT",{style:"currency",currency:"EUR",maximumFractionDigits:0}).format(numerical(x));
 const esc=x=>String(x??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const euroInput=x=>new Intl.NumberFormat("it-IT",{maximumFractionDigits:2}).format(Math.round(numerical(x)*100)/100);
+const parseEuroInput=x=>{
+ const t=String(x??"").trim().replace(/\s/g,"");
+ if(!/^(?:\d+|\d{1,3}(?:\.\d{3})+)(?:,\d{1,2})?$/.test(t))return NaN;
+ return Number(t.replace(/\./g,"").replace(",","."));
+};
 const round=x=>Math.round((numerical(x)+Number.EPSILON)*100)/100;
 const k=(direction,id)=>direction+":"+id;
 const floor=m=>m.kind==="actual"?numerical(m.amount):Math.max(0,round(numerical(m.amount)-numerical(m.futureAmount)));
@@ -122,8 +128,8 @@ function periodInputs(direction,id,value,label){
  const upper=direction==="INCOME"?"Favorevole":"Prudente";
  return '<div class="bf-baseline-range-period">'+
  '<label>Base del periodo (€)<strong>'+money(totals.base)+'</strong></label>'+
- '<label>'+lower+' · Min del periodo (€)<input type="number" min="0" step=".01" data-range-periodmin value="'+esc(totals.min)+'"></label>'+
- '<label>'+upper+' · Max del periodo (€)<input type="number" min="0" step=".01" data-range-periodmax value="'+esc(totals.max)+'"></label>'+
+ '<label>'+lower+' · Min del periodo (€)<input type="text" inputmode="decimal" data-range-periodmin value="'+esc(euroInput(totals.min))+'"></label>'+
+ '<label>'+upper+' · Max del periodo (€)<input type="text" inputmode="decimal" data-range-periodmax value="'+esc(euroInput(totals.max))+'"></label>'+
  '</div><div class="bf-baseline-range-derived">Variazioni calcolate: Min '+esc(percentDelta(totals.min,totals.base))+
  ' · Max '+esc(percentDelta(totals.max,totals.base))+
  ' · '+totals.monthCount+' mesi configurati.</div>'+
@@ -211,8 +217,8 @@ function editorHtml({direction,categoryId,months=[],label=""}){
   return '<div class="bf-baseline-range-month-row '+(b.active?'is-configured':'')+'" data-range-month-row="'+esc(m.month)+'">'+
    '<span class="bf-baseline-range-month-name">'+esc(monthName(m.month))+(b.active?' <b title="Intervallo definito">●</b>':'')+'</span>'+
    '<span class="bf-baseline-range-base" title="Di cui già registrati: '+esc(money(paid))+'">Base '+money(m.amount)+'</span>'+
-   '<label>'+lower+' · Min €<input type="number" step=".01" min="'+esc(round(paid))+'" data-range-month-min value="'+esc(b.min)+'"></label>'+
-   '<label>'+upper+' · Max €<input type="number" step=".01" min="0" data-range-month-max value="'+esc(b.max)+'"></label>'+
+   '<label>'+lower+' · Min €<input type="text" inputmode="decimal" data-range-month-min value="'+esc(euroInput(b.min))+'"></label>'+
+   '<label>'+upper+' · Max €<input type="text" inputmode="decimal" data-range-month-max value="'+esc(euroInput(b.max))+'"></label>'+
    '<button type="button" class="btn ghost compact" data-range-month-clear '+(!b.active?'disabled':'')+' title="Riporta Min e Max alla Baseline del mese">↺</button></div>';
  }).join("");
  return '<details class="bf-baseline-range" data-baseline-range="'+esc(id)+'" data-baseline-range-label="'+esc(label)+'">'+
@@ -268,10 +274,10 @@ function install(){
   const id=panel.getAttribute("data-baseline-range"),month=row.getAttribute("data-range-month-row");
   const m=monthLists[id]?.find(x=>x.month===month&&x.kind!=="actual");if(!m)return;
   try{
-   const a=row.querySelector("[data-range-month-min]")?.value.trim().replace(",",".");
-   const b=row.querySelector("[data-range-month-max]")?.value.trim().replace(",",".");
+   const a=row.querySelector("[data-range-month-min]")?.value.trim();
+   const b=row.querySelector("[data-range-month-max]")?.value.trim();
    if(a===""||b==="")throw Error("Inserisci entrambi i valori Min e Max del mese.");
-   const lo=Number(a),hi=Number(b),base=numerical(m.amount),paid=floor(m);
+   const lo=parseEuroInput(a),hi=parseEuroInput(b),base=numerical(m.amount),paid=floor(m);
    if(!Number.isFinite(lo)||!Number.isFinite(hi)||lo<paid-.005||lo>base+.005||hi<base-.005||hi<lo-.005||hi>100000000)
     throw Error("Serve quota già consuntivata ≤ Min ≤ Base ≤ Max.");
    const draft=upgradeLegacy(getDraft(id),monthLists[id]);
@@ -287,14 +293,14 @@ function install(){
   const id=panel.getAttribute("data-baseline-range"),[direction,categoryId]=id.split(":");
   try{
    if(button.hasAttribute("data-range-period-apply")){
-    const a=panel.querySelector("[data-range-periodmin]")?.value.trim().replace(",",".");
-    const b=panel.querySelector("[data-range-periodmax]")?.value.trim().replace(",",".");
+    const a=panel.querySelector("[data-range-periodmin]")?.value.trim();
+    const b=panel.querySelector("[data-range-periodmax]")?.value.trim();
     if(!a||!b)throw Error("Indica Min e Max del periodo.");
     const draft=upgradeLegacy(getDraft(id),monthLists[id]);
     const visible=new Set(monthLists[id].filter(m=>m.kind!=="actual").map(m=>m.month));
     const hasOld=Object.keys(draft.exceptions).some(m=>visible.has(m));
     if(hasOld&&root.confirm&&!root.confirm("Distribuire gli importi Min/Max su tutti i mesi futuri visibili? I valori mensili già impostati nel periodo saranno sostituiti."))return;
-    const newMonths=distributePeriod(monthLists[id],Number(a),Number(b));
+    const newMonths=distributePeriod(monthLists[id],parseEuroInput(a),parseEuroInput(b));
     for(const month of visible)delete draft.exceptions[month];
     Object.assign(draft.exceptions,newMonths);
     updatePanels(id);message(root.document.querySelector('[data-baseline-range="'+id+'"]'),"Valori distribuiti. Controlla i mesi e premi Salva incertezza.");return;
@@ -344,7 +350,7 @@ function install(){
  });
 }
 
-const api={buildAssumptions,validPcts,editorHtml,load,settings:()=>settings,settingsFor,summarize,status,distributePeriod,upgradeLegacy};
+const api={buildAssumptions,validPcts,editorHtml,load,settings:()=>settings,settingsFor,summarize,status,distributePeriod,upgradeLegacy,euroInput,parseEuroInput};
 root.BudgetFamilyBaselineUncertainty=api;
 if(typeof module!=="undefined"&&module.exports)module.exports=api;
 if(root.document){if(root.document.readyState==="loading")root.document.addEventListener("DOMContentLoaded",install);else install()}
