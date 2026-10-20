@@ -89,3 +89,11 @@
 .bf-draft-toolbar .bf-draft-cancel{min-width:70px;background:#fff;color:#475569;border:1px solid #cbd5e1;font-weight:650}
 .bf-draft-toolbar .bf-draft-cancel:hover:not(:disabled){background:#f1f5f9}
 .bf-draft-toolbar .bf-draft-cancel:disabled{opacity:.45}
+
+/* V73.30.10.43 · monthly scenario editing inside expanded L2 rows. */
+#planningBoardView.bf-board-plan-mode .planning-month-panel{overflow-x:auto}
+#planningBoardView.bf-board-plan-mode .planning-month-grid{grid-template-columns:repeat(12,minmax(94px,1fr));min-width:1190px}
+#planningBoardView .bf-scenario-month-input{display:block;box-sizing:border-box;width:100%;margin-top:4px;min-width:0;max-width:100%;padding:6px 4px;text-align:right;font:700 13px system-ui,-apple-system,sans-serif;font-variant-numeric:tabular-nums;color:#152d4a;background:#fff;border:1px solid #9db8d8;border-radius:6px}
+#planningBoardView .bf-scenario-month-input:focus{outline:2px solid #4389ea;outline-offset:1px}
+#planningBoardView .planning-month-cell.bf-scenario-month-manual{border-color:#2785d0;background:#eaf4ff}
+#planningBoardView .planning-month-cell.bf-scenario-month-manual .t{color:#1759a3;font-weight:700}
