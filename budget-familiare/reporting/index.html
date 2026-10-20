@@ -2353,7 +2353,7 @@ body{font-size:16px;line-height:1.5}
               <option value="METHOD:SAME_MONTH_LAST_YEAR">Stesso mese A-1</option>
               <option value="METHOD:LAST_VALUE">Ultimo valore</option>
               <option value="METHOD:FIXED">Importo fisso</option>
-              <option value="METHOD:RANGE">Range best-worst</option>
+              
               <option value="METHOD:ZERO">⊘ Non si ripete</option>
             </optgroup>
           </select></label>
@@ -2362,6 +2362,7 @@ body{font-size:16px;line-height:1.5}
             <option value="WITH">Con note</option>
             <option value="WITHOUT">Senza note</option>
           </select></label>
+          <label class="small">Intervallo <select id="planningIntervalFilter" class="select planning-filter-select" aria-label="Filtra per intervallo previsionale"><option value="ALL">Tutti</option><option value="WITH">Con intervallo</option><option value="WITHOUT">Senza intervallo</option><option value="MONTHS">Con eccezioni mensili</option></select></label>
           <label class="small">Mostra <select id="planningBoardDisplayUnit" class="select planning-filter-select"><option value="TOTAL">Totale periodo</option><option value="MONTH">Media mese</option></select></label>
           <label class="small planning-changed-control"><input id="planningBoardOnlyChanged" type="checkbox"> Solo modificate</label><label id="planningBaselinePositiveFilterWrap" class="small planning-changed-control hidden" title="Mostra solo le L2 con importo Baseline positivo nello stesso periodo. Esclude le categorie Baseline = 0 indipendentemente dal metodo di previsione. Si combina con gli altri filtri."><input id="planningBaselinePositiveOnly" type="checkbox"> Solo Baseline &gt; 0</label>
           <label class="planning-board-search"><input id="planningBoardSearch" type="search" placeholder="Cerca categoria…" autocomplete="off"></label>
@@ -2370,8 +2371,8 @@ body{font-size:16px;line-height:1.5}
       <section class="planning-board-card">
         <div class="planning-board-table-wrap">
           <table class="planning-board-table">
-            <thead><tr><th><button class="bf-sort-head" type="button" data-baseline-sort="l1_name">L1 ↕</button> <button class="bf-sort-head" type="button" data-baseline-sort="l2_name">L2 ↕</button></th><th id="planningBoardHistoryHead"><button class="bf-sort-head" type="button" data-baseline-sort="comparison">Storico ↕</button></th><th id="planningBoardYearHead"><button class="bf-sort-head" type="button" data-baseline-sort="annual">Baseline ↕</button></th><th id="planningBoardDeltaHead"><button class="bf-sort-head" type="button" data-baseline-sort="deltaPct">Var.% ↕</button> <button class="bf-sort-head" type="button" data-baseline-sort="deltaAbs">€ ↕</button></th><th><button class="bf-sort-head" type="button" data-baseline-sort="nature">Natura ↕</button></th><th><button class="bf-sort-head" type="button" data-baseline-sort="method">Tipo previsione ↕</button></th><th><button class="bf-sort-head" type="button" data-baseline-sort="confidence">Affidabilità ↕</button></th><th><button class="bf-sort-head" type="button" data-baseline-sort="note">Note / razionale ↕</button></th></tr></thead>
-            <tbody id="planningBoardBody"><tr><td colspan="8" class="muted">Apri il tabellone per caricare il piano.</td></tr></tbody>
+            <thead><tr><th><button class="bf-sort-head" type="button" data-baseline-sort="l1_name">L1 ↕</button> <button class="bf-sort-head" type="button" data-baseline-sort="l2_name">L2 ↕</button></th><th id="planningBoardHistoryHead"><button class="bf-sort-head" type="button" data-baseline-sort="comparison">Storico ↕</button></th><th id="planningBoardYearHead"><button class="bf-sort-head" type="button" data-baseline-sort="annual">Baseline ↕</button></th><th id="planningBoardDeltaHead"><button class="bf-sort-head" type="button" data-baseline-sort="deltaPct">Var.% ↕</button> <button class="bf-sort-head" type="button" data-baseline-sort="deltaAbs">€ ↕</button></th><th><button class="bf-sort-head" type="button" data-baseline-sort="nature">Natura ↕</button></th><th><button class="bf-sort-head" type="button" data-baseline-sort="method">Tipo previsione ↕</button></th><th><button class="bf-sort-head" type="button" data-baseline-sort="confidence">Affidabilità ↕</button></th><th><button class="bf-sort-head" type="button" data-baseline-sort="interval">Intervallo ↕</button></th><th><button class="bf-sort-head" type="button" data-baseline-sort="note">Note / razionale ↕</button></th></tr></thead>
+            <tbody id="planningBoardBody"><tr><td colspan="9" class="muted">Apri il tabellone per caricare il piano.</td></tr></tbody>
           </table>
         </div>
         <div id="planningBoardLegend" class="planning-board-legend"></div>
@@ -2852,6 +2853,8 @@ let planningBoardHorizon="CALENDAR";
 let planningBoardNatureFilter="ALL";
 let planningBoardForecastFilter="ALL";
 let planningBoardNoteFilter="ALL";
+let planningBoardIntervalFilter="ALL";
+let planningIntervalBaselineRows=new Map();
 let planningBoardLevel="L1_L2";
 let planningBoardSearch="";
 let planningBoardOnlyChanged=false;
@@ -4641,7 +4644,7 @@ function integratedMonthlyPlanHtml(){
       '</div>'+currentStatus+(label?'<div class="override-label">'+esc(label)+'</div>':'<div class="override-label" style="visibility:hidden">Base</div>')+
       '</div>';
   }).join("");
-  const title=manualMode?'Piano manuale L2 · mese in corso + prossimi 11 mesi':'Piano mensile L2 · mese in corso + prossimi 11 mesi';
+  const title=manualMode?'Baseline manuale L2 · mese in corso + prossimi 11 mesi':'Baseline mensile L2 · mese in corso + prossimi 11 mesi';
   const desc=manualMode
     ?'Il primo valore è il piano totale del mese in corso; il reale già registrato resta separato. Gli altri mesi seguono lo standard della regola salvo modifiche.'
     :'Il primo valore è il piano totale del mese in corso. Il reale già registrato non viene sommato di nuovo; se supera il piano, la proiezione non può scendere sotto il reale.';
@@ -7893,7 +7896,7 @@ function quickBaselineMonth(k,month,value){
  ed.monthChanges[month]=amount;ed.dirty=true;renderPlanningBoard();
 }
 function planningSharedChartSlot(key,name,level){
- return '<tr class="planning-month-row bf-baseline-detail-row"><td colspan="8"><div class="planning-month-panel">'+
+ return '<tr class="planning-month-row bf-baseline-detail-row"><td colspan="9"><div class="planning-month-panel">'+
   '<div class="bf-baseline-context"><strong>'+esc(level==="L1"?"Grafico L1 · "+name:"Dettaglio L2 · "+name)+'</strong><span>Storico e Baseline · clic sul mese per i movimenti reali</span></div>'+
   '<div class="bf-baseline-compact-summary" data-baseline-summary="'+esc(key)+'"></div>'+
   '<div data-baseline-shared-slot="'+esc(key)+'"><div class="analysis-loading">Caricamento…</div></div></div></td></tr>';
@@ -7920,7 +7923,7 @@ function planningMonthPanelHtml(row){
      '<div class="t">'+esc(label)+'</div></div>';
  });
  const changed=editable?" · Modifica i mesi per aggiornare il totale annuale e la media sopra. Gli Actual sono bloccati.":"";
- return '<tr class="planning-month-row"><td colspan="8"><div class="planning-month-panel"><div class="planning-month-head"><div class="small"><strong>'+
+ return '<tr class="planning-month-row"><td colspan="9"><div class="planning-month-panel"><div class="planning-month-head"><div class="small"><strong>'+
    esc(row.l2_name)+'</strong> · dettaglio mensile del periodo selezionato'+changed+
    '</div><button class="btn ghost compact" type="button" data-planning-open-analysis="'+esc(row.category_id)+
    '" data-planning-open-direction="'+row.direction+'">Apri in Analisi</button></div><div class="planning-month-grid">'+
@@ -8003,7 +8006,7 @@ function planningFlatRows(direction,rows){
   all=all.filter(r=>draftMode?window.BudgetFamilySinglePlan.isChanged(r):planningBoardContext==="BASELINE"?planningBaselineNeedsReview(r).overrides:Math.abs(num(r.annual)-num(r.comparison))>=.5);
  }
  if(!all.length)return "";
- let html='<tr class="planning-section-label"><td colspan="8">'+(direction==="INCOME"?"Entrate":"Spese")+' · L2 ordinate</td></tr>';
+ let html='<tr class="planning-section-label"><td colspan="9">'+(direction==="INCOME"?"Entrate":"Spese")+' · L2 ordinate</td></tr>';
  baselineSortRows(all).forEach(r=>{
   const key=direction+"|"+r.category_id,opened=planningBoardExpandedL2.has(key),baselineNote=String(r.meta?.rationale_note||""),planNote=planningBoardContext==="PLAN"?String(planningBoardData?.meta?.strategic_plan?.notes?.[direction+":"+String(r.category_id)]||""):"",displayNote=planNote?"Piano: "+planNote+(baselineNote?" | Baseline: "+baselineNote:""):baselineNote;
   html+='<tr class="planning-l2-row"><td><div class="planning-category"><button class="planning-caret" type="button" data-planning-toggle-l2="'+esc(key)+'">'+(opened?"▾":"▸")+'</button>'+baselineL1Tag(r.l1_name)+'<span class="name">'+esc(r.l2_name)+'</span></div></td>'+
@@ -8019,7 +8022,7 @@ function planningFlatRows(direction,rows){
 function planningSectionHtml(direction,allRows){
  if(baselineViewMode==="FLAT")return planningFlatRows(direction,allRows);
   const q=planningBoardSearch.trim().toLocaleLowerCase("it"),groups=planningGroupRows(allRows);
-  let html='<tr class="planning-section-label"><td colspan="8">'+(direction==="INCOME"?"Entrate":"Spese")+'</td></tr>';
+  let html='<tr class="planning-section-label"><td colspan="9">'+(direction==="INCOME"?"Entrate":"Spese")+'</td></tr>';
   let hasVisibleGroups=false;
   groups.forEach(function(g){
     const groupMatches=!q||String(g.name||"").toLocaleLowerCase("it").includes(q);
@@ -8653,7 +8656,7 @@ function renderPlanningBoard(){
     let html="";
     if(planningBoardFilter!=="EXPENSE")html+=planningSectionHtml("INCOME",shownInc);
     if(planningBoardFilter!=="INCOME")html+=planningSectionHtml("EXPENSE",shownExp);
-    $("planningBoardBody").innerHTML=html||'<tr><td colspan="8" class="muted">Nessuna voce corrisponde ai filtri.</td></tr>';
+    $("planningBoardBody").innerHTML=html||'<tr><td colspan="9" class="muted">Nessuna voce corrisponde ai filtri.</td></tr>';
     $("planningBoardLegend").textContent="Valori: "+(planningBoardDisplayUnit==="MONTH"?"media mensile":"totale periodo")+". Confronto con "+planningComparisonLabel()+". Verde sulle spese = riduzione, verde sulle entrate = aumento. "+
       (isStrategic?"Piano approvato V"+approved.revision+": confronto con la Baseline congelata alla stessa data.":
        canDraft?(planningBoardContext==="STRATEGY"?"Scenario vs Baseline: gli interventi modificano soltanto le quote future; nessun dato storico o Baseline viene sovrascritto.":"Piano in elaborazione vs Baseline: i target non modificano la Baseline e rimangono una bozza fino all’approvazione."):
