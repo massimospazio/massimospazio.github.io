@@ -7882,7 +7882,31 @@ function planningSharedChartSlot(key,name,level){
 }
 function planningMonthPanelHtml(row){
  if(planningBoardContext==="BASELINE")return planningSharedChartSlot(row.direction+"|"+row.category_id,row.l2_name,"L2");
- return '<tr class="planning-month-row"><td colspan="8"><div class="planning-month-panel"><div class="planning-month-head"><div class="small"><strong>'+esc(row.l2_name)+'</strong> · dettaglio mensile del periodo selezionato.</div><button class="btn ghost compact" type="button" data-planning-open-analysis="'+esc(row.category_id)+'" data-planning-open-direction="'+row.direction+'">Apri in Analisi</button></div><div class="planning-month-grid">'+row.months.map(function(m){return '<div class="planning-month-cell '+(m.kind==="actual"?"actual ":"")+(m.override?"override":"")+'"><div class="m">'+esc(monthLabel(m.month))+'</div><div class="a">'+money(m.amount)+'</div><div class="t">'+(m.kind==="actual"?"reale":(m.override?"override":planningBoardContext==="STRATEGY"?"scenario":planningBoardContext==="PLAN"?"piano":"prev."))+'</div></div>'}).join("")+'</div></div></td></tr>';
+ const editable=(planningBoardContext==="STRATEGY"||planningBoardContext==="PLAN")&&
+   !planningBoardData?.meta?.strategic_plan&&!!window.BudgetFamilySinglePlan;
+ const id=row.direction+":"+row.category_id;
+ const values=row.months.map(function(m){
+   const manual=!!m.scenarioOverride;
+   const actual=m.kind==="actual";
+   const minimum=actual?num(m.amount):Math.max(0,num(m.amount)-num(m.futureAmount));
+   const amount=new Intl.NumberFormat("it-IT",{maximumFractionDigits:2}).format(num(m.amount));
+   const label=actual?"Consuntivo":manual?"Modifica manuale":m.override?"Override Baseline":
+     editable?"Modificabile":planningBoardContext==="STRATEGY"?"Scenario":"Piano";
+   const field=editable&&!actual?
+     '<input type="text" inputmode="decimal" class="bf-scenario-month-input" data-bf-draft-month-amount="'+esc(id)+
+     '" data-bf-draft-month-id="'+esc(m.month)+'" value="'+esc(amount)+'" aria-label="Importo '+esc(monthLabel(m.month))+
+     ' '+esc(row.l2_name)+'" title="Importo totale del mese. Già registrato e non riducibile: '+esc(money(minimum))+'">':
+     '<div class="a">'+money(m.amount)+'</div>';
+   return '<div class="planning-month-cell '+(actual?"actual ":"")+(m.override?"override ":"")+
+     (manual?"bf-scenario-month-manual":"")+'"><div class="m">'+esc(monthLabel(m.month))+'</div>'+field+
+     '<div class="t">'+esc(label)+'</div></div>';
+ });
+ const changed=editable?" · Modifica i mesi per aggiornare il totale annuale e la media sopra. Gli Actual sono bloccati.":"";
+ return '<tr class="planning-month-row"><td colspan="8"><div class="planning-month-panel"><div class="planning-month-head"><div class="small"><strong>'+
+   esc(row.l2_name)+'</strong> · dettaglio mensile del periodo selezionato'+changed+
+   '</div><button class="btn ghost compact" type="button" data-planning-open-analysis="'+esc(row.category_id)+
+   '" data-planning-open-direction="'+row.direction+'">Apri in Analisi</button></div><div class="planning-month-grid">'+
+   values.join("")+'</div></div></td></tr>';
 }
 function planningComparisonUsesBaseline(){
   return planningBoardContext==="STRATEGY"||(planningBoardContext==="PLAN"&&planningBoardHorizon==="CALENDAR");
