@@ -1,7 +1,7 @@
 // Canonical source: massimospazio/budget-familiare; public files are deployed automatically.
 (function(){
-  const APP_VERSION='V73.30.10.37';
-  const APP_RELEASE='Strategia e Piano · ripristino L2 e annulla modifiche';
+  const APP_VERSION='V73.30.10.38';
+  const APP_RELEASE='Strategia e Piano · analisi variazione avanzo';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});

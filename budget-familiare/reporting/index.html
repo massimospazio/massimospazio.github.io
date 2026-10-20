@@ -8,14 +8,14 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=73.30.10.37-20261019"></script>
-<script src="../shared/app-config.js?v=73.30.10.37-20261019"></script>
-<script src="../shared/contextual-help.js?v=73.30.10.37-20261019" defer></script>
+<script src="../shared/supabase-client.js?v=73.30.10.38-20261019"></script>
+<script src="../shared/app-config.js?v=73.30.10.38-20261019"></script>
+<script src="../shared/contextual-help.js?v=73.30.10.38-20261019" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<link rel="stylesheet" href="../shared/health-reserve.css?v=73.30.10.37-20261019">
-<link rel="stylesheet" href="../shared/approved-plan.css?v=73.30.10.37-20261019">
-<link rel="stylesheet" href="../shared/scenario-strategy.css?v=73.30.10.37-20261019">
-<link rel="stylesheet" href="../shared/single-plan-board.css?v=73.30.10.37-20261019">
+<link rel="stylesheet" href="../shared/health-reserve.css?v=73.30.10.38-20261019">
+<link rel="stylesheet" href="../shared/approved-plan.css?v=73.30.10.38-20261019">
+<link rel="stylesheet" href="../shared/scenario-strategy.css?v=73.30.10.38-20261019">
+<link rel="stylesheet" href="../shared/single-plan-board.css?v=73.30.10.38-20261019">
 <style>
 :root{--bg:#f4f6fa;--card:#fff;--text:#17263e;--muted:#58677d;--line:#dce4ee;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 4px 18px rgba(15,23,42,.045);--sc-blue:#2563eb;--sc-blue-soft:#eff6ff;--sc-green:#0ea87a;--sc-red:#ef5b73;--sc-purple:#7658e6;--sc-ink:#17263e}
 *{box-sizing:border-box}
@@ -830,6 +830,22 @@ button,input,select{font:inherit}
 .planning-overview-item .po-mini-delta.bad{color:#b6364b}
 .planning-overview-item .po-mini-delta.neutral{color:#526880}
 .planning-overview-item .po-explanation{font-size:12px;line-height:1.4;color:#536b8a;margin-top:auto}
+/* V73.30.10.38 — attribuzione della variazione dell'avanzo, senza ingrandire il KPI chiuso. */
+.planning-overview-item.surplus .po-surplus-variation{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:2px 7px;border-top:1px solid #e8eff8;padding-top:5px;font-size:12px;color:#50617d}
+.planning-overview-item.surplus .po-surplus-variation strong{font-size:14px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.planning-overview-item.surplus .good{color:#11805b}
+.planning-overview-item.surplus .bad{color:#c0394d}
+.planning-overview-item.surplus .neutral{color:#64748b}
+.planning-overview-item.surplus .po-surplus-detail{font-size:12px;border-top:1px solid #edf1f7}
+.planning-overview-item.surplus .po-surplus-detail summary{padding:5px 0;cursor:pointer;color:#315b95;font-weight:650;list-style-position:inside}
+.planning-overview-item.surplus .po-surplus-detail summary:hover{text-decoration:underline}
+.planning-overview-item.surplus .po-surplus-detail-inner{padding:5px 0 3px;display:grid;gap:4px}
+.planning-overview-item.surplus .po-impact-row{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.planning-overview-item.surplus .po-impact-row span{min-width:0;overflow-wrap:anywhere;color:#42536b}
+.planning-overview-item.surplus .po-impact-row strong{font-variant-numeric:tabular-nums;white-space:nowrap}
+.planning-overview-item.surplus .po-surplus-detail-inner small{font-size:12px;line-height:1.4;color:#65748a}
+.planning-overview-item.surplus .po-surplus-detail-inner .po-impact-warning{color:#a83244}
+.planning-overview-item.surplus .po-contribution{margin-top:3px;padding-top:4px}
 .planning-overview-item .po-contribution{
   font-size:12px;line-height:1.4;color:#385b83;font-weight:700;
   margin-top:auto;padding-top:6px;border-top:1px solid #e8eff8;
@@ -2025,7 +2041,7 @@ body{font-size:16px;line-height:1.5}
 #planningBoardView .bf-l1-tag{max-width:80px}
 #planningBoardView .bf-sort-head{font-size:12px;white-space:normal}
 
-/* V73.30.10.37 — structural guards for eight-column shared table. */
+/* V73.30.10.38 — structural guards for eight-column shared table. */
 #planningBoardView .planning-board-table tbody tr.planning-l2-row>td:nth-child(3){text-align:right}
 #planningBoardView .planning-board-table tbody tr.planning-l2-row>td:nth-child(7){text-align:center}
 #planningBoardView .planning-board-table tbody tr.planning-l2-row>td:nth-child(8){text-align:left}
@@ -2078,7 +2094,7 @@ body{font-size:16px;line-height:1.5}
 @media(max-width:760px){.planning-board-shell[data-board-context="BASELINE"] .forecast-grid{grid-template-columns:1fr}.planning-board-shell[data-board-context="BASELINE"] .analysis-chart-box{height:205px}}
 
 
-/* V73.30.10.37 — common economic flow view for historical, baseline and Plan */
+/* V73.30.10.38 — common economic flow view for historical, baseline and Plan */
 .flow-dataset-picker{border-right:1px solid var(--line);padding-right:10px}
 .flow-compare-controls .flow-future-only select{min-height:36px;border:1px solid #cad7e9;border-radius:7px;background:#fff;color:#1b314c;padding:5px 9px;max-width:240px;font:inherit}
 .flow-unified-panel-head .flow-source-label{display:inline-flex;align-items:center;margin-left:6px;padding:2px 7px;border-radius:6px;background:#ebf2fc;color:#27528b;font-size:12px}
@@ -2753,8 +2769,8 @@ body{font-size:16px;line-height:1.5}
   </div>
 </div>
 
-<script src="../shared/scenario-strategy.js?v=73.30.10.37-20261019"></script>
-<script src="../shared/single-plan-board.js?v=73.30.10.37-20261019"></script>
+<script src="../shared/scenario-strategy.js?v=73.30.10.38-20261019"></script>
+<script src="../shared/single-plan-board.js?v=73.30.10.38-20261019"></script>
 <script>
 const sb=window.appSupabase;
 if(typeof Chart!=="undefined"){
@@ -5682,7 +5698,7 @@ function flowStepsFor(t){
   return {steps:steps,income:income,margin:margin,final:cur};
 }
 
-/* Flow datasets v73.30.10.37: different sources, common reconciled waterfall schema.
+/* Flow datasets v73.30.10.38: different sources, common reconciled waterfall schema.
    Never treat an unapproved technical snapshot as an approved strategic Plan. */
 function flowFutureFrame(){
  const d=projectionDataFor("EXPENSE"),i=projectionDataFor("INCOME");
@@ -8112,6 +8128,16 @@ function planningOverviewModel(exp,inc){
   }
   return {baseline:one("annual"),history:one("comparison")};
 }
+// Contributi sull'avanzo: ridurre investimenti libera risorse, ma non è un taglio ai consumi.
+function planningSurplusAttribution(model){
+  const scenario=model.baseline,base=model.history;
+  const income=num(scenario.totalIncome)-num(base.totalIncome);
+  const spending=(num(base.totalExpenses)-num(base.expense.SAVINGS))-
+    (num(scenario.totalExpenses)-num(scenario.expense.SAVINGS));
+  const savings=num(base.expense.SAVINGS)-num(scenario.expense.SAVINGS);
+  const total=num(scenario.surplus)-num(base.surplus);
+  return {income,spending,savings,total,reconciled:Math.abs(income+spending+savings-total)<.01};
+}
 function planningOverviewDelta(current,previous,kind){
   const diff=num(current)-num(previous),
     positive=diff>.005,negative=diff<-.005,
@@ -8161,11 +8187,25 @@ function planningOverviewRenderModel(model,context){
   ].filter(x=>Math.abs(x[1])>.005||Math.abs(x[2])>.005);
   const savingNote=residual.length?'<div class="po-contribution" title="'+esc(residual.map(x=>x[0]+" "+money(x[1])+" ("+planningComparisonLabel().toLowerCase()+" "+money(x[2])+")").join(" · "))+'">'+
     residual.map(x=>esc((x[0]==="Altre uscite"?"Altre":"Risparmio")+": "+money(x[1]))).join(" · ")+'</div>':"";
+  const showAttribution=(context==="STRATEGY"||context==="PLAN")&&planningComparisonUsesBaseline();
+  let surplusBody=savingNote;
+  if(showAttribution){
+    const a=planningSurplusAttribution(model);
+    const signed=n=>(n>0?"+":n<0?"−":"")+money(Math.abs(n));
+    const tone=n=>n>.005?"good":n<-.005?"bad":"neutral";
+    const items=[["Entrate",a.income],["Uscite escl. investimenti",a.spending],["Investimenti/risparmio",a.savings]];
+    const lines=items.map(([label,v])=>'<div class="po-impact-row"><span>'+esc(label)+'</span><strong class="'+tone(v)+'">'+esc(signed(v))+'</strong></div>').join("");
+    surplusBody='<div class="po-surplus-variation" title="Variazione assoluta dell’avanzo rispetto alla Baseline dello stesso periodo"><span>Δ avanzo vs Baseline</span><strong class="'+tone(a.total)+'">'+esc(signed(a.total))+'</strong></div>'+
+      '<details class="po-surplus-detail"><summary>Da cosa deriva il Δ?</summary><div class="po-surplus-detail-inner">'+lines+
+      '<small>Valori = contributi all’avanzo. Minori investimenti liberano liquidità, ma non significano minori consumi.</small>'+
+      (a.reconciled?'':'<small class="po-impact-warning">Attenzione: contributi da riconciliare.</small>')+'</div></details>'+
+      savingNote;
+  }
   return planningOverviewBlock("Entrate · "+baseLabel,"income",b.totalIncome,h.totalIncome,"INCOME",incomeHtml)+
     planningOverviewBlock("Uscite · "+baseLabel,"expense",b.totalExpenses,h.totalExpenses,"EXPENSE",expenseHtml)+
     planningOverviewBlock("Margine strutturale","margin",b.margin,h.margin,"INCOME",null,
       "Entrate − O − N − NC (escluse D e altre uscite)")+
-    planningOverviewBlock("Avanzo","surplus",b.surplus,h.surplus,"INCOME",savingNote,
+    planningOverviewBlock("Avanzo","surplus",b.surplus,h.surplus,"INCOME",surplusBody,
       "Margine − D − altre uscite − risparmio");
 }
 function renderPlanningOverview(exp,inc,view){
@@ -9120,8 +9160,8 @@ $("rpcDiagnosticsModal")?.addEventListener("click",function(e){if(e.target===$("
 document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!$("rpcDiagnosticsModal")?.classList.contains("hidden"))closeRpcDiagnostics()});
 init();
 </script>
-<script src="../shared/health-reserve.js?v=73.30.10.37-20261019"></script>
-<script src="../shared/approved-plan.js?v=73.30.10.37-20261019"></script>
+<script src="../shared/health-reserve.js?v=73.30.10.38-20261019"></script>
+<script src="../shared/approved-plan.js?v=73.30.10.38-20261019"></script>
 </body>
 </html>
 
