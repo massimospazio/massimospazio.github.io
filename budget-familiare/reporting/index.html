@@ -8,14 +8,14 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=73.30.10.40-20261019"></script>
-<script src="../shared/app-config.js?v=73.30.10.40-20261019"></script>
-<script src="../shared/contextual-help.js?v=73.30.10.40-20261019" defer></script>
+<script src="../shared/supabase-client.js?v=73.30.10.41-20261019"></script>
+<script src="../shared/app-config.js?v=73.30.10.41-20261019"></script>
+<script src="../shared/contextual-help.js?v=73.30.10.41-20261019" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<link rel="stylesheet" href="../shared/health-reserve.css?v=73.30.10.40-20261019">
-<link rel="stylesheet" href="../shared/approved-plan.css?v=73.30.10.40-20261019">
-<link rel="stylesheet" href="../shared/scenario-strategy.css?v=73.30.10.40-20261019">
-<link rel="stylesheet" href="../shared/single-plan-board.css?v=73.30.10.40-20261019">
+<link rel="stylesheet" href="../shared/health-reserve.css?v=73.30.10.41-20261019">
+<link rel="stylesheet" href="../shared/approved-plan.css?v=73.30.10.41-20261019">
+<link rel="stylesheet" href="../shared/scenario-strategy.css?v=73.30.10.41-20261019">
+<link rel="stylesheet" href="../shared/single-plan-board.css?v=73.30.10.41-20261019">
 <style>
 :root{--bg:#f4f6fa;--card:#fff;--text:#17263e;--muted:#58677d;--line:#dce4ee;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 4px 18px rgba(15,23,42,.045);--sc-blue:#2563eb;--sc-blue-soft:#eff6ff;--sc-green:#0ea87a;--sc-red:#ef5b73;--sc-purple:#7658e6;--sc-ink:#17263e}
 *{box-sizing:border-box}
@@ -801,7 +801,7 @@ button,input,select{font:inherit}
 .planning-overview-item.expense{border-top:3px solid #e16469}
 .planning-overview-item.margin{border-top:3px solid #467cce}
 .planning-overview-item.surplus{border-top:3px solid #7a63bc}
-/* V73.30.10.40 — 5° KPI nel Tabellone, senza comprimere i quattro principali. */
+/* V73.30.10.41 — 5° KPI nel Tabellone, senza comprimere i quattro principali. */
 .planning-overview-item.investments{grid-column:1/-1;border-left:3px solid #64748b;gap:4px;padding:9px 12px}
 .planning-overview-item.investments .po-investment-main{display:flex;gap:8px 16px;align-items:baseline;flex-wrap:wrap}
 .planning-overview-item.investments .po-label{font-size:13px}
@@ -842,7 +842,7 @@ button,input,select{font:inherit}
 .planning-overview-item .po-mini-delta.bad{color:#b6364b}
 .planning-overview-item .po-mini-delta.neutral{color:#526880}
 .planning-overview-item .po-explanation{font-size:12px;line-height:1.4;color:#536b8a;margin-top:auto}
-/* V73.30.10.40 — attribuzione della variazione dell'avanzo, senza ingrandire il KPI chiuso. */
+/* V73.30.10.41 — attribuzione della variazione dell'avanzo, senza ingrandire il KPI chiuso. */
 .planning-overview-item.surplus .po-surplus-variation{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:2px 7px;border-top:1px solid #e8eff8;padding-top:5px;font-size:12px;color:#50617d}
 .planning-overview-item.surplus .po-surplus-variation strong{font-size:14px;font-variant-numeric:tabular-nums;white-space:nowrap}
 .planning-overview-item.surplus .good{color:#11805b}
@@ -2053,7 +2053,7 @@ body{font-size:16px;line-height:1.5}
 #planningBoardView .bf-l1-tag{max-width:80px}
 #planningBoardView .bf-sort-head{font-size:12px;white-space:normal}
 
-/* V73.30.10.40 — structural guards for eight-column shared table. */
+/* V73.30.10.41 — structural guards for eight-column shared table. */
 #planningBoardView .planning-board-table tbody tr.planning-l2-row>td:nth-child(3){text-align:right}
 #planningBoardView .planning-board-table tbody tr.planning-l2-row>td:nth-child(7){text-align:center}
 #planningBoardView .planning-board-table tbody tr.planning-l2-row>td:nth-child(8){text-align:left}
@@ -2106,7 +2106,7 @@ body{font-size:16px;line-height:1.5}
 @media(max-width:760px){.planning-board-shell[data-board-context="BASELINE"] .forecast-grid{grid-template-columns:1fr}.planning-board-shell[data-board-context="BASELINE"] .analysis-chart-box{height:205px}}
 
 
-/* V73.30.10.40 — common economic flow view for historical, baseline and Plan */
+/* V73.30.10.41 — common economic flow view for historical, baseline and Plan */
 .flow-dataset-picker{border-right:1px solid var(--line);padding-right:10px}
 .flow-compare-controls .flow-future-only select{min-height:36px;border:1px solid #cad7e9;border-radius:7px;background:#fff;color:#1b314c;padding:5px 9px;max-width:240px;font:inherit}
 .flow-unified-panel-head .flow-source-label{display:inline-flex;align-items:center;margin-left:6px;padding:2px 7px;border-radius:6px;background:#ebf2fc;color:#27528b;font-size:12px}
@@ -2361,7 +2361,7 @@ body{font-size:16px;line-height:1.5}
             <option value="WITHOUT">Senza note</option>
           </select></label>
           <label class="small">Mostra <select id="planningBoardDisplayUnit" class="select planning-filter-select"><option value="TOTAL">Totale periodo</option><option value="MONTH">Media mese</option></select></label>
-          <label class="small planning-changed-control"><input id="planningBoardOnlyChanged" type="checkbox"> Solo modificate</label>
+          <label class="small planning-changed-control"><input id="planningBoardOnlyChanged" type="checkbox"> Solo modificate</label><label id="planningBaselineZeroFilterWrap" class="small planning-changed-control hidden" title="Mostra le L2 con importo Baseline totale pari a zero nello stesso periodo, anche quando lo Scenario ha già un importo. Si combina con gli altri filtri."><input id="planningBaselineZeroOnly" type="checkbox"> Baseline = 0</label>
           <label class="planning-board-search"><input id="planningBoardSearch" type="search" placeholder="Cerca categoria…" autocomplete="off"></label>
         </div>
       </div>
@@ -2781,8 +2781,8 @@ body{font-size:16px;line-height:1.5}
   </div>
 </div>
 
-<script src="../shared/scenario-strategy.js?v=73.30.10.40-20261019"></script>
-<script src="../shared/single-plan-board.js?v=73.30.10.40-20261019"></script>
+<script src="../shared/scenario-strategy.js?v=73.30.10.41-20261019"></script>
+<script src="../shared/single-plan-board.js?v=73.30.10.41-20261019"></script>
 <script>
 const sb=window.appSupabase;
 if(typeof Chart!=="undefined"){
@@ -2849,6 +2849,7 @@ let planningBoardNoteFilter="ALL";
 let planningBoardLevel="L1_L2";
 let planningBoardSearch="";
 let planningBoardOnlyChanged=false;
+let planningBoardBaselineZeroOnly=false;
 let planningBoardDisplayUnit="TOTAL";
 let planningNatureChart=null;
 let planningMonthlyChart=null;
@@ -5710,7 +5711,7 @@ function flowStepsFor(t){
   return {steps:steps,income:income,margin:margin,final:cur};
 }
 
-/* Flow datasets v73.30.10.40: different sources, common reconciled waterfall schema.
+/* Flow datasets v73.30.10.41: different sources, common reconciled waterfall schema.
    Never treat an unapproved technical snapshot as an approved strategic Plan. */
 function flowFutureFrame(){
  const d=projectionDataFor("EXPENSE"),i=projectionDataFor("INCOME");
@@ -7946,14 +7947,19 @@ function baselineL1Tag(label){
  const [bg,fg]=colors[hash%colors.length];
  return '<span class="bf-l1-tag" style="background:'+bg+';color:'+fg+'" title="L1 · '+esc(name)+'">'+esc(name.length>14?name.slice(0,13)+"…":name)+'</span>';
 }
+function planningBaselineZeroFilterMatch(row){
+ // Solo confronto omogeneo alla Baseline. Non usare l'Annual dello Scenario né lo storico.
+ return !planningBoardBaselineZeroOnly||!planningComparisonUsesBaseline()||Math.abs(num(row.comparison))<.005;
+}
 function planningFlatRows(direction,rows){
- let all=rows.filter(planningForecastFilterMatch).filter(planningNoteFilterMatch).filter(planningBaselineReviewMatches);
+ let all=rows.filter(planningForecastFilterMatch).filter(planningNoteFilterMatch).filter(planningBaselineReviewMatches).filter(planningBaselineZeroFilterMatch);
  if(planningBoardNatureFilter!=="ALL")all=all.filter(r=>planningNatureValue(r.meta,direction)===planningBoardNatureFilter);
  if(planningBoardSearch.trim()){const q=planningBoardSearch.trim().toLowerCase();all=all.filter(r=>(r.l1_name+" "+r.l2_name).toLowerCase().includes(q))}
  if(planningBoardOnlyChanged){
   const draftMode=(planningBoardContext==="STRATEGY"||planningBoardContext==="PLAN")&&!!window.BudgetFamilySinglePlan&&!planningBoardData?.meta?.strategic_plan;
   all=all.filter(r=>draftMode?window.BudgetFamilySinglePlan.isChanged(r):planningBoardContext==="BASELINE"?planningBaselineNeedsReview(r).overrides:Math.abs(num(r.annual)-num(r.comparison))>=.5);
  }
+ if(!all.length)return "";
  let html='<tr class="planning-section-label"><td colspan="8">'+(direction==="INCOME"?"Entrate":"Spese")+' · L2 ordinate</td></tr>';
  baselineSortRows(all).forEach(r=>{
   const key=direction+"|"+r.category_id,opened=planningBoardExpandedL2.has(key),baselineNote=String(r.meta?.rationale_note||""),planNote=planningBoardContext==="PLAN"?String(planningBoardData?.meta?.strategic_plan?.notes?.[direction+":"+String(r.category_id)]||""):"",displayNote=planNote?"Piano: "+planNote+(baselineNote?" | Baseline: "+baselineNote:""):baselineNote;
@@ -7971,16 +7977,18 @@ function planningSectionHtml(direction,allRows){
  if(baselineViewMode==="FLAT")return planningFlatRows(direction,allRows);
   const q=planningBoardSearch.trim().toLocaleLowerCase("it"),groups=planningGroupRows(allRows);
   let html='<tr class="planning-section-label"><td colspan="8">'+(direction==="INCOME"?"Entrate":"Spese")+'</td></tr>';
+  let hasVisibleGroups=false;
   groups.forEach(function(g){
     const groupMatches=!q||String(g.name||"").toLocaleLowerCase("it").includes(q);
     let visibleRows=groupMatches?g.rows:g.rows.filter(function(r){return String(r.l2_name||"").toLocaleLowerCase("it").includes(q)});
     if(planningBoardNatureFilter!=="ALL")visibleRows=visibleRows.filter(function(r){return planningNatureValue(r.meta,direction)===planningBoardNatureFilter});
-    visibleRows=visibleRows.filter(planningForecastFilterMatch).filter(planningNoteFilterMatch).filter(planningBaselineReviewMatches);
+    visibleRows=visibleRows.filter(planningForecastFilterMatch).filter(planningNoteFilterMatch).filter(planningBaselineReviewMatches).filter(planningBaselineZeroFilterMatch);
     if(planningBoardContext==="BASELINE"&&planningBaselineReviewFilter==="LOW_RELIABILITY")visibleRows=visibleRows.filter(r=>[0,4,5].includes(planningForecastReliability(r).level));
     const draftPlan=(planningBoardContext==="PLAN"||planningBoardContext==="STRATEGY")&&(planningBoardContext==="STRATEGY"||!planningBoardData?.meta?.strategic_plan)&&!!window.BudgetFamilySinglePlan;
     if(planningBoardOnlyChanged)visibleRows=visibleRows.filter(r=>draftPlan?window.BudgetFamilySinglePlan.isChanged(r):planningBoardContext==="BASELINE"?planningBaselineNeedsReview(r).overrides:Math.abs(num(r.annual)-num(r.comparison))>=.5);
     if(!visibleRows.length)return;
-    const key=direction+"|"+g.id,searching=!!q,filtering=planningBoardNatureFilter!=="ALL"||planningBoardForecastFilter!=="ALL"||planningBoardNoteFilter!=="ALL"||planningBoardContext==="BASELINE"&&planningBaselineReviewFilter!=="ALL";
+    hasVisibleGroups=true;
+    const key=direction+"|"+g.id,searching=!!q,filtering=planningBoardNatureFilter!=="ALL"||planningBoardForecastFilter!=="ALL"||planningBoardNoteFilter!=="ALL"||planningBoardContext==="BASELINE"&&planningBaselineReviewFilter!=="ALL"||planningBoardBaselineZeroOnly&&planningComparisonUsesBaseline();
     const expanded=planningBoardLevel==="L1_L2"&&(searching||filtering||planningBoardOnlyChanged||planningBoardExpandedL1.has(key));
     const annual=visibleRows.reduce(function(s,r){return s+r.annual},0),comparison=visibleRows.reduce(function(s,r){return s+r.comparison},0),deltaAbs=annual-comparison,deltaPct=comparison>0?deltaAbs*100/comparison:(Math.abs(annual)<.5?0:null);
     html+='<tr class="planning-l1-row '+(direction==="INCOME"?"income":"expense")+'">'+
@@ -8005,7 +8013,7 @@ function planningSectionHtml(direction,allRows){
       if(open)html+=planningMonthPanelHtml(r);
     });
   });
-  return html;
+  return hasVisibleGroups?html:"";
 }
 function planningRenderFilterButtons(){
  document.querySelectorAll("[data-baseline-mode]").forEach(b=>{b.classList.toggle("ghost",b.dataset.baselineMode!==baselineViewMode);b.classList.remove("hidden")});
@@ -8547,6 +8555,8 @@ function renderPlanningBoard(){
     $("planningBoardView").dataset.displayUnit=planningBoardDisplayUnit;
     if($("planningBoardDisplayUnit"))$("planningBoardDisplayUnit").value=planningBoardDisplayUnit;
     if($("planningBoardOnlyChanged"))$("planningBoardOnlyChanged").checked=planningBoardOnlyChanged;
+    if($("planningBaselineZeroOnly"))$("planningBaselineZeroOnly").checked=planningBoardBaselineZeroOnly;
+    $("planningBaselineZeroFilterWrap")?.classList.toggle("hidden",!planningComparisonUsesBaseline());
     $("planningBoardTitle").textContent=view.title;
     $("planningBoardYear").textContent=view.period;
     $("planningBoardHistoryHead").innerHTML='<button type="button" class="bf-sort-head" data-baseline-sort="comparison">'+esc(rolling?"Storico 12M":"Storico "+def.comparisonLabel)+' ↕</button>';
@@ -8855,6 +8865,7 @@ $("planningSimulatorView").addEventListener("input",function(e){
   next[sim.dataset.planningSim]=num(sim.value);planningSimulationSet(next);renderPlanningSimulatorView();
 });
 $("planningBoardOnlyChanged")?.addEventListener("change",function(){planningBoardOnlyChanged=this.checked;renderPlanningBoard()});
+$("planningBaselineZeroOnly")?.addEventListener("change",function(){planningBoardBaselineZeroOnly=this.checked;renderPlanningBoard()});
 $("planningBoardDisplayUnit")?.addEventListener("change",function(){planningBoardDisplayUnit=this.value;renderPlanningBoard()});
 $("planningBoardSearch").addEventListener("input",function(){planningBoardSearch=this.value||"";renderPlanningBoard()});
 $("planningNatureFilter").addEventListener("change",function(){planningBoardNatureFilter=this.value||"ALL";renderPlanningBoard()});
@@ -9206,8 +9217,8 @@ $("rpcDiagnosticsModal")?.addEventListener("click",function(e){if(e.target===$("
 document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!$("rpcDiagnosticsModal")?.classList.contains("hidden"))closeRpcDiagnostics()});
 init();
 </script>
-<script src="../shared/health-reserve.js?v=73.30.10.40-20261019"></script>
-<script src="../shared/approved-plan.js?v=73.30.10.40-20261019"></script>
+<script src="../shared/health-reserve.js?v=73.30.10.41-20261019"></script>
+<script src="../shared/approved-plan.js?v=73.30.10.41-20261019"></script>
 </body>
 </html>
 
