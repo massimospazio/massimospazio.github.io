@@ -47,6 +47,40 @@ function buildAssumptions(exp,inc,values=settings){
  return {assumptions:result,invalid};
 }
 function settingsFor(direction,id){return settings[k(direction,id)]||{min_pct:null,max_pct:null,exceptions:{}}}
+/* Period summary used by the shared Baseline/Strategia/Piano board.
+   Show only effective future-month exceptions in the badge; already-closed months
+   remain stored but no longer affect the uncertainty forecast. */
+function summarize(row,values=settings){
+ const direction=String(row?.direction||""),id=String(row?.category_id||"");
+ const config=values[k(direction,id)];
+ const months=Array.isArray(row?.months)?row.months:[];
+ const future=months.filter(m=>m.kind!=="actual");
+ const futureKeys=new Set(future.map(m=>String(m.month)));
+ const general=!!config&&config.min_pct!==null&&config.min_pct!==undefined&&
+   config.max_pct!==null&&config.max_pct!==undefined;
+ const exceptionKeys=Object.keys(config?.exceptions||{}).filter(m=>futureKeys.has(m)).sort();
+ const configured=general||exceptionKeys.length>0;
+ const kind=general?(exceptionKeys.length?"MIXED":"PERIOD"):(exceptionKeys.length?"MONTHS":"NONE");
+ const effective=buildAssumptions(direction==="EXPENSE"?[row]:[],direction==="INCOME"?[row]:[],values);
+ let base=0,min=0,max=0,active=0;
+ for(const m of months){
+  const standard=numerical(m.amount);
+  base+=standard;
+  const entry=effective.assumptions[k(direction,id)+"|"+m.month];
+  if(!entry){min+=standard;max+=standard;continue}
+  const salaryException=entry.type==="SALARY";
+  const lo=salaryException?numerical(entry.fixed)+numerical(entry.variableMin):numerical(entry.min);
+  const hi=salaryException?numerical(entry.fixed)+numerical(entry.variableMax):numerical(entry.max);
+  min+=lo;max+=hi;active++;
+ }
+ return {
+  configured,kind,hasPeriod:general,monthCount:exceptionKeys.length,
+  months:exceptionKeys,base:round(base),min:round(min),max:round(max),
+  active,invalidCount:effective.invalid.length
+ };
+}
+function status(){return {loaded,error:loadError}}
+
 function load(rpc,onChanged){
  if(rpc)readRpc=rpc;
  if(onChanged)changeListener=onChanged;
@@ -236,7 +270,7 @@ function install(){
   finally{button.disabled=false}
  });
 }
-const api={buildAssumptions,validPcts,editorHtml,load,settings:()=>settings,settingsFor};
+const api={buildAssumptions,validPcts,editorHtml,load,settings:()=>settings,settingsFor,summarize,status};
 root.BudgetFamilyBaselineUncertainty=api;
 if(typeof module!=="undefined"&&module.exports)module.exports=api;
 if(root.document){if(root.document.readyState==="loading")root.document.addEventListener("DOMContentLoaded",install);else install()}
