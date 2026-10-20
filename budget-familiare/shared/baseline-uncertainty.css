@@ -1,4 +1,4 @@
-/* V73.30.10.47 – Baseline uncertainty independent of forecast method. */
+/* V73.30.10.50 – Min/Max in euro per mese e aggregati per periodo. */
 .bf-baseline-range{box-sizing:border-box;margin:10px 0;padding:0 12px;border:1px solid #b9d3f1;border-radius:9px;background:#fafdff;color:#243c5b;font-size:13px;max-width:100%}
 .bf-baseline-range>summary{display:list-item;cursor:pointer;font-weight:730;padding:11px 2px}
 .bf-baseline-range-indicator{margin-left:8px;font-weight:550;color:#537295;font-size:12px}
@@ -18,3 +18,29 @@
 .bf-baseline-range-actions>span{flex:1;min-width:120px;font-size:12px}
 .bf-baseline-range-error{color:#b91c1c!important}
 @media(max-width:650px){.bf-baseline-range-pcts{grid-template-columns:1fr}.bf-baseline-range-add label{max-width:none}}
+
+/* Un solo calendario di input: ogni mese futuro mostra Base, Min e Max. */
+.bf-baseline-range-period{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:9px 0 4px;max-width:790px;align-items:end}
+.bf-baseline-range-period label>strong{display:block;margin:8px 0;font-size:15px;font-variant-numeric:tabular-nums;color:#223e5b}
+.bf-baseline-range-derived{font-size:12px;color:#496786;margin:7px 0;font-weight:600}
+.bf-baseline-range-months{border-top:1px solid #dbe9f6;margin-top:14px;padding-top:10px}
+.bf-baseline-range-months>strong{display:block;color:#254971;margin-bottom:3px}
+.bf-baseline-range-month-row{display:grid;grid-template-columns:90px minmax(105px,1fr) minmax(100px,1fr) minmax(100px,1fr) 34px;gap:8px;align-items:end;padding:7px 5px;border-bottom:1px solid #e7edf4}
+.bf-baseline-range-month-row:nth-child(even){background:#f5f9ff}
+.bf-baseline-range-month-row.is-configured{border-left:3px solid #3173c8}
+.bf-baseline-range-month-name{align-self:center;font-size:12px;font-weight:700;white-space:nowrap;color:#31506e}
+.bf-baseline-range-month-name b{color:#2463c5}
+.bf-baseline-range-base{align-self:center;font-size:12px;white-space:nowrap;font-weight:600;color:#425e7d}
+.bf-baseline-range-month-row label{min-width:0}
+.bf-baseline-range-month-row input{margin-top:2px;padding:6px 5px;text-align:right;font-variant-numeric:tabular-nums}
+.bf-baseline-range-month-row>button{align-self:center;padding:5px 6px}
+.bf-baseline-range-legacy{color:#a16207!important}
+@media(max-width:650px){
+ .bf-baseline-range-period{grid-template-columns:1fr 1fr}
+ .bf-baseline-range-month-row{grid-template-columns:65px 1fr 1fr 32px;gap:5px}
+ .bf-baseline-range-month-row .bf-baseline-range-base{grid-column:2/4;grid-row:1}
+ .bf-baseline-range-month-row label:nth-of-type(1){grid-column:2;grid-row:2}
+ .bf-baseline-range-month-row label:nth-of-type(2){grid-column:3;grid-row:2}
+ .bf-baseline-range-month-row .bf-baseline-range-month-name{grid-row:1/3}
+ .bf-baseline-range-month-row>button{grid-column:4;grid-row:2}
+}
