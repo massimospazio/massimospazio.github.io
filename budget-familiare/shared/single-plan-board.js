@@ -291,8 +291,13 @@ function onChange(e){
   const previous=applyRows([base])[0],old=previous.months.find(m=>m.month===month);
   if(!old)return;
   const revised=round2(n),nextTotal=round2(previous.annual+revised-value(old.amount));
+  if(Math.abs(revised-value(old.amount))<.005)return; // no-op: non bloccare un mese solo per averci cliccato
   if(!state.monthTargets[id])state.monthTargets[id]={};
-  if(Math.abs(revised-value(original.amount))<.005)delete state.monthTargets[id][month];
+  const otherManual=Object.keys(state.monthTargets[id]).some(m=>m!==month);
+  // L'importo immesso resta fissato anche se coincide con la Baseline,
+  // quando il resto della categoria ha un target differente.
+  if(Math.abs(revised-value(original.amount))<.005&&
+     Math.abs(nextTotal-value(base.annual))<.005&&!otherManual)delete state.monthTargets[id][month];
   else state.monthTargets[id][month]=revised;
   if(!Object.keys(state.monthTargets[id]).length)delete state.monthTargets[id];
   if(Math.abs(nextTotal-value(base.annual))<.005&&!state.monthTargets[id])delete state.targets[id];
@@ -308,6 +313,11 @@ function onChange(e){
  const fixedMin=locked(base)+(base.months||[]).filter(m=>m.kind!=="actual"&&Object.prototype.hasOwnProperty.call(manual,m.month))
   .reduce((sum,m)=>sum+Math.max(0,value(manual[m.month])-fixedMonth(m)),0);
  const desired=round2(monthly?n*12:n);
+ const adjustable=(base.months||[]).filter(m=>m.kind!=="actual"&&!Object.prototype.hasOwnProperty.call(manual,m.month));
+ if(!adjustable.length&&Math.abs(desired-applyRows([base])[0].annual)>.005){
+  e.target.setCustomValidity("Non ci sono mesi liberi: modifica un mese manuale o ripristina la categoria.");
+  e.target.reportValidity();return;
+ }
  if(desired<fixedMin-.005){
   e.target.setCustomValidity("Per ridurre sotto "+money(fixedMin)+" ripristina prima uno o più mesi manuali.");
   e.target.reportValidity();return;
