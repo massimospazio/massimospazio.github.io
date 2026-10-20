@@ -135,11 +135,21 @@ function updatePanels(id){
  for(const el of root.document.querySelectorAll("[data-baseline-range]")){
   if(el.getAttribute("data-baseline-range")!==id)continue;
   const open=el.open;
+  const openMonths=!!el.querySelector(".bf-baseline-range-exceptions")?.open;
+  const monthSelected=el.querySelector("[data-range-month]")?.value;
   const [direction,categoryId]=id.split(":");
   const label=el.getAttribute("data-baseline-range-label")||"";
   const host=root.document.createElement("div");
   host.innerHTML=editorHtml({direction,categoryId,months:monthLists[id],label});
-  const next=host.firstElementChild;if(next){next.open=open;el.replaceWith(next)}
+  const next=host.firstElementChild;
+  if(next){
+   next.open=open;
+   const exceptions=next.querySelector(".bf-baseline-range-exceptions");
+   if(exceptions)exceptions.open=openMonths;
+   const picker=next.querySelector("[data-range-month]");
+   if(picker&&monthSelected&&Array.from(picker.options).some(x=>x.value===monthSelected))picker.value=monthSelected;
+   el.replaceWith(next);
+  }
  }
 }
 function readPercents(panel,draft){
