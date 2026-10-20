@@ -4349,10 +4349,12 @@ function forecastMethodOptions(v){
     ["AVG12","Media 12 mesi"],
     ["MEDIAN12","Mediana 12 mesi"],
     ["FIXED","Importo manuale"],
-    ["RANGE","Intervallo"],
     ["ZERO","Non si ripeterà"]
   ];
-  return opts.map(function(o){return '<option value="'+o[0]+'"'+(v===o[0]?" selected":"")+'>'+o[1]+'</option>'}).join("");
+  // Compatibilita' in lettura: il vecchio metodo RANGE non e' piu' selezionabile.
+  // Una eventuale configurazione storica viene resa esplicita, senza sostituirla silenziosamente.
+  const legacy=v==="RANGE"?'<option value="RANGE" selected disabled>Intervallo (metodo precedente)</option>':"";
+  return legacy+opts.map(function(o){return '<option value="'+o[0]+'"'+(v===o[0]?" selected":"")+'>'+o[1]+'</option>'}).join("");
 }
 function forecastFrequencyOptions(v){
   const base=String(v||"MONTHLY").startsWith("MONTHS:")?"MONTHS":(v||"MONTHLY");
