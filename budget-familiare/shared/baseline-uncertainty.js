@@ -95,9 +95,11 @@ function editorHtml({direction,categoryId,months=[],label=""}){
  const rows=Object.entries(special).sort(([a],[b])=>a.localeCompare(b)).map(([month,entry])=>{
   const m=available.find(x=>x.month===month);
   return '<div class="bf-baseline-range-exception">'+
-    '<span>'+esc(monthName(month))+'</span><strong>'+(entry.type==="SALARY"?
-      'Fissa '+money(entry.fixed)+' · variabile '+money(entry.variableMin)+' / '+money(entry.variableMax):
-      'Min '+money(entry.min)+' · Max '+money(entry.max))+'</strong>'+
+    '<span>'+esc(monthName(month))+'</span><strong>Prudente '+money(entry.type==="SALARY"?
+      numerical(entry.fixed)+numerical(entry.variableMin):entry.min)+
+      ' · Base '+(m?money(m.amount):'Baseline non disponibile')+
+      ' · Favorevole '+money(entry.type==="SALARY"?
+      numerical(entry.fixed)+numerical(entry.variableMax):entry.max)+'</strong>'+
     '<button class="btn ghost compact" type="button" data-range-remove="'+esc(month)+'">Rimuovi</button>'+
     (!m?'<small>Mese fuori dal periodo corrente (conservato)</small>':'')+
     '</div>';
@@ -109,19 +111,16 @@ function editorHtml({direction,categoryId,months=[],label=""}){
   '<div class="bf-baseline-range-body">'+
   (loadError?'<p class="bf-baseline-range-error">Caricamento non riuscito: '+esc(loadError)+'</p>':'')+
   (!loaded?'<p class="bf-baseline-range-help">Caricamento impostazioni…</p>':'')+
-  '<p class="bf-baseline-range-help">Intervallo L2 per il periodo di previsione. <b>Base = Baseline</b>; Min e Max non cambiano il metodo di previsione né gli override mensili.</p>'+
+  '<p class="bf-baseline-range-help">Intervallo L2 per il periodo di previsione. <b>Base = Baseline</b>; Min e Max sono ipotesi prudenti/favorevoli, non limiti garantiti e non cambiano né il metodo di previsione né gli override mensili.</p>'+
   periodInputs(direction,categoryId,view)+
   '<details class="bf-baseline-range-exceptions"><summary>Eccezioni mensili ('+Object.keys(special).length+') · facoltative</summary>'+
   rows+
   (available.length?'<div class="bf-baseline-range-add"><label>Mese <select data-range-month>'+
    available.map(m=>'<option value="'+esc(m.month)+'">'+esc(monthName(m.month))+' · Baseline '+esc(money(m.amount))+'</option>').join("")+
    '</select></label>'+
-   (direction==="INCOME"&&/stipendio/i.test(label)?
-    '<label>Quota fissa €<input type="number" data-range-fixed min="0" step=".01" placeholder="Fissa"></label>'+
-    '<label>Variabile Min €<input type="number" data-range-monthmin min="0" step=".01" placeholder="Min"></label>'+
-    '<label>Variabile Max €<input type="number" data-range-monthmax min="0" step=".01" placeholder="Max"></label>':
-    '<label>Min totale €<input type="number" data-range-monthmin min="0" step=".01" placeholder="Min"></label>'+
-    '<label>Max totale €<input type="number" data-range-monthmax min="0" step=".01" placeholder="Max"></label>')+
+   '<label>Prudente · Min totale €<input type="number" data-range-monthmin min="0" step=".01" placeholder="es. 9000"></label>'+
+   '<label>Favorevole · Max totale €<input type="number" data-range-monthmax min="0" step=".01" placeholder="es. 15000"></label>'+
+   '<small>Base = Baseline del mese selezionato (non si reinserisce). Il Prudente non è un minimo garantito: è una delle ipotesi sfavorevoli plausibili.</small>'+
    '<button type="button" class="btn ghost compact" data-range-add>Aggiungi eccezione</button></div>':
    '<p>Nessun mese futuro modificabile.</p>')+
   '</details>'+
@@ -179,17 +178,11 @@ function install(){
     if(!minText||!maxText)throw Error("Indica Min e Max del mese.");
     const lo=Number(minText),hi=Number(maxText),paid=floor(m),base=numerical(m.amount);
     if(!Number.isFinite(lo)||!Number.isFinite(hi)||lo<0||hi<lo)throw Error("Intervallo del mese non valido.");
-    let exception={type:"TOTAL",min:round(lo),max:round(hi)};
-    if(direction==="INCOME"&&panel.querySelector("[data-range-fixed]")){
-     const txt=panel.querySelector("[data-range-fixed]").value.trim();
-     if(!txt)throw Error("Indica la quota fissa dello stipendio.");
-     const fixed=Number(txt),expected=base-fixed;
-     if(!Number.isFinite(fixed)||fixed<0||expected<0||lo>expected||hi<expected||fixed+lo<paid)
-       throw Error("La quota variabile attesa deve stare fra Min e Max; il totale minimo deve coprire il già incassato.");
-     exception={type:"SALARY",fixed:round(fixed),variableMin:round(lo),variableMax:round(hi)};
-    }else if(lo>base+.005||hi<base-.005||lo<paid-.005)
-     throw Error("Min ≤ Baseline ≤ Max e minimo non sotto gli Actual.");
-    draft.exceptions[month]=exception;updatePanels(id);return;
+    if(lo>base+.005||hi<base-.005||lo<paid-.005)
+     throw Error("Occorre Prudente ≤ Base (Baseline) ≤ Favorevole; il Prudente non può essere inferiore agli Actual già registrati.");
+    // Anche lo stipendio usa valori TOTALI del mese. Non sommare una nuova quota variabile.
+    draft.exceptions[month]={type:"TOTAL",min:round(lo),max:round(hi)};
+    updatePanels(id);return;
    }
    if(button.hasAttribute("data-range-remove")){
     delete draft.exceptions[button.getAttribute("data-range-remove")];updatePanels(id);return;
@@ -203,9 +196,13 @@ function install(){
      if(draft.exceptions[month])continue;
      const m=monthLists[id]?.find(x=>x.month===month&&x.kind!=="actual");
      if(!m||Math.abs(numerical(value.expected)-numerical(m.amount))>.005)continue;
-     if(value.type==="SALARY"&&direction==="INCOME")
-      draft.exceptions[month]={type:"SALARY",fixed:numerical(value.fixed),variableMin:numerical(value.variableMin),variableMax:numerical(value.variableMax)};
-     else draft.exceptions[month]={type:"TOTAL",min:numerical(value.min),max:numerical(value.max)};
+     // Una vecchia ipotesi stipendio con componenti separati viene convertita
+     // negli stessi totali prudente/favorevole, senza cambiarne l'effetto economico.
+     const lo=value.type==="SALARY"?numerical(value.fixed)+numerical(value.variableMin):numerical(value.min);
+     const hi=value.type==="SALARY"?numerical(value.fixed)+numerical(value.variableMax):numerical(value.max);
+     const paid=floor(m);
+     if(!Number.isFinite(lo)||!Number.isFinite(hi)||lo<paid-.005||lo>m.amount+.005||hi<m.amount-.005)continue;
+     draft.exceptions[month]={type:"TOTAL",min:round(lo),max:round(hi)};
      imported++;
     }
     updatePanels(id);
