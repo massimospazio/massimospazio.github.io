@@ -4686,13 +4686,21 @@ async function saveIntegratedMonthlyOverride(month,amount,input){
   if(input)input.disabled=true;
   try{
     const chosen=analysisForecastEditor?.category_setting?.recurrence_pattern==="MANUAL_MONTHS"&&amount===0?null:amount;
-    await rpc(rpcName,{p_month:month,p_category_id:analysisSelectedCategory,p_amount:chosen});
+    const wasAnnual=analysisForecastEditor?.category_setting?.recurrence_pattern==="MANUAL_MONTHS";
+    const overrideResult=await rpc(rpcName,{p_month:month,p_category_id:analysisSelectedCategory,p_amount:chosen});
     updateCellLocal(direction==="INCOME"?"income":"expense",analysisSelectedCategory,month,chosen);
     analysisForecastEditor=await rpc("dashboard_reporting_forecast_editor_v2",{p_category_id:analysisSelectedCategory,p_direction:direction,p_horizon_months:12});
+    // Saving a modified month can auto-convert a flat rule to the annual model.
+    // Drop the old draft so the new frequency does not appear unsaved/blocked.
+    analysisForecastDraft=null;analysisForecastDraftKey="";
     invalidateAnalysisProjection(direction);
     renderForecastEditor();renderPlan();renderProjection();
     if(analysisTimeMode==="PROJECTION")await loadAnalysisProjection(true);
     const manualMode=savedPlanIsManual(),direct=analysisForecastEditor?.category_setting?.recurrence_pattern==="MANUAL_MONTHS";
+    if(!wasAnnual&&overrideResult?.annual_template){
+      msg($("analysisStatus"),"La modifica ha trasformato la distribuzione in Personalizzata per mese: i valori si ripeteranno ogni anno.");
+      return;
+    }
     msg($("analysisStatus"),chosen===null
       ?(direct?"Mese azzerato.":manualMode?"Valore mensile ripristinato allo standard della regola.":"Override rimosso: il mese torna al valore calcolato dalla regola.")
       :(direct?"Importo mensile salvato.":manualMode?"Valore mensile del piano salvato.":"Override mensile salvato."));
