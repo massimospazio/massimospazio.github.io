@@ -14,6 +14,20 @@ const round=x=>Math.round((numerical(x)+Number.EPSILON)*100)/100;
 const k=(direction,id)=>direction+":"+id;
 const floor=m=>m.kind==="actual"?numerical(m.amount):Math.max(0,round(numerical(m.amount)-numerical(m.futureAmount)));
 const salary=r=>r.direction==="INCOME"&&String(r.l2_name||"").trim().toLocaleLowerCase("it")==="stipendio";
+// Dated bounds can be inherited by the same calendar month in future years.
+// The nearest past year's explicit value wins; Actual months remain immutable.
+function exceptionForMonth(config,month){
+ const exact=config?.exceptions?.[month];if(exact)return exact;
+ const target=String(month||""),year=Number(target.slice(0,4)),mm=target.slice(5,7);
+ if(!/^\d{4}-(0[1-9]|1[0-2])-01$/.test(target))return null;
+ let latest=-Infinity,result=null;
+ for(const [date,value] of Object.entries(config?.exceptions||{})){
+  if(!/^\d{4}-(0[1-9]|1[0-2])-01$/.test(date)||date.slice(5,7)!==mm)continue;
+  const y=Number(date.slice(0,4));
+  if(y<=year&&y>latest){latest=y;result=value}
+ }
+ return result;
+}
 let readRpc=null,changeListener=()=>{},loaded=false,pending=null,loadError="";
 let settings={},drafts={},monthLists={};
 function validPcts(lo,hi){
@@ -29,7 +43,7 @@ function buildAssumptions(exp,inc,values=settings){
   for(const m of r.months||[]){
    if(m.kind==="actual")continue;
    const id=k(r.direction,r.category_id)+"|"+m.month;
-   const special=entry.exceptions?.[m.month];
+   const special=exceptionForMonth(entry,m.month);
    let prediction=null;
    if(special?.type==="TOTAL"){
     prediction={type:"CATEGORY",expected:numerical(m.amount),min:numerical(special.min),max:numerical(special.max)};
@@ -64,7 +78,7 @@ function summarize(row,values=settings){
  const futureKeys=new Set(future.map(m=>String(m.month)));
  const general=!!config&&config.min_pct!==null&&config.min_pct!==undefined&&
    config.max_pct!==null&&config.max_pct!==undefined;
- const exceptionKeys=Object.keys(config?.exceptions||{}).filter(m=>futureKeys.has(m)).sort();
+ const exceptionKeys=future.filter(m=>exceptionForMonth(config,m.month)).map(m=>m.month).sort();
  const configured=general||exceptionKeys.length>0;
  const kind=general?(exceptionKeys.length?"MIXED":"PERIOD"):(exceptionKeys.length?"MONTHS":"NONE");
  const effective=buildAssumptions(direction==="EXPENSE"?[row]:[],direction==="INCOME"?[row]:[],values);
@@ -105,7 +119,7 @@ function monthName(m){
 }
 
 function monthBounds(m,config){
- const special=config?.exceptions?.[m.month];
+ const special=exceptionForMonth(config,m.month);
  if(special?.type==="TOTAL")return {min:numerical(special.min),max:numerical(special.max),active:true};
  if(special?.type==="SALARY")return {min:numerical(special.fixed)+numerical(special.variableMin),max:numerical(special.fixed)+numerical(special.variableMax),active:true};
  if(config?.min_pct!==null&&config?.min_pct!==undefined&&config?.max_pct!==null&&config?.max_pct!==undefined){
@@ -226,8 +240,8 @@ function editorHtml({direction,categoryId,months=[],label=""}){
  const upper=direction==="INCOME"?"Favorevole":"Prudente";
  const info=periodSummary(direction,categoryId,view,label);
  const configured=info.monthCount||(view.min_pct!==null&&view.min_pct!==undefined);
- const chosen=available.find(m=>!special[m.month])||available[0];
- const selection=chosen&&special[chosen.month];
+ const chosen=available.find(m=>!exceptionForMonth(view,m.month))||available[0];
+ const selection=chosen&&exceptionForMonth(view,chosen.month);
  const selectedMin=selection?(selection.type==="SALARY"?numerical(selection.fixed)+numerical(selection.variableMin):numerical(selection.min)):null;
  const selectedMax=selection?(selection.type==="SALARY"?numerical(selection.fixed)+numerical(selection.variableMax):numerical(selection.max)):null;
  const entries=Object.entries(special).sort(([a],[b])=>a.localeCompare(b)).map(([month,entry])=>{
@@ -240,7 +254,7 @@ function editorHtml({direction,categoryId,months=[],label=""}){
    '<span class="bf-baseline-range-exception-month">'+esc(monthName(month))+'</span>'+
    '<strong>'+lower+' '+money(totalMin)+' · Base '+(m?money(m.amount):'non disponibile')+
    ' · '+upper+' '+money(totalMax)+'</strong>'+
-   (archived||outside?'<small>'+(archived?'Mese consuntivato: escluso dal calcolo':'Fuori dal periodo: conservato')+'</small>':'')+
+   (archived||outside?'<small>'+(archived?'Mese consuntivato: Actual invariato':'Intervallo annuale: disponibile negli anni successivi')+'</small>':'')+
    (m&&!archived?'<button class="btn ghost compact" type="button" data-range-edit="'+esc(month)+'">Modifica</button>':'')+
    '<button class="btn ghost compact" type="button" data-range-remove="'+esc(month)+'">Rimuovi</button>'+
    '</div>';
@@ -252,7 +266,7 @@ function editorHtml({direction,categoryId,months=[],label=""}){
  '<div class="bf-baseline-range-body">'+
  (loadError?'<p class="bf-baseline-range-error">Caricamento non riuscito: '+esc(loadError)+'</p>':'')+
  (!loaded?'<p class="bf-baseline-range-help">Caricamento impostazioni…</p>':'')+
- '<p class="bf-baseline-range-help">Base = Baseline. Min e Max sono ipotesi plausibili, non limiti garantiti e non ricorrenti negli anni.</p>'+
+ '<p class="bf-baseline-range-help">Base = Baseline. Min e Max sono ipotesi plausibili, non limiti garantiti. Gli intervalli mensili seguono il modello annuale della Baseline e possono essere rivisti ogni anno.</p>'+
  periodInputs(direction,categoryId,view,label)+
  '<details class="bf-baseline-range-exceptions" open><summary>Mesi con incertezza ('+Object.keys(special).length+')</summary>'+
  (entries||'<p class="bf-baseline-range-empty">Nessun mese specifico aggiunto.</p>')+
@@ -277,7 +291,7 @@ function editorHtml({direction,categoryId,months=[],label=""}){
 function populateSelectedMonth(panel){
  const id=panel.getAttribute("data-baseline-range"),month=panel.querySelector("[data-range-month]")?.value;
  const config=drafts[id]||settings[id]||{};
- const entry=config.exceptions?.[month];
+ const entry=exceptionForMonth(config,month);
  const lo=entry?.type==="SALARY"?numerical(entry.fixed)+numerical(entry.variableMin):entry?.type==="TOTAL"?numerical(entry.min):null;
  const hi=entry?.type==="SALARY"?numerical(entry.fixed)+numerical(entry.variableMax):entry?.type==="TOTAL"?numerical(entry.max):null;
  const a=panel.querySelector("[data-range-monthmin]"),b=panel.querySelector("[data-range-monthmax]");
@@ -432,7 +446,7 @@ function install(){
  });
 }
 
-const api={buildAssumptions,validPcts,editorHtml,load,settings:()=>settings,settingsFor,summarize,status,distributePeriod,upgradeLegacy,euroInput,parseEuroInput,preparePeriodEdit};
+const api={buildAssumptions,validPcts,editorHtml,load,settings:()=>settings,settingsFor,summarize,status,distributePeriod,upgradeLegacy,euroInput,parseEuroInput,preparePeriodEdit,exceptionForMonth};
 root.BudgetFamilyBaselineUncertainty=api;
 if(typeof module!=="undefined"&&module.exports)module.exports=api;
 if(root.document){if(root.document.readyState==="loading")root.document.addEventListener("DOMContentLoaded",install);else install()}

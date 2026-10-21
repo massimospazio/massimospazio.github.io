@@ -4517,7 +4517,7 @@ function forecastFrequencyExplanation(d){
   if(d.frequency==="QUARTERLY")return "L’importo viene applicato ogni 3 mesi, mantenendo la cadenza rispetto all’ultima occorrenza.";
   if(d.frequency==="SEMIANNUAL")return "L’importo viene applicato ogni 6 mesi, mantenendo la cadenza rispetto all’ultima occorrenza.";
   if(d.frequency==="ANNUAL")return "L’importo viene applicato ogni 12 mesi, mantenendo la cadenza rispetto all’ultima occorrenza.";
-  if(d.frequency==="MANUAL_MONTHS")return "Inserisci importi nei mesi interessati: tutti gli altri rimangono a zero, senza ripetizione nell'anno seguente.";
+  if(d.frequency==="MANUAL_MONTHS")return "Inserisci importi nei mesi interessati: gli altri restano a zero e la distribuzione si ripete annualmente.";
   if(d.frequency==="MONTHS"){
     const names=["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"],sel=(d.specific_months||[]).map(function(m){return names[m-1]}).filter(Boolean);
     return sel.length?"Regola annuale preesistente: "+sel.join(", ")+". Per cambiare i valori del periodo usa esclusivamente i mesi del calendario sotto; la vecchia ricorrenza annuale resta invariata.":"La precedente regola per mesi non ha occorrenze: imposta direttamente i valori del periodo nel calendario sotto.";
@@ -4577,7 +4577,7 @@ function forecastControlsHtml(d){
   if(d.method==="SAME_MONTH_LAST_YEAR"){
     frequency='<div class="forecast-field"><label>Frequenza prevista</label><div class="forecast-type-note"><strong>Ereditata dallo storico.</strong><br>Ogni mese replica esattamente lo stesso mese A-1, inclusi i mesi a 0 €.</div></div>';
   }else{
-    frequency='<div class="forecast-field"><label>Frequenza prevista ⓘ</label><select id="forecastFrequency" class="select">'+forecastFrequencyOptions(d.frequency)+'</select><div class="forecast-type-note">'+(direct?'Nessuno standard: indica gli importi nei mesi sotto. Nessuna ripetizione futura.':'Lo stesso valore ogni mese, modificabile con override nel calendario.')+'</div></div>';
+    frequency='<div class="forecast-field"><label>Frequenza prevista ⓘ</label><select id="forecastFrequency" class="select">'+forecastFrequencyOptions(d.frequency)+'</select><div class="forecast-type-note">'+(direct?'Nessuno standard: indica gli importi nei mesi sotto. La distribuzione si ripete annualmente.':'Lo stesso valore ogni mese, modificabile con override nel calendario.')+'</div></div>';
   }
   const fixed=d.method==="FIXED"&&!direct?'<div class="forecast-field"><label>Importo previsto €</label><input id="forecastFixedAmount" class="input" type="number" min="0" step="1" value="'+esc(d.fixed_amount==null?"":d.fixed_amount)+'" /></div>':"";
   const range=d.method==="RANGE"&&!direct?'<div class="forecast-field"><label>Intervallo €</label><div class="forecast-range-fields"><input id="forecastRangeMin" class="input" type="number" min="0" step="1" placeholder="Min" value="'+esc(d.range_min==null?"":d.range_min)+'" /><input id="forecastRangeMax" class="input" type="number" min="0" step="1" placeholder="Max" value="'+esc(d.range_max==null?"":d.range_max)+'" /></div></div>':"";
@@ -4654,7 +4654,7 @@ function integratedMonthlyPlanHtml(){
     const modified=x.override_amount!==null&&x.override_amount!==undefined,base=num(x.base_amount),planned=num(x.planned_amount),isCurrent=!!x.is_current_month;
     const actual=isCurrent?num(x.actual_to_date):0,remaining=isCurrent?Math.max(0,planned-actual):0,over=isCurrent?Math.max(0,actual-planned):0;
     const cardClass=(dirty?" disabled":(!manualMode&&modified?" override":""))+(isCurrent?" current":"");
-    const label=directMode?(modified?'Importo inserito':''):(modified?(manualMode?'Valore standard '+money(base):'Override · base '+money(base)):'');
+    const label=directMode?(planned>0?'Modello annuale':''):(modified?(manualMode?'Valore standard '+money(base):'Override · base '+money(base)):'');
     const resetTitle=directMode?"Azzera importo del mese":manualMode?"Ripristina il valore standard della regola":"Rimuovi override e ripristina il valore della regola";
     const currentStatus=isCurrent
       ?'<div class="analysis-plan-current-live"><span>Reale ordinario <strong>'+money(actual)+'</strong></span>'+
@@ -4665,17 +4665,18 @@ function integratedMonthlyPlanHtml(){
       '<div class="month">'+esc(monthLabel(x.month))+(isCurrent?' <span class="current-badge">mese in corso</span>':'')+'</div>'+
       (directMode?'':'<div class="base">'+(manualMode?'Standard ':'Regola ')+money(base)+'</div>')+
       '<div class="analysis-plan-month-input-row"><input class="input" type="number" min="0" step="1" value="'+esc(planInputValue(planned))+'" data-analysis-plan-month="'+esc(x.month)+'" data-analysis-plan-base="'+esc(base)+'" aria-label="Piano '+esc(monthLabel(x.month))+'"'+(dirty?' disabled':'')+' />'+
-      (modified&&!dirty?'<button class="analysis-plan-reset" type="button" data-reset-analysis-plan="'+esc(x.month)+'" title="'+esc(resetTitle)+'">↺</button>':"")+
+      ((modified||(directMode&&planned>0))&&!dirty?'<button class="analysis-plan-reset" type="button" data-reset-analysis-plan="'+esc(x.month)+'" title="'+esc(resetTitle)+'">↺</button>':"")+
       '</div>'+currentStatus+(label?'<div class="override-label">'+esc(label)+'</div>':'<div class="override-label" style="visibility:hidden">Base</div>')+
       '</div>';
   }).join("");
   const title=directMode?'Baseline personalizzata · mese in corso + prossimi 11 mesi':manualMode?'Baseline manuale L2 · mese in corso + prossimi 11 mesi':'Baseline mensile L2 · mese in corso + prossimi 11 mesi';
   const desc=directMode
-    ?'Inserisci gli importi direttamente nei mesi scelti; tutti gli altri restano 0 €. Nessuno standard né ripetizione automatica nell’anno successivo. Consuntivi protetti.'
+    ?'Inserisci gli importi nei mesi scelti; gli altri restano 0 €. La distribuzione si ripete negli anni successivi e puoi modificarla in qualsiasi momento. Consuntivi protetti.'
     :manualMode
     ?'Modifica direttamente qui il mese desiderato, senza selezionarlo anche sopra. Il primo valore è il piano totale del mese corrente; il reale resta separato. Gli altri mesi seguono la regola, salvo modifica.'
     :'Il primo valore è il piano totale del mese in corso. Il reale già registrato non viene sommato di nuovo; se supera il piano, la proiezione non può scendere sotto il reale.';
-  const changedChip=changed?'<span class="analysis-plan-summary-chip">'+changed+' '+(directMode?'mesi inseriti':manualMode?'mesi modificati':'override')+'</span>':"";
+  const shownCount=directMode?rows.filter(x=>num(x.planned_amount)>0).length:changed;
+  const changedChip=shownCount?'<span class="analysis-plan-summary-chip">'+shownCount+' '+(directMode?'mesi valorizzati':manualMode?'mesi modificati':'override')+'</span>':"";
   const warning=dirty?'<div class="analysis-plan-unsaved"><strong>Regola modificata ma non ancora salvata.</strong> Il piano sotto usa ancora l’ultima regola salvata. Salva la previsione per ricalcolarlo e abilitarne la modifica.</div>':"";
   return '<div class="analysis-monthly-plan"><div class="analysis-monthly-plan-head"><div><h5>'+title+'</h5><p>'+desc+'</p></div><div class="analysis-monthly-plan-summary">'+(directMode?'':'<span class="analysis-plan-summary-chip">'+(manualMode?'Standard ':'Base ')+money(baseTotal)+'</span>')+'<span class="analysis-plan-summary-chip">'+(directMode?'Totale ':'Piano ')+money(plannedTotal)+'</span>'+changedChip+'</div></div>'+warning+'<div class="analysis-plan-months">'+months+'</div></div>';
 }
@@ -4753,9 +4754,9 @@ async function saveForecastRule(btn){
     const merchantId=entity==="COUNTERPARTY"?(cp.component_merchant_id||null):null;
     if(pattern==="MANUAL_MONTHS"&&entity!=="CATEGORY")throw Error("La modalità personalizzata richiede una categoria L2.");
     const args={p_category_id:analysisSelectedCategory,p_direction:analysisCurrentDirection(),p_entity_type:entity,p_merchant_id:merchantId,p_forecast_scope:scope,p_forecast_source:source,p_forecast_method:method,p_adjustment_pct:adj,p_amount_model:model,p_fixed_amount:fixed===null?null:Number(fixed),p_range_min:rmin===null?null:Number(rmin),p_range_max:rmax===null?null:Number(rmax),p_recurrence_pattern:pattern};
-    // In modalità diretta, preserva gli importi già specificati, anche se cambia il metodo.
+    // La modalità per mese salva un modello annuale, non dodici override datati.
     const saveResult=pattern==="MANUAL_MONTHS"
-      ?await rpc("dashboard_reporting_save_forecast_setting_v1",args)
+      ?await rpc("dashboard_reporting_enable_annual_template_v1",{p_category_id:analysisSelectedCategory,p_direction:analysisCurrentDirection()})
       :await rpc("dashboard_reporting_save_forecast_reset_overrides_v1",{...args,p_confirm_reset:overrideCount>0});
     await rpc("dashboard_reporting_save_forecast_semantics_v2",{p_category_id:analysisSelectedCategory,p_entity_type:entity,p_merchant_id:merchantId,p_plan_type:"FORECAST",p_certainty_level:d.certainty_level||"ESTIMATED",p_note:d.rationale_note||null});
     scenarioForecastRationales=null;
@@ -7854,7 +7855,7 @@ function quickBaselinePreview(ed,x){
 }
 function quickBaselineMonthValue(ed,x){
  const pending=ed.monthChanges||{};
- if(Object.prototype.hasOwnProperty.call(pending,x.month))return pending[x.month]===null?quickBaselinePreview(ed,x):pending[x.month];
+ if(Object.prototype.hasOwnProperty.call(pending,x.month))return pending[x.month]===null?(ed.pattern==="MANUAL_MONTHS"?0:quickBaselinePreview(ed,x)):pending[x.month];
  const overridden=x.override_amount!==null&&x.override_amount!==undefined;
  return overridden?num(x.override_amount):quickBaselinePreview(ed,x);
 }
@@ -7876,10 +7877,10 @@ function quickBaselineHtml(row){
   const pending=ed.monthChanges||{},modified=Object.prototype.hasOwnProperty.call(pending,m.month);
   const overridden=modified?pending[m.month]!==null:x.override_amount!==null&&x.override_amount!==undefined;
   const value=quickBaselineMonthValue(ed,x);
-  return '<label class="qbe-month"><span>'+esc(monthLabel(m.month))+'</span><input type="number" min="0" step="0.01" data-qbe-month="'+esc(m.month)+'" value="'+(value===null?'':esc(String(Math.round(value*100)/100)))+'" placeholder="—" '+(value===null?'disabled title="Anteprima non disponibile: apri Analisi completa"':'')+'><small>'+(direct?(overridden?'Importo inserito':'Mese a zero'):(overridden?'Override':'Calcolato dalla regola'))+(modified?' · non salvato':'')+'</small>'+(overridden?'<button type="button" class="btn ghost compact" data-qbe-reset-month="'+esc(m.month)+'">'+(direct?'Azzera':'Ripristina')+'</button>':'')+'</label>';
+  return '<label class="qbe-month"><span>'+esc(monthLabel(m.month))+'</span><input type="number" min="0" step="0.01" data-qbe-month="'+esc(m.month)+'" value="'+(value===null?'':esc(String(Math.round(value*100)/100)))+'" placeholder="—" '+(value===null?'disabled title="Anteprima non disponibile: apri Analisi completa"':'')+'><small>'+(direct?(num(value)>0?'Importo del modello annuale':'Mese a zero'):(overridden?'Override':'Calcolato dalla regola'))+(modified?' · non salvato':'')+'</small>'+((overridden||(direct&&num(value)>0))?'<button type="button" class="btn ghost compact" data-qbe-reset-month="'+esc(m.month)+'">'+(direct?'Azzera':'Ripristina')+'</button>':'')+'</label>';
  }).join("");
  return '<div class="qbe" data-qbe-key="'+esc(k)+'">'+
- '<div class="qbe-head"><strong>Modifica rapida Baseline · '+esc(row.l2_name)+'</strong><span>'+(direct?'Valori diretti, nessuna ricorrenza':'Consuntivi e previsioni nello stesso calendario')+'</span></div>'+
+ '<div class="qbe-head"><strong>Modifica rapida Baseline · '+esc(row.l2_name)+'</strong><span>'+(direct?'Modello annuale · importi per mese':'Consuntivi e previsioni nello stesso calendario')+'</span></div>'+
  '<div class="qbe-controls"><label>Metodo<select data-qbe-field="method"'+(direct?' disabled title="Cambia modalità dall’editor completo"':'')+'>'+forecastMethodOptions(ed.method)+'</select></label>'+
  (rate?'<label>Variazione %<input type="number" min="-100" max="1000" step="1" data-qbe-field="adjustment" value="'+esc(ed.adjustment)+'"></label>':'')+
  (fixed?'<label>Importo fisso €<input type="number" min="0" step="1" data-qbe-field="fixed" value="'+esc(ed.fixed??0)+'"></label>':'')+
