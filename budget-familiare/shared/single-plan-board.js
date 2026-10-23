@@ -136,6 +136,27 @@ function scenarioPreset(preset){
  }
  persist();root.renderPlanningBoard?.();
 }
+// Apply only discretionary decisions from the decision matrix.
+// Income Min/Max remain scenario assumptions, never silently converted to sliders.
+function applyDecisionTargets(changes){
+ if(!state.year||!changes||typeof changes!=="object")return false;
+ const discretionaries=Object.entries(state.originals).filter(([,r])=>
+  r.direction==="EXPENSE"&&r.meta?.expense_nature==="DISCRETIONARY");
+ if(!discretionaries.length)return false;
+ const replacing=discretionaries.some(([id])=>state.targets[id]!==undefined||
+  Object.keys(state.monthTargets[id]||{}).length>0);
+ if(replacing&&!root.confirm("Applicare le scelte D della matrice? I target discrezionali e gli eventuali mesi manuali della bozza saranno sostituiti. Le altre voci, le note e la Baseline rimarranno invariati."))return false;
+ for(const [id,r] of discretionaries){
+  delete state.targets[id];delete state.monthTargets[id];
+  const raw=changes[String(r.category_id)];
+  if(raw===undefined)continue;
+  const n=Number(raw),minimum=locked(r);
+  if(!Number.isFinite(n)||n<minimum-.005)return false;
+  if(Math.abs(n-value(r.annual))>.005)state.targets[id]=round2(n);
+ }
+ persist();root.renderPlanningBoard?.();
+ return true;
+}
 function resetIfYearChanged(year,horizon){
  const next=year+"|"+horizon,prev=state.year+"|"+state.horizon;
  if(next===prev)return;
@@ -391,7 +412,7 @@ function init(){
 root.BudgetFamilySinglePlan={
  prepare(exp,inc,year,horizon){resetIfYearChanged(year,horizon||'CALENDAR');[...exp,...inc].forEach(r=>state.originals[key(r)]=r);return {exp:applyRows(exp),inc:applyRows(inc)}},
  render,inlineAmount,inlineNote,isChanged,showOnlyChanged,scenarioPreset,saveDraft,discardUnsaved,resetCategoryToBaseline,details(){return {year:state.year,targets:{...state.targets},monthTargets:JSON.parse(JSON.stringify(state.monthTargets)),notes:{...state.notes},reserve:state.reserve,project:state.project,targetUnit:state.targetUnit}},
- isDraft(){return Object.keys(state.targets).length>0||Object.keys(state.monthTargets).length>0}
+ applyDecisionTargets,isDraft(){return Object.keys(state.targets).length>0||Object.keys(state.monthTargets).length>0}
 };
 if(typeof module!=="undefined"&&module.exports)module.exports={locked,applyRows,scenarioPreset,state};
 if(root.document){if(root.document.getElementById("planningBoardOverview"))init();else if(root.document.readyState==="loading")root.document.addEventListener("DOMContentLoaded",init);else init()}
