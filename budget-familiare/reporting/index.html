@@ -7925,6 +7925,7 @@ function closeBaselineEditor(){
  const key=baselinePortalKey;
  ++baselinePortalRequest;
  planningBoardExpandedL2.delete(key);
+ window.BudgetFamilyBaselineUncertainty?.discardDraft?.(analysisCurrentDirection(),analysisSelectedCategory);
  baselineRestoreAnalysisPanel();
  analysisForecastDraft=null;analysisForecastDraftKey="";
  renderPlanningBoard();

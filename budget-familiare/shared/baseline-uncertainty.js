@@ -328,6 +328,14 @@ function getDraft(id){
  if(!drafts[id])drafts[id]=JSON.parse(JSON.stringify(settingsFor(...id.split(":"))));
  return drafts[id];
 }
+function hasPending(direction,id){
+ const key=k(direction,id),draft=drafts[key];if(!draft)return false;
+ const saved=settingsFor(direction,id);
+ const normalize=x=>JSON.stringify({min_pct:x.min_pct??null,max_pct:x.max_pct??null,exceptions:x.exceptions||{}});
+ return normalize(draft)!==normalize(saved);
+}
+function discardDraft(direction,id){delete drafts[k(direction,id)]}
+
 function message(panel,s,isError=false){
  const el=panel.querySelector("[data-range-feedback]");
  if(el){el.textContent=s;el.style.color=isError?"#b91c1c":"#166534"}
@@ -446,7 +454,7 @@ function install(){
  });
 }
 
-const api={buildAssumptions,validPcts,editorHtml,load,settings:()=>settings,settingsFor,summarize,status,distributePeriod,upgradeLegacy,euroInput,parseEuroInput,preparePeriodEdit,exceptionForMonth};
+const api={buildAssumptions,validPcts,editorHtml,load,settings:()=>settings,settingsFor,summarize,status,distributePeriod,upgradeLegacy,euroInput,parseEuroInput,preparePeriodEdit,exceptionForMonth,hasPending,discardDraft};
 root.BudgetFamilyBaselineUncertainty=api;
 if(typeof module!=="undefined"&&module.exports)module.exports=api;
 if(root.document){if(root.document.readyState==="loading")root.document.addEventListener("DOMContentLoaded",install);else install()}
