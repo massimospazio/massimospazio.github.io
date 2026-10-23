@@ -163,9 +163,11 @@ function economicOutlooks(exp,inc,assumptions={}){
  const scenarios={};
  for(const [mode,variant] of [["LOW","PRUDENT"],["BASE","BASE"],["HIGH","FAVORABLE"]]){
   const variedIncomes=vary(incomes,variant,assumptions);
-  const nonD=vary(expenses.filter(r=>r.kind!=="DISCRETIONARY"),variant,assumptions);
+  // Savings/investments are also choices to preserve, not external spending shocks.
+  const voluntary=r=>r.kind==="DISCRETIONARY"||r.kind==="SAVINGS";
+  const nonD=vary(expenses.filter(r=>!voluntary(r)),variant,assumptions);
   let k=0;
-  const variedExpenses=expenses.map(r=>r.kind==="DISCRETIONARY"?r:nonD[k++]);
+  const variedExpenses=expenses.map(r=>voluntary(r)?r:nonD[k++]);
   const calc=strategy.calculate(variedExpenses,variedIncomes);
   scenarios[mode]={id:mode,income:variedIncomes,expenses:variedExpenses,
    balance:round(calc.baselineBalance),
