@@ -1,7 +1,7 @@
 // Canonical source: massimospazio/budget-familiare; public files are deployed automatically.
 (function(){
-  const APP_VERSION='V73.30.10.59';
-  const APP_RELEASE='Baseline · editor compatto e 12 mesi in una riga';
+  const APP_VERSION='V73.30.10.60';
+  const APP_RELEASE='Baseline · incertezza allineata ai mesi personalizzati';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});

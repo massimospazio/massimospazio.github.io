@@ -8,16 +8,16 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=73.30.10.59-20261023"></script>
-<script src="../shared/app-config.js?v=73.30.10.59-20261023"></script>
-<script src="../shared/contextual-help.js?v=73.30.10.59-20261023" defer></script>
+<script src="../shared/supabase-client.js?v=73.30.10.60-20261023"></script>
+<script src="../shared/app-config.js?v=73.30.10.60-20261023"></script>
+<script src="../shared/contextual-help.js?v=73.30.10.60-20261023" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<link rel="stylesheet" href="../shared/health-reserve.css?v=73.30.10.59-20261023">
-<link rel="stylesheet" href="../shared/approved-plan.css?v=73.30.10.59-20261023">
-<link rel="stylesheet" href="../shared/scenario-strategy.css?v=73.30.10.59-20261023">
-<link rel="stylesheet" href="../shared/scenario-uncertainty.css?v=73.30.10.59-20261023">
-<link rel="stylesheet" href="../shared/baseline-uncertainty.css?v=73.30.10.59-20261023">
-<link rel="stylesheet" href="../shared/single-plan-board.css?v=73.30.10.59-20261023">
+<link rel="stylesheet" href="../shared/health-reserve.css?v=73.30.10.60-20261023">
+<link rel="stylesheet" href="../shared/approved-plan.css?v=73.30.10.60-20261023">
+<link rel="stylesheet" href="../shared/scenario-strategy.css?v=73.30.10.60-20261023">
+<link rel="stylesheet" href="../shared/scenario-uncertainty.css?v=73.30.10.60-20261023">
+<link rel="stylesheet" href="../shared/baseline-uncertainty.css?v=73.30.10.60-20261023">
+<link rel="stylesheet" href="../shared/single-plan-board.css?v=73.30.10.60-20261023">
 <style>
 :root{--bg:#f4f6fa;--card:#fff;--text:#17263e;--muted:#58677d;--line:#dce4ee;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 4px 18px rgba(15,23,42,.045);--sc-blue:#2563eb;--sc-blue-soft:#eff6ff;--sc-green:#0ea87a;--sc-red:#ef5b73;--sc-purple:#7658e6;--sc-ink:#17263e}
 *{box-sizing:border-box}
@@ -2136,7 +2136,7 @@ body{font-size:16px;line-height:1.5}
 @media(max-width:750px){.flow-dataset-picker{border-right:none;padding-right:0}.flow-compare-controls .flow-future-only{flex:1 1 145px}.flow-compare-controls .flow-future-only select{max-width:100%;width:100%}}
 
 
-/* V73.30.10.59 — editor Baseline compatto, 12 mesi su una riga, chiusura visibile */
+/* V73.30.10.60 — editor Baseline compatto, 12 mesi su una riga, chiusura visibile */
 .planning-board-shell[data-board-context="BASELINE"] .forecast-grid.bf-baseline-compact{
   display:grid;
   grid-template-columns:minmax(155px,1.2fr) minmax(165px,1.3fr) minmax(105px,.7fr) minmax(190px,1.5fr);
@@ -2899,10 +2899,10 @@ body{font-size:16px;line-height:1.5}
   </div>
 </div>
 
-<script src="../shared/scenario-strategy.js?v=73.30.10.59-20261023"></script>
-<script src="../shared/scenario-uncertainty.js?v=73.30.10.59-20261023"></script>
-<script src="../shared/baseline-uncertainty.js?v=73.30.10.59-20261023"></script>
-<script src="../shared/single-plan-board.js?v=73.30.10.59-20261023"></script>
+<script src="../shared/scenario-strategy.js?v=73.30.10.60-20261023"></script>
+<script src="../shared/scenario-uncertainty.js?v=73.30.10.60-20261023"></script>
+<script src="../shared/baseline-uncertainty.js?v=73.30.10.60-20261023"></script>
+<script src="../shared/single-plan-board.js?v=73.30.10.60-20261023"></script>
 <script>
 const sb=window.appSupabase;
 if(typeof Chart!=="undefined"){
@@ -4719,8 +4719,12 @@ function forecastRationaleHtml(d){
  const rows=planningBoardData?.[direction==="INCOME"?"income":"expense"]?
   planningBuildRows(planningBoardData[direction==="INCOME"?"income":"expense"],direction,planningBoardHorizon):[];
  const r=rows.find(x=>String(x.category_id)===String(id));
+ // The forecast editor is reloaded immediately after an L2 save, while
+ // planningBoardData is invalidated. Never interpret that temporary gap as
+ // twelve zero months: use the plan actually shown below this uncertainty box.
+ const savedMonths=window.BudgetFamilyBaselineUncertainty?.monthsFromPlan(analysisForecastEditor?.monthly_plan||[])||[];
  const uncertainty=window.BudgetFamilyBaselineUncertainty?.editorHtml({
-  direction,categoryId:id,months:r?.months||[],
+  direction,categoryId:id,months:savedMonths.length?savedMonths:(r?.months||[]),
   label:r?.l2_name||analysisDetailData?.name||""
  })||"";
  return '<div class="forecast-semantics forecast">'+
@@ -9487,8 +9491,8 @@ $("rpcDiagnosticsModal")?.addEventListener("click",function(e){if(e.target===$("
 document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!$("rpcDiagnosticsModal")?.classList.contains("hidden"))closeRpcDiagnostics()});
 init();
 </script>
-<script src="../shared/health-reserve.js?v=73.30.10.59-20261023"></script>
-<script src="../shared/approved-plan.js?v=73.30.10.59-20261023"></script>
+<script src="../shared/health-reserve.js?v=73.30.10.60-20261023"></script>
+<script src="../shared/approved-plan.js?v=73.30.10.60-20261023"></script>
 </body>
 </html>
 
