@@ -4569,18 +4569,18 @@ function updateForecastLiveResult(){
 }
 function forecastControlsHtml(d){
   const direct=d.frequency==="MANUAL_MONTHS";
-  const method='<div class="forecast-field"><label>Metodo di previsione '+contextualHelpButton('forecast-baseline','metodi e base della previsione')+'</label><select id="forecastMethod" class="select"'+(direct?' disabled title="Per cambiare metodo torna prima a Mensile"':'')+'>'+forecastMethodOptions(d.method)+'</select></div>';
+  const method='<div class="forecast-field bf-forecast-method-field"><label>Metodo di previsione '+contextualHelpButton('forecast-baseline','metodi e base della previsione')+'</label><select id="forecastMethod" class="select"'+(direct?' disabled title="Per cambiare metodo torna prima a Mensile"':'')+'>'+forecastMethodOptions(d.method)+'</select></div>';
   if(d.method==="ZERO")return method+'<div class="forecast-field"><label>Risultato</label><div class="notice">Questa voce resta nello storico ma non contribuisce alla previsione futura.</div></div>';
   const historical=!direct&&!["FIXED","RANGE","ZERO"].includes(d.method);
-  const variation=historical?'<div class="forecast-field"><label title="La variazione non è cumulativa tra un mese e il successivo.">Variazione attesa % ⓘ</label><input id="forecastAdjustment" class="input" type="number" min="-100" max="1000" step="1" value="'+esc(num(d.adjustment))+'" /><div class="forecast-type-note">Applica la variazione alla stima base; non è cumulativa mese su mese.</div></div>':"";
+  const variation=historical?'<div class="forecast-field bf-forecast-aux-field"><label title="La variazione non è cumulativa tra un mese e il successivo.">Variazione attesa % ⓘ</label><input id="forecastAdjustment" class="input" type="number" min="-100" max="1000" step="1" value="'+esc(num(d.adjustment))+'" /><div class="forecast-type-note">Applica la variazione alla stima base; non è cumulativa mese su mese.</div></div>':"";
   let frequency;
   if(d.method==="SAME_MONTH_LAST_YEAR"){
-    frequency='<div class="forecast-field"><label>Frequenza prevista</label><div class="forecast-type-note"><strong>Ereditata dallo storico.</strong><br>Ogni mese replica esattamente lo stesso mese A-1, inclusi i mesi a 0 €.</div></div>';
+    frequency='<div class="forecast-field bf-forecast-frequency-field"><label>Frequenza prevista</label><div class="forecast-type-note"><strong>Ereditata dallo storico.</strong><br>Ogni mese replica esattamente lo stesso mese A-1, inclusi i mesi a 0 €.</div></div>';
   }else{
-    frequency='<div class="forecast-field"><label>Frequenza prevista ⓘ</label><select id="forecastFrequency" class="select">'+forecastFrequencyOptions(d.frequency)+'</select><div class="forecast-type-note">'+(direct?'Nessuno standard: indica gli importi nei mesi sotto. La distribuzione si ripete annualmente.':'Lo stesso valore ogni mese, modificabile con override nel calendario.')+'</div></div>';
+    frequency='<div class="forecast-field bf-forecast-frequency-field"><label>Frequenza prevista ⓘ</label><select id="forecastFrequency" class="select">'+forecastFrequencyOptions(d.frequency)+'</select><div class="forecast-type-note">'+(direct?'Nessuno standard: indica gli importi nei mesi sotto. La distribuzione si ripete annualmente.':'Lo stesso valore ogni mese, modificabile con override nel calendario.')+'</div></div>';
   }
-  const fixed=d.method==="FIXED"&&!direct?'<div class="forecast-field"><label>Importo previsto €</label><input id="forecastFixedAmount" class="input" type="number" min="0" step="1" value="'+esc(d.fixed_amount==null?"":d.fixed_amount)+'" /></div>':"";
-  const range=d.method==="RANGE"&&!direct?'<div class="forecast-field"><label>Intervallo €</label><div class="forecast-range-fields"><input id="forecastRangeMin" class="input" type="number" min="0" step="1" placeholder="Min" value="'+esc(d.range_min==null?"":d.range_min)+'" /><input id="forecastRangeMax" class="input" type="number" min="0" step="1" placeholder="Max" value="'+esc(d.range_max==null?"":d.range_max)+'" /></div></div>':"";
+  const fixed=d.method==="FIXED"&&!direct?'<div class="forecast-field bf-forecast-aux-field"><label>Importo previsto €</label><input id="forecastFixedAmount" class="input" type="number" min="0" step="1" value="'+esc(d.fixed_amount==null?"":d.fixed_amount)+'" /></div>':"";
+  const range=d.method==="RANGE"&&!direct?'<div class="forecast-field bf-forecast-aux-field"><label>Intervallo €</label><div class="forecast-range-fields"><input id="forecastRangeMin" class="input" type="number" min="0" step="1" placeholder="Min" value="'+esc(d.range_min==null?"":d.range_min)+'" /><input id="forecastRangeMax" class="input" type="number" min="0" step="1" placeholder="Max" value="'+esc(d.range_max==null?"":d.range_max)+'" /></div></div>':"";
   // Un solo calendario operativo: quello con importi per mese/anno qui sotto.
   // Le selezioni generiche Gen-Dic duplicate non sono più presentate.
   const legacyMonths=d.frequency==="MONTHS"
@@ -4631,11 +4631,11 @@ function forecastRationaleHtml(d){
  })||"";
  return '<div class="forecast-semantics forecast">'+
  '<div class="forecast-field forecast-role-field"><label>Ruolo del valore</label><div class="forecast-static-value">Baseline</div></div>'+
- '<div class="forecast-field"><label title="Affidabilità della stima, salvata indipendentemente dalla regola.">Affidabilità previsiva ⓘ</label>'+manual+
+ '<div class="forecast-field bf-forecast-reliability-field"><label title="Affidabilità della stima, salvata indipendentemente dalla regola.">Affidabilità previsiva ⓘ</label>'+manual+
  '<div class="forecast-plan-type-note">Da Non valutata a Certa/Alta/Consolidata/Stimata/Incerta. Salvataggio immediato della sola affidabilità, indipendente dalla regola.</div></div>'+
- '<div class="forecast-field forecast-rationale"><label>Motivazione (opzionale)</label>'+
+ '<div class="forecast-field forecast-rationale bf-forecast-notes-field"><label>Motivazione (opzionale)</label>'+
  '<textarea id="forecastRationale" class="input" maxlength="1000" placeholder="Motivo della previsione">'+esc(d?.rationale_note||"")+'</textarea></div>'+
- '<div class="forecast-field" style="grid-column:1/-1">'+uncertainty+'</div>'+
+ '<div class="forecast-field bf-forecast-uncertainty-field">'+uncertainty+'</div>'+
  '</div>';
 }
 function planInputValue(v){
@@ -4678,7 +4678,7 @@ function integratedMonthlyPlanHtml(){
   const shownCount=directMode?rows.filter(x=>num(x.planned_amount)>0).length:changed;
   const changedChip=shownCount?'<span class="analysis-plan-summary-chip">'+shownCount+' '+(directMode?'mesi valorizzati':manualMode?'mesi modificati':'override')+'</span>':"";
   const warning=dirty?'<div class="analysis-plan-unsaved"><strong>Regola modificata ma non ancora salvata.</strong> Il piano sotto usa ancora l’ultima regola salvata. Salva la previsione per ricalcolarlo e abilitarne la modifica.</div>':"";
-  return '<div class="analysis-monthly-plan"><div class="analysis-monthly-plan-head"><div><h5>'+title+'</h5><p>'+desc+'</p></div><div class="analysis-monthly-plan-summary">'+(directMode?'':'<span class="analysis-plan-summary-chip">'+(manualMode?'Standard ':'Base ')+money(baseTotal)+'</span>')+'<span class="analysis-plan-summary-chip">'+(directMode?'Totale ':'Piano ')+money(plannedTotal)+'</span>'+changedChip+'</div></div>'+warning+'<div class="analysis-plan-months">'+months+'</div></div>';
+  return '<div class="analysis-monthly-plan"><div class="analysis-monthly-plan-head"><div><h5>'+title+'</h5><p>'+desc+'</p></div><div class="analysis-monthly-plan-summary">'+(directMode?'':'<span class="analysis-plan-summary-chip">'+(manualMode?'Standard ':'Base ')+money(baseTotal)+'</span>')+'<span class="analysis-plan-summary-chip">'+(directMode?'Totale ':'Piano ')+money(plannedTotal)+'</span>'+changedChip+'</div></div>'+warning+'<div class="bf-month-scroll-hint" aria-hidden="true">↔ I 12 mesi sono su un’unica riga: scorri lateralmente per vederli tutti</div><div class="analysis-plan-months" aria-label="Piano dei dodici mesi: scorrimento orizzontale">'+months+'</div><div class="bf-baseline-editor-footer"><button class="btn ghost compact bf-baseline-close" type="button" data-close-baseline-editor>✕ Chiudi pannello</button></div></div>';
 }
 async function saveIntegratedMonthlyOverride(month,amount,input){
   if(!analysisSelectedCategory||!analysisForecastEditor)return;
@@ -4716,12 +4716,12 @@ function renderForecastEditor(){
   if(!analysisForecastEditor){box.innerHTML='<div class="analysis-loading"><span class="spinner"></span>Carico configurazione forecast…</div>';return}
   const s=analysisForecastEditor.category_setting||{},scope=s.forecast_scope||"CATEGORY",target=currentForecastTarget(),cp=selectedAnalysisComponent(),tracking=!!analysisForecastEditor.tracking_enabled;let controls="",result="";
   if(scope==="COUNTERPARTIES"&&!target){controls='<div class="notice"><strong>Forecast per controparti attivo.</strong><br>La previsione della L2 è la somma delle controparti. Seleziona una controparte sotto per modificarne la regola. “Senza controparte” è una componente esplicita: nessun residuo nascosto.</div>';result=forecastResultHtml(forecastPreviewStats())}
-  else{const draft=ensureForecastDraft();controls='<div class="forecast-grid">'+forecastControlsHtml(draft)+forecastRationaleHtml(draft)+'</div><div id="forecastExplanation">'+forecastExplanationHtml(draft)+'</div>';result='<div id="forecastLiveResult">'+forecastResultHtml(forecastDraftPreview())+'</div>'}
+  else{const draft=ensureForecastDraft(),aux=(draft.method==="FIXED"&&draft.frequency!=="MANUAL_MONTHS")||draft.method==="RANGE"||(draft.frequency!=="MANUAL_MONTHS"&&!["FIXED","RANGE","ZERO"].includes(draft.method));controls='<div class="forecast-grid bf-baseline-compact'+(aux?' has-aux':'')+'">'+forecastControlsHtml(draft)+forecastRationaleHtml(draft)+'</div><div id="forecastExplanation">'+forecastExplanationHtml(draft)+'</div>';result='<div id="forecastLiveResult">'+forecastResultHtml(forecastDraftPreview())+'</div>'}
   const targetLabel=scope==="COUNTERPARTIES"?(cp?"Controparte: "+cp.component_name:"Somma controparti"):"Categoria L2";
   const methodChanged=target&&scope==="CATEGORY"&&ensureForecastDraft().method!==String(s.forecast_method||"AVG6");
   const overrideCount=(analysisForecastEditor.monthly_plan||[]).filter(x=>x.override_amount!==null&&x.override_amount!==undefined).length;
   const resetWarning=methodChanged&&ensureForecastDraft().frequency!=="MANUAL_MONTHS"&&overrideCount?'<div class="forecast-reset-warning" role="alert"><strong>Attenzione: '+overrideCount+' override mensili presenti</strong><div>Se salvi il nuovo metodo, gli override verranno rimossi dopo la tua conferma. Potrai reinserirli sulla nuova Baseline.</div></div>':"";
-  box.innerHTML='<div class="forecast-panel-head"><div><h4>Previsione</h4><div class="small muted">Definisci la regola strutturale e rifinisci direttamente sotto i singoli mesi del piano.</div></div><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">'+(!tracking?'<span class="forecast-test-badge">Modalità test · tracking OFF</span>':'')+'<div class="forecast-scope-buttons"><button class="btn '+(scope==="CATEGORY"?"":"ghost ")+'compact" type="button" data-forecast-scope="CATEGORY">Categoria L2</button><button class="btn '+(scope==="COUNTERPARTIES"?"":"ghost ")+'compact" type="button" data-forecast-scope="COUNTERPARTIES">Controparti</button></div></div></div>'+controls+resetWarning+result+'<div class="forecast-actions"><span class="forecast-target">'+esc(targetLabel)+'</span>'+(target?'<button class="btn compact" type="button" data-save-forecast>Salva previsione</button>':'')+'</div>'+integratedMonthlyPlanHtml();
+  box.innerHTML='<div class="forecast-panel-head"><div><h4>Previsione</h4><div class="small muted">Definisci la regola strutturale e rifinisci direttamente sotto i singoli mesi del piano.</div></div><div class="bf-forecast-head-actions">'+(!tracking?'<span class="forecast-test-badge">Modalità test · tracking OFF</span>':'')+'<div class="forecast-scope-buttons"><button class="btn '+(scope==="CATEGORY"?"":"ghost ")+'compact" type="button" data-forecast-scope="CATEGORY">Categoria L2</button><button class="btn '+(scope==="COUNTERPARTIES"?"":"ghost ")+'compact" type="button" data-forecast-scope="COUNTERPARTIES">Controparti</button></div><button class="btn ghost compact bf-baseline-close" type="button" data-close-baseline-editor aria-label="Chiudi il pannello della Baseline">✕ Chiudi</button></div></div>'+controls+resetWarning+result+'<div class="forecast-actions"><span class="forecast-target">'+esc(targetLabel)+'</span>'+(target?'<button class="btn compact" type="button" data-save-forecast>Salva previsione</button>':'')+'</div>'+integratedMonthlyPlanHtml();
 }
 function canonicalSavedSetting(s,scope){
   const x=Object.assign({},s||{});let method=x.forecast_method||"AVG6",fixed=x.fixed_amount,rmin=x.range_min,rmax=x.range_max,adj=num(x.adjustment_pct);
@@ -7811,6 +7811,33 @@ function baselineRenderCompactSummary(key,direction,id,level){
    '<span class="bf-baseline-compare '+quality+'" title="Differenza Baseline rispetto allo storico omogeneo"><b>Δ vs storico</b> '+(delta>0?"+":delta<0?"−":"")+money(Math.abs(delta))+
    (pct===null?' · n.d.':' · '+(pct>0?"+":"")+pct.toLocaleString("it-IT",{maximumFractionDigits:1})+'%')+'</span>';
 }
+function baselineEditorHasUnsavedChanges(){
+ const panel=$("analysisForecastPanel"),saved=analysisForecastEditor?.category_setting||{};
+ const draft=ensureForecastDraft();
+ const noteChanged=String(draft?.rationale_note||"")!==String(saved.rationale_note||"");
+ const changedInputs=Array.from(panel?.querySelectorAll("[data-range-periodmin],[data-range-periodmax],[data-range-monthmin],[data-range-monthmax]")||[])
+   .some(input=>String(input.value)!==String(input.defaultValue));
+ const monthInputChanged=Array.from(panel?.querySelectorAll("[data-analysis-plan-month]")||[])
+   .some(input=>{
+     const row=(analysisForecastEditor?.monthly_plan||[]).find(x=>String(x.month)===input.dataset.analysisPlanMonth);
+     return row&&String(input.value).trim()!==planInputValue(row.planned_amount);
+   });
+ return forecastDraftIsDirty()||noteChanged||changedInputs||monthInputChanged||
+   !!window.BudgetFamilyBaselineUncertainty?.hasPending?.(analysisCurrentDirection(),analysisSelectedCategory);
+}
+function closeBaselineEditor(){
+ if(!baselinePortalKey)return;
+ if(baselineEditorHasUnsavedChanges()&&!window.confirm("Ci sono modifiche non salvate nel pannello. Chiudere senza salvarle?"))return;
+ const key=baselinePortalKey;
+ ++baselinePortalRequest;
+ planningBoardExpandedL2.delete(key);
+ baselineRestoreAnalysisPanel();
+ analysisForecastDraft=null;analysisForecastDraftKey="";
+ renderPlanningBoard();
+ const toggle=Array.from(document.querySelectorAll("[data-planning-toggle-l2]"))
+   .find(b=>b.dataset.planningToggleL2===key);
+ toggle?.scrollIntoView({block:"nearest",behavior:"auto"});
+}
 async function baselineOpenSharedDetail(key){
  if(planningBoardContext!=="BASELINE")return;
  const slot=document.querySelector('[data-baseline-shared-slot="'+key+'"]'),panel=$("categoryDetail");
@@ -9287,6 +9314,8 @@ $("detailMovements").addEventListener("click",async function(e){
   const key=th.dataset.sortAnalysisMoves;if(analysisMovementSort.key===key)analysisMovementSort.dir=analysisMovementSort.dir==="asc"?"desc":"asc";else{analysisMovementSort.key=key;analysisMovementSort.dir=key==="transaction_date"?"desc":"asc"}renderAnalysisMovements();
 });
 $("analysisForecastPanel").addEventListener("click",async function(e){
+  const close=e.target.closest("[data-close-baseline-editor]");
+  if(close){closeBaselineEditor();return}
   const reset=e.target.closest("[data-reset-analysis-plan]");
   if(reset){await saveIntegratedMonthlyOverride(reset.dataset.resetAnalysisPlan,null,reset);return}
   const scope=e.target.closest("[data-forecast-scope]");if(scope){await saveForecastScope(scope.dataset.forecastScope,scope);return}
