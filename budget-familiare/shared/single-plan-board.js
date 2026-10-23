@@ -171,9 +171,19 @@ function resetIfYearChanged(year,horizon){
  state.year=year;state.horizon=horizon;state.targets={...(saved.targets||{})};state.monthTargets=JSON.parse(JSON.stringify(saved.monthTargets||{}));state.notes={...(saved.notes||{})};state.originals={};state.bonus=saved.bonus||"BASE";state.targetUnit=saved.targetUnit||"TOTAL";state.reserve=saved.reserve||0;state.project=saved.project||0;
 }
 async function approve(){
- if(state.horizon==="ROLLING_12"){root.alert("La simulazione rolling è una bozza di prova: approvazione disabilitata finché il piano pluriennale non è supportato.");return}
- if(Object.keys(state.targets).length===0&&Object.keys(state.monthTargets).length===0){root.alert("Non hai modificato alcun target: non c'è un nuovo Piano strategico da approvare.");return}
- if(!root.confirm("Approvare il Piano per "+state.year+"?\\n\\nI target e le note saranno congelati in una nuova versione e la Baseline resterà invariata."))return;
+ if(state.horizon==="ROLLING_12"){
+  root.alert("La bozza 12 mesi può comprendere l'anno successivo. Per approvare il Piano operativo dell'anno corrente, seleziona «Anno corrente»: i dati rolling non verranno convertiti né cancellati.");
+  return;
+ }
+ const hasTargets=Object.keys(state.targets).length>0||Object.keys(state.monthTargets).length>0;
+ const planStart=state.originals&&Object.values(state.originals).flatMap(r=>r.months||[])
+  .find(m=>m.kind!=="actual")?.month||"";
+ const approvalText="Approvare il Piano operativo "+state.year+"?\\n\\n"+
+  (hasTargets?"Congeleremo i target che hai modificato rispetto alla Baseline.":"Nessun target è stato modificato: approverai esplicitamente la Baseline attuale come Piano operativo.")+
+  "\\n\\nI mesi già chiusi restano consuntivi, il mese in corso include già il consuntivo e la previsione residua. Il tracking inizierà dall'approvazione, non retroattivamente da gennaio."+
+  (state.reserve||state.project?"\\n\\nATTENZIONE: le quote Fondo / Progetto della bozza non sono ancora trasferite come obiettivi autonomi nello snapshot approvato. Verranno mantenute nella bozza.":"")+
+  "\\n\\nLa Baseline e le ipotesi Min/Max rimarranno invariate.";
+ if(!root.confirm(approvalText))return;
  const reason=root.prompt("Motivo dell'approvazione (8-600 caratteri)","Piano familiare: obiettivi e impegni di spesa concordati");
  if(reason===null)return;
  if(reason.trim().length<8||reason.trim().length>600){root.alert("Inserisci una motivazione di 8-600 caratteri.");return}
@@ -227,7 +237,7 @@ function render(originalExp,originalInc,isPlan,context,extra={}){
 
  '<button type="button" class="btn ghost compact" data-bf-draft-reset>Ripristina target</button>'+
  (strategy?'<button type="button" class="btn compact" data-bf-draft-to-plan>Prosegui al Piano →</button>':
- '<button type="button" class="btn compact" '+(state.horizon==='ROLLING_12'?'disabled title="Approvazione rolling in sviluppo" ':'')+'data-bf-draft-approve>Approva Piano</button>')+'</div></div>';
+ '<button type="button" class="btn compact" '+(state.horizon==='ROLLING_12'?'data-bf-draft-show-calendar title="Passa ad Anno corrente per approvare il Piano operativo"' : 'data-bf-draft-approve')+'>'+(state.horizon==='ROLLING_12'?'Vai all’anno corrente →':'Approva Piano')+'</button>')+'</div></div>';
  const low=originalInc.reduce((sum,r)=>sum+value(r.rangeLow===undefined?r.annual:r.rangeLow),0);
  const high=originalInc.reduce((sum,r)=>sum+value(r.rangeHigh===undefined?r.annual:r.rangeHigh),0);
  const variation=state.bonus==="LOW"?low-totals(originalInc):state.bonus==="HIGH"?high-totals(originalInc):0;
@@ -410,6 +420,7 @@ function init(){
     persist();root.renderPlanningBoard?.();return;
   }
   if(e.target.closest("[data-bf-draft-to-plan]")){root.showPlanningBoardView?.("PLAN");return}
+  if(e.target.closest("[data-bf-draft-show-calendar]")){root.document.querySelector('[data-planning-horizon="CALENDAR"]')?.click();return}
   if(e.target.closest("[data-bf-draft-approve]")){approve();return}
   if(e.target.closest("[data-bf-draft-save]")){saveDraft();root.renderPlanningBoard?.();return}
   if(e.target.closest("[data-bf-draft-reset]")){state.targets={};state.monthTargets={};state.notes={};persist();root.renderPlanningBoard?.()}
