@@ -1,4 +1,4 @@
-/* V73.30.10.55: salvataggio diretto dei Min/Max di periodo in euro. */
+/* V73.30.10.60: allineamento base incertezza al piano mensile salvato. */
 (function(root){
 "use strict";
 const numerical=x=>Number.isFinite(Number(x))?Number(x):0;
@@ -14,6 +14,19 @@ const round=x=>Math.round((numerical(x)+Number.EPSILON)*100)/100;
 const k=(direction,id)=>direction+":"+id;
 const floor=m=>m.kind==="actual"?numerical(m.amount):Math.max(0,round(numerical(m.amount)-numerical(m.futureAmount)));
 const salary=r=>r.direction==="INCOME"&&String(r.l2_name||"").trim().toLocaleLowerCase("it")==="stipendio";
+// Always derive uncertainty from the same freshly loaded monthly amounts shown
+// in the baseline editor. The board projection cache may be intentionally cleared
+// immediately after saving a monthly amount; an empty cache is not a zero baseline.
+function monthsFromPlan(monthlyPlan){
+ return (Array.isArray(monthlyPlan)?monthlyPlan:[]).filter(x=>/^\d{4}-(0[1-9]|1[0-2])-01$/.test(String(x.month||""))).map(x=>{
+  const isCurrent=!!x.is_current_month;
+  const paid=isCurrent?Math.max(0,numerical(x.actual_to_date)):0;
+  const planned=Math.max(0,numerical(x.planned_amount));
+  const amount=round(Math.max(planned,paid));
+  return {month:String(x.month),kind:"plan",amount,
+   futureAmount:isCurrent?round(Math.max(0,amount-paid)):amount,current:isCurrent};
+ });
+}
 // Dated bounds can be inherited by the same calendar month in future years.
 // The nearest past year's explicit value wins; Actual months remain immutable.
 function exceptionForMonth(config,month){
@@ -141,7 +154,7 @@ function periodInputs(direction,id,value,label){
  const lower=direction==="INCOME"?"Prudente":"Favorevole";
  const upper=direction==="INCOME"?"Favorevole":"Prudente";
  return '<div class="bf-baseline-range-period">'+
- '<label>Base del periodo (€)<strong>'+money(totals.base)+'</strong></label>'+
+ '<label>Base del periodo (€)<strong>'+money(totals.base)+'</strong><small>Media '+money(totals.base/Math.max(1,(monthLists[k(direction,id)]||[]).length))+'/mese</small></label>'+
  '<label>'+lower+' · Min del periodo (€)<input type="text" inputmode="decimal" data-range-periodmin value="'+esc(euroInput(totals.min))+'"></label>'+
  '<label>'+upper+' · Max del periodo (€)<input type="text" inputmode="decimal" data-range-periodmax value="'+esc(euroInput(totals.max))+'"></label>'+
  '</div><div class="bf-baseline-range-derived">Variazioni calcolate: Min '+esc(percentDelta(totals.min,totals.base))+
@@ -454,7 +467,7 @@ function install(){
  });
 }
 
-const api={buildAssumptions,validPcts,editorHtml,load,settings:()=>settings,settingsFor,summarize,status,distributePeriod,upgradeLegacy,euroInput,parseEuroInput,preparePeriodEdit,exceptionForMonth,hasPending,discardDraft};
+const api={monthsFromPlan,buildAssumptions,validPcts,editorHtml,load,settings:()=>settings,settingsFor,summarize,status,distributePeriod,upgradeLegacy,euroInput,parseEuroInput,preparePeriodEdit,exceptionForMonth,hasPending,discardDraft};
 root.BudgetFamilyBaselineUncertainty=api;
 if(typeof module!=="undefined"&&module.exports)module.exports=api;
 if(root.document){if(root.document.readyState==="loading")root.document.addEventListener("DOMContentLoaded",install);else install()}
