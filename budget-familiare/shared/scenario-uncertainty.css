@@ -47,3 +47,16 @@
 .planning-sim-matrix-collapsed .planning-sim-matrix-wrap{margin-top:0}
 @media(max-width:1000px){.bf-risk-two{grid-template-columns:1fr}}
 @media(max-width:620px){.bf-risk-cards{grid-template-columns:1fr}.bf-risk-number{font-size:22px}.bf-risk-scenarios{padding:12px}}
+
+
+/* V73.30.10.66 · External scenario cards are actual selectable controls. */
+button.bf-risk-card{appearance:none;text-align:left;font:inherit;cursor:pointer;width:100%}
+button.bf-risk-card:hover{border-color:#91b7e9}
+button.bf-risk-card.selected{outline:2px solid #2563eb;outline-offset:1px}
+button.bf-risk-card:focus-visible{outline:3px solid #2563eb;outline-offset:2px}
+.bf-risk-explainer{border:1px solid #dce6f2;background:#fff;border-radius:9px;padding:12px 13px;margin:10px 0}
+.bf-risk-explainer>strong{font-size:14px;color:#1a3d65}
+.bf-risk-explainer p{font-size:12px;color:#4d647e;line-height:1.55;margin:8px 0}
+.bf-risk-formula{display:flex;align-items:center;flex-wrap:wrap;gap:6px;background:#f1f6fd;padding:10px;border-radius:7px;font-size:12px;color:#365675;font-variant-numeric:tabular-nums}
+.bf-risk-formula>*{white-space:nowrap}
+.bf-risk-formula>strong{font-size:14px;color:#183c67}

@@ -1,4 +1,4 @@
-/* V73.30.10.61 · Scenari di incertezza. Baseline = Base, senza mutare il Piano. */
+/* V73.30.10.66 · Scenari di incertezza. Baseline = Base, senza mutare il Piano. */
 (function(root){
 "use strict";
 const strategy=root.BudgetFamilyScenario||(typeof require==="function"?require("./scenario-strategy.js"):null);
@@ -154,6 +154,30 @@ function validate(r,m,values,salary){
  return {entry};
 }
 
+/* Economic conditions = uncertain income and non-discretionary spending.
+   Discretionary Min/Max are choices, not shocks: keep them at Baseline here.
+   Actual paid amounts remain immutable through vary(). */
+function economicOutlooks(exp,inc,assumptions={}){
+ const expenses=Array.isArray(exp)?exp:[],incomes=Array.isArray(inc)?inc:[];
+ const baseBalance=strategy.calculate(expenses,incomes).baselineBalance;
+ const scenarios={};
+ for(const [mode,variant] of [["LOW","PRUDENT"],["BASE","BASE"],["HIGH","FAVORABLE"]]){
+  const variedIncomes=vary(incomes,variant,assumptions);
+  const nonD=vary(expenses.filter(r=>r.kind!=="DISCRETIONARY"),variant,assumptions);
+  let k=0;
+  const variedExpenses=expenses.map(r=>r.kind==="DISCRETIONARY"?r:nonD[k++]);
+  const calc=strategy.calculate(variedExpenses,variedIncomes);
+  scenarios[mode]={id:mode,income:variedIncomes,expenses:variedExpenses,
+   balance:round(calc.baselineBalance),
+   incomeAmount:round(calc.baseIncome),nonDExpenses:round(calc.baseExpenses-calc.expenses.DISCRETIONARY.baseline),
+   incomeDelta:round(calc.baseIncome-strategy.calculate(expenses,incomes).baseIncome),
+   nonDDelta:round(calc.baseExpenses-strategy.calculate(expenses,incomes).baseExpenses),
+   delta:round(calc.baselineBalance-baseBalance),
+   drivers:drivers(expenses,incomes,variedExpenses,variedIncomes)};
+ }
+ return {scenarios,baselineBalance:round(baseBalance)};
+}
+
 /* V73.30.10.61 · Matrice decisionale (nessun dato persistito).
    Le entrate vengono variate coi Min/Max salvati. Le D rappresentano scelte:
    Min realistico, Baseline e Max plausibile. Soltanto per coprire un gap
@@ -164,6 +188,7 @@ function decisionMatrix(exp,inc,assumptions={},opts={}){
  const expenses=Array.isArray(exp)?exp:[],incomes=Array.isArray(inc)?inc:[];
  const goal=Math.max(0,numeric(opts.goal));
  const baseline=strategy.calculate(expenses,incomes);
+ const conditions=economicOutlooks(expenses,incomes,assumptions);
  const disc=expenses.filter(r=>r.kind==="DISCRETIONARY");
  const specs=disc.map(r=>{
   let minimum=0,maximum=0,locked=0,covered=0,possible=0;
@@ -223,35 +248,37 @@ function decisionMatrix(exp,inc,assumptions={},opts={}){
   }
  }
  const modes=[
-  {id:"LOW",label:"Entrate minime",uncertainty:"PRUDENT"},
-  {id:"BASE",label:"Entrate base",uncertainty:"BASE"},
-  {id:"HIGH",label:"Entrate favorevoli",uncertainty:"FAVORABLE"}
+  {id:"LOW",label:"Contesto sfavorevole",uncertainty:"PRUDENT"},
+  {id:"BASE",label:"Contesto base",uncertainty:"BASE"},
+  {id:"HIGH",label:"Contesto favorevole",uncertainty:"FAVORABLE"}
  ];
  const strategies=[
-  {id:"PROTECT",label:"Protezione"},
-  {id:"BALANCE",label:"Equilibrio"},
-  {id:"LIFE",label:"Qualità di vita"}
+  {id:"NONE",label:"Nessun intervento"},
+  {id:"REDUCE",label:"Riduci D"},
+  {id:"GOALS",label:"Proteggi obiettivi"},
+  {id:"SURPLUS",label:"Usa il surplus"}
  ];
  const cells=[];
  for(const incomeMode of modes){
-  const varied=vary(incomes,incomeMode.uncertainty,assumptions);
-  const untouched=strategy.calculate(expenses,varied);
+  const economic=conditions.scenarios[incomeMode.id];
+  const varied=economic.income,variedExpenses=economic.expenses;
+  const untouched=strategy.calculate(variedExpenses,varied);
   for(const policy of strategies){
    const targets=Object.fromEntries(specs.map(r=>[r.id,r.baseline]));
    let beyondMin=0;
-   if(policy.id==="PROTECT"){
+   if(policy.id==="REDUCE"){
+    // Voluntary saving: realistic lower D bounds; no automatic zero.
     specs.forEach(r=>{targets[r.id]=r.minimum});
-    const first=strategy.calculate(expenses,varied,{}, {categoryTargets:targets});
-    const gap=Math.max(0,goal-first.simulatedBalance);
-    if(gap>.005){const remains=cut(targets,gap,"locked");beyondMin=round(gap-remains)}
-   }else if(policy.id==="BALANCE"){
+   }else if(policy.id==="GOALS"){
+    // First realistic reduction, then emergency sacrifices below Min if required.
     let gap=Math.max(0,goal-untouched.simulatedBalance);
     gap=cut(targets,gap,"minimum");
-    if(gap>.005){const stays=gap;gap=cut(targets,gap,"locked");beyondMin=round(stays-gap)}
-   }else{
+    if(gap>.005){const remaining=gap;gap=cut(targets,gap,"locked");beyondMin=round(remaining-gap)}
+   }else if(policy.id==="SURPLUS"){
+    // Never increase D if doing so would worsen an existing goal shortfall.
     raise(targets,Math.max(0,untouched.simulatedBalance-goal));
    }
-   const result=strategy.calculate(expenses,varied,{}, {categoryTargets:targets});
+   const result=strategy.calculate(variedExpenses,varied,{}, {categoryTargets:targets});
    const spending=round(specs.reduce((a,r)=>a+(targets[r.id]??r.baseline),0));
    const deltaD=round(spending-sumBase);
    const activeTargets=Object.fromEntries(specs.filter(r=>Math.abs((targets[r.id]??r.baseline)-r.baseline)>.005)
@@ -265,6 +292,9 @@ function decisionMatrix(exp,inc,assumptions={},opts={}){
     goal,baselineBalance:round(baseline.baselineBalance),
     sustainable:result.simulatedBalance>=goal-.005,
     incomeDelta:round(result.simulatedIncome-baseline.baseIncome),
+    nonDDelta:economic.nonDDelta,externalDelta:economic.delta,
+    externalBalance:economic.balance,drivers:economic.drivers,
+    savingsVsNoAction:round(result.simulatedBalance-untouched.simulatedBalance),
     investments:round(result.expenses.SAVINGS.simulated),
     extraSavings:round((result.simulatedBalance-baseline.baselineBalance))
    });
@@ -274,19 +304,19 @@ function decisionMatrix(exp,inc,assumptions={},opts={}){
   .filter(({r,m})=>accepted(assumptions[key(r,m)],m,
     r.direction==="INCOME"&&String(r.l2_name||"").trim().toLocaleLowerCase("it")==="stipendio")).length;
  const incomeFuture=incomes.reduce((s,r)=>s+(r.months||[]).filter(m=>m.kind!=="actual").length,0);
- return {cells,modes,strategies,goal,
+ return {cells,modes,strategies,goal,conditions,
   baselineBalance:round(baseline.baselineBalance),incomeConfigured,incomeFuture,
   discretionaryConfigured:specs.reduce((a,r)=>a+r.covered,0),
   discretionaryFuture:specs.reduce((a,r)=>a+r.possible,0),
   d:{baseline:sumBase,min:sumMin,max:sumMax,locked:sumLocked},categories:specs};
 }
 
-const api={decisionMatrix,evaluate,vary,validate,accepted,floor,applyActions,applyPlannedRows,drivers};
+const api={decisionMatrix,economicOutlooks,evaluate,vary,validate,accepted,floor,applyActions,applyPlannedRows,drivers};
 if(typeof module!=="undefined"&&module.exports)module.exports=api;
 root.BudgetFamilyUncertainty=api;
 const doc=root.document;if(!doc)return;
 const storeKey="budget-family-uncertainty-v1";
-const state={cache:{},saved:{},key:"",selected:"",mountId:"planningRiskScenarios",notice:"",exp:[],inc:[],plannedRows:null,adjustments:{},targets:{},reliability:{},goals:0};
+const state={cache:{},saved:{},key:"",selected:"",externalSelected:"LOW",mountId:"planningRiskScenarios",notice:"",exp:[],inc:[],plannedRows:null,adjustments:{},targets:{},reliability:{},goals:0};
 function persisted(){
  try{const data=JSON.parse(root.localStorage?.getItem(storeKey)||"{}");return data&&typeof data==="object"?data:{}}catch(_){return {}}
 }
@@ -342,33 +372,43 @@ function renderUI(){
   {categoryTargets:state.targets,plannedRows:state.plannedRows});
  const ready=result.validCount>0;
  const goal=numeric(state.goals);
- const s=result.scenarios;
+ const economic=economicOutlooks(state.exp,state.inc,assumptions),s=economic.scenarios;
+ const selected=s[state.externalSelected]||s.LOW;
  const acts=state.plannedRows?
    state.exp.some((r,i)=>Math.abs(numeric(r.annual)-numeric(state.plannedRows.expenses[i]?.annual))>.005)||
    state.inc.some((r,i)=>Math.abs(numeric(r.annual)-numeric(state.plannedRows.income[i]?.annual))>.005):
    Object.values(state.adjustments).some(x=>Math.abs(numeric(x))>.005)||Object.keys(state.targets).length>0;
- const cards=[["PRUDENT","Prudente","Ipotesi cautelative"],["BASE","Base = Baseline","Previsione senza interventi"],["FAVORABLE","Favorevole","Ipotesi favorevoli"]]
-  .map(([id,name,subtitle])=>{
-   const x=s[id];return '<div class="bf-risk-card '+id.toLowerCase()+'"><strong>'+name+'</strong><small>'+subtitle+'</small>'+
-    '<span class="bf-risk-number">'+money(x.before)+'</span>'+
-    '<span class="bf-risk-after">'+(acts?'Dopo interventi: ' +money(x.after)+' <b>('+signed(x.deltaActions)+')</b>':'Nessuna leva volontaria selezionata')+'</span>'+
-    (goal>0?'<small>'+(x.after<goal?'Gap obiettivi '+money(goal-x.after):'Obiettivi coperti')+'</small>':'')+
-    '</div>';
-  }).join("");
- const driverItems=[];
- const map=new Map();
- for(const direction of ["PRUDENT","FAVORABLE"]){
-  const data=s[direction].drivers;
-  for(const d of data){
-   const id=d.direction+":"+d.category_id;
-   const old=map.get(id)||{...d,prudent:0,favorable:0};
-   old[direction.toLowerCase()]=d.impact;map.set(id,old);
-  }
- }
- driverItems.push(...[...map.values()].sort((a,b)=>(Math.abs(b.prudent)+Math.abs(b.favorable))-(Math.abs(a.prudent)+Math.abs(a.favorable))).slice(0,5));
- const ranks=driverItems.length?driverItems.map(d=>'<tr><td>'+escape(d.category)+'</td>'+
-  '<td>'+signed(d.prudent)+'</td><td>'+signed(d.favorable)+'</td></tr>').join(""):
-  '<tr><td colspan="3">Nessun intervallo valido configurato: i tre scenari coincidono con la Baseline.</td></tr>';
+ const cards=[["LOW","Contesto sfavorevole","Entrate Min · Costi non D Max"],["BASE","Contesto base","Baseline senza variazioni"],["HIGH","Contesto favorevole","Entrate Max · Costi non D Min"]].map(([id,name,subtitle])=>{
+  const x=s[id],active=id===state.externalSelected;
+  return '<button type="button" class="bf-risk-card '+(id==="LOW"?'prudent':id==="HIGH"?'favorable':'base')+(active?' selected':'')+'" data-risk-outlook="'+id+'" aria-pressed="'+active+'"><strong>'+name+'</strong><small>'+subtitle+'</small>'+
+   '<span class="bf-risk-number">'+money(x.balance)+'</span><span class="bf-risk-after">Δ vs Baseline '+signed(x.delta)+'</span>'+
+   '<small>Spese D lasciate alla Baseline: nessun adattamento automatico.</small>'+
+   (goal>0?'<small>'+(x.balance<goal?'Gap obiettivi '+money(goal-x.balance):'Obiettivi coperti')+'</small>':'')+'</button>';
+ }).join("");
+ const toMap=arr=>new Map(arr.map(d=>[d.direction+":"+d.category_id,d.impact]));
+ const down=toMap(s.LOW.drivers),up=toMap(s.HIGH.drivers),all=s.LOW.drivers.concat(s.HIGH.drivers);
+ const list=[...new Set(all.map(d=>d.direction+":"+d.category_id))].map(id=>{
+  const d=all.find(x=>x.direction+":"+x.category_id===id);
+  return {...d,prudent:down.get(id)||0,favorable:up.get(id)||0};
+ }).sort((a,b)=>(Math.abs(b.prudent)+Math.abs(b.favorable))-(Math.abs(a.prudent)+Math.abs(a.favorable))).slice(0,5);
+ const ranks=list.length?list.map(d=>'<tr><td>'+escape(d.category)+'</td><td>'+signed(d.prudent)+'</td><td>'+signed(d.favorable)+'</td></tr>').join(""):
+  '<tr><td colspan="3">Nessuna variazione esterna: non sono stati configurati Min/Max utilizzabili per entrate o spese non D.</td></tr>';
+ const selectedLabel=state.externalSelected==="LOW"?"Contesto sfavorevole":state.externalSelected==="HIGH"?"Contesto favorevole":"Contesto base";
+ const premise=state.externalSelected==="LOW"?
+  "Entrate ai valori minimi e costi non discrezionali ai massimi. Le spese D rimangono quelle della Baseline: se non cambiate abitudini, questo è il rischio economico.":
+  state.externalSelected==="HIGH"?
+  "Entrate ai massimi e costi non discrezionali ai minimi. Le D non aumentano da sole: puoi scegliere se risparmiare il margine o spenderne una parte.":
+  "Tutte le voci rimangono alla Baseline, senza shock esterni e senza correzioni dei comportamenti.";
+ const advice=selected.balance<0?"Il bilancio presenta un disavanzo: servono scelte correttive o più risorse.":
+  selected.balance<goal?"L'avanzo è positivo ma non copre gli obiettivi: confronta le rinunce possibili nella matrice.":
+  "Gli obiettivi sono coperti: puoi decidere se proteggere il margine o usarne una parte per le D.";
+ const dBase=strategy.calculate(state.exp,state.inc).expenses.DISCRETIONARY.baseline;
+ const explanation='<section class="bf-risk-explainer" aria-live="polite"><strong>'+escape(selectedLabel)+' · come si arriva al risultato</strong>'+
+  '<p><b>Ipotesi:</b> '+escape(premise)+'</p>'+
+  '<div class="bf-risk-formula"><span>Entrate '+money(selected.incomeAmount)+'</span><span>− Costi non D '+money(selected.nonDExpenses)+'</span><span>− D Baseline '+money(dBase)+'</span><strong>= '+money(selected.balance)+'</strong></div>'+
+  '<p><b>Conseguenza:</b> '+escape(advice)+'</p>'+
+  (selected.drivers.length?'<p><b>Fattori principali:</b> '+selected.drivers.slice(0,4).map(d=>escape(d.category)+' '+signed(d.impact)).join(' · ')+'</p>':'')+
+  '<p class="bf-risk-tip">Min/Max non impostati = Baseline; gli Actual restano invariati. Non sono probabilità statistiche né previsioni della liquidità mese per mese.</p></section>';
  const choices=sortedChoices(),current=selectedRow(),salary=current&&current.direction==="INCOME"&&String(current.l2_name||"").toLowerCase()==="stipendio";
  const rows=current?current.months.map(m=>
   '<tr data-risk-month="'+escape(m.month)+'"><td>'+escape(formatMonth(m.month))+'</td><td>'+money(m.amount)+'</td>'+
@@ -386,12 +426,10 @@ function renderUI(){
    'Min e Max totali per il singolo mese.')+'</p>'+
   '<div class="bf-risk-table-wrap"><table class="bf-risk-table"><thead><tr><th>Mese</th><th>Baseline</th><th>Già registrato</th><th>'+(salary?'Fissa · Min/Max variabile':'Min / Max totali')+'</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
  panel.innerHTML=
-  '<div class="bf-risk-title"><div><h3>Scenari realistici · prima del Piano</h3><p><strong>Scenario Base = Baseline.</strong> Prudente e Favorevole usano gli intervalli per categoria definiti nella Baseline.</p></div><span class="bf-risk-status">Quote future con intervallo '+result.validCount+(readOnly?' · configurazione Baseline':changed()?' · modifiche da salvare':' · ipotesi locali')+'</span></div>'+
-  '<div class="bf-risk-cards">'+cards+'</div>'+
-  '<p class="bf-risk-help">Forbice complessiva '+money(result.beforeSpread)+
-  (acts?' · dopo le leve '+money(result.afterSpread):'')+
-  '. Sono estremi costruiti dalle ipotesi impostate, <strong>non probabilità statistiche</strong>. Il valore Prudente che combina tutti gli estremi negativi può rappresentare uno stress test severo. Risultato del Tabellone, da riconciliare con il Flusso economico (investimenti inclusi secondo le regole correnti).</p>'+
-  '<div class="bf-risk-two"><div><h4>Fattori che cambiano l’avanzo</h4><table class="bf-risk-driver"><thead><tr><th>Categoria</th><th>Prudente vs Base</th><th>Favorevole vs Base</th></tr></thead><tbody>'+ranks+'</tbody></table></div>'+
+  '<div class="bf-risk-title"><div><h3>1. Cosa potrebbe succedere · scenari esterni</h3><p><strong>Prima le condizioni economiche, poi le scelte.</strong> Entrate e spese non discrezionali variano secondo Min/Max; le D restano alla Baseline. Seleziona una carta per leggere assunzioni e conseguenze.</p></div><span class="bf-risk-status">Quote future con intervallo '+result.validCount+(readOnly?' · configurazione Baseline':changed()?' · modifiche da salvare':' · ipotesi locali')+'</span></div>'+
+  '<div class="bf-risk-cards">'+cards+'</div>'+explanation+
+  '<p class="bf-risk-help">Forbice dei contesti: '+money(s.HIGH.balance-s.LOW.balance)+'. Gli estremi non sono probabilità statistiche. '+(acts?'I target della bozza restano separati dai tre scenari esterni. ':'')+'Risultati del periodo, non test della liquidità minima mensile.</p>'+
+  '<div class="bf-risk-two"><div><h4>Fattori esterni che cambiano l’avanzo</h4><table class="bf-risk-driver"><thead><tr><th>Categoria</th><th>Prudente vs Base</th><th>Favorevole vs Base</th></tr></thead><tbody>'+ranks+'</tbody></table></div>'+
   configHtml+'</div>'+
   '<div class="bf-risk-actions"><span>'+(result.staleCount||baselineRanges?.invalid?.length?
    '⚠ Verifica '+(result.staleCount+(baselineRanges?.invalid?.length||0))+' ipotesi fuori intervallo o obsolete.':
@@ -440,6 +478,7 @@ function init(){
  doc.addEventListener("click",e=>{
   if(!validHost(e))return;
   const b=e.target.closest("button");if(!b)return;
+  if(b.hasAttribute("data-risk-outlook")){state.externalSelected=b.getAttribute("data-risk-outlook")||"LOW";renderUI();return}
   if(b.hasAttribute("data-risk-open-baseline")){root.showPlanningBoardView?.("BASELINE");return}
   if(b.hasAttribute("data-risk-apply")){applyMonth(b);return}
   if(b.hasAttribute("data-risk-remove")){
