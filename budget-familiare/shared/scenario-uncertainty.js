@@ -1,4 +1,4 @@
-/* V73.30.10.44 · Scenari di incertezza. Baseline = Base, senza mutare il Piano. */
+/* V73.30.10.61 · Scenari di incertezza. Baseline = Base, senza mutare il Piano. */
 (function(root){
 "use strict";
 const strategy=root.BudgetFamilyScenario||(typeof require==="function"?require("./scenario-strategy.js"):null);
@@ -153,7 +153,135 @@ function validate(r,m,values,salary){
  if(!accepted(entry,m,salary))return {error:"Intervallo incoerente con il valore del mese."};
  return {entry};
 }
-const api={evaluate,vary,validate,accepted,floor,applyActions,applyPlannedRows,drivers};
+
+/* V73.30.10.61 · Matrice decisionale (nessun dato persistito).
+   Le entrate vengono variate coi Min/Max salvati. Le D rappresentano scelte:
+   Min realistico, Baseline e Max plausibile. Soltanto per coprire un gap
+   si puo' andare sotto Min fino alla quota futura azzerabile. Gli Actual restano protetti.
+   Gli altri costi, incluso SAVINGS, sono invariati: stress emergenze separato. */
+function decisionMatrix(exp,inc,assumptions={},opts={}){
+ if(!strategy)throw Error("Motore decisionale non disponibile");
+ const expenses=Array.isArray(exp)?exp:[],incomes=Array.isArray(inc)?inc:[];
+ const goal=Math.max(0,numeric(opts.goal));
+ const baseline=strategy.calculate(expenses,incomes);
+ const disc=expenses.filter(r=>r.kind==="DISCRETIONARY");
+ const specs=disc.map(r=>{
+  let minimum=0,maximum=0,locked=0,covered=0,possible=0;
+  for(const m of r.months||[]){
+   const paid=floor(m),baselineAmount=numeric(m.amount);
+   locked+=paid;
+   if(m.kind!=="actual")possible++;
+   const entry=assumptions[key(r,m)];
+   const valid=accepted(entry,m,false);
+   if(valid){covered++;minimum+=numeric(entry.min);maximum+=numeric(entry.max)}
+   else {minimum+=baselineAmount;maximum+=baselineAmount}
+  }
+  return {id:String(r.category_id),name:String(r.l2_name||"Categoria"),
+   baseline:round(numeric(r.annual)),locked:round(locked),
+   minimum:round(Math.max(locked,minimum)),maximum:round(Math.max(numeric(r.annual),maximum)),
+   covered,possible};
+ });
+ const total=field=>round(specs.reduce((a,r)=>a+r[field],0));
+ const sumBase=total("baseline"),sumMin=total("minimum"),sumMax=total("maximum"),sumLocked=total("locked");
+ // Allocate a required cut proportionally within a tranche; no arbitrary
+ // preference ordering is inferred from category names.
+ function cut(targets,needed,lowerField){
+  let remaining=Math.max(0,needed);
+  const available=specs.map(r=>Math.max(0,(targets[r.id]??r.baseline)-r[lowerField]));
+  const capacity=available.reduce((a,x)=>a+x,0),applied=Math.min(capacity,remaining);
+  let remainder=round(applied);
+  specs.forEach((r,i)=>{
+   const amount=i===specs.length-1?remainder:round(applied*(capacity?available[i]/capacity:0));
+   const used=Math.max(0,Math.min(available[i],amount,remainder));
+   targets[r.id]=round(Math.max(r[lowerField],(targets[r.id]??r.baseline)-used));
+   remainder=round(remainder-used);
+  });
+  // Handle residual rounding and zero-capacity last rows deterministically.
+  if(remainder>.005)for(const r of specs){
+   const space=Math.max(0,(targets[r.id]??r.baseline)-r[lowerField]);
+   const used=Math.min(space,remainder);
+   targets[r.id]=round((targets[r.id]??r.baseline)-used);remainder=round(remainder-used);
+   if(remainder<.005)break;
+  }
+  remaining=round(Math.max(0,remaining-(applied-remainder)));
+  return remaining;
+ }
+ function raise(targets,budget){
+  let remaining=Math.max(0,budget);
+  const capacities=specs.map(r=>Math.max(0,r.maximum-(targets[r.id]??r.baseline)));
+  const capacity=capacities.reduce((a,b)=>a+b,0),totalUp=Math.min(remaining,capacity);
+  let left=round(totalUp);
+  specs.forEach((r,i)=>{
+   const inc=i===specs.length-1?left:round(totalUp*(capacity?capacities[i]/capacity:0));
+   const take=Math.max(0,Math.min(inc,capacities[i],left));
+   targets[r.id]=round((targets[r.id]??r.baseline)+take);left=round(left-take);
+  });
+  if(left>.005)for(const r of specs){
+   const cap=Math.max(0,r.maximum-(targets[r.id]??r.baseline)),take=Math.min(cap,left);
+   targets[r.id]=round((targets[r.id]??r.baseline)+take);left=round(left-take);
+   if(left<.005)break;
+  }
+ }
+ const modes=[
+  {id:"LOW",label:"Entrate minime",uncertainty:"PRUDENT"},
+  {id:"BASE",label:"Entrate base",uncertainty:"BASE"},
+  {id:"HIGH",label:"Entrate favorevoli",uncertainty:"FAVORABLE"}
+ ];
+ const strategies=[
+  {id:"PROTECT",label:"Protezione"},
+  {id:"BALANCE",label:"Equilibrio"},
+  {id:"LIFE",label:"Qualità di vita"}
+ ];
+ const cells=[];
+ for(const incomeMode of modes){
+  const varied=vary(incomes,incomeMode.uncertainty,assumptions);
+  const untouched=strategy.calculate(expenses,varied);
+  for(const policy of strategies){
+   const targets=Object.fromEntries(specs.map(r=>[r.id,r.baseline]));
+   let beyondMin=0;
+   if(policy.id==="PROTECT"){
+    specs.forEach(r=>{targets[r.id]=r.minimum});
+    const first=strategy.calculate(expenses,varied,{}, {categoryTargets:targets});
+    const gap=Math.max(0,goal-first.simulatedBalance);
+    if(gap>.005){const remains=cut(targets,gap,"locked");beyondMin=round(gap-remains)}
+   }else if(policy.id==="BALANCE"){
+    let gap=Math.max(0,goal-untouched.simulatedBalance);
+    gap=cut(targets,gap,"minimum");
+    if(gap>.005){const stays=gap;gap=cut(targets,gap,"locked");beyondMin=round(stays-gap)}
+   }else{
+    raise(targets,Math.max(0,untouched.simulatedBalance-goal));
+   }
+   const result=strategy.calculate(expenses,varied,{}, {categoryTargets:targets});
+   const spending=round(specs.reduce((a,r)=>a+(targets[r.id]??r.baseline),0));
+   const deltaD=round(spending-sumBase);
+   const activeTargets=Object.fromEntries(specs.filter(r=>Math.abs((targets[r.id]??r.baseline)-r.baseline)>.005)
+     .map(r=>[r.id,round(targets[r.id])]));
+   cells.push({
+    id:incomeMode.id+"|"+policy.id,income:incomeMode.id,policy:policy.id,
+    balance:round(result.simulatedBalance),gap:round(Math.max(0,goal-result.simulatedBalance)),
+    free:round(result.simulatedBalance-goal),incomeAmount:round(result.simulatedIncome),
+    spendingD:spending,deltaD,baselineD:sumBase,belowMin:round(beyondMin),
+    targets:activeTargets,adjustableD:round(sumBase-sumLocked),
+    goal,baselineBalance:round(baseline.baselineBalance),
+    sustainable:result.simulatedBalance>=goal-.005,
+    incomeDelta:round(result.simulatedIncome-baseline.baseIncome),
+    investments:round(result.expenses.SAVINGS.simulated),
+    extraSavings:round((result.simulatedBalance-baseline.baselineBalance))
+   });
+  }
+ }
+ const incomeConfigured=incomes.flatMap(r=>(r.months||[]).map(m=>({r,m})))
+  .filter(({r,m})=>accepted(assumptions[key(r,m)],m,
+    r.direction==="INCOME"&&String(r.l2_name||"").trim().toLocaleLowerCase("it")==="stipendio")).length;
+ const incomeFuture=incomes.reduce((s,r)=>s+(r.months||[]).filter(m=>m.kind!=="actual").length,0);
+ return {cells,modes,strategies,goal,
+  baselineBalance:round(baseline.baselineBalance),incomeConfigured,incomeFuture,
+  discretionaryConfigured:specs.reduce((a,r)=>a+r.covered,0),
+  discretionaryFuture:specs.reduce((a,r)=>a+r.possible,0),
+  d:{baseline:sumBase,min:sumMin,max:sumMax,locked:sumLocked},categories:specs};
+}
+
+const api={decisionMatrix,evaluate,vary,validate,accepted,floor,applyActions,applyPlannedRows,drivers};
 if(typeof module!=="undefined"&&module.exports)module.exports=api;
 root.BudgetFamilyUncertainty=api;
 const doc=root.document;if(!doc)return;
