@@ -8,16 +8,16 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=73.30.10.66-20261023"></script>
-<script src="../shared/app-config.js?v=73.30.10.66-20261023"></script>
-<script src="../shared/contextual-help.js?v=73.30.10.66-20261023" defer></script>
+<script src="../shared/supabase-client.js?v=73.30.10.67-20261023"></script>
+<script src="../shared/app-config.js?v=73.30.10.67-20261023"></script>
+<script src="../shared/contextual-help.js?v=73.30.10.67-20261023" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<link rel="stylesheet" href="../shared/health-reserve.css?v=73.30.10.66-20261023">
-<link rel="stylesheet" href="../shared/approved-plan.css?v=73.30.10.66-20261023">
-<link rel="stylesheet" href="../shared/scenario-strategy.css?v=73.30.10.66-20261023">
-<link rel="stylesheet" href="../shared/scenario-uncertainty.css?v=73.30.10.66-20261023">
-<link rel="stylesheet" href="../shared/baseline-uncertainty.css?v=73.30.10.66-20261023">
-<link rel="stylesheet" href="../shared/single-plan-board.css?v=73.30.10.66-20261023">
+<link rel="stylesheet" href="../shared/health-reserve.css?v=73.30.10.67-20261023">
+<link rel="stylesheet" href="../shared/approved-plan.css?v=73.30.10.67-20261023">
+<link rel="stylesheet" href="../shared/scenario-strategy.css?v=73.30.10.67-20261023">
+<link rel="stylesheet" href="../shared/scenario-uncertainty.css?v=73.30.10.67-20261023">
+<link rel="stylesheet" href="../shared/baseline-uncertainty.css?v=73.30.10.67-20261023">
+<link rel="stylesheet" href="../shared/single-plan-board.css?v=73.30.10.67-20261023">
 <style>
 :root{--bg:#f4f6fa;--card:#fff;--text:#17263e;--muted:#58677d;--line:#dce4ee;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 4px 18px rgba(15,23,42,.045);--sc-blue:#2563eb;--sc-blue-soft:#eff6ff;--sc-green:#0ea87a;--sc-red:#ef5b73;--sc-purple:#7658e6;--sc-ink:#17263e}
 *{box-sizing:border-box}
@@ -2080,7 +2080,7 @@ body{font-size:16px;line-height:1.5}
 #planningBoardView .planning-board-table tbody tr.planning-l2-row>td:nth-child(9){text-align:left}
 #planningBoardView .planning-board-table .bf-plan-edit-cell{max-width:100%;min-width:0}
 #planningBoardView .planning-board-table .bf-plan-edit-cell input{max-width:88px;min-width:0;flex:1 1 78px;width:calc(100% - 28px);padding:5px 6px}
-/* Matrice decisionale V73.30.10.66 */
+/* Matrice decisionale V73.30.10.67 */
 .bf-decision-matrix{background:#fff;border:1px solid #d5e1ef;border-radius:13px;margin:12px 0;padding:16px}
 .bf-decision-head{display:flex;justify-content:space-between;gap:15px;align-items:flex-start}
 .bf-decision-head h3{margin:0 0 5px;font-size:18px}.bf-decision-head p{margin:0 0 10px;font-size:13px;color:#536985;max-width:830px}
@@ -2099,14 +2099,14 @@ body{font-size:16px;line-height:1.5}
 .bf-decision-detail p{font-size:12px;line-height:1.55;color:#4c627c;margin:0}
 .bf-decision-detail>div:last-child{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
 @media(max-width:760px){.bf-decision-head{display:block}.bf-decision-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
-/* V73.30.10.66 · Mesi attivi della Baseline al posto degli override tecnici. */
+/* V73.30.10.67 · Mesi attivi della Baseline al posto degli override tecnici. */
 /* Plain month-count text, on the SAME line as the method, no pill and no row-height increase. */
 #planningBoardView .planning-method{display:flex;flex-wrap:nowrap;align-items:center;gap:4px;min-width:0;min-height:0;white-space:nowrap}
 #planningBoardView .planning-method-chip{min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:0 1 auto}
 #planningBoardView .planning-method-count{flex:0 0 auto}
 #planningBoardView .bf-interval-range{gap:0;padding:3px 5px}
 #planningBoardView .bf-interval-values{font-variant-numeric:tabular-nums;font-size:11px}
-/* V73.30.10.66 · Min / Max leggibili nella colonna Intervallo */
+/* V73.30.10.67 · Min / Max leggibili nella colonna Intervallo */
 #planningBoardView .planning-board-table th:nth-child(1){width:19%}
 #planningBoardView .planning-board-table th:nth-child(2){width:8%}
 #planningBoardView .planning-board-table th:nth-child(3){width:10%}
@@ -2126,7 +2126,7 @@ body{font-size:16px;line-height:1.5}
 #planningBoardView .bf-interval-warning{font-size:12px;color:#ba3030}
 @media(max-width:1150px){#planningBoardView .bf-interval-range{padding:3px 2px;gap:2px}#planningBoardView .bf-interval-values{font-size:10px}#planningBoardView .bf-interval-origin{font-size:8px;padding:1px 2px}}
 
-/* V73.30.10.66 · Ten sortable columns: method | month-count | confidence. */
+/* V73.30.10.67 · Ten sortable columns: method | month-count | confidence. */
 #planningBoardView .planning-board-table{table-layout:fixed}
 #planningBoardView .planning-board-table th:nth-child(1){width:19%}
 #planningBoardView .planning-board-table th:nth-child(2){width:8%}
@@ -2145,7 +2145,7 @@ body{font-size:16px;line-height:1.5}
 #planningBoardView .planning-board-table td:nth-child(10){max-width:none!important;min-width:0!important}
 #planningBoardView .bf-months-count{display:inline;font-size:11px;font-weight:500;color:#52657b;white-space:nowrap;font-variant-numeric:tabular-nums}
 
-/* V73.30.10.66 · Separate externally uncertain context from voluntary D decisions. */
+/* V73.30.10.67 · Separate externally uncertain context from voluntary D decisions. */
 .bf-decision-table{min-width:860px;border-spacing:5px}
 .bf-decision-table th:first-child{width:140px}
 .bf-decision-table th{font-size:12px;line-height:1.35}
@@ -2224,7 +2224,7 @@ body{font-size:16px;line-height:1.5}
 @media(max-width:750px){.flow-dataset-picker{border-right:none;padding-right:0}.flow-compare-controls .flow-future-only{flex:1 1 145px}.flow-compare-controls .flow-future-only select{max-width:100%;width:100%}}
 
 
-/* V73.30.10.66 — editor Baseline compatto, 12 mesi su una riga, chiusura visibile */
+/* V73.30.10.67 — editor Baseline compatto, 12 mesi su una riga, chiusura visibile */
 .planning-board-shell[data-board-context="BASELINE"] .forecast-grid.bf-baseline-compact{
   display:grid;
   grid-template-columns:minmax(155px,1.2fr) minmax(165px,1.3fr) minmax(105px,.7fr) minmax(190px,1.5fr);
@@ -2991,10 +2991,10 @@ body{font-size:16px;line-height:1.5}
   </div>
 </div>
 
-<script src="../shared/scenario-strategy.js?v=73.30.10.66-20261023"></script>
-<script src="../shared/scenario-uncertainty.js?v=73.30.10.66-20261023"></script>
-<script src="../shared/baseline-uncertainty.js?v=73.30.10.66-20261023"></script>
-<script src="../shared/single-plan-board.js?v=73.30.10.66-20261023"></script>
+<script src="../shared/scenario-strategy.js?v=73.30.10.67-20261023"></script>
+<script src="../shared/scenario-uncertainty.js?v=73.30.10.67-20261023"></script>
+<script src="../shared/baseline-uncertainty.js?v=73.30.10.67-20261023"></script>
+<script src="../shared/single-plan-board.js?v=73.30.10.67-20261023"></script>
 <script>
 const sb=window.appSupabase;
 if(typeof Chart!=="undefined"){
@@ -9709,8 +9709,8 @@ $("rpcDiagnosticsModal")?.addEventListener("click",function(e){if(e.target===$("
 document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!$("rpcDiagnosticsModal")?.classList.contains("hidden"))closeRpcDiagnostics()});
 init();
 </script>
-<script src="../shared/health-reserve.js?v=73.30.10.66-20261023"></script>
-<script src="../shared/approved-plan.js?v=73.30.10.66-20261023"></script>
+<script src="../shared/health-reserve.js?v=73.30.10.67-20261023"></script>
+<script src="../shared/approved-plan.js?v=73.30.10.67-20261023"></script>
 </body>
 </html>
 

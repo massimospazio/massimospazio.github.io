@@ -1,6 +1,6 @@
 // Canonical source: massimospazio/budget-familiare; public files are deployed automatically.
 (function(){
-  const APP_VERSION='V73.30.10.66';
+  const APP_VERSION='V73.30.10.67';
   const APP_RELEASE='Strategia · scenari esterni e quattro decisioni D';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
