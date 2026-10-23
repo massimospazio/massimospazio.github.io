@@ -1,0 +1,25 @@
+/* V74.0.0 · Controllo del mese in corso */
+.bf-control-view{padding:16px 0 26px}
+.bf-control-header{display:flex;align-items:start;justify-content:space-between;flex-wrap:wrap;gap:10px;margin:0 0 15px}
+.bf-control-header h2{font-size:23px;margin:0 0 5px;color:#173654}
+.bf-control-header p,.bf-control-muted{font-size:12px;line-height:1.5;color:#61768f;margin:3px 0 12px}
+.bf-control-notice{border:1px solid #dae6f3;border-radius:9px;padding:11px 13px;background:#f7faff;font-size:13px;line-height:1.5;color:#38516c}
+.bf-control-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:15px 0}
+.bf-control-kpis>div{display:flex;gap:5px;flex-direction:column;min-width:0;border:1px solid #dbe4ee;border-radius:11px;padding:12px;background:#fff}
+.bf-control-kpis small{font-size:11px;color:#657891}
+.bf-control-kpis strong{font-size:20px;color:#203d5b;font-variant-numeric:tabular-nums}
+.bf-control-kpis span{font-size:11px;color:#738399}
+.bf-control-kpis .bf-negative,.bf-negative{color:#b23b42!important}
+.bf-control-kpis .bf-positive,.bf-positive{color:#207850!important}
+.bf-control-monthly{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:13px}
+.bf-control-monthly>div{background:#f8fafc;border:1px solid #e1e8ef;border-radius:10px;padding:13px}
+.bf-control-monthly h3,.bf-control-view h3{margin:3px 0 8px;color:#274768;font-size:15px}
+.bf-control-monthly p{font-size:13px;color:#495c75;margin:5px 0}
+.bf-control-overflow{overflow:auto;max-height:440px}
+.bf-control-table{width:100%;border-collapse:collapse;min-width:600px;font-size:12px}
+.bf-control-table th,.bf-control-table td{padding:9px 7px;border-bottom:1px solid #e3e9f1}
+.bf-control-table th{text-align:right;color:#53708d;background:#f0f5fb}
+.bf-control-table th:first-child,.bf-control-table td:first-child{text-align:left}
+.bf-control-table td:not(:first-child){text-align:right;font-variant-numeric:tabular-nums}
+.bf-control-table small{font-weight:400;color:#6d7b90}
+@media(max-width:780px){.bf-control-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.bf-control-monthly{grid-template-columns:1fr}}
