@@ -1,4 +1,4 @@
-/* V73.30.10.62: delta visibili nell'intervallo del Tabellone. */
+/* V73.30.10.63: intervalli compatti, sempre senza decimali. */
 (function(root){
 "use strict";
 const numerical=x=>Number.isFinite(Number(x))?Number(x):0;
@@ -123,8 +123,12 @@ function intervalDeltas(summary){
 function intervalDeltaLabel(summary){
  const d=intervalDeltas(summary);
  if(!d)return "—";
- const fmt=new Intl.NumberFormat("it-IT",{maximumFractionDigits:2});
- const signed=v=>Math.abs(v)<.005?"0":(v<0?"−":"+")+fmt.format(Math.abs(v));
+ // Presentation only: all budget-table amounts are rounded to whole euros.
+ const fmt=new Intl.NumberFormat("it-IT",{maximumFractionDigits:0,useGrouping:"always"});
+ const signed=v=>{
+  const euros=Math.round(Math.abs(v));
+  return euros===0?"0":(v<0?"−":"+")+fmt.format(euros);
+ };
  return signed(d.min)+" / "+signed(d.max)+" €";
 }
 function intervalImpact(summary){

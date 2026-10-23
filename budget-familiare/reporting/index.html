@@ -8,16 +8,16 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=73.30.10.62-20261023"></script>
-<script src="../shared/app-config.js?v=73.30.10.62-20261023"></script>
-<script src="../shared/contextual-help.js?v=73.30.10.62-20261023" defer></script>
+<script src="../shared/supabase-client.js?v=73.30.10.63-20261023"></script>
+<script src="../shared/app-config.js?v=73.30.10.63-20261023"></script>
+<script src="../shared/contextual-help.js?v=73.30.10.63-20261023" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<link rel="stylesheet" href="../shared/health-reserve.css?v=73.30.10.62-20261023">
-<link rel="stylesheet" href="../shared/approved-plan.css?v=73.30.10.62-20261023">
-<link rel="stylesheet" href="../shared/scenario-strategy.css?v=73.30.10.62-20261023">
-<link rel="stylesheet" href="../shared/scenario-uncertainty.css?v=73.30.10.62-20261023">
-<link rel="stylesheet" href="../shared/baseline-uncertainty.css?v=73.30.10.62-20261023">
-<link rel="stylesheet" href="../shared/single-plan-board.css?v=73.30.10.62-20261023">
+<link rel="stylesheet" href="../shared/health-reserve.css?v=73.30.10.63-20261023">
+<link rel="stylesheet" href="../shared/approved-plan.css?v=73.30.10.63-20261023">
+<link rel="stylesheet" href="../shared/scenario-strategy.css?v=73.30.10.63-20261023">
+<link rel="stylesheet" href="../shared/scenario-uncertainty.css?v=73.30.10.63-20261023">
+<link rel="stylesheet" href="../shared/baseline-uncertainty.css?v=73.30.10.63-20261023">
+<link rel="stylesheet" href="../shared/single-plan-board.css?v=73.30.10.63-20261023">
 <style>
 :root{--bg:#f4f6fa;--card:#fff;--text:#17263e;--muted:#58677d;--line:#dce4ee;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 4px 18px rgba(15,23,42,.045);--sc-blue:#2563eb;--sc-blue-soft:#eff6ff;--sc-green:#0ea87a;--sc-red:#ef5b73;--sc-purple:#7658e6;--sc-ink:#17263e}
 *{box-sizing:border-box}
@@ -2080,7 +2080,7 @@ body{font-size:16px;line-height:1.5}
 #planningBoardView .planning-board-table tbody tr.planning-l2-row>td:nth-child(9){text-align:left}
 #planningBoardView .planning-board-table .bf-plan-edit-cell{max-width:100%;min-width:0}
 #planningBoardView .planning-board-table .bf-plan-edit-cell input{max-width:88px;min-width:0;flex:1 1 78px;width:calc(100% - 28px);padding:5px 6px}
-/* Matrice decisionale V73.30.10.62 */
+/* Matrice decisionale V73.30.10.63 */
 .bf-decision-matrix{background:#fff;border:1px solid #d5e1ef;border-radius:13px;margin:12px 0;padding:16px}
 .bf-decision-head{display:flex;justify-content:space-between;gap:15px;align-items:flex-start}
 .bf-decision-head h3{margin:0 0 5px;font-size:18px}.bf-decision-head p{margin:0 0 10px;font-size:13px;color:#536985;max-width:830px}
@@ -2099,7 +2099,12 @@ body{font-size:16px;line-height:1.5}
 .bf-decision-detail p{font-size:12px;line-height:1.55;color:#4c627c;margin:0}
 .bf-decision-detail>div:last-child{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
 @media(max-width:760px){.bf-decision-head{display:block}.bf-decision-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
-/* V73.30.10.62 · Min / Max leggibili nella colonna Intervallo */
+/* V73.30.10.63 · Mesi attivi della Baseline al posto degli override tecnici. */
+#planningBoardView .bf-planning-active-months{display:inline-block;white-space:nowrap;font-size:10px;font-weight:700;color:#496780;background:#edf3f9;border:1px solid #dce7f1;border-radius:5px;padding:1px 4px;margin-left:3px}
+#planningBoardView .planning-method{display:flex;flex-wrap:wrap;align-items:center;gap:2px}
+#planningBoardView .bf-interval-range{gap:0;padding:3px 5px}
+#planningBoardView .bf-interval-values{font-variant-numeric:tabular-nums;font-size:11px}
+/* V73.30.10.63 · Min / Max leggibili nella colonna Intervallo */
 #planningBoardView .planning-board-table th:nth-child(1){width:19%}
 #planningBoardView .planning-board-table th:nth-child(2){width:8%}
 #planningBoardView .planning-board-table th:nth-child(3){width:10%}
@@ -2175,7 +2180,7 @@ body{font-size:16px;line-height:1.5}
 @media(max-width:750px){.flow-dataset-picker{border-right:none;padding-right:0}.flow-compare-controls .flow-future-only{flex:1 1 145px}.flow-compare-controls .flow-future-only select{max-width:100%;width:100%}}
 
 
-/* V73.30.10.62 — editor Baseline compatto, 12 mesi su una riga, chiusura visibile */
+/* V73.30.10.63 — editor Baseline compatto, 12 mesi su una riga, chiusura visibile */
 .planning-board-shell[data-board-context="BASELINE"] .forecast-grid.bf-baseline-compact{
   display:grid;
   grid-template-columns:minmax(155px,1.2fr) minmax(165px,1.3fr) minmax(105px,.7fr) minmax(190px,1.5fr);
@@ -2518,7 +2523,7 @@ body{font-size:16px;line-height:1.5}
             <option value="WITH">Con note</option>
             <option value="WITHOUT">Senza note</option>
           </select></label>
-          <label class="small">Intervallo <select id="planningIntervalFilter" class="select planning-filter-select" aria-label="Filtra per intervallo previsionale"><option value="ALL">Tutti</option><option value="WITH">Con intervallo</option><option value="WITHOUT">Senza intervallo</option><option value="MONTHS">Con mesi configurati</option></select></label>
+          <label class="small">Intervallo <select id="planningIntervalFilter" class="select planning-filter-select" aria-label="Filtra per intervallo previsionale"><option value="ALL">Tutti</option><option value="WITH">Con intervallo</option><option value="WITHOUT">Senza intervallo</option><option value="MONTHS">Con Min/Max su mesi specifici</option></select></label>
           <label class="small">Mostra <select id="planningBoardDisplayUnit" class="select planning-filter-select"><option value="TOTAL">Totale periodo</option><option value="MONTH">Media mese</option></select></label>
           <label class="small planning-changed-control"><input id="planningBoardOnlyChanged" type="checkbox"> Solo modificate</label><label id="planningBaselinePositiveFilterWrap" class="small planning-changed-control hidden" title="Mostra solo le L2 con importo Baseline positivo nello stesso periodo. Esclude le categorie Baseline = 0 indipendentemente dal metodo di previsione. Si combina con gli altri filtri."><input id="planningBaselinePositiveOnly" type="checkbox"> Solo Baseline &gt; 0</label>
           <label class="planning-board-search"><input id="planningBoardSearch" type="search" placeholder="Cerca categoria…" autocomplete="off"></label>
@@ -2942,10 +2947,10 @@ body{font-size:16px;line-height:1.5}
   </div>
 </div>
 
-<script src="../shared/scenario-strategy.js?v=73.30.10.62-20261023"></script>
-<script src="../shared/scenario-uncertainty.js?v=73.30.10.62-20261023"></script>
-<script src="../shared/baseline-uncertainty.js?v=73.30.10.62-20261023"></script>
-<script src="../shared/single-plan-board.js?v=73.30.10.62-20261023"></script>
+<script src="../shared/scenario-strategy.js?v=73.30.10.63-20261023"></script>
+<script src="../shared/scenario-uncertainty.js?v=73.30.10.63-20261023"></script>
+<script src="../shared/baseline-uncertainty.js?v=73.30.10.63-20261023"></script>
+<script src="../shared/single-plan-board.js?v=73.30.10.63-20261023"></script>
 <script>
 const sb=window.appSupabase;
 if(typeof Chart!=="undefined"){
@@ -7900,14 +7905,24 @@ function planningMethodIcon(method){
   return ({AVG6:"▥",AVG12:"▥",MEDIAN12:"≋",SAME_MONTH_LAST_YEAR:"↶",LAST_VALUE:"◷",FIXED:"▣",RANGE:"↔",ZERO:"⊘"})[String(method||"")]||"•";
 }
 function planningMethodClass(method){return String(method||"").toUpperCase()==="ZERO"?" zero":""}
+function planningMonthsWithAmount(row){
+ // Baseline month distribution, independent of the edited scenario and override count.
+ const base=planningIntervalBaselineRows.get(row.direction+":"+row.category_id)||row;
+ const months=Array.isArray(base.months)?base.months:[];
+ return {active:months.filter(m=>num(m.amount)>.005).length,total:months.length};
+}
 function planningMethodHtml(row){
-  const m=row.meta||{},scope=m.forecast_scope||"CATEGORY",method=String(m.forecast_method||""),label=planningMethodName(method),override=row.overrideCount?'<span class="planning-plan-chip">'+row.overrideCount+' override</span>':"";
+ const m=row.meta||{},scope=m.forecast_scope||"CATEGORY",method=String(m.forecast_method||""),label=planningMethodName(method);
+ const spread=planningMonthsWithAmount(row),text=spread.active+"/"+spread.total+" mesi";
+ const explanation="Mesi con importo Baseline o consuntivo positivo: "+spread.active+" su "+spread.total+
+  ". Indica la frequenza della voce, non la costanza della cifra. Non conta le modifiche manuali.";
+ const frequency=spread.total?'<span class="bf-planning-active-months" title="'+esc(explanation)+'">'+esc(text)+'</span>':"";
   if(scope==="COUNTERPARTIES"){
     const count=num(m.counterparty_setting_count),methods=String(m.counterparty_methods||"").split(",").map(function(x){return x.trim()}).filter(Boolean);
     const one=methods.length===1?methods[0]:"",detail=one?planningMethodName(one):(methods.length>1?"Metodi misti":label),icon=one?planningMethodIcon(one):"⋯";
-    return '<div class="planning-method"><span class="planning-method-chip'+planningMethodClass(one)+'"><b>CP</b><i>'+icon+'</i>'+esc(detail)+'</span>'+override+(count?'<span class="planning-method-count">'+count+'</span>':"")+'</div>';
+    return '<div class="planning-method"><span class="planning-method-chip'+planningMethodClass(one)+'"><b>CP</b><i>'+icon+'</i>'+esc(detail)+'</span>'+frequency+(count?'<span class="planning-method-count">'+count+'</span>':"")+'</div>';
   }
-  return '<div class="planning-method"><span class="planning-method-chip'+planningMethodClass(method)+'"><i>'+planningMethodIcon(method)+'</i>'+esc(label)+'</span>'+override+'</div>';
+  return '<div class="planning-method"><span class="planning-method-chip'+planningMethodClass(method)+'"><i>'+planningMethodIcon(method)+'</i>'+esc(label)+'</span>'+frequency+'</div>';
 }
 function planningForecastFilterMatch(row){
   const filter=planningBoardForecastFilter||"ALL";if(filter==="ALL")return true;
@@ -8366,7 +8381,7 @@ function planningIntervalHtml(row){
  const dates=(v.months||[]).map(m=>monthLabel(m)).join(", ");
  const delta=source.intervalDeltaLabel(v),d=source.intervalDeltas(v)||{min:0,max:0};
  const signed=amount=>(amount>0?"+":amount<0?"−":"")+money(Math.abs(amount));
- const detail=label+" · Baseline "+money(v.base)+
+ const detail=label+" · Configurazione "+parts.join("+")+" · Baseline "+money(v.base)+
    " · Min "+money(v.min)+" ("+signed(d.min)+" rispetto alla Baseline)"+
    " · Max "+money(v.max)+" ("+signed(d.max)+" rispetto alla Baseline)"+
    (dates?" · Mesi: "+dates:"")+
@@ -8375,7 +8390,6 @@ function planningIntervalHtml(row){
  const severity=source.intervalImpact(v);
  return '<span class="bf-interval-badge bf-interval-range is-'+esc(severity)+'" role="img" aria-label="'+esc(detail)+'" title="'+esc(detail)+'">'+
    '<strong class="bf-interval-values">'+esc(delta)+'</strong>'+
-   '<small class="bf-interval-origin">'+esc(parts.join("+"))+'</small>'+
    (v.invalidCount?'<b class="bf-interval-warning" aria-label="Intervalli da verificare">!</b>':'')+
    '</span>';
 }
@@ -9602,8 +9616,8 @@ $("rpcDiagnosticsModal")?.addEventListener("click",function(e){if(e.target===$("
 document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!$("rpcDiagnosticsModal")?.classList.contains("hidden"))closeRpcDiagnostics()});
 init();
 </script>
-<script src="../shared/health-reserve.js?v=73.30.10.62-20261023"></script>
-<script src="../shared/approved-plan.js?v=73.30.10.62-20261023"></script>
+<script src="../shared/health-reserve.js?v=73.30.10.63-20261023"></script>
+<script src="../shared/approved-plan.js?v=73.30.10.63-20261023"></script>
 </body>
 </html>
 
