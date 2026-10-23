@@ -1,4 +1,4 @@
-/* V73.30.10.60: allineamento base incertezza al piano mensile salvato. */
+/* V73.30.10.62: delta visibili nell'intervallo del Tabellone. */
 (function(root){
 "use strict";
 const numerical=x=>Number.isFinite(Number(x))?Number(x):0;
@@ -112,6 +112,27 @@ function summarize(row,values=settings){
   active,invalidCount:effective.invalid.length
  };
 }
+/* V73.30.10.62: delta Min/Max rispetto alla Baseline del periodo VISIBILE.
+   Classi cromatiche indicano solo ampiezza assoluta, non bontà della spesa:
+   piccolo <250 €, medio 250-999 €, ampio da 1.000 €. */
+function intervalDeltas(summary){
+ if(!summary||!summary.configured)return null;
+ return {min:round(numerical(summary.min)-numerical(summary.base)),
+   max:round(numerical(summary.max)-numerical(summary.base))};
+}
+function intervalDeltaLabel(summary){
+ const d=intervalDeltas(summary);
+ if(!d)return "—";
+ const fmt=new Intl.NumberFormat("it-IT",{maximumFractionDigits:2});
+ const signed=v=>Math.abs(v)<.005?"0":(v<0?"−":"+")+fmt.format(Math.abs(v));
+ return signed(d.min)+" / "+signed(d.max)+" €";
+}
+function intervalImpact(summary){
+ const d=intervalDeltas(summary);if(!d)return "none";
+ const width=Math.max(Math.abs(d.min),Math.abs(d.max));
+ return width<.005?"flat":width>=1000?"high":width>=250?"medium":"low";
+}
+
 function status(){return {loaded,error:loadError}}
 
 function load(rpc,onChanged){
@@ -467,7 +488,7 @@ function install(){
  });
 }
 
-const api={monthsFromPlan,buildAssumptions,validPcts,editorHtml,load,settings:()=>settings,settingsFor,summarize,status,distributePeriod,upgradeLegacy,euroInput,parseEuroInput,preparePeriodEdit,exceptionForMonth,hasPending,discardDraft};
+const api={monthsFromPlan,intervalDeltas,intervalDeltaLabel,intervalImpact,buildAssumptions,validPcts,editorHtml,load,settings:()=>settings,settingsFor,summarize,status,distributePeriod,upgradeLegacy,euroInput,parseEuroInput,preparePeriodEdit,exceptionForMonth,hasPending,discardDraft};
 root.BudgetFamilyBaselineUncertainty=api;
 if(typeof module!=="undefined"&&module.exports)module.exports=api;
 if(root.document){if(root.document.readyState==="loading")root.document.addEventListener("DOMContentLoaded",install);else install()}
