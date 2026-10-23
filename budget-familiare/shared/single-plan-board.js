@@ -143,6 +143,13 @@ function applyDecisionTargets(changes){
  const discretionaries=Object.entries(state.originals).filter(([,r])=>
   r.direction==="EXPENSE"&&r.meta?.expense_nature==="DISCRETIONARY");
  if(!discretionaries.length)return false;
+ // Validate the whole request before touching draft state (all-or-nothing).
+ for(const [,r] of discretionaries){
+  const raw=changes[String(r.category_id)];
+  if(raw===undefined)continue;
+  const n=Number(raw);
+  if(!Number.isFinite(n)||n<locked(r)-.005||n<0)return false;
+ }
  const replacing=discretionaries.some(([id])=>state.targets[id]!==undefined||
   Object.keys(state.monthTargets[id]||{}).length>0);
  if(replacing&&!root.confirm("Applicare le scelte D della matrice? I target discrezionali e gli eventuali mesi manuali della bozza saranno sostituiti. Le altre voci, le note e la Baseline rimarranno invariati."))return false;
@@ -150,8 +157,7 @@ function applyDecisionTargets(changes){
   delete state.targets[id];delete state.monthTargets[id];
   const raw=changes[String(r.category_id)];
   if(raw===undefined)continue;
-  const n=Number(raw),minimum=locked(r);
-  if(!Number.isFinite(n)||n<minimum-.005)return false;
+  const n=Number(raw);
   if(Math.abs(n-value(r.annual))>.005)state.targets[id]=round2(n);
  }
  persist();root.renderPlanningBoard?.();

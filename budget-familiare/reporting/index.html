@@ -8,16 +8,16 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=73.30.10.60-20261023"></script>
-<script src="../shared/app-config.js?v=73.30.10.60-20261023"></script>
-<script src="../shared/contextual-help.js?v=73.30.10.60-20261023" defer></script>
+<script src="../shared/supabase-client.js?v=73.30.10.61-20261023"></script>
+<script src="../shared/app-config.js?v=73.30.10.61-20261023"></script>
+<script src="../shared/contextual-help.js?v=73.30.10.61-20261023" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<link rel="stylesheet" href="../shared/health-reserve.css?v=73.30.10.60-20261023">
-<link rel="stylesheet" href="../shared/approved-plan.css?v=73.30.10.60-20261023">
-<link rel="stylesheet" href="../shared/scenario-strategy.css?v=73.30.10.60-20261023">
-<link rel="stylesheet" href="../shared/scenario-uncertainty.css?v=73.30.10.60-20261023">
-<link rel="stylesheet" href="../shared/baseline-uncertainty.css?v=73.30.10.60-20261023">
-<link rel="stylesheet" href="../shared/single-plan-board.css?v=73.30.10.60-20261023">
+<link rel="stylesheet" href="../shared/health-reserve.css?v=73.30.10.61-20261023">
+<link rel="stylesheet" href="../shared/approved-plan.css?v=73.30.10.61-20261023">
+<link rel="stylesheet" href="../shared/scenario-strategy.css?v=73.30.10.61-20261023">
+<link rel="stylesheet" href="../shared/scenario-uncertainty.css?v=73.30.10.61-20261023">
+<link rel="stylesheet" href="../shared/baseline-uncertainty.css?v=73.30.10.61-20261023">
+<link rel="stylesheet" href="../shared/single-plan-board.css?v=73.30.10.61-20261023">
 <style>
 :root{--bg:#f4f6fa;--card:#fff;--text:#17263e;--muted:#58677d;--line:#dce4ee;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 4px 18px rgba(15,23,42,.045);--sc-blue:#2563eb;--sc-blue-soft:#eff6ff;--sc-green:#0ea87a;--sc-red:#ef5b73;--sc-purple:#7658e6;--sc-ink:#17263e}
 *{box-sizing:border-box}
@@ -2080,6 +2080,25 @@ body{font-size:16px;line-height:1.5}
 #planningBoardView .planning-board-table tbody tr.planning-l2-row>td:nth-child(9){text-align:left}
 #planningBoardView .planning-board-table .bf-plan-edit-cell{max-width:100%;min-width:0}
 #planningBoardView .planning-board-table .bf-plan-edit-cell input{max-width:88px;min-width:0;flex:1 1 78px;width:calc(100% - 28px);padding:5px 6px}
+/* Matrice decisionale V73.30.10.61 */
+.bf-decision-matrix{background:#fff;border:1px solid #d5e1ef;border-radius:13px;margin:12px 0;padding:16px}
+.bf-decision-head{display:flex;justify-content:space-between;gap:15px;align-items:flex-start}
+.bf-decision-head h3{margin:0 0 5px;font-size:18px}.bf-decision-head p{margin:0 0 10px;font-size:13px;color:#536985;max-width:830px}
+.bf-decision-head>span{font-size:12px;color:#526c8a;white-space:nowrap}
+.bf-decision-scroll{overflow:auto}.bf-decision-table{width:100%;min-width:650px;border-spacing:7px;table-layout:fixed}
+.bf-decision-table th{font-size:12px;text-align:center;color:#4f6882}.bf-decision-table th:first-child{width:155px;text-align:left}
+.bf-decision-cell{width:100%;min-height:95px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:5px;border:1px solid #d7e3ee;border-radius:9px;background:#f8fafc;cursor:pointer;padding:7px}
+.bf-decision-cell strong{font-size:19px;font-variant-numeric:tabular-nums;color:#224461}
+.bf-decision-cell small{font-size:12px;color:#5a6d82}
+.bf-decision-cell.active{outline:2px solid #2563eb;outline-offset:1px;background:#ebf4ff}
+.bf-decision-cell.bad{border-color:#f3cda4;background:#fff8ec}.bf-decision-cell.bad strong{color:#a94b28}
+.bf-decision-detail{display:grid;gap:10px;padding:12px;border-radius:10px;border:1px solid #e0e8f1;background:#f8fafc;margin-top:10px}
+.bf-decision-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.bf-decision-kpis>div{padding:9px;background:#fff;border:1px solid #e0e8f1;border-radius:8px}
+.bf-decision-kpis small{display:block;font-size:11px;color:#617a90}.bf-decision-kpis strong{font-size:15px;font-variant-numeric:tabular-nums}
+.bf-decision-detail p{font-size:12px;line-height:1.55;color:#4c627c;margin:0}
+.bf-decision-detail>div:last-child{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+@media(max-width:760px){.bf-decision-head{display:block}.bf-decision-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 <style>
 .purchase-financing-detail{margin-top:4px;font-size:14px;line-height:1.5;font-weight:400;color:#425b7c;white-space:normal;min-width:200px}
@@ -2136,7 +2155,7 @@ body{font-size:16px;line-height:1.5}
 @media(max-width:750px){.flow-dataset-picker{border-right:none;padding-right:0}.flow-compare-controls .flow-future-only{flex:1 1 145px}.flow-compare-controls .flow-future-only select{max-width:100%;width:100%}}
 
 
-/* V73.30.10.60 — editor Baseline compatto, 12 mesi su una riga, chiusura visibile */
+/* V73.30.10.61 — editor Baseline compatto, 12 mesi su una riga, chiusura visibile */
 .planning-board-shell[data-board-context="BASELINE"] .forecast-grid.bf-baseline-compact{
   display:grid;
   grid-template-columns:minmax(155px,1.2fr) minmax(165px,1.3fr) minmax(105px,.7fr) minmax(190px,1.5fr);
@@ -2433,7 +2452,11 @@ body{font-size:16px;line-height:1.5}
       <div class="planning-overview-scroll" aria-label="Riepilogo sintetico del periodo" tabindex="0">
         <div id="planningBoardOverview" class="planning-overview-strip" aria-live="polite"></div>
       </div>
-      <div id="planningBaselineReview" class="planning-baseline-review hidden" aria-live="polite"></div>
+      <section id="planningDecisionMatrix" class="bf-decision-matrix hidden" aria-label="Matrice decisionale fra entrate e spese discrezionali">
+  <div class="bf-decision-head"><div><h3>Matrice decisionale · scegli una direzione</h3><p>Tre ipotesi sulle entrate × tre strategie sulle discrezionali. Seleziona una cella per confrontare gli effetti prima di decidere.</p></div><span>Simulazione, non previsione salvata</span></div>
+  <div id="planningDecisionMatrixBody" aria-live="polite"></div>
+</section>
+<div id="planningBaselineReview" class="planning-baseline-review hidden" aria-live="polite"></div>
       <div class="planning-board-toolbar">
         <div class="planning-board-toolbar-left">
           <div class="mode-toggle">
@@ -2899,10 +2922,10 @@ body{font-size:16px;line-height:1.5}
   </div>
 </div>
 
-<script src="../shared/scenario-strategy.js?v=73.30.10.60-20261023"></script>
-<script src="../shared/scenario-uncertainty.js?v=73.30.10.60-20261023"></script>
-<script src="../shared/baseline-uncertainty.js?v=73.30.10.60-20261023"></script>
-<script src="../shared/single-plan-board.js?v=73.30.10.60-20261023"></script>
+<script src="../shared/scenario-strategy.js?v=73.30.10.61-20261023"></script>
+<script src="../shared/scenario-uncertainty.js?v=73.30.10.61-20261023"></script>
+<script src="../shared/baseline-uncertainty.js?v=73.30.10.61-20261023"></script>
+<script src="../shared/single-plan-board.js?v=73.30.10.61-20261023"></script>
 <script>
 const sb=window.appSupabase;
 if(typeof Chart!=="undefined"){
@@ -2963,6 +2986,7 @@ let planningBoardLoading=false;
 let planningBoardData=null;
 let planningBoardFilter="ALL";
 let planningBoardHorizon="CALENDAR";
+let planningDecisionSelection="BASE|BALANCE",planningDecisionLast=null;
 let planningBoardNatureFilter="ALL";
 let planningBoardForecastFilter="ALL";
 let planningBoardNoteFilter="ALL";
@@ -8766,6 +8790,54 @@ function renderPlanningSimulatorView(){
   });
 }
 
+
+function renderPlanningDecisionMatrix(exp,inc){
+ const host=$("planningDecisionMatrix"),node=$("planningDecisionMatrixBody");
+ if(!host||!node)return;
+ const active=planningBoardContext==="STRATEGY";
+ host.classList.toggle("hidden",!active);
+ if(!active){planningDecisionLast=null;return}
+ const ranges=window.BudgetFamilyBaselineUncertainty,risk=window.BudgetFamilyUncertainty;
+ if(!ranges?.status?.().loaded||!risk?.decisionMatrix){
+  node.innerHTML='<p>Caricamento Min/Max della Baseline…</p>';return;
+ }
+ const built=ranges.buildAssumptions(exp,inc),goals=window.BudgetFamilySinglePlan?.details?.()||{};
+ const goal=Math.max(0,num(goals.reserve)+num(goals.project));
+ const data=risk.decisionMatrix(exp.map(r=>({...r,kind:planningOverviewExpenseKind(r)})),
+   inc.map(r=>({...r,kind:planningOverviewIncomeKind(r)})),built.assumptions,{goal});
+ planningDecisionLast=data;
+ const current=data.cells.find(c=>c.id===planningDecisionSelection)||data.cells[4];
+ if(!current)return;
+ const labels={LOW:"Entrate minime",BASE:"Entrate base",HIGH:"Entrate favorevoli"};
+ const policies={PROTECT:"Protezione",BALANCE:"Equilibrio",LIFE:"Qualità di vita"};
+ const matrix=data.modes.map(mode=>'<tr><th>'+esc(mode.label)+'</th>'+
+   data.strategies.map(p=>{
+    const c=data.cells.find(x=>x.income===mode.id&&x.policy===p.id);
+    return '<td><button type="button" data-bf-decision-cell="'+esc(c.id)+'" aria-pressed="'+(c.id===current.id)+'" class="bf-decision-cell'+(c.id===current.id?' active':'')+(c.gap>.005?' bad':'')+'">'+
+     '<strong>'+money(c.balance)+'</strong><small>D '+(c.deltaD>0?'+':c.deltaD<0?'−':'')+money(Math.abs(c.deltaD))+'</small>'+
+     '<small>'+(c.gap>.005?'Gap '+money(c.gap):'Obiettivo coperto')+'</small></button></td>';
+   }).join('')+'</tr>').join("");
+ const categories=data.categories.filter(r=>current.targets[r.id]!==undefined)
+   .map(r=>({name:r.name,delta:current.targets[r.id]-r.baseline}))
+   .sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta)).slice(0,5);
+ const movers=categories.length?categories.map(r=>esc(r.name)+' '+(r.delta>0?'+':'−')+money(Math.abs(r.delta))).join(' · '):'Nessuna variazione D';
+ const missing=data.incomeConfigured<data.incomeFuture||data.discretionaryConfigured<data.discretionaryFuture;
+ node.innerHTML='<div class="bf-decision-scroll"><table class="bf-decision-table"><thead><tr><th>Entrate ↓ / strategia →</th>'+
+  data.strategies.map(p=>'<th>'+esc(p.label)+'</th>').join('')+'</tr></thead><tbody>'+matrix+'</tbody></table></div>'+
+  '<div class="bf-decision-detail"><strong>'+esc(labels[current.income]+' · '+policies[current.policy])+
+  (current.gap>.005?' · Gap obiettivi '+money(current.gap):' · avanzo dopo obiettivi '+money(current.free))+'</strong>'+
+  '<div class="bf-decision-kpis"><div><small>Entrate</small><strong>'+money(current.incomeAmount)+'</strong></div>'+
+  '<div><small>Discrezionali (D)</small><strong>'+money(current.spendingD)+'</strong></div>'+
+  '<div><small>Avanzo</small><strong>'+money(current.balance)+'</strong></div>'+
+  '<div><small>Investimenti invariati</small><strong>'+money(current.investments)+'</strong></div></div>'+
+  '<p><strong>Scelte principali:</strong> '+movers+'.'+(current.belowMin>.005?' <strong>Sacrifici oltre i Min: '+money(current.belowMin)+'</strong>.':'')+'</p>'+
+  (missing?'<p>Intervalli ancora parziali: entrate '+data.incomeConfigured+'/'+data.incomeFuture+' mesi; D '+data.discretionaryConfigured+'/'+data.discretionaryFuture+' mesi. Senza Min/Max si mantiene la Baseline.</p>':'')+
+  (built.invalid.length?'<p><strong>Attenzione:</strong> '+built.invalid.length+' intervalli non validi ignorati.</p>':'')+
+  '<p>«Protezione» abbassa le D verso i Min; «Equilibrio» interviene solo se manca avanzo per gli obiettivi; «Qualità di vita» aumenta D verso i Max usando le risorse disponibili. Se necessario, D può scendere sotto Min fino alla sola quota non ancora sostenuta. Le O/N e gli investimenti restano invariati. <strong>Non è ancora uno stress test di liquidità mensile.</strong> Fondo e progetto valgono come obiettivi solo se definiti nella bozza, non come spese aggiunte.</p>'+
+  '<div><p>La scelta delle entrate Min/Max rimane un’ipotesi della matrice: il pulsante trasferisce <strong>solo i budget D</strong> nella bozza, senza toccare Baseline o altre voci.</p>'+
+  '<button class="btn compact" type="button" data-bf-decision-apply '+(!Object.keys(current.targets).length?'disabled':'')+'>Applica '+Object.keys(current.targets).length+' budget D alla bozza →</button></div></div>';
+}
+
 function renderPlanningBoard(){
   const previousSharedPanel=baselinePortalKey;
   if(previousSharedPanel){++baselinePortalRequest;baselineRestoreAnalysisPanel()}
@@ -8844,6 +8916,7 @@ function renderPlanningBoard(){
     $("planningBoardView").classList.toggle("bf-board-plan-mode",canDraft);
     const draft=canDraft&&window.BudgetFamilySinglePlan
       ?window.BudgetFamilySinglePlan.prepare(exp,inc,year,planningBoardHorizon):null;
+    renderPlanningDecisionMatrix(exp,inc);
     function withBaselineComparison(targetRows,referenceRows){
       const reference=new Map(referenceRows.map(r=>[String(r.category_id),num(r.annual)]));
       return targetRows.map(r=>{
@@ -9059,6 +9132,15 @@ $("planningBoardView").addEventListener("change",function(e){
  if(e.target.id==="baselineSort"){baselineSortKey=e.target.value;if(baselineSortKey==="confidence_amount")baselineSortDesc=true;renderPlanningBoard();return}
 });
 $("planningBoardView").addEventListener("click",function(e){
+ const cell=e.target.closest("[data-bf-decision-cell]");
+ if(cell){planningDecisionSelection=cell.dataset.bfDecisionCell;renderPlanningBoard();return}
+ if(e.target.closest("[data-bf-decision-apply]")&&planningBoardContext==="STRATEGY"){
+  const chosen=planningDecisionLast?.cells?.find(c=>c.id===planningDecisionSelection);
+  if(chosen&&window.BudgetFamilySinglePlan?.applyDecisionTargets(chosen.targets)){
+   msg($("planningBoardStatus"),"Budget D applicati alla bozza. L'ipotesi di entrate Min/Max resta soltanto nella matrice.");
+  }
+  return;
+ }
  const reverse=e.target.closest("[data-baseline-sort-direction]");if(reverse){baselineSortDesc=!baselineSortDesc;renderPlanningBoard();return}
  const head=e.target.closest("[data-baseline-sort]");if(head){const k=head.dataset.baselineSort;baselineSortDesc=baselineSortKey===k?!baselineSortDesc:!(k==="l1_name"||k==="l2_name");baselineSortKey=k;renderPlanningBoard();return}
  const mode=e.target.closest("[data-baseline-mode]");if(mode){baselineViewMode=mode.dataset.baselineMode;renderPlanningBoard();return}
@@ -9491,8 +9573,8 @@ $("rpcDiagnosticsModal")?.addEventListener("click",function(e){if(e.target===$("
 document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!$("rpcDiagnosticsModal")?.classList.contains("hidden"))closeRpcDiagnostics()});
 init();
 </script>
-<script src="../shared/health-reserve.js?v=73.30.10.60-20261023"></script>
-<script src="../shared/approved-plan.js?v=73.30.10.60-20261023"></script>
+<script src="../shared/health-reserve.js?v=73.30.10.61-20261023"></script>
+<script src="../shared/approved-plan.js?v=73.30.10.61-20261023"></script>
 </body>
 </html>
 
