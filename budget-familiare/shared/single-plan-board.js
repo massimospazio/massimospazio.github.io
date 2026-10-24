@@ -308,10 +308,11 @@ async function approve(){
  if(!count){root.alert("Non ci sono mesi futuri da approvare nel periodo selezionato.");return}
  const label=first.slice(0,7)+" → "+last.slice(0,7);
  const confirmation="Approvare la "+(continuousRevision?"revisione V"+(continuousRevision+1):"prima versione")+
-  " del Piano continuo?\\n\\nPeriodo visualizzato: "+label+
+  " del Piano continuo?\n\nPeriodo visualizzato: "+label+
   ". Verranno salvati i target mensili futuri di "+Object.keys(monthMaps).length+
   " categorie. I mesi precedenti e quelli già approvati fuori dalla vista saranno conservati."+
-  "\\n\\nLe revisioni precedenti restano conservate nel database. La Baseline non verrà modificata.";
+  "\n\nLe revisioni precedenti restano conservate nel database. La Baseline non verrà modificata."+
+  (state.reserve||state.project?"\n\nATTENZIONE: Fondo e Progetto restano nella bozza e NON sono approvati come obiettivi autonomi.":"");
  if(!root.confirm(confirmation))return;
  const reason=root.prompt("Motivo dell'approvazione (8-600 caratteri)",
   "Aggiornamento obiettivi del Piano familiare per "+label);
