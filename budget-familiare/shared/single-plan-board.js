@@ -24,7 +24,7 @@ function cancelRevision(){
 function startRevision(plan){
  const st=plan?.meta?.strategic_plan;
  if(st?.kind!=='STRATEGIC'||state.horizon!=='CALENDAR')return false;
- if(isDirty()&&!root.confirm('La bozza ha modifiche non salvate. Caricare il Piano approvato per la revisione?'))return false;
+ if(!rollingApprovalNeedsRevision&&isDirty()&&!root.confirm('La bozza ha modifiche non salvate. Caricare il Piano approvato per la revisione?'))return false;
  const rollingEdits=rollingApprovalNeedsRevision?{targets:{...state.targets},monthTargets:JSON.parse(JSON.stringify(state.monthTargets)),notes:{...state.notes}}:null;
  state.targets={...(st.targets||{})};
  state.notes={...(st.notes||{})};
