@@ -10,6 +10,15 @@ const STORAGE_KEY="budget-family-scenario-drafts-v1";
 let saveError=false;
 let revisionSource=null;
 function revisionActive(){return !!revisionSource&&state.horizon==='CALENDAR'}
+function cancelRevision(){
+ if(!revisionActive())return false;
+ if(isDirty()&&!root.confirm('Chiudere la revisione? Le modifiche non salvate verranno scartate.'))return false;
+ const key=state.year+'|'+state.horizon;
+ const saved=savedDrafts[key]||{};
+ state.targets={...(saved.targets||{})};state.monthTargets=JSON.parse(JSON.stringify(saved.monthTargets||{}));
+ state.notes={...(saved.notes||{})};revisionSource=null;
+ persist();root.renderPlanningBoard?.();return true;
+}
 function startRevision(plan){
  const st=plan?.meta?.strategic_plan;
  if(st?.kind!=='STRATEGIC'||state.horizon!=='CALENDAR')return false;
@@ -222,6 +231,12 @@ async function approve(){
    ...(hasMonthTargets?{p_months:monthMaps}:{})
   });
   if(!result||!result.plan)throw new Error("La risposta non contiene il Piano approvato");
+  const savedTargets=result.plan.meta?.strategic_plan?.targets;
+  if(!savedTargets||Object.entries(effectiveTargets).some(([id,amount])=>
+    Math.abs(Number(savedTargets[id])-amount)>.02)){
+   await root.BudgetFamilyPlan?.reload?.();
+   throw new Error('Versione creata, ma non è stato possibile verificare tutti i target. Controlla il Piano prima di riprovare.');
+  }
   revisionSource=null;
   state.targets={};state.monthTargets={};state.notes={};saveDraft();
   await root.BudgetFamilyPlan?.reload?.();
@@ -449,7 +464,7 @@ function init(){
 root.BudgetFamilySinglePlan={
  prepare(exp,inc,year,horizon){resetIfYearChanged(year,horizon||'CALENDAR');[...exp,...inc].forEach(r=>state.originals[key(r)]=r);return {exp:applyRows(exp),inc:applyRows(inc)}},
  render,inlineAmount,inlineNote,isChanged,showOnlyChanged,scenarioPreset,saveDraft,discardUnsaved,resetCategoryToBaseline,details(){return {year:state.year,targets:{...state.targets},monthTargets:JSON.parse(JSON.stringify(state.monthTargets)),notes:{...state.notes},reserve:state.reserve,project:state.project,targetUnit:state.targetUnit}},
- applyDecisionTargets,startRevision,revisionActive,isDraft(){return Object.keys(state.targets).length>0||Object.keys(state.monthTargets).length>0}
+ applyDecisionTargets,startRevision,cancelRevision,revisionActive,isDraft(){return Object.keys(state.targets).length>0||Object.keys(state.monthTargets).length>0}
 };
 if(typeof module!=="undefined"&&module.exports)module.exports={locked,applyRows,scenarioPreset,state};
 if(root.document){if(root.document.getElementById("planningBoardOverview"))init();else if(root.document.readyState==="loading")root.document.addEventListener("DOMContentLoaded",init);else init()}
