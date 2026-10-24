@@ -196,7 +196,10 @@ function reviewRollingApproval(){
   const months=applyRows([base])[0].months.filter(m=>m.kind!=="actual"&&String(m.month).slice(0,4)===year);
   if(months.length)edits[id]=Object.fromEntries(months.map(m=>[m.month,round2(m.amount)]));
  }
- if(!Object.keys(edits).length){root.alert("Nessuna modifica rolling per l'anno corrente.");return}
+ if(!Object.keys(edits).length){
+  if(root.confirm("La vista rolling non contiene modifiche all’anno corrente. Passare alla vista annuale per verificare e approvare il Piano?"))root.document.querySelector('[data-planning-horizon="CALENDAR"]')?.click();
+  return;
+ }
  if(!root.confirm("Trasferire i target rolling alla bozza annuale? Solo i mesi dell'anno corrente saranno approvabili; verifica gli importi prima di confermare."))return;
  rollingTransfer={year,edits,notes:{...state.notes}};
  root.document.querySelector('[data-planning-horizon="CALENDAR"]')?.click();
