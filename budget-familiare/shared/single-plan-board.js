@@ -9,6 +9,8 @@ let justSaved=false;
 const STORAGE_KEY="budget-family-scenario-drafts-v1";
 let saveError=false;
 let revisionSource=null;
+let rollingTransfer=null;
+let rollingApprovalNeedsRevision=false;
 function revisionActive(){return !!revisionSource&&state.horizon==='CALENDAR'}
 function cancelRevision(){
  if(!revisionActive())return false;
@@ -23,9 +25,11 @@ function startRevision(plan){
  const st=plan?.meta?.strategic_plan;
  if(st?.kind!=='STRATEGIC'||state.horizon!=='CALENDAR')return false;
  if(isDirty()&&!root.confirm('La bozza ha modifiche non salvate. Caricare il Piano approvato per la revisione?'))return false;
+ const rollingEdits=rollingApprovalNeedsRevision?{targets:{...state.targets},monthTargets:JSON.parse(JSON.stringify(state.monthTargets)),notes:{...state.notes}}:null;
  state.targets={...(st.targets||{})};
  state.notes={...(st.notes||{})};
  state.monthTargets=JSON.parse(JSON.stringify(st.month_targets||{}));
+ if(rollingEdits){Object.assign(state.targets,rollingEdits.targets);Object.assign(state.monthTargets,rollingEdits.monthTargets);Object.assign(state.notes,rollingEdits.notes);rollingApprovalNeedsRevision=false;}
  revisionSource={revision:plan.revision,year:state.year};
  persist();root.renderPlanningBoard?.();return true;
 }
@@ -185,6 +189,33 @@ function applyDecisionTargets(changes){
  persist();root.renderPlanningBoard?.();
  return true;
 }
+function reviewRollingApproval(){
+ const edits={},year=state.year;
+ for(const [id,base] of Object.entries(state.originals)){
+  if(state.targets[id]===undefined&&!Object.keys(state.monthTargets[id]||{}).length)continue;
+  const months=applyRows([base])[0].months.filter(m=>m.kind!=="actual"&&String(m.month).slice(0,4)===year);
+  if(months.length)edits[id]=Object.fromEntries(months.map(m=>[m.month,round2(m.amount)]));
+ }
+ if(!Object.keys(edits).length){root.alert("Nessuna modifica rolling per l'anno corrente.");return}
+ if(!root.confirm("Trasferire i target rolling alla bozza annuale? Solo i mesi dell'anno corrente saranno approvabili; verifica gli importi prima di confermare."))return;
+ rollingTransfer={year,edits,notes:{...state.notes}};
+ root.document.querySelector('[data-planning-horizon="CALENDAR"]')?.click();
+}
+function applyRollingTransfer(exp,inc){
+ const p=rollingTransfer;if(!p||state.horizon!=="CALENDAR"||state.year!==p.year)return;
+ rollingTransfer=null;
+ rollingApprovalNeedsRevision=true;
+ const rows=new Map([...exp,...inc].map(r=>[key(r),r]));
+ for(const [id,months] of Object.entries(p.edits)){
+  const row=rows.get(id);if(!row)continue;
+  const editable=row.months.filter(m=>m.kind!=="actual"&&Object.prototype.hasOwnProperty.call(months,m.month));
+  if(!editable.length)continue;
+  state.monthTargets[id]=Object.fromEntries(editable.map(m=>[m.month,months[m.month]]));
+  state.targets[id]=round2(value(row.annual)+editable.reduce((n,m)=>n+months[m.month]-value(m.amount),0));
+ }
+ Object.assign(state.notes,p.notes);persist();
+ root.alert("Bozza annuale aggiornata. Verifica i target e premi Approva Piano.");
+}
 function resetIfYearChanged(year,horizon){
  const next=year+"|"+horizon,prev=state.year+"|"+state.horizon;
  if(next===prev)return;
@@ -194,10 +225,7 @@ function resetIfYearChanged(year,horizon){
  state.year=year;state.horizon=horizon;state.targets={...(saved.targets||{})};state.monthTargets=JSON.parse(JSON.stringify(saved.monthTargets||{}));state.notes={...(saved.notes||{})};state.originals={};state.bonus=saved.bonus||"BASE";state.targetUnit=saved.targetUnit||"TOTAL";state.reserve=saved.reserve||0;state.project=saved.project||0;
 }
 async function approve(){
- if(state.horizon==="ROLLING_12"){
-  root.alert("La bozza 12 mesi può comprendere l'anno successivo. Per approvare il Piano operativo dell'anno corrente, seleziona «Anno corrente»: i dati rolling non verranno convertiti né cancellati.");
-  return;
- }
+ if(state.horizon==="ROLLING_12"){reviewRollingApproval();return;}
  const hasTargets=Object.keys(state.targets).length>0||Object.keys(state.monthTargets).length>0;
  const planStart=state.originals&&Object.values(state.originals).flatMap(r=>r.months||[])
   .find(m=>m.kind!=="actual")?.month||"";
@@ -272,7 +300,7 @@ function render(originalExp,originalInc,isPlan,context,extra={}){
 
  '<button type="button" class="btn ghost compact" data-bf-draft-reset>Ripristina target</button>'+
  (strategy?'<button type="button" class="btn compact" data-bf-draft-to-plan>Prosegui al Piano →</button>':
- '<button type="button" class="btn compact" '+(state.horizon==='ROLLING_12'?'data-bf-draft-show-calendar title="Passa ad Anno corrente per approvare il Piano operativo"' : 'data-bf-draft-approve')+'>'+(state.horizon==='ROLLING_12'?'Vai all’anno corrente →':'Approva Piano')+'</button>')+'</div></div>';
+ '<button type="button" class="btn compact" data-bf-draft-approve>Approva Piano</button>')+'</div></div>';
  const low=originalInc.reduce((sum,r)=>sum+value(r.rangeLow===undefined?r.annual:r.rangeLow),0);
  const high=originalInc.reduce((sum,r)=>sum+value(r.rangeHigh===undefined?r.annual:r.rangeHigh),0);
  const variation=state.bonus==="LOW"?low-totals(originalInc):state.bonus==="HIGH"?high-totals(originalInc):0;
@@ -462,9 +490,9 @@ function init(){
  });
 }
 root.BudgetFamilySinglePlan={
- prepare(exp,inc,year,horizon){resetIfYearChanged(year,horizon||'CALENDAR');[...exp,...inc].forEach(r=>state.originals[key(r)]=r);return {exp:applyRows(exp),inc:applyRows(inc)}},
+ prepare(exp,inc,year,horizon){resetIfYearChanged(year,horizon||'CALENDAR');[...exp,...inc].forEach(r=>state.originals[key(r)]=r);applyRollingTransfer(exp,inc);return {exp:applyRows(exp),inc:applyRows(inc)}},
  render,inlineAmount,inlineNote,isChanged,showOnlyChanged,scenarioPreset,saveDraft,discardUnsaved,resetCategoryToBaseline,details(){return {year:state.year,targets:{...state.targets},monthTargets:JSON.parse(JSON.stringify(state.monthTargets)),notes:{...state.notes},reserve:state.reserve,project:state.project,targetUnit:state.targetUnit}},
- applyDecisionTargets,startRevision,cancelRevision,revisionActive,isDraft(){return Object.keys(state.targets).length>0||Object.keys(state.monthTargets).length>0}
+ applyDecisionTargets,startRevision,cancelRevision,revisionActive,needsRollingRevision(){return rollingApprovalNeedsRevision},isDraft(){return Object.keys(state.targets).length>0||Object.keys(state.monthTargets).length>0}
 };
 if(typeof module!=="undefined"&&module.exports)module.exports={locked,applyRows,scenarioPreset,state};
 if(root.document){if(root.document.getElementById("planningBoardOverview"))init();else if(root.document.readyState==="loading")root.document.addEventListener("DOMContentLoaded",init);else init()}
