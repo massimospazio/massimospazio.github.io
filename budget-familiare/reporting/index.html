@@ -8,17 +8,17 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=74.0.2-20261024"></script>
-<script src="../shared/app-config.js?v=74.0.2-20261024"></script>
-<script src="../shared/contextual-help.js?v=74.0.2-20261024" defer></script>
+<script src="../shared/supabase-client.js?v=74.1.0-20261024"></script>
+<script src="../shared/app-config.js?v=74.1.0-20261024"></script>
+<script src="../shared/contextual-help.js?v=74.1.0-20261024" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<link rel="stylesheet" href="../shared/health-reserve.css?v=74.0.2-20261024">
-<link rel="stylesheet" href="../shared/approved-plan.css?v=74.0.2-20261024">
-<link rel="stylesheet" href="../shared/monthly-control.css?v=74.0.2-20261024">
-<link rel="stylesheet" href="../shared/scenario-strategy.css?v=74.0.2-20261024">
-<link rel="stylesheet" href="../shared/scenario-uncertainty.css?v=74.0.2-20261024">
-<link rel="stylesheet" href="../shared/baseline-uncertainty.css?v=74.0.2-20261024">
-<link rel="stylesheet" href="../shared/single-plan-board.css?v=74.0.2-20261024">
+<link rel="stylesheet" href="../shared/health-reserve.css?v=74.1.0-20261024">
+<link rel="stylesheet" href="../shared/approved-plan.css?v=74.1.0-20261024">
+<link rel="stylesheet" href="../shared/monthly-control.css?v=74.1.0-20261024">
+<link rel="stylesheet" href="../shared/scenario-strategy.css?v=74.1.0-20261024">
+<link rel="stylesheet" href="../shared/scenario-uncertainty.css?v=74.1.0-20261024">
+<link rel="stylesheet" href="../shared/baseline-uncertainty.css?v=74.1.0-20261024">
+<link rel="stylesheet" href="../shared/single-plan-board.css?v=74.1.0-20261024">
 <style>
 :root{--bg:#f4f6fa;--card:#fff;--text:#17263e;--muted:#58677d;--line:#dce4ee;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 4px 18px rgba(15,23,42,.045);--sc-blue:#2563eb;--sc-blue-soft:#eff6ff;--sc-green:#0ea87a;--sc-red:#ef5b73;--sc-purple:#7658e6;--sc-ink:#17263e}
 *{box-sizing:border-box}
@@ -2993,11 +2993,11 @@ body{font-size:16px;line-height:1.5}
   </div>
 </div>
 
-<script src="../shared/scenario-strategy.js?v=74.0.2-20261024"></script>
-<script src="../shared/scenario-uncertainty.js?v=74.0.2-20261024"></script>
-<script src="../shared/baseline-uncertainty.js?v=74.0.2-20261024"></script>
-<script src="../shared/single-plan-board.js?v=74.0.2-20261024"></script>
-<script src="../shared/monthly-control.js?v=74.0.2-20261024"></script>
+<script src="../shared/scenario-strategy.js?v=74.1.0-20261024"></script>
+<script src="../shared/scenario-uncertainty.js?v=74.1.0-20261024"></script>
+<script src="../shared/baseline-uncertainty.js?v=74.1.0-20261024"></script>
+<script src="../shared/single-plan-board.js?v=74.1.0-20261024"></script>
+<script src="../shared/monthly-control.js?v=74.1.0-20261024"></script>
 <script>
 const sb=window.appSupabase;
 if(typeof Chart!=="undefined"){
@@ -8212,12 +8212,12 @@ function planningMonthPanelHtml(row){
    values.join("")+'</div></div></td></tr>';
 }
 function planningComparisonUsesBaseline(){
-  return planningBoardContext==="STRATEGY"||(planningBoardContext==="PLAN"&&planningBoardHorizon==="CALENDAR");
+  return planningBoardContext==="STRATEGY"||planningBoardContext==="PLAN";
 }
 function planningComparisonLabel(){return planningComparisonUsesBaseline()?"Baseline":"Storico"}
 function planningCurrentValueLabel(){
   return planningBoardContext==="STRATEGY"?"Scenario":
-    planningBoardContext==="PLAN"&&planningBoardHorizon==="CALENDAR"?"Piano":
+    planningBoardContext==="PLAN"?"Piano":
     planningBoardContext==="BASELINE"?"Baseline":"Previsione";
 }
 function planningDeltaHtml(deltaAbs,deltaPct,direction,comparison){
@@ -8983,6 +8983,21 @@ function renderPlanningBoard(){
   const previousSharedPanel=baselinePortalKey;
   if(previousSharedPanel){++baselinePortalRequest;baselineRestoreAnalysisPanel()}
   if(!planningBoardData||!planningBoardData.expense||!planningBoardData.income)return;
+  if((planningBoardContext==="PLAN"||planningBoardContext==="STRATEGY")&&
+     !window.BudgetFamilySinglePlan?.continuousEnabled?.()){
+    if(!window.__bfContinuousPlanLoading){
+      window.__bfContinuousPlanLoading=true;
+      msg($("planningBoardStatus"),"Carico il Piano continuo e le revisioni…");
+      window.BudgetFamilySinglePlan.ensureContinuous().then(()=>{
+        window.__bfContinuousPlanLoading=false;
+        renderPlanningBoard();
+      }).catch(e=>{
+        window.__bfContinuousPlanLoading=false;
+        msg($("planningBoardStatus"),"Impossibile caricare il Piano continuo: "+String(e.message||e),true);
+      });
+    }
+    return;
+  }
   // The simulation is annual: do not fall through to Rolling Forecast vs historical.
   // Il rolling 12 mesi resta consultabile anche in Strategia; i target annuali non vengono toccati.
   const liveBoardData=planningBoardData;
@@ -8992,7 +9007,7 @@ function renderPlanningBoard(){
     const prior=window.BudgetFamilyPlan?.snapshotFor(Number(calendarYear));
     if(prior?.meta?.strategic_plan?.kind==="STRATEGIC")window.BudgetFamilySinglePlan.startRevision(prior);
   }
-  const approved=planningBoardContext==="PLAN"&&planningBoardHorizon==="CALENDAR"
+  const approved=planningBoardContext==="PLAN"&&planningBoardHorizon==="CALENDAR"&&!window.BudgetFamilySinglePlan?.continuousEnabled?.()
      ?window.BudgetFamilyPlan?.snapshotFor(Number(calendarYear)):null;
   const isStrategic=approved?.meta?.strategic_plan?.kind==="STRATEGIC";
   if(isStrategic)planningBoardData={expense:approved.expense,income:approved.income,meta:approved.meta};
@@ -9037,6 +9052,13 @@ function renderPlanningBoard(){
       view.column="Piano in elaborazione · "+year;
       view.subtitle="Un solo scenario di lavoro, con target L2 e delte rispetto alla Baseline.";
       view.note="I nuovi importi sono una simulazione temporanea, non modificano la Baseline. Approva il Piano esplicitamente per congelare gli impegni.";
+    }
+    if(planningBoardContext==="PLAN"&&window.BudgetFamilySinglePlan?.continuousEnabled?.()){
+      const revision=window.BudgetFamilySinglePlan.continuousStatus().revision;
+      view.title="Tabellone · Piano continuo"+(revision?" · V"+revision:" · prima approvazione");
+      view.column="Obiettivo Piano · "+(rolling?"12 mesi":"anno corrente");
+      view.subtitle=rolling?"Puoi modificare e approvare anche i mesi dell’anno successivo.":"Il Piano rimane continuo oltre il 31 dicembre.";
+      view.note="Una sola pianificazione mensile e revisioni versionate. I consuntivi sono protetti; la Baseline è il confronto, non il Piano.";
     }
     $("planningBoardView").dataset.boardContext=planningBoardContext;
     $("planningBoardView").dataset.displayUnit=planningBoardDisplayUnit;
@@ -9144,15 +9166,16 @@ async function showBudgetControlView(){
   ]);
   const live={expense,income},year=Number(String(expense?.current_year_start||"").slice(0,4));
   if(!year)throw new Error("Proiezione senza anno valido");
-  const saved=await rpc("dashboard_family_approved_plan_v1",{p_action:"READ",p_year:year,p_revision:null});
+  const saved=await rpc("dashboard_family_continuous_plan_v1",{p_action:"READ",p_months:{},p_notes:{},p_note:null});
   const approved=saved?.plan;
-  if(approved?.meta?.strategic_plan?.kind!=="STRATEGIC"){
-   host.innerHTML='<div class="bf-control-header"><div><h2>Controllo · inizio del percorso</h2><p>Non è stato ancora approvato un Piano strategico per '+year+'.</p></div></div>'+
+  if(!approved?.revision){
+   host.innerHTML='<div class="bf-control-header"><div><h2>Controllo · inizio del percorso</h2><p>Non è stato ancora approvato un Piano continuo per '+year+'.</p></div></div>'+
     '<p class="bf-control-notice">Per il tracking serve un riferimento fissato in una data precisa. Puoi approvare la Baseline attuale anche senza modificare i target, includendo il mese corrente. Non saranno riscritti i mesi già trascorsi.</p>'+
     '<button type="button" class="btn" data-bf-control-plan>Apri Piano e approvazione →</button>';
    return;
   }
-  window.BudgetFamilyMonthlyControl?.render(host,window.BudgetFamilyMonthlyControl.compare(approved,live));
+  const planModel=window.BudgetFamilyMonthlyControl?.fromContinuous?.(approved,live);
+  window.BudgetFamilyMonthlyControl?.render(host,window.BudgetFamilyMonthlyControl.compare(planModel,live));
  }catch(error){
   host.innerHTML='<p class="bf-control-notice"><strong>Impossibile completare il controllo:</strong> '+esc(String(error?.message||error))+'</p>'+
    '<button type="button" class="btn ghost compact" data-bf-control-reload>Riprova</button>';
@@ -9759,8 +9782,8 @@ $("rpcDiagnosticsModal")?.addEventListener("click",function(e){if(e.target===$("
 document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!$("rpcDiagnosticsModal")?.classList.contains("hidden"))closeRpcDiagnostics()});
 init();
 </script>
-<script src="../shared/health-reserve.js?v=74.0.2-20261024"></script>
-<script src="../shared/approved-plan.js?v=74.0.2-20261024"></script>
+<script src="../shared/health-reserve.js?v=74.1.0-20261024"></script>
+<script src="../shared/approved-plan.js?v=74.1.0-20261024"></script>
 </body>
 </html>
 

@@ -33,6 +33,7 @@ function dateHuman(iso){
 function message(m,error){state.status=m||"";state.error=!!error;paint()}
 function paint(){
  const el=$("bfApprovedPlanBar");if(!el)return;
+ if(root.BudgetFamilySinglePlan?.continuousEnabled?.()){el.classList.add("hidden");return;}
  const display=visible();
  el.classList.toggle("hidden",!display);
  if(!display)return;
@@ -90,6 +91,7 @@ async function approve(){
  finally{state.busy=false;paint();if(visible()&&planningBoardHorizon==="CALENDAR")root.renderPlanningBoard?.()}
 }
 function onBoardRendered(){
+ if(root.BudgetFamilySinglePlan?.continuousEnabled?.()){paint();return}
  paint();
  const y=boardYear();
  if(visible()&&state.year!==y&&!state.busy)load(y);

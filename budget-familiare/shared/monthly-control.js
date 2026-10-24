@@ -34,6 +34,23 @@ function categoryRows(approved,live,month,direction){
    remaining:round(planned-actual),delta:round(current-planned)};
  });
 }
+// Adapt immutable continuous monthly targets to the existing Plan-vs-Actual cockpit.
+function fromContinuous(record,live){
+ if(!record?.revision||!record.month_targets||!live?.expense||!live?.income)return null;
+ const make=(direction)=>{
+  const original=live[direction],approved=record[direction+"_at_approval"];
+  const initial=new Map((approved?.forecast_monthly||[]).map(m=>[String(m.category_id)+":"+m.month,num(m.actual_to_date)]));
+  const prefix=direction==="expense"?"EXPENSE:":"INCOME:";
+  return {...original,forecast_monthly:(original.forecast_monthly||[]).map(m=>{
+   const target=record.month_targets[prefix+String(m.category_id)]?.[m.month];
+   const atApproval=initial.get(String(m.category_id)+":"+m.month)||0;
+   return {...m,effective_amount:target===undefined?num(m.effective_amount):num(target),actual_to_date:atApproval};
+  })};
+ };
+ return {revision:record.revision,approved_at:record.approved_at,
+  snapshot_month:String(record.approved_at||"").slice(0,7)+"-01",
+  expense:make("expense"),income:make("income")};
+}
 function compare(plan,live){
  if(!plan?.expense||!plan?.income||!live?.expense||!live?.income)return {error:"Piano o proiezione incompleti"};
  const year=String(live.expense.current_year_start||"").slice(0,4);
@@ -89,7 +106,7 @@ function render(rootEl,model){
    '<h3>Le voci che spiegano il cambiamento del mese</h3>'+table+
    '<p class="bf-control-muted">L’Actual riflette soltanto i movimenti importati e classificati fino all’ultimo aggiornamento. Il residuo non è una disponibilità di liquidità bancaria. Gli investimenti seguono la semantica del Tabellone e non vanno confusi con il consumo. Non stimiamo ancora automaticamente il ritmo di spesa giornaliero né suggeriamo tagli sulla base del solo calendario.</p>';
 }
-const api={annualTotal,monthTotals,categoryRows,compare,render};
+const api={annualTotal,monthTotals,categoryRows,fromContinuous,compare,render};
 root.BudgetFamilyMonthlyControl=api;
 if(typeof module!=="undefined"&&module.exports)module.exports=api;
 })(typeof window!=="undefined"?window:globalThis);

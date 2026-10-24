@@ -1,7 +1,7 @@
 // Canonical source: massimospazio/budget-familiare; public files are deployed automatically.
 (function(){
-  const APP_VERSION='V74.0.2';
-  const APP_RELEASE='Piano · approvazione rolling con revisione annuale';
+  const APP_VERSION='V74.1.0';
+  const APP_RELEASE='Piano continuo · obiettivi per mese e revisioni senza confini annuali';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});
