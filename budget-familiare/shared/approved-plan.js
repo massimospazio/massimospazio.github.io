@@ -50,7 +50,7 @@ function paint(){
  el.innerHTML='<div class="bf-plan-head"><div class="bf-plan-heading"><strong>'+ (p&&!rolling?(strategic?'Piano approvato · V':'Fotografia tecnica · V')+p.revision:'Fotografie e Piani · '+year) +'</strong><span>'+esc(info)+'</span></div>'+
  '<div class="bf-plan-actions">'+
  (versions.length?'<label>Versione <select id="bfPlanVersion" '+(state.busy||rolling?'disabled':'')+'>'+versions.map(v=>'<option value="'+v.revision+'" '+(p&&v.revision===p.revision?'selected':'')+'>V'+v.revision+' · '+esc(dateHuman(v.approved_at))+'</option>').join("")+'</select></label>':'')+
- (strategic&&!rolling?'<button type="button" id="bfPlanRevise" class="btn compact" '+(state.busy?'disabled':'')+'>'+(root.BudgetFamilySinglePlan?.revisionActive?.()?'Revisione in corso':'Modifica Piano · nuova revisione')+'</button>':'')+
+ (strategic&&!rolling?root.BudgetFamilySinglePlan?.revisionActive?.()?'<button type="button" id="bfPlanCancelRevision" class="btn ghost compact">Chiudi revisione</button>':'<button type="button" id="bfPlanRevise" class="btn compact" '+(state.busy?'disabled':'')+'>Modifica Piano · nuova revisione</button>':'')+
  '<button type="button" id="bfPlanReload" class="btn ghost compact" '+(state.busy?'disabled':'')+'>↻ Piano</button>'+
  ''+
  '</div></div>'+
@@ -103,6 +103,7 @@ function init(){
  $("planningBoardContextNote").before(bar);
  bar.addEventListener("click",e=>{
   if(e.target.closest("#bfPlanReload"))load(boardYear());
+  if(e.target.closest("#bfPlanCancelRevision"))root.BudgetFamilySinglePlan?.cancelRevision?.();
   if(e.target.closest("#bfPlanRevise")){
    if(root.BudgetFamilySinglePlan?.revisionActive?.())return;
    const source=state.record;

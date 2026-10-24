@@ -233,7 +233,7 @@ async function approve(){
   if(!result||!result.plan)throw new Error("La risposta non contiene il Piano approvato");
   const savedTargets=result.plan.meta?.strategic_plan?.targets;
   if(!savedTargets||Object.entries(effectiveTargets).some(([id,amount])=>
-    Math.abs(Number(savedTargets[id])-amount)>.02)){
+    (!Object.prototype.hasOwnProperty.call(savedTargets,id)||!Number.isFinite(Number(savedTargets[id]))||Math.abs(Number(savedTargets[id])-amount)>.02))){
    await root.BudgetFamilyPlan?.reload?.();
    throw new Error('Versione creata, ma non è stato possibile verificare tutti i target. Controlla il Piano prima di riprovare.');
   }
