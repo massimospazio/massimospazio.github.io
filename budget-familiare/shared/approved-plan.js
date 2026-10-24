@@ -25,7 +25,7 @@ function visible(){
  return $("planningBoardView")&&!$("planningBoardView").classList.contains("hidden")&&planningBoardContext==="PLAN";
 }
 function currentRecord(y){return !state.busy&&state.year===y?state.record:null}
-function snapshotFor(y){return planningBoardHorizon==="CALENDAR" ? currentRecord(y) : null}
+function snapshotFor(y){return planningBoardHorizon==="CALENDAR"&&!root.BudgetFamilySinglePlan?.revisionActive?.() ? currentRecord(y) : null}
 function dateHuman(iso){
  if(!iso)return"";
  const d=new Date(iso);return Number.isNaN(+d)?iso:new Intl.DateTimeFormat("it-IT",{day:"2-digit",month:"2-digit",year:"numeric"}).format(d);
@@ -50,6 +50,7 @@ function paint(){
  el.innerHTML='<div class="bf-plan-head"><div class="bf-plan-heading"><strong>'+ (p&&!rolling?(strategic?'Piano approvato · V':'Fotografia tecnica · V')+p.revision:'Fotografie e Piani · '+year) +'</strong><span>'+esc(info)+'</span></div>'+
  '<div class="bf-plan-actions">'+
  (versions.length?'<label>Versione <select id="bfPlanVersion" '+(state.busy||rolling?'disabled':'')+'>'+versions.map(v=>'<option value="'+v.revision+'" '+(p&&v.revision===p.revision?'selected':'')+'>V'+v.revision+' · '+esc(dateHuman(v.approved_at))+'</option>').join("")+'</select></label>':'')+
+ (strategic&&!rolling?'<button type="button" id="bfPlanRevise" class="btn compact" '+(state.busy?'disabled':'')+'>'+(root.BudgetFamilySinglePlan?.revisionActive?.()?'Revisione in corso':'Modifica Piano · nuova revisione')+'</button>':'')+
  '<button type="button" id="bfPlanReload" class="btn ghost compact" '+(state.busy?'disabled':'')+'>↻ Piano</button>'+
  ''+
  '</div></div>'+
@@ -102,6 +103,13 @@ function init(){
  $("planningBoardContextNote").before(bar);
  bar.addEventListener("click",e=>{
   if(e.target.closest("#bfPlanReload"))load(boardYear());
+  if(e.target.closest("#bfPlanRevise")){
+   if(root.BudgetFamilySinglePlan?.revisionActive?.())return;
+   const source=state.record;
+   if(source?.meta?.strategic_plan?.kind==="STRATEGIC"){
+    if(root.BudgetFamilySinglePlan?.startRevision?.(source))message("Revisione in elaborazione: modifica le categorie, salva la bozza, poi approva una nuova versione.");
+   }
+  }
  });
  bar.addEventListener("change",e=>{
   if(e.target.id==="bfPlanVersion")load(boardYear(),Number(e.target.value));
