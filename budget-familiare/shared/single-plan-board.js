@@ -8,6 +8,19 @@ const savedDrafts={};
 let justSaved=false;
 const STORAGE_KEY="budget-family-scenario-drafts-v1";
 let saveError=false;
+let revisionSource=null;
+function revisionActive(){return !!revisionSource&&state.horizon==='CALENDAR'}
+function startRevision(plan){
+ const st=plan?.meta?.strategic_plan;
+ if(st?.kind!=='STRATEGIC'||state.horizon!=='CALENDAR')return false;
+ if(isDirty()&&!root.confirm('La bozza ha modifiche non salvate. Caricare il Piano approvato per la revisione?'))return false;
+ state.targets={...(st.targets||{})};
+ state.notes={...(st.notes||{})};
+ state.monthTargets={};
+ revisionSource={revision:plan.revision,year:state.year};
+ persist();root.renderPlanningBoard?.();return true;
+}
+
 function snapshot(){return {targets:{...state.targets},monthTargets:JSON.parse(JSON.stringify(state.monthTargets)),notes:{...state.notes},reserve:state.reserve,project:state.project,bonus:state.bonus,targetUnit:state.targetUnit}}
 function persist(){
  if(!state.year)return false;
@@ -167,6 +180,7 @@ function resetIfYearChanged(year,horizon){
  const next=year+"|"+horizon,prev=state.year+"|"+state.horizon;
  if(next===prev)return;
  if(state.year)persist();
+ revisionSource=null;
  const saved=drafts[next]||{};
  state.year=year;state.horizon=horizon;state.targets={...(saved.targets||{})};state.monthTargets=JSON.parse(JSON.stringify(saved.monthTargets||{}));state.notes={...(saved.notes||{})};state.originals={};state.bonus=saved.bonus||"BASE";state.targetUnit=saved.targetUnit||"TOTAL";state.reserve=saved.reserve||0;state.project=saved.project||0;
 }
@@ -178,7 +192,7 @@ async function approve(){
  const hasTargets=Object.keys(state.targets).length>0||Object.keys(state.monthTargets).length>0;
  const planStart=state.originals&&Object.values(state.originals).flatMap(r=>r.months||[])
   .find(m=>m.kind!=="actual")?.month||"";
- const approvalText="Approvare il Piano operativo "+state.year+"?\\n\\n"+
+ const approvalText=(revisionActive()?'Approvare la revisione del Piano V'+revisionSource.revision+' per '+state.year+'?\\n\\n':'Approvare il Piano operativo '+state.year+'?\\n\\n')+
   (hasTargets?"Congeleremo i target che hai modificato rispetto alla Baseline.":"Nessun target è stato modificato: approverai esplicitamente la Baseline attuale come Piano operativo.")+
   "\\n\\nI mesi già chiusi restano consuntivi, il mese in corso include già il consuntivo e la previsione residua. Il tracking inizierà dall'approvazione, non retroattivamente da gennaio."+
   (state.reserve||state.project?"\\n\\nATTENZIONE: le quote Fondo / Progetto della bozza non sono ancora trasferite come obiettivi autonomi nello snapshot approvato. Verranno mantenute nella bozza.":"")+
@@ -203,6 +217,7 @@ async function approve(){
    ...(hasMonthTargets?{p_months:monthMaps}:{})
   });
   if(!result||!result.plan)throw new Error("La risposta non contiene il Piano approvato");
+  revisionSource=null;
   state.targets={};state.monthTargets={};state.notes={};saveDraft();
   await root.BudgetFamilyPlan?.reload?.();
   root.renderPlanningBoard?.();
@@ -227,7 +242,7 @@ function render(originalExp,originalInc,isPlan,context,extra={}){
  const exp=applyRows(originalExp),inc=applyRows(originalInc);
  const baseline=totals(originalInc)-totals(originalExp),planned=totals(inc)-totals(exp),improvement=planned-baseline;
  let html='<div class="bf-plan-inline-head"><div class="bf-strategy-intro"><strong>'+
- (strategy?'Strategia · Elabora il tuo scenario':'Piano · Rifinisci e approva')+'</strong>'+
+ (strategy?'Strategia · Elabora il tuo scenario':revisionActive()?'Revisione del Piano approvato · V'+revisionSource.revision:'Piano · Rifinisci e approva')+'</strong>'+
  '<span> '+(strategy?'Usa le leve o modifica i target L2 nella tabella sottostante.':'Lo scenario viene dalla Strategia e mantiene gli stessi target L2.')+'</span></div>'+
  '<div class="bf-plan-inline-actions">'+(strategy?'':'<label>Entrate <select data-bf-draft-risk>'+
  '<option value="LOW"'+(state.bonus==="LOW"?' selected':'')+'>Prudente</option>'+
@@ -429,7 +444,7 @@ function init(){
 root.BudgetFamilySinglePlan={
  prepare(exp,inc,year,horizon){resetIfYearChanged(year,horizon||'CALENDAR');[...exp,...inc].forEach(r=>state.originals[key(r)]=r);return {exp:applyRows(exp),inc:applyRows(inc)}},
  render,inlineAmount,inlineNote,isChanged,showOnlyChanged,scenarioPreset,saveDraft,discardUnsaved,resetCategoryToBaseline,details(){return {year:state.year,targets:{...state.targets},monthTargets:JSON.parse(JSON.stringify(state.monthTargets)),notes:{...state.notes},reserve:state.reserve,project:state.project,targetUnit:state.targetUnit}},
- applyDecisionTargets,isDraft(){return Object.keys(state.targets).length>0||Object.keys(state.monthTargets).length>0}
+ applyDecisionTargets,startRevision,revisionActive,isDraft(){return Object.keys(state.targets).length>0||Object.keys(state.monthTargets).length>0}
 };
 if(typeof module!=="undefined"&&module.exports)module.exports={locked,applyRows,scenarioPreset,state};
 if(root.document){if(root.document.getElementById("planningBoardOverview"))init();else if(root.document.readyState==="loading")root.document.addEventListener("DOMContentLoaded",init);else init()}
