@@ -265,6 +265,7 @@ async function approve(){
    await root.BudgetFamilyPlan?.reload?.();
    throw new Error('Versione creata, ma non è stato possibile verificare tutti i target. Controlla il Piano prima di riprovare.');
   }
+  rollingApprovalNeedsRevision=false;
   revisionSource=null;
   state.targets={};state.monthTargets={};state.notes={};saveDraft();
   await root.BudgetFamilyPlan?.reload?.();
@@ -492,7 +493,7 @@ function init(){
 root.BudgetFamilySinglePlan={
  prepare(exp,inc,year,horizon){resetIfYearChanged(year,horizon||'CALENDAR');[...exp,...inc].forEach(r=>state.originals[key(r)]=r);applyRollingTransfer(exp,inc);return {exp:applyRows(exp),inc:applyRows(inc)}},
  render,inlineAmount,inlineNote,isChanged,showOnlyChanged,scenarioPreset,saveDraft,discardUnsaved,resetCategoryToBaseline,details(){return {year:state.year,targets:{...state.targets},monthTargets:JSON.parse(JSON.stringify(state.monthTargets)),notes:{...state.notes},reserve:state.reserve,project:state.project,targetUnit:state.targetUnit}},
- applyDecisionTargets,startRevision,cancelRevision,revisionActive,needsRollingRevision(){return rollingApprovalNeedsRevision},isDraft(){return Object.keys(state.targets).length>0||Object.keys(state.monthTargets).length>0}
+ applyDecisionTargets,startRevision,cancelRevision,revisionActive,needsRollingRevision(){return rollingApprovalNeedsRevision},hasPendingRollingTransfer(){return !!rollingTransfer},isDraft(){return Object.keys(state.targets).length>0||Object.keys(state.monthTargets).length>0}
 };
 if(typeof module!=="undefined"&&module.exports)module.exports={locked,applyRows,scenarioPreset,state};
 if(root.document){if(root.document.getElementById("planningBoardOverview"))init();else if(root.document.readyState==="loading")root.document.addEventListener("DOMContentLoaded",init);else init()}

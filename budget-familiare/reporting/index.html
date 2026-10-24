@@ -8987,7 +8987,7 @@ function renderPlanningBoard(){
   // Il rolling 12 mesi resta consultabile anche in Strategia; i target annuali non vengono toccati.
   const liveBoardData=planningBoardData;
   const calendarYear=String(liveBoardData.expense.current_year_start||"").slice(0,4);
-  if(planningBoardContext==="PLAN"&&planningBoardHorizon==="CALENDAR"&&window.BudgetFamilySinglePlan?.needsRollingRevision?.()){
+  if(planningBoardContext==="PLAN"&&planningBoardHorizon==="CALENDAR"&&(window.BudgetFamilySinglePlan?.needsRollingRevision?.()||window.BudgetFamilySinglePlan?.hasPendingRollingTransfer?.())){
     window.BudgetFamilySinglePlan.prepare(planningBuildRows(liveBoardData.expense,"EXPENSE"),planningBuildRows(liveBoardData.income,"INCOME"),calendarYear,"CALENDAR");
     const prior=window.BudgetFamilyPlan?.snapshotFor(Number(calendarYear));
     if(prior?.meta?.strategic_plan?.kind==="STRATEGIC")window.BudgetFamilySinglePlan.startRevision(prior);
