@@ -16,7 +16,7 @@ function startRevision(plan){
  if(isDirty()&&!root.confirm('La bozza ha modifiche non salvate. Caricare il Piano approvato per la revisione?'))return false;
  state.targets={...(st.targets||{})};
  state.notes={...(st.notes||{})};
- state.monthTargets={};
+ state.monthTargets=JSON.parse(JSON.stringify(st.month_targets||{}));
  revisionSource={revision:plan.revision,year:state.year};
  persist();root.renderPlanningBoard?.();return true;
 }
@@ -212,8 +212,13 @@ async function approve(){
    monthMaps[id]=Object.fromEntries(row.months.filter(m=>m.kind!=="actual").map(m=>[m.month,round2(m.amount)]));
   }
   const hasMonthTargets=Object.keys(monthMaps).length>0;
+  const effectiveTargets={...state.targets};
+  for(const id of Object.keys(effectiveTargets)){
+   const base=state.originals[id];if(!base)throw new Error('Categoria del Piano non disponibile: '+id);
+   effectiveTargets[id]=round2(applyRows([base])[0].annual);
+  }
   const result=await root.budgetFamilyPlanRpc(hasMonthTargets?"dashboard_family_strategic_plan_v2":"dashboard_family_strategic_plan_v1",{
-   p_year:Number(state.year),p_note:reason.trim(),p_targets:state.targets,p_notes:state.notes,
+   p_year:Number(state.year),p_note:reason.trim(),p_targets:effectiveTargets,p_notes:state.notes,
    ...(hasMonthTargets?{p_months:monthMaps}:{})
   });
   if(!result||!result.plan)throw new Error("La risposta non contiene il Piano approvato");
