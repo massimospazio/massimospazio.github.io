@@ -121,6 +121,9 @@ function buildControl(approved,live,meta={},horizon="ROLLING_12"){
  if(!exp||!inc||!approved?.month_targets)return {error:"Piano o proiezione mancanti"};
  const current=String(exp.current_month||"");
  if(!/^\d{4}-\d\d-01$/.test(current))return {error:"Mese di proiezione non valido"};
+ const approvedMonths=Object.values(approved.month_targets).flatMap(r=>Object.keys(r||{}))
+  .filter(m=>/^\d{4}-\d\d-01$/.test(m)).sort();
+ const approvedStart=approvedMonths[0]||current,approvedEnd=approvedMonths[approvedMonths.length-1]||current;
  const start=horizon==="CALENDAR"?current.slice(0,4)+"-01-01":current;
  const months=Array.from({length:12},(_,i)=>addMonth(start,i));
  const metaMap=new Map((meta?.rows||[]).map(r=>[String(r.category_id),r]));
@@ -144,6 +147,7 @@ function buildControl(approved,live,meta={},horizon="ROLLING_12"){
    const id=String(cat.category_id),entry=approved.month_targets[direction+":"+id]||{};
    const natureMeta=metaMap.get(id)||{};
    const actualHistory=(data.actual_monthly||[]).filter(a=>String(a.category_id)===id&&String(a.month)<current).map(a=>({month:String(a.month),amount:num(a.amount)}));
+   const actualByMonth=Object.fromEntries(actualHistory.map(a=>[a.month,a.amount]));
    const reliabilityValue=reliabilityMap?Number(reliabilityMap[id]):NaN;
    const rec={id:direction+":"+id,direction,categoryId:id,
     name:String(cat.l2_name||cat.name||"Categoria"),
@@ -155,7 +159,7 @@ function buildControl(approved,live,meta={},horizon="ROLLING_12"){
     scope:String(natureMeta.forecast_scope||"CATEGORY"),
     counterpartyMethods:String(natureMeta.counterparty_methods||""),
     reliability:reliabilityMap?(Number.isInteger(reliabilityValue)&&reliabilityValue>=1&&reliabilityValue<=5?reliabilityValue:0):null,
-    history:actualHistory,
+    history:actualHistory,actualByMonth,approvedTargets:entry,
     months:{}};
    for(const month of months){
     const old=month<current;
@@ -220,7 +224,7 @@ function buildControl(approved,live,meta={},horizon="ROLLING_12"){
    .sort((a,b)=>a.metric.delta-b.metric.delta);
  const worst=activeRows.filter(r=>r.net!==null).sort((a,b)=>a.net-b.net)[0]||null;
  return {kind:"extended",revision:approved.revision,approvedAt:approved.approved_at||"",
-  current,horizon,months,series,rows,complete,coverage,
+  current,horizon,months,series,rows,complete,coverage,approvedStart,approvedEnd,
   totalForecast,futureForecast,planTotal,initialGap,afterApprovalGap,freshness:meta?.freshness||null,
   delta:futureForecast!==null&&planTotal!==null?round(futureForecast-planTotal):null,
   worst:worst?{month:worst.month,net:worst.net}:null,
@@ -286,7 +290,7 @@ function monthTone(m,model){
  return "neutral";
 }
 
-const controlUi={period:"ROLLING_12",tab:"SUMMARY",month:null,direction:"EXPENSE",onlyRisks:false,expanded:{},sort:"IMPACT",selectedCategory:null,openHelp:null,sensitivity:"STANDARD",mode:"ALL",modeShowAll:false,boardExpanded:{},boardSort:"NAME",boardDirection:"EXPENSE",boardNature:"ALL"};
+const controlUi={period:"ROLLING_12",tab:"SUMMARY",month:null,direction:"EXPENSE",onlyRisks:false,expanded:{},sort:"IMPACT",selectedCategory:null,openHelp:null,sensitivity:"STANDARD",mode:"ALL",modeShowAll:false,boardExpanded:{},boardSort:"NAME",boardSortAscending:true,boardDirection:"EXPENSE",boardNature:"ALL",boardScope:"MONTH",boardView:"L1"};
 try{const saved=root.localStorage?.getItem("bf-control-sensitivity");if(["HIGH","STANDARD","LOW"].includes(saved))controlUi.sensitivity=saved}catch(e){}
 const sensitivityLimits={HIGH:{eur:15,pct:.05},STANDARD:{eur:30,pct:.10},LOW:{eur:75,pct:.20}};
 function materialDelta(delta,plan){
