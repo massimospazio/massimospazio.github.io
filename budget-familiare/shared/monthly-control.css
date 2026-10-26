@@ -178,3 +178,72 @@
 .bf-control-legend .bf-legend-amber{background:#d69a43}
 .bf-control-view .bf-month-strip button.bf-month-caution{border-bottom-color:#d69a43}
 .bf-control-view .bf-month-strip button.bf-month-caution strong{color:#975c20}
+
+/* V74.2.4 — approved-plan-first tracking and inspectable technical gaps */
+.bf-control-first-row{grid-template-columns:minmax(0,.94fr) minmax(0,1.45fr) minmax(0,1.18fr)}
+.bf-control-view .bf-kpi-projection{justify-content:flex-start}
+.bf-tech-comparison{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:7px 0}
+.bf-tech-comparison>div{display:flex;flex-direction:column;gap:5px;min-width:0}
+.bf-tech-comparison small,.bf-category-compare small{font-size:11px;color:#60758e;line-height:1.3}
+.bf-tech-comparison strong{font-size:26px;line-height:1.15;color:#2a4b70;font-variant-numeric:tabular-nums}
+.bf-tech-comparison strong.bf-negative{color:#a93946}
+.bf-tech-comparison strong.bf-positive{color:#16795c}
+.bf-control-view .bf-kpi-projection p{font-size:11px;margin:0;color:#566d86;line-height:1.5}
+.bf-control-view .bf-risk-summary>strong{font-size:21px;line-height:1.3}
+.bf-risk-jump{align-self:flex-start;border:1px solid #9ebddd;border-radius:7px;background:#edf5ff;color:#1f5689;font:inherit;font-size:11px;font-weight:700;padding:7px 10px;cursor:pointer;margin-top:5px;text-align:left}
+.bf-risk-jump:hover,.bf-risk-jump:focus-visible{background:#ddebfd;outline:2px solid #438bdb;outline-offset:2px}
+.bf-category-compare{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0}
+.bf-category-compare>div{border:1px solid #dbe4ef;border-radius:8px;background:#f8fafc;padding:11px 13px;display:flex;flex-direction:column;gap:5px}
+.bf-category-compare strong{font-size:20px;font-variant-numeric:tabular-nums;color:#244f76}
+.bf-category-compare strong.bf-negative{color:#b63849}
+.bf-category-compare strong.bf-positive{color:#1b805f}
+.bf-control-category-visual{height:295px;margin:10px 0 14px}
+.bf-impact-action{display:block;width:100%;font:inherit;text-align:left;background:transparent;border:1px solid transparent;padding:6px 5px;border-radius:6px;cursor:pointer}
+.bf-impact-action:hover,.bf-impact-action:focus-visible{background:#eef5fd;border-color:#bfcee0;outline:0}
+.bf-control-view .bf-month-strip button{min-height:105px}
+.bf-control-view .bf-month-strip button strong{font-size:13px}
+.bf-control-view .bf-month-strip button small{line-height:1.3}
+@media(max-width:1100px){.bf-control-first-row{grid-template-columns:repeat(2,minmax(0,1fr))}.bf-control-first-row>.bf-kpi-card:first-child{grid-column:1/-1}}
+@media(max-width:650px){.bf-control-first-row{grid-template-columns:1fr}.bf-control-first-row>.bf-kpi-card:first-child{grid-column:auto}.bf-category-compare{grid-template-columns:1fr}.bf-tech-comparison strong{font-size:22px}}
+
+/* V74.2.5 — Consuntivo-first. Experimental estimates live only in native details. */
+.bf-control-view .bf-control-actual-first{grid-template-columns:minmax(0,1fr) minmax(0,1.4fr) minmax(0,1.2fr)}
+.bf-control-view .bf-control-actual-first .bf-kpi-card{border-top-color:#477caf;min-height:136px}
+.bf-control-view .bf-control-actual-first .bf-kpi-actual{border-top-color:#2e9479}
+.bf-control-view .bf-control-actual-first .bf-kpi-card>strong{font-size:29px}
+.bf-control-view .bf-control-actual-first .bf-tech-comparison{margin:0;padding:3px 0}
+.bf-control-view .bf-control-actual-first .bf-tech-comparison strong{font-size:23px}
+.bf-actual-budget-track{height:9px;width:100%;border-radius:99px;overflow:hidden;background:#eaf0f6;margin:6px 0 2px}
+.bf-actual-budget-track span{display:block;height:100%;background:#4285bd;border-radius:99px}
+.bf-control-view .bf-control-actual-minor{grid-template-columns:repeat(2,minmax(0,1fr))}
+.bf-control-view .bf-control-actual-minor .bf-kpi-card{min-height:72px}
+.bf-control-view .bf-month-strip button{min-height:93px}
+.bf-control-view .bf-month-strip .bf-real-over{color:#b63849;font-weight:700}
+.bf-technical-panel{margin:16px 0 20px;border:1px solid #c6d3e5;border-radius:10px;background:#f7f9fc;overflow:visible}
+.bf-technical-panel>summary{display:list-item;cursor:pointer;padding:15px 20px;color:#315477;font-size:13px;font-weight:750;line-height:1.4}
+.bf-technical-panel>summary:hover,.bf-technical-panel>summary:focus-visible{background:#edf4fd;outline:2px solid #b0ceec}
+.bf-technical-inner{padding:5px 18px 18px;color:#35516f;line-height:1.5;font-size:12px}
+.bf-technical-inner>h4{margin:15px 0 10px;font-size:13px}
+.bf-tech-category{border:1px solid #d6e1ef;border-radius:8px;background:#fff;margin:10px 0;overflow:hidden}
+.bf-tech-category>summary{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:12px;align-items:center;cursor:pointer;padding:12px 14px;color:#305477;font-size:12px}
+.bf-tech-category>summary:hover,.bf-tech-category>summary:focus-visible{background:#eff6ff;outline:2px solid #b5cfe9}
+.bf-tech-category>summary strong{color:#a43b46;font-size:15px;font-variant-numeric:tabular-nums}
+.bf-tech-open-hint{font-weight:500;color:#506e8b;font-size:11px}
+.bf-tech-category>p,.bf-tech-category>.bf-control-muted,.bf-tech-category-compare,.bf-tech-legend,.bf-tech-months{margin-left:14px;margin-right:14px}
+.bf-tech-category-compare{display:flex;gap:14px;justify-content:space-between;flex-wrap:wrap;padding:9px 12px;background:#f1f5fa;border-radius:7px;font-variant-numeric:tabular-nums}
+.bf-tech-category-compare>span{display:inline-block}
+.bf-tech-legend{display:flex;gap:18px;font-size:11px;color:#60768c;margin-top:10px;margin-bottom:10px}
+.bf-tech-legend span{display:inline-flex;align-items:center;gap:5px}
+.bf-tech-legend i{display:inline-block;width:13px;height:8px;border-radius:3px}
+.bf-tech-plan{background:#6f83a6}.bf-tech-live{background:#e0a044}
+.bf-tech-months{display:grid;gap:6px;padding:0 0 14px}
+.bf-tech-month-row{display:grid;grid-template-columns:75px minmax(0,1fr) 155px;align-items:center;gap:10px;font-size:12px}
+.bf-tech-month-row small{font-size:11px;text-align:right;font-variant-numeric:tabular-nums;color:#516b88}
+.bf-tech-bars{display:flex;flex-direction:column;gap:4px;justify-content:center}
+.bf-tech-bars>span{height:9px;background:#eef2f7;border-radius:3px;display:block;overflow:hidden}
+.bf-tech-bar{height:100%;display:block;border-radius:3px}
+.bf-tech-bar.plan{background:#6f83a6}.bf-tech-bar.live{background:#e0a044}
+@media(max-width:1080px){.bf-control-view .bf-control-actual-first{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){.bf-control-view .bf-control-actual-first{grid-template-columns:1fr}.bf-tech-category>summary{grid-template-columns:minmax(0,1fr) auto}.bf-tech-open-hint{grid-column:1/-1}.bf-tech-month-row{grid-template-columns:62px minmax(0,1fr);gap:7px}.bf-tech-month-row small{grid-column:2;text-align:left}}
+
+.bf-tech-category>summary strong.bf-positive{color:#197658}
