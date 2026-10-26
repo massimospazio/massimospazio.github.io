@@ -221,7 +221,7 @@ function buildControl(approved,live,meta={},horizon="ROLLING_12"){
  const worst=activeRows.filter(r=>r.net!==null).sort((a,b)=>a.net-b.net)[0]||null;
  return {kind:"extended",revision:approved.revision,approvedAt:approved.approved_at||"",
   current,horizon,months,series,rows,complete,coverage,
-  totalForecast,futureForecast,planTotal,initialGap,afterApprovalGap,
+  totalForecast,futureForecast,planTotal,initialGap,afterApprovalGap,freshness:meta?.freshness||null,
   delta:futureForecast!==null&&planTotal!==null?round(futureForecast-planTotal):null,
   worst:worst?{month:worst.month,net:worst.net}:null,
   risksForMonth:selectedRisks,notes:"Il saldo cumulato è economico, non liquidità bancaria"};
@@ -281,7 +281,7 @@ function monthTone(m,model){
  return "neutral";
 }
 
-const controlUi={period:"ROLLING_12",tab:"SUMMARY",month:null,direction:"EXPENSE",onlyRisks:false,expanded:{},sort:"IMPACT",selectedCategory:null,openHelp:null,sensitivity:"STANDARD",mode:"ALL",modeShowAll:false};
+const controlUi={period:"ROLLING_12",tab:"SUMMARY",month:null,direction:"EXPENSE",onlyRisks:false,expanded:{},sort:"IMPACT",selectedCategory:null,openHelp:null,sensitivity:"STANDARD",mode:"ALL",modeShowAll:false,boardExpanded:{},boardSort:"NAME",boardDirection:"EXPENSE",boardNature:"ALL"};
 try{const saved=root.localStorage?.getItem("bf-control-sensitivity");if(["HIGH","STANDARD","LOW"].includes(saved))controlUi.sensitivity=saved}catch(e){}
 const sensitivityLimits={HIGH:{eur:15,pct:.05},STANDARD:{eur:30,pct:.10},LOW:{eur:75,pct:.20}};
 function materialDelta(delta,plan){
