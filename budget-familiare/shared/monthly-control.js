@@ -135,7 +135,7 @@ function buildControl(approved,live,meta={},horizon="ROLLING_12"){
    const id=compound.slice(direction.length+1);
    // Historic/archived categories may still be present in approved revisions.
   // Retain the saved target but do not silently invent forecast for them.
-  if(!categoryIds.has(id))categories.push({category_id:id,l2_name:"Categoria archiviata",l1_name:"Da verificare"});
+  if(!categoryIds.has(id))categories.push({category_id:id,l2_name:"Categoria archiviata",l1_name:"Da verificare",_archived:true});
   }
   for(const cat of categories){
    const id=String(cat.category_id),entry=approved.month_targets[direction+":"+id]||{};
@@ -150,7 +150,7 @@ function buildControl(approved,live,meta={},horizon="ROLLING_12"){
     const old=month<current;
     const f=forecast.get(id+"|"+month),a=historic.get(id+"|"+month);
     const actual=old?(a?num(a.amount):0):(month===current?num(f?.actual_to_date):0);
-    const predicted=old?actual:(f?num(f.effective_amount):null);
+    const predicted=old?actual:(f?num(f.effective_amount):(cat._archived?null:0));
     const planned=has(entry,month)&&Number.isFinite(Number(entry[month]))?num(entry[month]):null;
     const status=old?"CLOSED":planned!==null?"APPROVED":"PROVISIONAL";
     const delta=(!old&&planned!==null&&predicted!==null)?
