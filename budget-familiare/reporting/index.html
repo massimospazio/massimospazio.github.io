@@ -9175,6 +9175,12 @@ async function showBudgetControlView(){
     '<button type="button" class="btn" data-bf-control-plan>Apri Piano e approvazione →</button>';
    return;
   }
+  // Affidabilità è distinta dal metodo della Baseline e non è presente nel planning meta.
+  // Errori di caricamento lasciano valori 'non disponibili', senza declassare a 'Incerta'.
+  try{
+   const reliability=await rpc("dashboard_reporting_list_baseline_reliability_v1");
+   if(reliability&&typeof reliability==="object"&&!Array.isArray(reliability))meta.reliability=reliability;
+  }catch(err){meta.reliability=null}
   window.BudgetFamilyMonthlyControl?.renderTracking(host,approved,live,meta);
  }catch(error){
   host.innerHTML='<p class="bf-control-notice"><strong>Impossibile completare il controllo:</strong> '+esc(String(error?.message||error))+'</p>'+
