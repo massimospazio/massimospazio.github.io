@@ -694,6 +694,116 @@ function technicalDetails(model){
   (compensations.length?compensations.map(showCategory).join(''):'<p>Nessuna compensazione tecnica.</p>')+
   '</div></details>';
 }
+
+/* V74.2.8: Plan / Actual board, no forecast assumptions. */
+const controlNatures=[["MANDATORY","O · Obbligatorie","#d95762"],["NECESSARY","N · Necessarie","#d7a03d"],["DISCRETIONARY","D · Discrezionali","#2f9a81"],["OTHER","NC · Non classificate","#8999b0"],["SAVINGS","Risparmio / investimenti","#4e95ba"]];
+const controlKind=n=>n==="SAVINGS"||n==="INVESTMENT"?"SAVINGS":["MANDATORY","NECESSARY","DISCRETIONARY"].includes(n)?n:"OTHER";
+const controlPct=n=>n===null?"—":new Intl.NumberFormat("it-IT",{maximumFractionDigits:1}).format(n)+"%";
+const controlRatio=(actual,plan)=>actual===null||plan===null||plan<=0?null:Math.round(1000*actual/plan)/10;
+const controlDayLabel=d=>/^\d{4}-\d{2}-\d{2}/.test(String(d||""))?String(d).slice(8,10)+"/"+String(d).slice(5,7)+"/"+String(d).slice(0,4):"n/d";
+function controlMonthProgress(month,date){
+ const today=String(date||new Date().toISOString().slice(0,10)).slice(0,10);
+ if(today.slice(0,7)<month.slice(0,7))return 0;
+ if(today.slice(0,7)>month.slice(0,7))return 100;
+ const y=+month.slice(0,4),m=+month.slice(5,7),total=new Date(Date.UTC(y,m,0)).getUTCDate();
+ return Math.max(0,Math.min(100,Math.round((+today.slice(8,10))*100/total)));
+}
+function controlDirectionTotals(model,month,direction){
+ const list=model.rows.filter(r=>r.direction===direction).map(r=>r.months[month]);
+ const plan=list.every(x=>x.plan!==null)?round(list.reduce((n,x)=>n+num(x.plan),0)):null;
+ const actual=month<=model.current?round(list.reduce((n,x)=>n+num(x.actual),0)):null;
+ return {plan,actual,ratio:controlRatio(actual,plan),remaining:plan!==null&&actual!==null?round(plan-actual):null};
+}
+function controlBankFreshness(model){
+ const banks=model.freshness?.banks;
+ if(!Array.isArray(banks)||!banks.length)return "Ultima data movimento e import: informazioni non disponibili";
+ return banks.map(b=>'<span><b>'+esc(String(b.bank||"Banca"))+'</b>: ultimo movimento '+esc(controlDayLabel(b.last_movement_date))+
+   ' · ultimo import '+esc(controlDayLabel(b.last_import_at))+'</span>').join('');
+}
+function controlProgressCard(title,key,data,month){
+ const pct=data.ratio,bar=Math.max(0,Math.min(100,pct||0));
+ return '<section class="bf-v828-card"><div class="bf-kpi-caption"><span>'+esc(title)+' · '+esc(displayMonth(month))+'</span>'+infoButton(key)+'</div>'+
+  '<div class="bf-v828-values"><div><small>Consuntivo</small><strong>'+eur(data.actual)+'</strong></div>'+
+  '<div><small>Piano mese</small><strong>'+eur(data.plan)+'</strong></div></div>'+
+  '<div class="bf-v828-meter"><i style="width:'+bar+'%"></i></div>'+
+  '<p><b>'+controlPct(pct)+'</b> del Piano · Residuo '+eur(data.remaining)+'</p></section>';
+}
+function renderNatureProgress(model,month){
+ const visible=month<=model.current;
+ const rows=model.rows.filter(r=>r.direction==="EXPENSE");
+ const items=controlNatures.map(([kind,title,color])=>{
+  const chosen=rows.filter(r=>controlKind(r.nature)===kind);
+  if(kind==="SAVINGS"&&!chosen.length)return "";
+  const cells=chosen.map(r=>r.months[month]);
+  const plan=cells.every(x=>x.plan!==null)?round(cells.reduce((n,x)=>n+num(x.plan),0)):null;
+  const actual=visible?round(cells.reduce((n,x)=>n+num(x.actual),0)):null;
+  const pct=controlRatio(actual,plan);
+  return '<div class="bf-v828-nature-item"><div class="bf-v828-nature-head"><b><i style="background:'+color+'"></i>'+esc(title)+'</b>'+
+   '<span>'+eur(actual)+' / '+eur(plan)+'</span></div>'+
+   '<div class="bf-v828-meter"><i style="background:'+color+';width:'+Math.min(100,Math.max(0,pct||0))+'%"></i></div>'+
+   '<small>'+controlPct(pct)+' del Piano · residuo '+eur(actual===null||plan===null?null:round(plan-actual))+
+   ' · '+chosen.length+' L2</small></div>';
+ }).filter(Boolean).join('');
+ return '<section class="bf-panel bf-v828-natures">'+sectionHeading("Avanzamento spese per natura · O / N / D","natureprogress")+
+  '<p class="bf-control-muted">I gruppi utilizzano la natura già assegnata in pianificazione. NC è esplicita; gli investimenti, se presenti, sono separati. Il budget ancora disponibile non è risparmio consolidato.</p>'+
+  '<div class="bf-v828-nature-grid">'+items+'</div></section>';
+}
+function controlBoardEntries(model,month,direction){
+ return model.rows.filter(r=>r.direction===direction).map(r=>{
+  const x=r.months[month],actual=month<=model.current?num(x.actual):null,plan=x.plan;
+  const delta=actual===null||plan===null?null:round(actual-plan);
+  return {...r,plan,actual,delta,residual:delta===null?null:round(-delta),
+   variancePct:delta===null||plan<=0?null:round(100*delta/plan),progress:controlRatio(actual,plan)};
+ });
+}
+function controlBoardSummary(items,groupName,groupId){
+ const plan=items.every(r=>r.plan!==null)?round(items.reduce((n,r)=>n+num(r.plan),0)):null;
+ const actual=items.every(r=>r.actual!==null)?round(items.reduce((n,r)=>n+num(r.actual),0)):null;
+ const delta=plan===null||actual===null?null:round(actual-plan);
+ const natures=[...new Set(items.map(r=>controlKind(r.nature)))];
+ return {name:groupName,id:groupId,items,plan,actual,delta,residual:delta===null?null:round(-delta),
+  variancePct:delta===null||plan<=0?null:round(100*delta/plan),progress:controlRatio(actual,plan),
+  nature:natures.length===1?natures[0]:"MIXED"};
+}
+function controlBoardRow(r,group,expanded){
+ const nature=group?r.nature:controlKind(r.nature);
+ const badges={MANDATORY:"O",NECESSARY:"N",DISCRETIONARY:"D",OTHER:"NC",SAVINGS:"I",MIXED:"M"};
+ const label=group?'<button type="button" class="bf-tree-toggle bf-v828-group-btn" data-bf-control-board-expand="'+encodeURIComponent(r.id)+'" aria-expanded="'+expanded+'">'+
+  (expanded?"▾":"▸")+' '+esc(r.name)+' <small>('+r.items.length+')</small></button>':
+  '<button type="button" class="bf-tree-toggle bf-control-indent" data-bf-control-open-risk="'+encodeURIComponent(r.id)+'">'+esc(r.name)+'</button>';
+ const fmtDelta=r.delta===null?"—":(r.delta>0?"+":"")+money(r.delta);
+ const color=r.delta!==null&&r.delta>0&&controlUi.boardDirection==="EXPENSE"?"bf-v828-over":"";
+ return '<tr class="'+(group?'bf-v828-l1 ':'bf-v828-l2 ')+color+'"><td>'+label+'</td>'+
+  '<td><span class="bf-v828-nature-pill nature-'+nature.toLowerCase()+'">'+(badges[nature]||"?")+'</span></td>'+
+  '<td class="bf-v828-number">'+eur(r.plan)+'</td><td class="bf-v828-number">'+eur(r.actual)+'</td>'+
+  '<td class="bf-v828-number">'+eur(r.residual)+'</td><td class="bf-v828-number">'+fmtDelta+'</td>'+
+  '<td class="bf-v828-number">'+controlPct(r.variancePct)+'</td><td><div class="bf-v828-meter"><i style="width:'+Math.min(100,Math.max(0,r.progress||0))+'%"></i></div>'+
+  '<small>'+(r.progress===null?(r.plan===0&&r.actual>0?"Non pianificata":"—"):controlPct(r.progress))+'</small></td></tr>';
+}
+function renderControlBoard(model,month){
+ const direction=controlUi.boardDirection;
+ const entries=controlBoardEntries(model,month,direction).filter(r=>direction==="INCOME"||controlUi.boardNature==="ALL"||controlKind(r.nature)===controlUi.boardNature);
+ const groups=new Map();
+ for(const r of entries){const id=r.l1Id+"|"+r.l1Name;if(!groups.has(id))groups.set(id,[]);groups.get(id).push(r);}
+ const compare=(a,b)=>controlUi.boardSort==="NAME"?a.name.localeCompare(b.name,"it"):num(b[controlUi.boardSort])-num(a[controlUi.boardSort]);
+ const grouped=[...groups].map(([id,items])=>controlBoardSummary(items,items[0].l1Name,id)).sort(compare);
+ const headings=[["Categoria L1 / L2","NAME"],["Natura",null],["Piano mese","plan"],["Consuntivo mese","actual"],["Residuo","residual"],["Δ €","delta"],["Δ %","variancePct"],["Avanzamento",null]];
+ const th=headings.map(([name,key])=>'<th>'+(key?'<button type="button" class="bf-v828-sort" data-bf-control-board-sort="'+key+'">'+esc(name)+(controlUi.boardSort===key?' ↓':' ↕')+'</button>':esc(name))+'</th>').join('');
+ const body=grouped.map(g=>controlBoardRow(g,true,!!controlUi.boardExpanded[g.id])+
+   (controlUi.boardExpanded[g.id]?g.items.sort(compare).map(r=>controlBoardRow(r,false,false)).join(''):"")).join('');
+ const filters=direction==="INCOME"?"":'<div class="bf-v828-filters">'+[["ALL","Tutte"],["MANDATORY","O"],["NECESSARY","N"],["DISCRETIONARY","D"],["OTHER","NC"]].map(([key,name])=>
+  '<button type="button" class="btn compact '+(controlUi.boardNature===key?'':'ghost')+'" data-bf-control-board-nature="'+key+'">'+name+'</button>').join('')+'</div>';
+ return '<section class="bf-panel bf-v828-board" id="bfControlBoard">'+
+  '<div class="bf-control-section-head">'+sectionHeading("Tabellone di Controllo · L1 / L2","controlboard")+
+   '<div class="bf-control-buttons">'+[["EXPENSE","Uscite"],["INCOME","Entrate"]].map(([k,name])=>'<button type="button" class="btn compact '+(direction===k?'':'ghost')+'" data-bf-control-board-direction="'+k+'">'+name+'</button>').join('')+
+   '<button type="button" class="btn compact ghost" data-bf-control-board-expand-all="ALL">Espandi L1</button>'+
+   '<button type="button" class="btn compact ghost" data-bf-control-board-expand-all="NONE">Comprimi</button></div></div>'+
+  '<p class="bf-control-muted">Δ € e Δ % = Consuntivo − Piano del mese selezionato. Durante il mese un residuo positivo non è un risparmio consolidato. Seleziona la L1 per aprire le L2.</p>'+
+  filters+'<div class="bf-control-overflow"><table class="bf-control-table bf-v828-table"><thead><tr>'+th+'</tr></thead><tbody>'+
+   (body||'<tr><td colspan="8">Nessuna categoria disponibile.</td></tr>')+'</tbody></table></div>'+
+  '<p class="bf-control-muted">Confronto cumulato e warning configurabili: rilascio successivo. Nessun Forecast è stato ricalcolato o approvato automaticamente.</p></section>';
+}
+
 function renderExtended(host,model){
  if(!host||!model||model.error){if(host)host.innerHTML='<p class="bf-control-notice">'+esc(model?.error||"Dati assenti")+'</p>';return}
  const sm=showMonth(model,controlUi.month);
