@@ -477,6 +477,157 @@ function drawCategoryChart(host,model){
   }
  });
 }
+// V74.2.6 — derived classifications; never persist a duplicate classification.
+// Mode is a control lens, while low reliability is an independent overlay.
+const controlModeInfo={
+ EXECUTION:{label:"Programmate",detail:"Verifica le registrazioni attese, senza inventare date di pagamento.",mark:"calendar-check"},
+ HISTORY:{label:"Da storico",detail:"Confronto con un mese storico intero; a mese aperto il consuntivo è parziale.",mark:"chart-line"},
+ DISCRETIONARY:{label:"Discrezionali",detail:"Rispetto dell'obiettivo volontario e budget ancora disponibile.",mark:"target"},
+ ATTENTION:{label:"Da rivedere",detail:"Ipotesi a bassa affidabilità o evidenze concrete: importi non sommabili agli altri gruppi.",mark:"alert"},
+ UNCLASSIFIED:{label:"Da classificare",detail:"Metadati insufficienti o combinazioni non riconosciute: nessuna assegnazione inventata.",mark:"help"}
+};
+const historicalMethods=new Set(["AVG6","AVG12","MEDIAN12","SAME_MONTH_LAST_YEAR","LAST_VALUE"]);
+const confidenceLabels=["Non valutata","Certa","Alta","Consolidata","Stimata","Incerta"];
+function controlMethodName(m){
+ const names={AVG6:"Media 6 mesi",AVG12:"Media 12 mesi",MEDIAN12:"Mediana 12 mesi",SAME_MONTH_LAST_YEAR:"Stesso mese A-1",LAST_VALUE:"Ultimo valore",FIXED:"Fisso manuale",RANGE:"Intervallo",ZERO:"Non si ripeterà"};
+ return names[m]||"Metodo non specificato";
+}
+function controlMode(r){
+ if(r.nature==="DISCRETIONARY")return "DISCRETIONARY";
+ const method=r.method;
+ if(r.scope==="COUNTERPARTIES"){
+  const methods=r.counterpartyMethods.split(",").map(m=>m.trim()).filter(Boolean);
+  if(!methods.length)return "UNCLASSIFIED";
+  if(methods.every(m=>historicalMethods.has(m)))return "HISTORY";
+  if(methods.every(m=>m==="FIXED"||m==="ZERO")&&["RECURRING","PLANNED_OCCASIONAL","EXCEPTIONAL"].includes(r.temporality))return "EXECUTION";
+  return "UNCLASSIFIED"; // Mixed methods: a single treatment would be misleading.
+ }
+ if(historicalMethods.has(method))return "HISTORY";
+ if(method==="FIXED"&&["RECURRING","PLANNED_OCCASIONAL","EXCEPTIONAL"].includes(r.temporality))return "EXECUTION";
+ return "UNCLASSIFIED";
+}
+function controlHistoricalReference(row,month,current){
+ const method=row.method,history=new Map((row.history||[]).map(x=>[x.month,num(x.amount)]));
+ if(row.scope==="COUNTERPARTIES"||!historicalMethods.has(method))return null;
+ if(method==="SAME_MONTH_LAST_YEAR"){
+  const prev=addMonth(month,-12);
+  return history.has(prev)?{value:round(history.get(prev)),label:"Stesso mese "+displayMonth(prev),basis:"Mese intero, anno precedente"}:null;
+ }
+ const last=addMonth(current,-1),count=method==="AVG6"?6:12;
+ if(method==="LAST_VALUE"){
+  const entries=(row.history||[]).filter(x=>x.month<=last).sort((a,b)=>b.month.localeCompare(a.month));
+  return entries.length?{value:round(entries[0].amount),label:"Ultimo mese registrato "+displayMonth(entries[0].month),basis:"Un solo mese storico: riferimento debole"}:null;
+ }
+ const arr=Array.from({length:count},(_,i)=>addMonth(last,-i));
+ const observed=arr.filter(m=>history.has(m)).length;
+ if(observed<(count===6?3:6))return null;
+ const nums=arr.map(m=>history.get(m)||0);
+ const value=method==="MEDIAN12"?nums.slice().sort((a,b)=>a-b)[5]+(nums.slice().sort((a,b)=>a-b)[6]-nums.slice().sort((a,b)=>a-b)[5])/2:nums.reduce((a,b)=>a+b,0)/count;
+ return {value:round(value),label:(method==="MEDIAN12"?"Mediana":"Media")+" ultimi "+count+" mesi",basis:observed+"/"+count+" mesi con movimenti; i mesi senza movimenti valgono zero solo come riferimento indicativo"};
+}
+function buildModeTracking(model,month){
+ const current=month===model.current,past=month<model.current,realAvailable=month<=model.current;
+ const expenses=model.rows.filter(r=>r.direction==="EXPENSE").map(r=>{
+  const metric=r.months[month],mode=controlMode(r);
+  const planned=metric.plan,spent=realAvailable?num(metric.actual):null,remaining=planned===null||spent===null?null:round(planned-spent);
+  const historical=mode==="HISTORY"?controlHistoricalReference(r,month,model.current):null;
+  const breach=spent!==null&&planned!==null&&spent>planned+.005;
+  const near=mode==="DISCRETIONARY"&&spent!==null&&planned!==null&&planned>0&&spent>=planned*.80&&!breach;
+  const historyExceeded=mode==="HISTORY"&&current&&historical&&spent!==null&&spent>historical.value+30&&spent>historical.value*1.2;
+  const unreliable=r.reliability!==null&&[4,5].includes(r.reliability);
+  const unreviewed=r.reliability===0;
+  const hasExposure=(planned!==null&&planned>=100)||(spent!==null&&spent>=100);
+  const attention=(unreliable||unreviewed)&&hasExposure||breach||historyExceeded;
+  let status="In osservazione",tone="neutral";
+  if(planned===null){status="Piano non approvato";tone="neutral"}
+  else if(!realAvailable){status="In programma";tone="neutral"}
+  else if(breach){status="Budget già superato";tone="danger"}
+  else if(historyExceeded){status="Parziale sopra storico intero";tone="caution"}
+  else if(near){status="Residuo limitato";tone="caution"}
+  else if(mode==="EXECUTION"){status=spent===0?"Non ancora registrata":spent>=planned&&planned>0?"Importo registrato":"Registrazione parziale"}
+  else if(mode==="HISTORY"){status=historical?"Storico disponibile":"Storico insufficiente";tone=historical?"neutral":"muted"}
+  else if(mode==="DISCRETIONARY"){status=planned===0?"Nessuna spesa pianificata":"Budget sotto controllo"}
+  else{status="Metadati da verificare";tone="muted"}
+  return {...r,metric,mode,planned,spent,remaining,historical,breach,near,historyExceeded,
+   attention,unreliable,unreviewed,status,tone,hasExposure};
+ });
+ const groups={};
+ for(const code of ["EXECUTION","HISTORY","DISCRETIONARY","UNCLASSIFIED","ATTENTION"]){
+  const arr=code==="ATTENTION"?expenses.filter(r=>r.attention):expenses.filter(r=>r.mode===code);
+  groups[code]={items:arr,count:arr.length,
+   plan:arr.reduce((n,r)=>n+num(r.planned),0),
+   actual:realAvailable?arr.reduce((n,r)=>n+num(r.spent),0):null,
+   missing:arr.filter(r=>r.planned===null).length,
+   confirmed:arr.filter(r=>r.breach).length};
+ }
+ return {month,current,past,expenses,groups,realAvailable,knownReliability:expenses.some(r=>r.reliability!==null)};
+}
+function modeDetail(row,month,current){
+ const confidence=row.reliability===null?"Dati affidabilità non disponibili":confidenceLabels[row.reliability]||"Non valutata";
+ const why=row.mode==="EXECUTION"?"Importo impostato manualmente e spesa ricorrente o programmata. Non significa che il pagamento sia certo.":
+   row.mode==="HISTORY"?"Metodo basato sullo storico: il riferimento è un mese intero, mentre il consuntivo corrente è parziale.":
+   row.mode==="DISCRETIONARY"?"La natura Discrezionale prevale sul metodo di previsione: si controlla l'obiettivo scelto.":
+   "Metodo assente, non ripetibile o composto: è richiesta una verifica manuale della classificazione.";
+ const hist=row.historical?'<p><strong>Riferimento storico:</strong> '+money(row.historical.value)+' · '+esc(row.historical.label)+' ('+esc(row.historical.basis)+').</p>':
+   row.mode==="HISTORY"?'<p>Non è disponibile uno storico sufficiente e comparabile per applicare automaticamente questo confronto.</p>':'';
+ const detail=row.scope==="COUNTERPARTIES"?"Controparti · "+row.counterpartyMethods:controlMethodName(row.method);
+ return '<div class="bf-mode-row-content"><p>'+esc(why)+'</p><p><strong>Metodo Baseline attuale:</strong> '+esc(detail)+
+  ' · <strong>Temporalità:</strong> '+esc(row.temporality||"non definita")+
+  ' · <strong>Affidabilità:</strong> '+esc(confidence)+'.</p>'+hist+
+  '<p class="bf-control-muted">'+(month>current?"Mese futuro: nessun consuntivo registrabile al momento.":month===current?"Mese in corso: il consuntivo è parziale e non prova una tendenza mensile.":"Mese chiuso: confronta solo dati di periodi completi.")+'</p>'+
+  '<button type="button" class="bf-risk-jump" data-bf-control-open-risk="'+encodeURIComponent(row.id)+'">Apri la categoria e i 12 mesi</button></div>';
+}
+function modeRow(row,month,current){
+ const pct=row.planned>0&&row.spent!==null?Math.max(0,Math.min(100,Math.round(100*row.spent/row.planned))):0;
+ const rl=row.reliability===null?"Affid. n/d":row.reliability===0?"Non valutata":confidenceLabels[row.reliability];
+ return '<details class="bf-mode-row bf-mode-tone-'+row.tone+'"><summary>'+
+   '<span class="bf-mode-row-name"><strong>'+esc(row.name)+'</strong><small>'+esc(row.l1Name)+' · '+esc(rl)+'</small></span>'+
+   '<span class="bf-mode-row-num"><small>Piano mese</small><b>'+eur(row.planned)+'</b></span>'+
+   '<span class="bf-mode-row-num"><small>Registrato</small><b>'+eur(row.spent)+'</b></span>'+
+   '<span class="bf-mode-row-num"><small>Residuo</small><b>'+eur(row.remaining)+'</b></span>'+
+   '<span class="bf-mode-state">'+esc(row.status)+'</span></summary>'+
+   (row.planned>0&&row.spent!==null?'<div class="bf-mode-row-progress"><span style="width:'+pct+'%"></span></div>':'')+
+   modeDetail(row,month,current)+'</details>';
+}
+function renderModeTracking(model,month){
+ const data=buildModeTracking(model,month),selected=controlUi.mode||"ALL";
+ const order=["EXECUTION","HISTORY","DISCRETIONARY","ATTENTION"];
+ const cards='<div class="bf-mode-cards">'+order.map(code=>{
+  const x=data.groups[code],labels=controlModeInfo[code],overlay=code==="ATTENTION";
+  return '<button type="button" class="bf-mode-card '+(selected===code?'active ':'')+(overlay?'overlay':'')+'" data-bf-control-mode="'+code+'" aria-pressed="'+(selected===code)+'">'+
+   '<span>'+esc(labels.label)+'</span><strong>'+x.count+' <small>L2</small></strong>'+
+   '<span class="bf-mode-card-amount">'+(overlay?"Voci da esaminare · non sommabili":'Piano mese '+money(x.plan))+'</span>'+
+   '<small>'+(overlay?'Affidabilità bassa o anomalie reali':x.confirmed?x.confirmed+' già oltre target':'Nessuno sforamento reale')+'</small></button>';
+ }).join('')+'</div>';
+ const natureCodes=[["MANDATORY","Obbligatorie"],["NECESSARY","Necessarie"],["DISCRETIONARY","Discrezionali"],["","Non classificate"]];
+ const totalKnown=data.expenses.filter(r=>r.planned!==null).reduce((n,r)=>n+num(r.planned),0);
+ const nature='<details class="bf-mode-natures"><summary>Composizione del budget per natura · vista indipendente dalle modalità</summary><div class="bf-nature-list">'+natureCodes.map(([code,label])=>{
+  const cells=data.expenses.filter(r=>r.nature===code&&r.planned!==null);
+  const amount=round(cells.reduce((n,r)=>n+r.planned,0));
+  return '<div><span>'+esc(label)+'</span><strong>'+money(amount)+'</strong><small>'+(totalKnown?Math.round(100*amount/totalKnown):0)+'% del budget spese</small></div>';
+ }).join('')+'</div><p class="bf-control-muted">Le nature ripartiscono ogni uscita una volta sola; l’affidabilità è un livello trasversale e non va sommata alle altre.</p></details>';
+ const filter=selected==="ALL"?"":selected;
+ const chunks=(filter?[filter]:["ATTENTION","DISCRETIONARY","HISTORY","EXECUTION","UNCLASSIFIED"]).map(code=>{
+  const group=data.groups[code],limit=filter?(controlUi.modeShowAll?999:12):code==="ATTENTION"?5:code==="UNCLASSIFIED"?3:4;
+  let arr=group.items.slice().sort((a,b)=>
+   Number(b.breach)-Number(a.breach)||Number(b.historyExceeded)-Number(a.historyExceeded)||
+   Number(b.near)-Number(a.near)||Number(b.unreliable)-Number(a.unreliable)||num(b.planned)-num(a.planned));
+  const count=arr.length;arr=arr.slice(0,limit);
+  if(!group.count&&code==="UNCLASSIFIED")return "";
+  return '<div class="bf-mode-subsection"><div class="bf-mode-subhead"><b>'+esc(controlModeInfo[code].label)+'</b><small>'+
+   group.count+' categorie · '+(code==="ATTENTION"?"vista trasversale, non sommabile":money(group.plan)+" da Piano")+'</small></div>'+
+   '<p class="bf-control-muted">'+esc(controlModeInfo[code].detail)+'</p>'+
+   (arr.length?arr.map(r=>modeRow(r,month,model.current)).join(''):'<p class="bf-control-muted">Nessuna categoria in questa modalità.</p>')+
+   (count>limit?'<button type="button" class="bf-mode-more" data-bf-control-mode="'+code+'">Vedi tutte le '+count+' categorie</button>':'')+'</div>';
+ }).join('');
+ return '<section class="bf-panel bf-mode-tracking">'+sectionHeading("Dove concentrare il Controllo · "+displayMonth(month),"modes")+
+ '<p class="bf-control-muted">Modalità principale assegnata automaticamente per <strong>natura, metodo e temporalità</strong>. Affidabilità trasversale. Non sono quattro budget distinti.</p>'+
+ cards+'<div class="bf-mode-toolbar"><button type="button" data-bf-control-mode="ALL" class="btn compact '+(selected==="ALL"?"":"ghost")+'">Panoramica</button>'+
+ (selected!=="ALL"&&data.groups[selected]?.count>12?'<button type="button" class="btn compact ghost" data-bf-control-mode-more="'+(controlUi.modeShowAll?'LESS':'ALL')+'">'+(controlUi.modeShowAll?'Mostra meno':'Mostra tutte le L2')+'</button>':'')+
+ '<small>'+(data.realAvailable?'Consuntivi parziali o effettivi, senza proiezione giornaliera':'Mese futuro: solo obiettivi, nessun consuntivo')+'</small></div>'+
+ chunks+nature+
+ '<p class="bf-control-muted">I metodi riportati provengono dalla <strong>Baseline corrente</strong>, non da una fotografia dei metadati al momento dell’approvazione. Il budget deriva invece esclusivamente dal Piano approvato. Le categorie a zero e non ripetibili sono visibili come “Da classificare” e non producono avvisi senza nuove spese.</p></section>';
+}
 function actualOverBudget(model,month){
  return model.rows.filter(r=>r.direction==="EXPENSE").map(r=>({...r,metric:r.months[month]}))
  .filter(r=>r.metric&&r.metric.plan!==null&&r.metric.actual>r.metric.plan+.005)
