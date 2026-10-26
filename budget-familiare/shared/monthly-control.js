@@ -206,7 +206,61 @@ function buildControl(approved,live,meta={},horizon="ROLLING_12"){
   worst:worst?{month:worst.month,net:worst.net}:null,
   risksForMonth:selectedRisks,notes:"Il saldo cumulato è economico, non liquidità bancaria"};
 }
-const controlUi={period:"ROLLING_12",tab:"SUMMARY",month:null,direction:"EXPENSE",onlyRisks:false,expanded:{},sort:"IMPACT",selectedCategory:null};
+
+// Self-contained, actionable help for every key metric and section. No external service.
+const controlHelp={
+ outcome:["Risultato economico previsto","Somma delle entrate previste meno le uscite previste nel periodo visualizzato.","Σ (entrate forecast − uscite forecast) mese per mese. Il mese corrente include gli importi già registrati.","Positivo indica avanzo economico, negativo disavanzo. Non è il denaro disponibile sul conto: non include un saldo bancario iniziale."],
+ deviation:["Scostamento dal Piano","Misura quanto il risultato economico futuro si discosta dagli obiettivi che hai approvato.","Σ (Forecast entrate − Piano entrate) − Σ (Forecast uscite − Piano uscite), sui mesi futuri confrontabili.","Negativo = peggioramento, positivo = miglioramento. Se manca un target o una previsione, il totale appare come «—» e non viene inventato."],
+ remaining:["Budget spese residuo","Quota del budget di spesa mensile che non risulta ancora utilizzata alla data dei movimenti importati.","Spese previste nel Piano approvato per il mese − spese effettivamente registrate fino a oggi.","Non è denaro sul conto. Se il mese è chiuso non c'è un residuo utilizzabile; con obiettivi mancanti la cifra è parziale."],
+ overspend:["Sforamenti previsti","Numero di categorie con forecast significativamente superiore al target approvato nel mese.","Per ogni uscita confronta Forecast e Piano: segnala solo scostamenti superiori sia alla soglia minima in euro sia alla percentuale configurata.","Indica un rischio previsto, non uno sforamento già avvenuto. Regola la sensibilità degli avvisi se necessario."],
+ sensitivity:["Sensibilità degli avvisi","Stabilisce quando un peggioramento viene evidenziato in rosso o genera un messaggio.","Sono richieste entrambe le condizioni: scostamento di almeno 15€/30€/75€ e di almeno 5%/10%/20% del valore Piano, secondo il livello scelto.","Alta individua scostamenti più piccoli; Bassa lascia emergere solo quelli maggiori. I calcoli economici non cambiano."],
+ coverage:["Copertura degli obiettivi","Percentuale delle coppie categoria–mese del periodo futuro con target esplicitamente approvato.","100 × obiettivi categoria–mese approvati / totale categoria–mese attesi nel periodo.","100% è una condizione di qualità della pianificazione, non un risultato economico. Se è inferiore, alcuni confronti non sono attendibili."],
+ worst:["Mese con flusso più negativo","Mese futuro con il saldo economico previsto più basso nella finestra.","Minimo di (Entrate forecast − Uscite forecast) per singolo mese futuro.","Un mese negativo non è automaticamente fuori Piano: vacanze e spese programmate possono renderlo normale. Verifica lo scostamento dal Piano."],
+ months:["Calendario mensile","Ti permette di passare rapidamente dal mese corrente ai mesi successivi e osservare i diversi andamenti.","Ogni valore è il saldo economico forecast del mese. Il colore segnala lo scostamento dal Piano, non soltanto il segno del saldo.","Blu o grigio = in linea/da verificare; rosso = peggioramento significativo del risultato; ambra = categoria a rischio pur con risultato mensile complessivamente vicino al Piano; verde = miglioramento significativo."],
+ trend:["Andamento sui 12 mesi","Mostra a colpo d'occhio come evolve il risultato mensile rispetto al Piano approvato.","Barre: saldo economico forecast; linea tratteggiata: saldo mensile previsto dal Piano, se interamente approvato.","Le barre sotto lo zero non sono necessariamente anomale. Rosso segnala peggioramento significativo del saldo; ambra una singola categoria a rischio; blu un valore neutro, verde un miglioramento rispetto al Piano. Non è liquidità bancaria."],
+ actions:["Priorità e prossime azioni","Raccoglie i rischi e i dati da verificare, prima di decidere come intervenire.","Gli avvisi derivano dai target approvati, dal forecast aggiornato e dalla copertura dei dati.","Prima controlla importazioni, categorie e qualità del forecast. Una previsione peggiore del Piano non comporta la sua modifica automatica."],
+ monthbalance:["Bilancio del mese","Riepiloga le entrate, le uscite e il saldo economico del mese selezionato.","Saldo mese = entrate forecast − uscite forecast; Piano = entrate target − uscite target quando tutti i target sono approvati.","Actual indica solo quanto registrato; forecast comprende la previsione complessiva del mese. Non confondere saldo economico e liquidità."],
+ periodimpact:["Chi contribuisce allo scostamento","Evidenzia le categorie che peggiorano e quelle che compensano il risultato dell'intero periodo.","Per una spesa: Piano − Forecast; per un'entrata: Forecast − Piano. Somma solo mesi futuri e target approvati.","Barre rosse = contributi negativi all'avanzo, verdi = positivi. I compensatori non cancellano la necessità di verificare gli sforamenti."],
+ categories:["Controllo categorie L1/L2","Permette di individuare le categorie che hanno consumato budget o rischiano di superare gli obiettivi.","Piano = target approvato, Actual = uscite/entrate registrate, Forecast = stima di fine mese, Δ = impatto sull'avanzo.","Apri una L1 e seleziona una L2 per la sequenza dei 12 mesi. Una previsione non diventa automaticamente un obiettivo."],
+ categorytrend:["Evoluzione di una categoria","Segue una L2 mese per mese, evidenziando la distanza tra Piano e Forecast.","Il delta delle uscite è Piano − Forecast; per le entrate Forecast − Piano.","Il valore «—» indica assenza di target o previsione attendibile. Il mese chiuso mostra consuntivo, non un obiettivo retroattivo."],
+ flows:["Flussi economici mensili","Confronta il saldo mese per mese e mostra il risultato cumulato dell'intero intervallo.","Saldo mese = Entrate − Uscite; cumulato = somma progressiva dei saldi mensili, partendo convenzionalmente da zero.","Non è il saldo previsto dei conti. Per la liquidità servono anche saldi iniziali verificati, giroconti, investimenti e tempi di pagamento."],
+ chartflows:["Grafico dei flussi","Rappresenta il saldo mensile previsto e il saldo pianificato; aiuta a individuare mesi da analizzare.","Barre = Forecast entrate − uscite; linea = Piano entrate − uscite, quando il mese è coperto.","Il colore delle barre segnala se il forecast è peggiore o migliore del Piano, non il fatto che il saldo sia negativo."],
+ breakdown:["Sforamenti del mese","Elenca le uscite il cui forecast supera il target approvato nel mese selezionato.","Sforamento = Forecast uscite − Piano uscite; delta sul risultato = −sforamento.","Una previsione di sforamento non significa che sia già avvenuto: controlla Actual, residuo e comportamenti futuri."],
+};
+function infoButton(id){
+ const h=controlHelp[id];if(!h)return "";
+ const opened=controlUi.openHelp===id;
+ return '<span class="bf-info-wrap"><button type="button" class="bf-info-trigger" data-bf-control-help="'+esc(id)+'" aria-label="Informazioni: '+esc(h[0])+'" aria-expanded="'+opened+'" title="Spiegazione di '+esc(h[0])+'">i</button>'+
+ (opened?'<span class="bf-help-card" role="note"><strong>'+esc(h[0])+'</strong>'+
+ '<span><b>Cos’è e a cosa serve</b>'+esc(h[1])+'</span>'+
+ '<span><b>Come si calcola</b>'+esc(h[2])+'</span>'+
+ '<span><b>Come leggerlo</b>'+esc(h[3])+'</span>'+
+ '<button type="button" data-bf-control-help-close aria-label="Chiudi spiegazione">Chiudi ×</button></span>':'')+'</span>';
+}
+function sectionHeading(title,id){
+ return '<div class="bf-section-heading"><h3>'+esc(title)+'</h3>'+infoButton(id)+'</div>';
+}
+function kpi(title,id,amount,detail,tone=""){
+ return '<div class="bf-kpi-card '+(tone?'bf-kpi-'+tone:'')+'"><div class="bf-kpi-caption">'+
+ '<span>'+esc(title)+'</span>'+infoButton(id)+'</div><strong>'+amount+'</strong><span>'+detail+'</span></div>';
+}
+function monthTone(m,model){
+ if(!m.active||m.missing||m.planNet===null||m.net===null)return "neutral";
+ const diff=round(m.net-m.planNet);
+ if(materialDelta(diff,m.planNet))return diff<0?"danger":"success";
+ if(model?.risksForMonth(m.month).some(r=>materialDelta(r.metric.delta,r.metric.plan)))return "caution";
+ return "neutral";
+}
+
+const controlUi={period:"ROLLING_12",tab:"SUMMARY",month:null,direction:"EXPENSE",onlyRisks:false,expanded:{},sort:"IMPACT",selectedCategory:null,openHelp:null,sensitivity:"STANDARD"};
+try{const saved=root.localStorage?.getItem("bf-control-sensitivity");if(["HIGH","STANDARD","LOW"].includes(saved))controlUi.sensitivity=saved}catch(e){}
+const sensitivityLimits={HIGH:{eur:15,pct:.05},STANDARD:{eur:30,pct:.10},LOW:{eur:75,pct:.20}};
+function materialDelta(delta,plan){
+ if(delta===null||delta===undefined)return false;
+ const config=sensitivityLimits[controlUi.sensitivity]||sensitivityLimits.STANDARD;
+ return Math.abs(delta)>=config.eur&&Math.abs(delta)>=Math.abs(num(plan))*config.pct;
+}
+
 let currentControlRecord=null,currentControlLive=null,currentControlMeta=null,currentControlHost=null;
 function safeClass(n){return n===null?"":n<-.005?"bf-negative":n>.005?"bf-positive":""}
 function humanDelta(n){return n===null?"—":(n>0?"+":"")+money(n)}
@@ -226,7 +280,7 @@ function alerts(model,month){
  if(model.coverage.missing>0)items.push({type:"quality",title:"Copertura del Piano incompleta",
   text:model.coverage.missing+" obiettivi mensili non approvati nel periodo. I forecast di questi mesi non vengono conteggiati come Piano.",
   action:"Rivedi la copertura e approva i nuovi mesi quando sono stati decisi."});
- const risks=model.risksForMonth(month).slice(0,3);
+ const risks=model.risksForMonth(month).filter(r=>materialDelta(r.metric.delta,r.metric.plan)).slice(0,3);
  for(const r of risks){
   const amount=round(-r.metric.delta);
   items.push({type:"risk",title:r.name+" · rischio di sforamento",
@@ -279,19 +333,29 @@ function tableMonth(model,month){
  let out='';
  for(const g of sorted){
   const ag=g.aggregate;
-  if(controlUi.onlyRisks&&!g.items.some(r=>r.metric.delta!==null&&r.metric.delta<-.005))continue;
+  if(controlUi.onlyRisks&&!g.items.some(r=>materialDelta(r.metric.delta,r.metric.plan)&&r.metric.delta<0))continue;
   const expanded=!!controlUi.expanded[g.key],id=encodeURIComponent(g.key);
   const status=ag.missing?"PROVISIONAL":month<model.current?"CLOSED":"APPROVED";
   out+=line('<button class="bf-tree-toggle" type="button" data-bf-control-expand="'+esc(id)+'" aria-expanded="'+expanded+'">'+(expanded?"▾":"▸")+' '+esc(g.name)+' <small>('+g.items.length+')</small></button>',
     'bf-control-group',ag,ag.missing,status,null);
   if(expanded){
    let items=[...g.items];
-   if(controlUi.onlyRisks)items=items.filter(r=>r.metric.delta!==null&&r.metric.delta<-.005);
+   if(controlUi.onlyRisks)items=items.filter(r=>materialDelta(r.metric.delta,r.metric.plan)&&r.metric.delta<0);
    items.sort((a,b)=>controlUi.sort==="NAME"?a.name.localeCompare(b.name,"it"):
      controlUi.sort==="AMOUNT"?(b.metric.forecast??-Infinity)-(a.metric.forecast??-Infinity):
       (a.metric.delta??Infinity)-(b.metric.delta??Infinity));
-   for(const r of items)out+=line('<button type="button" class="bf-tree-toggle bf-control-indent" data-bf-control-category="'+esc(r.id)+'">'+esc(r.name)+'</button> <small>'+esc(r.nature==="DISCRETIONARY"?"D":r.nature==="NECESSARY"?"N":r.nature==="MANDATORY"?"O":"")+'</small>',
-    'bf-control-child',r.metric,false,r.metric.status,r.id);
+   for(const r of items){
+    const observed=month===model.current?r.metric.actual:r.metric.forecast;
+    const ratio=r.metric.plan!==null&&r.metric.plan>0&&observed!==null?
+     Math.min(100,Math.max(0,100*observed/r.metric.plan)):null;
+    const bar=ratio===null?'':' <span class="bf-budget-mini" title="'+
+     (month===model.current?'Actual / Piano':'Forecast / Piano')+' · '+Math.round(100*observed/r.metric.plan)+'%">'+
+     '<i class="'+(r.metric.forecast!==null&&r.metric.plan!==null&&r.metric.forecast>r.metric.plan+.005?'bf-budget-mini-over':'')+
+     '" style="width:'+ratio+'%"></i></span>';
+    out+=line('<button type="button" class="bf-tree-toggle bf-control-indent" data-bf-control-category="'+esc(r.id)+'">'+
+      esc(r.name)+'</button>'+bar+' <small>'+esc(r.nature==="DISCRETIONARY"?"D":r.nature==="NECESSARY"?"N":r.nature==="MANDATORY"?"O":"")+'</small>',
+     'bf-control-child',r.metric,false,r.metric.status,r.id);
+   }
   }
  }
  return out||'<tr><td colspan="7">Nessuna categoria per il filtro selezionato.</td></tr>';
@@ -299,7 +363,7 @@ function tableMonth(model,month){
 function categoryTimeline(model){
  const selected=model.rows.find(r=>r.id===controlUi.selectedCategory&&r.direction===controlUi.direction);
  if(!selected)return "";
- return '<section class="bf-panel bf-control-category-timeline"><div class="bf-control-section-head"><h3>'+esc(selected.l1Name)+' / '+esc(selected.name)+' · 12 mesi</h3>'+
+ return '<section class="bf-panel bf-control-category-timeline"><div class="bf-control-section-head">'+sectionHeading(selected.l1Name+" / "+selected.name+" · 12 mesi","categorytrend")+
   '<button type="button" data-bf-control-category="CLOSE" class="btn compact ghost">✕ Chiudi dettaglio</button></div>'+
   '<div class="bf-control-overflow"><table class="bf-control-table"><thead><tr><th>Mese</th><th>Piano</th><th>Actual</th><th>Forecast</th><th>Δ sul risultato</th><th>Stato</th></tr></thead><tbody>'+
    model.months.map(m=>{
@@ -310,6 +374,73 @@ function categoryTimeline(model){
    '<p class="bf-control-muted">Il forecast di una categoria è una stima aggiornata, non un nuovo obiettivo. Un valore di Piano «—» indica assenza di approvazione per quel mese.</p></section>';
 }
 
+
+function periodEffects(model){
+ return model.rows.map(r=>{
+  const comparable=model.months.filter(m=>m>=model.current).map(m=>r.months[m])
+    .filter(x=>x.plan!==null&&x.forecast!==null&&x.delta!==null);
+  return {id:r.id,direction:r.direction,name:r.name,l1Name:r.l1Name,
+    effect:round(comparable.reduce((total,x)=>total+x.delta,0)),count:comparable.length};
+ }).filter(x=>x.count>0&&Math.abs(x.effect)>.005)
+  .sort((a,b)=>a.effect-b.effect);
+}
+function impactBars(model){
+ const rows=periodEffects(model),neg=rows.filter(r=>r.effect<0).slice(0,5),
+  pos=rows.filter(r=>r.effect>0).reverse().slice(0,5);
+ const max=Math.max(1,...neg.map(r=>-r.effect),...pos.map(r=>r.effect));
+ const render=(arr,type)=>arr.length?arr.map(r=>{
+  const w=Math.max(3,Math.round(100*Math.abs(r.effect)/max));
+  return '<div class="bf-impact-row"><div class="bf-impact-head"><span>'+esc(r.l1Name)+' / <b>'+esc(r.name)+'</b></span>'+
+   '<strong class="'+(type==="negative"?'bf-negative':'bf-positive')+'">'+humanDelta(r.effect)+'</strong></div>'+
+   '<div class="bf-impact-track"><div class="bf-impact-fill bf-impact-'+type+'" style="width:'+w+'%"></div></div></div>';
+ }).join(''):'<p class="bf-control-muted">Nessun contributo significativo nei mesi confrontabili.</p>';
+ const worst=neg[0]||null;
+ const offset=model.delta!==null&&worst?round(model.delta-worst.effect):null;
+ return '<div class="bf-impact-grid"><div><h4>Penalizzazioni</h4>'+render(neg,"negative")+'</div>'+
+ '<div><h4>Compensazioni</h4>'+render(pos,"positive")+'</div></div>'+
+ (offset!==null?'<p class="bf-impact-insight">La voce peggiore pesa '+money(Math.abs(worst.effect))+
+ ' sul risultato; il contributo netto delle altre categorie è <strong>'+humanDelta(offset)+
+ '</strong>. Questi valori si riferiscono agli scostamenti Piano/Forecast, non ai pagamenti già avvenuti.</p>':'');
+}
+let visualControlChart=null;
+function drawControlChart(host,model){
+ if(visualControlChart){visualControlChart.destroy();visualControlChart=null}
+ const canvas=host?.querySelector?.("[data-bf-control-chart]");
+ const ChartCtor=root.Chart;
+ if(!canvas||!ChartCtor||!canvas.getContext)return;
+ const ctx=canvas.getContext("2d");
+ if(!ctx)return;
+ const shown=model.series;
+ const values=shown.map(m=>m.net);
+ const targets=shown.map(m=>m.planNet);
+ const colors=shown.map(m=>monthTone(m,model)==="danger"?"#D04D56":
+  monthTone(m,model)==="success"?"#20936D":
+   monthTone(m,model)==="caution"?"#D69A43":"#5086CF");
+ visualControlChart=new ChartCtor(ctx,{
+  type:"bar",
+  data:{labels:shown.map(m=>displayMonth(m.month)),datasets:[
+   {type:"bar",label:"Saldo forecast mese",data:values,
+    backgroundColor:colors,borderRadius:4,maxBarThickness:36,order:2},
+   {type:"line",label:"Saldo Piano",data:targets,borderColor:"#7C87A3",
+    backgroundColor:"#7C87A3",borderDash:[6,4],pointRadius:2,
+    borderWidth:2.5,tension:.15,spanGaps:false,order:1}
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,animation:false,interaction:{mode:"index",intersect:false},
+   onClick(_event,elements){if(elements.length){
+    controlUi.month=shown[elements[0].index].month;
+    renderTracking(currentControlHost,currentControlRecord,currentControlLive,currentControlMeta);
+   }},
+   plugins:{legend:{position:"bottom",labels:{usePointStyle:true,boxWidth:10,font:{size:11}}},
+    tooltip:{callbacks:{label(context){return context.dataset.label+": "+
+      (context.parsed.y===null?"—":money(context.parsed.y))}}}},
+   scales:{
+    x:{grid:{display:false},ticks:{maxRotation:0,minRotation:0,font:{size:10}}},
+    y:{grid:{color:"rgba(103,122,148,.13)"},ticks:{callback:v=>new Intl.NumberFormat("it-IT",{notation:"compact",maximumFractionDigits:0}).format(v)+" €"}}
+   }
+  }
+ });
+}
+
 function renderExtended(host,model){
  if(!host||!model||model.error){if(host)host.innerHTML='<p class="bf-control-notice">'+esc(model?.error||"Dati assenti")+'</p>';return}
  const sm=showMonth(model,controlUi.month);
@@ -317,57 +448,91 @@ function renderExtended(host,model){
  const label=controlUi.period==="CALENDAR"?"Anno "+model.current.slice(0,4):"12 mesi · "+displayMonth(model.months[0])+" – "+displayMonth(model.months[11]);
  const closed=sm.month<model.current;
  const coveragePct=model.coverage.expected?Math.round(100*model.coverage.approved/model.coverage.expected):0;
- const focus=model.risksForMonth(sm.month);
+ const focus=model.risksForMonth(sm.month).filter(r=>materialDelta(r.metric.delta,r.metric.plan));
  const bodyAlerts=alerts(model,sm.month).slice(0,5).map(a=>
   '<div class="bf-control-message bf-control-message-'+a.type+'"><strong>'+esc(a.title)+'</strong><p>'+esc(a.text)+'</p><small>'+esc(a.action)+'</small></div>').join('');
  const buttons='<div class="bf-control-buttons">'+
   ["SUMMARY","CATEGORIES","FLOWS"].map((v,i)=>'<button type="button" data-bf-control-tab="'+v+'" class="btn compact '+(controlUi.tab===v?'':'ghost')+'">'+["Sintesi","Categorie","Flussi mensili"][i]+'</button>').join('')+'</div>';
  const select='<div class="bf-control-buttons">'+
   ['ROLLING_12','CALENDAR'].map((v,i)=>'<button type="button" data-bf-control-period="'+v+'" class="btn compact '+(controlUi.period===v?'':'ghost')+'">'+['12 mesi rolling','Anno corrente'][i]+'</button>').join('')+'</div>';
+ const sensitivity='<div class="bf-control-sensitivity"><label for="bfControlSensitivity">Avvisi</label>'+
+  '<select id="bfControlSensitivity" data-bf-control-sensitivity aria-label="Sensibilità dei warning">'+
+  [["HIGH","Alta"],["STANDARD","Standard"],["LOW","Bassa"]].map(([val,label])=>
+   '<option value="'+val+'"'+(controlUi.sensitivity===val?' selected':'')+'>'+label+'</option>').join('')+
+  '</select>'+infoButton("sensitivity")+'</div>';
  const partial=model.coverage.missing>0;
  const monthlyResidue=closed?"—":sm.missing?"Parziale "+money(sm.planExpense-sm.actualExpense):money(sm.planExpense-sm.actualExpense);
+
+ const effects=periodEffects(model),mainRisk=effects.find(x=>x.effect<-.005);
+ const riskName=mainRisk?mainRisk.name:"Nessuno scostamento";
+ const riskAmount=mainRisk?humanDelta(mainRisk.effect):"—";
+ const compareTone=model.delta===null?"neutral":model.delta<-.005?"danger":model.delta>.005?"success":"neutral";
+ const outcomeTone=model.totalForecast!==null&&model.totalForecast<0&&model.delta!==null&&model.delta<0?"caution":"neutral";
+ const hero='<div class="bf-hero-kpis">'+
+  kpi("Risultato economico previsto","outcome",eur(model.totalForecast),
+    'Somma dei saldi mensili · non è liquidità bancaria',outcomeTone)+
+  kpi("Scostamento vs Piano","deviation",humanDelta(model.delta),
+    model.delta===null?'Confronto non disponibile: verifica la copertura':'Differenza prevista sui mesi futuri approvati',compareTone)+
+  kpi("Criticità principale · "+riskName,"periodimpact",riskAmount,
+    mainRisk?mainRisk.count+' mesi confrontabili · impatto sull’avanzo':'Nessuno scostamento negativo significativo',mainRisk?"danger":"neutral")+
+  '</div>';
+ const minor='<div class="bf-control-kpis bf-kpi-minor">'+
+  kpi("Budget spese residuo · "+displayMonth(sm.month),"remaining",monthlyResidue,
+   closed?"Consuntivo chiuso":sm.missing?"Valore parziale, alcuni target non sono approvati":"Piano meno Actual del mese")+
+  kpi("Sforamenti previsti · mese","overspend",String(focus.length),
+   money(focus.reduce((n,r)=>n-r.metric.delta,0))+' · maggiore spesa prevista',focus.length?"caution":"neutral")+
+  kpi("Copertura del Piano","coverage",coveragePct+"%",
+   model.coverage.approved+' / '+model.coverage.expected+' categoria-mesi',partial?"caution":"neutral")+
+  kpi("Flusso netto più basso","worst",model.worst?displayMonth(model.worst.month):"—",
+   eur(model.worst?.net)+' · non indica da solo uno sforamento')+
+  '</div>';
  const top='<div class="bf-control-header"><div><h2>Controllo · '+esc(label)+'</h2>'+
-  '<p>Piano V'+esc(model.revision)+' · confronto con Actual e Forecast · '+esc(model.current.slice(0,7))+
-  ' · nessuna revisione automatica</p></div><button class="btn compact ghost" data-bf-control-reload>↻ Aggiorna dati</button></div>'+
-  '<div class="bf-control-controls">'+select+buttons+'</div>'+
-  '<div class="bf-control-kpis bf-control-kpis-v2">'+
-  '<div><small>Saldo economico previsto · periodo</small><strong class="'+safeClass(model.totalForecast)+'">'+eur(model.totalForecast)+'</strong><span>Entrate meno uscite; non liquidità bancaria</span></div>'+
-  '<div><small>Δ vs Piano · mesi comparabili</small><strong class="'+safeClass(model.delta)+'">'+
-   (model.delta===null?'—':humanDelta(model.delta))+'</strong><span>'+(model.delta===null?'Piano o forecast incompleto: non calcolabile sul totale':'Confronto del periodo selezionato')+'</span></div>'+
-  '<div><small>Budget spese residuo · '+esc(displayMonth(sm.month))+'</small><strong>'+esc(monthlyResidue)+'</strong><span>'+(closed?'Consuntivo chiuso: nessun budget residuo':sm.missing?'Piano − Actual · copertura incompleta':'Piano − Actual · target approvati')+'</span></div>'+
-  '<div><small>Sforamenti previsti · mese</small><strong class="'+(focus.length?'bf-negative':'')+'">'+focus.length+'</strong><span>'+money(focus.reduce((n,r)=>n-r.metric.delta,0))+' di impatto sulle uscite</span></div>'+
-  '<div><small>Copertura target del periodo</small><strong>'+coveragePct+'%</strong><span>'+model.coverage.approved+' / '+model.coverage.expected+' categoria-mesi'+(partial?' · parte provvisoria':'')+'</span></div>'+
-  '<div><small>Mese più critico · flusso netto</small><strong>'+esc(model.worst?displayMonth(model.worst.month):"—")+'</strong><span>'+eur(model.worst?.net)+' · prima dei saldi iniziali</span></div></div>'+
-  (partial?'<p class="bf-control-notice">La copertura del Piano è incompleta: i mesi/categorie senza target esplicito rimangono <strong>provvisori</strong>. Non sono assimilati a un Piano approvato nei confronti o nei totali.</p>':'');
- const monthMenu='<div class="bf-month-strip" aria-label="Scegli mese del controllo">'+model.series.map(m=>
-  '<button type="button" data-bf-control-month="'+m.month+'" class="'+(m.month===sm.month?'active':'')+'">'+
-   '<span>'+esc(displayMonth(m.month))+'</span><small class="'+(m.net!==null&&m.net<0?'bf-negative':'')+'">'+eur(m.net)+'</small>'+
+  '<p>Piano V'+esc(model.revision)+' · Actual aggiornati e Forecast · nessuna revisione automatica</p></div>'+
+  '<button class="btn compact ghost" data-bf-control-reload>↻ Aggiorna dati</button></div>'+
+  '<div class="bf-control-controls">'+select+buttons+sensitivity+'</div>'+
+  hero+minor+
+  (partial?'<p class="bf-control-notice">La copertura del Piano è incompleta: i mesi/categorie senza target esplicito rimangono <strong>provvisori</strong>. Non vengono scambiati per obiettivi approvati.</p>':'');
+ const monthMenu='<div class="bf-months-block">'+sectionHeading("Scegli un mese · scostamenti rispetto al Piano","months")+
+  '<div class="bf-month-strip" aria-label="Scegli mese del controllo">'+model.series.map(m=>
+  '<button type="button" data-bf-control-month="'+m.month+'" aria-pressed="'+(m.month===sm.month)+'" class="'+(m.month===sm.month?'active ':'')+'bf-month-'+monthTone(m,model)+'">'+
+   '<span>'+esc(displayMonth(m.month))+'</span>'+
+   '<strong>'+eur(m.net)+'</strong>'+
+   '<small>'+(m.planNet!==null&&m.net!==null?'Δ '+humanDelta(round(m.net-m.planNet)):(m.active&&m.missing?'Da approvare':'Consuntivo / non confrontabile'))+'</small>'+
    (m.active&&m.missing?'<i title="Target provvisori"></i>':'')+
-   '</button>').join('')+'</div>';
+   '</button>').join('')+'</div></div>';
  let panel='';
  if(controlUi.tab==="SUMMARY"){
-  panel='<div class="bf-control-columns"><section class="bf-panel"><h3>Attenzioni e prossime azioni · '+esc(displayMonth(sm.month))+'</h3>'+
+  panel='<section class="bf-panel bf-chart-panel">'+sectionHeading("Bilancio previsto · Piano e Forecast mese per mese","trend")+
+   '<div class="bf-control-visual"><canvas data-bf-control-chart="overview" role="img" aria-label="Grafico del saldo economico forecast e Piano nei 12 mesi"></canvas></div>'+
+   '<div class="bf-control-legend"><span><i class="bf-legend-blue"></i>In linea o da verificare</span>'+
+   '<span><i class="bf-legend-red"></i>Peggio del Piano</span><span><i class="bf-legend-amber"></i>Categoria a rischio</span><span><i class="bf-legend-green"></i>Meglio del Piano</span>'+
+   '<span><i class="bf-legend-line"></i>Piano</span></div>'+
+   '<p class="bf-control-muted">Il colore confronta Forecast e Piano, non identifica automaticamente come critico ogni mese con saldo negativo. Se manca un target il confronto non viene inventato.</p></section>'+
+   '<div class="bf-control-columns"><section class="bf-panel">'+sectionHeading("Attenzioni e prossime azioni · "+displayMonth(sm.month),"actions")+
     '<div class="bf-control-messages">'+bodyAlerts+'</div></section>'+
-   '<section class="bf-panel"><h3>Bilancio del mese</h3>'+
+    '<section class="bf-panel">'+sectionHeading("Bilancio del mese","monthbalance")+
     '<div class="bf-control-quickrows"><div><span>Entrate previste</span><strong>'+eur(sm.income)+'</strong></div>'+
     '<div><span>Uscite previste</span><strong>'+eur(sm.expense)+'</strong></div>'+
-    '<div><span>Saldo economico mese</span><strong class="'+safeClass(sm.net)+'">'+eur(sm.net)+'</strong></div>'+
+    '<div><span>Saldo economico mese</span><strong>'+eur(sm.net)+'</strong></div>'+
     '<div><span>Saldo mese da Piano</span><strong>'+eur(sm.planNet)+'</strong></div>'+
     '<div><span>Entrate già registrate</span><strong>'+money(sm.actualIncome)+'</strong></div>'+
     '<div><span>Uscite già registrate</span><strong>'+money(sm.actualExpense)+'</strong></div></div>'+
-    '<p class="bf-control-muted">Il confronto col Piano è disponibile solo con copertura completa. Il saldo previsto dei conti richiede saldi bancari e timing dei movimenti.</p></section></div>'+
-    '<section class="bf-panel"><h3>Principali scostamenti sulle uscite · '+esc(displayMonth(sm.month))+'</h3>'+riskTable(focus)+'</section>'+
-    '<section class="bf-panel"><h3>Spese con peggioramento previsto · intero periodo</h3>'+periodRiskTable(model)+'</section>';
+    '<p class="bf-control-muted">Il confronto col Piano richiede target approvati e forecast attendibili; per la liquidità servono anche i saldi e il calendario dei pagamenti.</p></section></div>'+
+    '<section class="bf-panel">'+sectionHeading("Chi migliora e chi peggiora il risultato · intero periodo","periodimpact")+
+     impactBars(model)+'</section>'+
+    '<section class="bf-panel">'+sectionHeading("Sforamenti previsti · "+displayMonth(sm.month),"breakdown")+
+      riskTable(focus)+'</section>';
  }else if(controlUi.tab==="CATEGORIES"){
   const table='<div class="bf-control-overflow"><table class="bf-control-table bf-control-detail"><thead><tr><th>Categoria L1 / L2</th><th>Piano</th><th>Actual</th><th>Forecast</th><th>Δ sul risultato</th><th>Residuo</th><th>Stato</th></tr></thead><tbody>'+
    tableMonth(model,sm.month)+'</tbody></table></div>';
-  panel='<section class="bf-panel"><div class="bf-control-section-head"><h3>Dettaglio per categoria · '+esc(displayMonth(sm.month))+'</h3><div class="bf-control-buttons">'+
+  panel='<section class="bf-panel"><div class="bf-control-section-head">'+sectionHeading("Dettaglio per categoria · "+displayMonth(sm.month),"categories")+'<div class="bf-control-buttons">'+
    ["EXPENSE","INCOME"].map((v,i)=>'<button class="btn compact '+(controlUi.direction===v?'':'ghost')+'" data-bf-control-direction="'+v+'">'+['Uscite','Entrate'][i]+'</button>').join('')+
    '<button class="btn compact ghost" data-bf-control-risk-filter="'+(controlUi.onlyRisks?'ALL':'RISK')+'">'+(controlUi.onlyRisks?'Mostra tutte':'Solo sforamenti')+'</button>'+
    '<button class="btn compact ghost" data-bf-control-sort="'+(controlUi.sort==="IMPACT"?'NAME':'IMPACT')+'">Ordine: '+(controlUi.sort==="IMPACT"?'impatto':'nome')+'</button></div></div>'+
    table+'<p class="bf-control-muted">Espandi una L1 e seleziona una L2 per vedere il tracking su tutti i 12 mesi. Gli importi parziali o provvisori non sono target approvati.</p></section>'+categoryTimeline(model);
  }else{
-  panel='<section class="bf-panel"><h3>Flusso economico mese per mese · '+esc(label)+'</h3>'+
+  panel='<section class="bf-panel">'+sectionHeading("Flusso economico mese per mese · "+label,"flows")+
+   '<div class="bf-control-visual bf-control-visual-short"><canvas data-bf-control-chart="flows" role="img" aria-label="Grafico di confronto saldo economico Piano e Forecast"></canvas></div>'+
   '<div class="bf-control-overflow"><table class="bf-control-table bf-control-timeline"><thead><tr><th>Mese</th><th>Entrate previste</th><th>Uscite previste</th><th>Saldo mese</th><th>Saldo cumulato*</th><th>Saldo Piano**</th><th>Copertura</th></tr></thead><tbody>'+
    model.series.map(m=>'<tr><td><button class="bf-tree-toggle" data-bf-control-month="'+m.month+'">'+esc(displayMonth(m.month))+'</button></td>'+
    '<td>'+eur(m.income)+'</td><td>'+eur(m.expense)+'</td><td class="'+safeClass(m.net)+'">'+eur(m.net)+'</td>'+
@@ -376,6 +541,7 @@ function renderExtended(host,model){
    '<p class="bf-control-muted">* Cumulato dei flussi economici del periodo, con partenza convenzionale da zero. ** Solo mesi coperti interamente da Piano approvato; non è un saldo bancario. Le uscite e gli investimenti mantengono le semantiche delle proiezioni L2 attuali.</p></section>';
  }
  host.innerHTML=top+monthMenu+panel;
+ drawControlChart(host,model);
 }
 function periodRiskTable(model){
  const items=model.rows.filter(r=>r.direction==="EXPENSE").map(r=>{
@@ -400,6 +566,20 @@ function renderTracking(host,approved,live,meta){
 }
 function handleControlClick(e){
  if(!currentControlHost)return false;
+ const help=e.target?.closest?.("[data-bf-control-help]");
+ if(help){
+  const id=help.getAttribute("data-bf-control-help");
+  if(!Object.prototype.hasOwnProperty.call(controlHelp,id))return false;
+  controlUi.openHelp=controlUi.openHelp===id?null:id;
+  renderTracking(currentControlHost,currentControlRecord,currentControlLive,currentControlMeta);
+  currentControlHost.querySelector?.('[data-bf-control-help="'+id+'"]')?.focus?.();
+  return true;
+ }
+ if(e.target?.closest?.("[data-bf-control-help-close]")){
+  controlUi.openHelp=null;
+  renderTracking(currentControlHost,currentControlRecord,currentControlLive,currentControlMeta);
+  return true;
+ }
  const attr=[
   ["data-bf-control-tab","tab"],
   ["data-bf-control-period","period"],
@@ -423,7 +603,24 @@ function handleControlClick(e){
  return false;
 }
 
-const api={annualTotal,monthTotals,categoryRows,fromContinuous,compare,render,buildControl,renderTracking,handleControlClick};
+function handleControlChange(e){
+ const el=e.target?.closest?.("[data-bf-control-sensitivity]");
+ if(!el||!currentControlHost)return false;
+ const value=el.value;
+ if(!Object.prototype.hasOwnProperty.call(sensitivityLimits,value))return false;
+ controlUi.sensitivity=value;
+ try{root.localStorage?.setItem("bf-control-sensitivity",value)}catch(e){}
+ renderTracking(currentControlHost,currentControlRecord,currentControlLive,currentControlMeta);
+ return true;
+}
+function handleControlKey(e){
+ if(e?.key!=="Escape"||!controlUi.openHelp||!currentControlHost)return false;
+ const id=controlUi.openHelp;controlUi.openHelp=null;
+ renderTracking(currentControlHost,currentControlRecord,currentControlLive,currentControlMeta);
+ currentControlHost.querySelector?.('[data-bf-control-help="'+id+'"]')?.focus?.();
+ return true;
+}
+const api={annualTotal,monthTotals,categoryRows,fromContinuous,compare,render,buildControl,renderTracking,handleControlClick,handleControlKey,handleControlChange};
 root.BudgetFamilyMonthlyControl=api;
 if(typeof module!=="undefined"&&module.exports)module.exports=api;
 })(typeof window!=="undefined"?window:globalThis);
