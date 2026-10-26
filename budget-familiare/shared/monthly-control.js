@@ -124,6 +124,7 @@ function buildControl(approved,live,meta={},horizon="ROLLING_12"){
  const start=horizon==="CALENDAR"?current.slice(0,4)+"-01-01":current;
  const months=Array.from({length:12},(_,i)=>addMonth(start,i));
  const metaMap=new Map((meta?.rows||[]).map(r=>[String(r.category_id),r]));
+ const reliabilityMap=meta?.reliability&&typeof meta.reliability==="object"?meta.reliability:null;
  const rows=[];
  for(const [direction,data] of [["EXPENSE",exp],["INCOME",inc]]){
   const forecast=new Map((data.forecast_monthly||[]).map(m=>[String(m.category_id)+"|"+String(m.month),m]));
@@ -142,11 +143,19 @@ function buildControl(approved,live,meta={},horizon="ROLLING_12"){
   for(const cat of categories){
    const id=String(cat.category_id),entry=approved.month_targets[direction+":"+id]||{};
    const natureMeta=metaMap.get(id)||{};
+   const actualHistory=(data.actual_monthly||[]).filter(a=>String(a.category_id)===id&&String(a.month)<current).map(a=>({month:String(a.month),amount:num(a.amount)}));
+   const reliabilityValue=reliabilityMap?Number(reliabilityMap[id]):NaN;
    const rec={id:direction+":"+id,direction,categoryId:id,
     name:String(cat.l2_name||cat.name||"Categoria"),
     l1Id:String(cat.l1_id||cat.l1_name||"Senza L1"),
     l1Name:String(cat.l1_name||"Senza L1"),
     nature:String(direction==="EXPENSE"?(natureMeta.expense_nature||cat.expense_nature||""):(natureMeta.income_nature||cat.income_nature||"")),
+    temporality:String(natureMeta.temporality||""),
+    method:String(natureMeta.forecast_method||""),
+    scope:String(natureMeta.forecast_scope||"CATEGORY"),
+    counterpartyMethods:String(natureMeta.counterparty_methods||""),
+    reliability:reliabilityMap?(Number.isInteger(reliabilityValue)&&reliabilityValue>=1&&reliabilityValue<=5?reliabilityValue:0):null,
+    history:actualHistory,
     months:{}};
    for(const month of months){
     const old=month<current;
