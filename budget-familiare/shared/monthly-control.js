@@ -486,11 +486,12 @@ function renderExtended(host,model){
   kpi("Flusso netto più basso","worst",model.worst?displayMonth(model.worst.month):"—",
    eur(model.worst?.net)+' · non indica da solo uno sforamento')+
   '</div>';
+ const stageNotice='<p class="bf-control-notice"><strong>Piano approvato</strong> = obiettivi fissi; <strong>Consuntivo</strong> = movimenti registrati; <strong>Proiezione tecnica</strong> = stima live preliminare, non validata; <strong>Forecast revisionato</strong> = non ancora creato né approvato. La proiezione non modifica il Piano.</p>';
  const top='<div class="bf-control-header"><div><h2>Controllo · '+esc(label)+'</h2>'+
   '<p>Piano approvato V'+esc(model.revision)+' · Consuntivi aggiornati · Proiezione tecnica non revisionata</p></div>'+
   '<button class="btn compact ghost" data-bf-control-reload>↻ Aggiorna dati</button></div>'+
   '<div class="bf-control-controls">'+select+buttons+sensitivity+'</div>'+
-  hero+minor+
+  stageNotice+hero+minor+
   (partial?'<p class="bf-control-notice">La copertura del Piano è incompleta: i mesi/categorie senza target esplicito rimangono <strong>provvisori</strong>. Non vengono scambiati per obiettivi approvati.</p>':'');
  const monthMenu='<div class="bf-months-block">'+sectionHeading("Scegli un mese · scostamenti rispetto al Piano","months")+
   '<div class="bf-month-strip" aria-label="Scegli mese del controllo">'+model.series.map(m=>
