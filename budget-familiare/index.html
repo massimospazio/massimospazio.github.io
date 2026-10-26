@@ -188,6 +188,20 @@
 @media(max-width:900px){.process-nav{grid-template-columns:repeat(7,132px)}.process-context{align-items:flex-start;flex-direction:column}.process-subnav{width:100%;justify-content:flex-start}}
 @media(max-width:650px){.process-shell{padding:8px}.process-overline span{display:none}.process-step{min-width:126px}.process-context-copy{display:grid;gap:2px}.process-subnav .tab{flex:1 1 auto;justify-content:center}}
 
+
+.duplicate-review-panel{margin:14px 0}.duplicate-review-clear{font-size:12px;color:#24704d;background:#f0fdf4;border:1px solid #bbebd1;border-radius:9px;padding:10px 12px}
+.duplicate-review-heading{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;padding:13px 15px;background:#fff8e9;border:1px solid #e9bf76;border-radius:11px 11px 0 0}
+.duplicate-review-heading strong{font-size:15px;color:#875115}.duplicate-review-heading p{margin:5px 0 0;font-size:12px;line-height:1.5;color:#805a25}
+.duplicate-review-item{border:1px solid #e4cfaa;border-top:0;padding:13px 15px;background:#fff}
+.duplicate-review-item:last-child{border-radius:0 0 11px 11px}
+.duplicate-review-primary{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:12px;color:#63758b}
+.duplicate-review-primary strong{font-size:17px;color:#213e5a;font-variant-numeric:tabular-nums}
+.duplicate-review-pill{border-radius:20px;background:#fef1d6;color:#986014;padding:4px 9px;font-size:10px;font-weight:800}
+.duplicate-review-compare{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}
+.duplicate-review-compare>div{display:flex;flex-direction:column;gap:6px;padding:11px 12px;border-radius:8px;background:#f7fafc;border:1px solid #dce6ee;min-width:0}
+.duplicate-review-compare small{font-size:11px;color:#5c7088}.duplicate-review-compare strong{font-size:12px;color:#263f5b;overflow-wrap:anywhere}
+.duplicate-review-actions{display:flex;gap:8px;flex-wrap:wrap}.duplicate-review-actions .btn{white-space:normal}
+@media(max-width:650px){.duplicate-review-compare{grid-template-columns:1fr}.duplicate-review-heading{flex-direction:column}}
 </style>
 <style>
 .purchase-financing-controls{display:grid;grid-template-columns:minmax(200px,1fr) minmax(140px,190px) auto;gap:8px;align-items:center;margin:6px 0}
@@ -268,6 +282,7 @@
             <div id="importUploadMsg"></div>
           </div>
           <div id="importsTable"></div>
+          <div id="duplicateReviewPanel" class="duplicate-review-panel"></div>
           <div id="importDetailPanel" class="import-detail-panel hidden"></div></div>
       </div>
     </section>
@@ -987,7 +1002,7 @@ async function init(){const {data:{session}}=await sb.auth.getSession();if(sessi
 function showLogin(){$('loginView').classList.remove('hidden');$('appView').classList.add('hidden')}
 async function showApp(user){$('loginView').classList.add('hidden');$('appView').classList.remove('hidden');$('userEmail').textContent=user.email||user.id;await loadAll()}
 async function loadAll(){await loadOverview();await loadMovementsData()}
-async function loadOverview(){try{overview=await rpc('dashboard_read_v1');renderOverview()}catch(e){console.error(e);$('accountsTable').innerHTML=`<div class="msg error">${esc(e.message)}</div>`}}
+async function loadOverview(){try{overview=await rpc('dashboard_read_v1');renderOverview();await loadImportDuplicateReviews()}catch(e){console.error(e);$('accountsTable').innerHTML=`<div class="msg error">${esc(e.message)}</div>`}}
 async function loadMovementsData(){
   try{
     // Evita di lanciare contemporaneamente tutte le RPC pesanti:
@@ -1268,6 +1283,54 @@ function importStateInfo(x){
   return {label:'Completato',cls:'ok'};
 }
 function importStateBadge(x){const s=importStateInfo(x);return '<span class="import-status '+s.cls+'">'+esc(s.label)+'</span>'}
+// V74.2.7 — reviewed bank-import collisions. Pending candidates are NOT transactions.
+let pendingDuplicateReviews=[];
+async function loadImportDuplicateReviews(){
+ const panel=$('duplicateReviewPanel');if(!panel)return;
+ try{
+  const result=await rpc('dashboard_ing_duplicate_reviews_v1',{p_limit:100});
+  pendingDuplicateReviews=Array.isArray(result?.rows)?result.rows:[];
+  const total=Number(result?.pending_count||pendingDuplicateReviews.length);
+  if(!total){panel.innerHTML='<div class="duplicate-review-clear">✓ Nessun potenziale duplicato ING in attesa di conferma.</div>';return}
+  panel.innerHTML='<div class="duplicate-review-heading"><div><strong>Potenziali duplicati ING da verificare · '+nfmt(total)+'</strong>'+
+   '<p>Stesso conto, data e importo (con segno). Questi movimenti sono temporaneamente <b>fuori da consuntivi, budget e previsioni</b>, finché non decidi.</p></div>'+
+   '<button type="button" class="btn ghost compact" data-duplicate-review-refresh>↻ Aggiorna</button></div>'+
+   pendingDuplicateReviews.map(r=>
+   '<div class="duplicate-review-item"><div class="duplicate-review-primary"><span class="duplicate-review-pill">IN SOSPESO · non contabilizzato</span>'+
+   '<strong>'+esc(new Date(String(r.transaction_date)+'T12:00:00Z').toLocaleDateString('it-IT',{timeZone:'UTC'}))+' · '+euro(r.amount)+'</strong><span>'+esc(r.account||'Conto ING')+'</span></div>'+
+   '<div class="duplicate-review-compare"><div><small>Già presente · movimento di riferimento</small>'+
+    '<strong>'+esc(r.matched_description||'Descrizione non disponibile')+'</strong>'+
+    '<small>Importato '+esc(String(r.matched_imported_at||'').slice(0,10))+'</small></div>'+
+   '<div><small>Nuova riga esclusa · file '+esc(String(r.filename||'').replace(/^.*__/,''))+'</small>'+
+    '<strong>'+esc(r.description||r.causale||'Descrizione non disponibile')+'</strong>'+
+    '<small>Importata '+esc(String(r.imported_at||'').slice(0,10))+'</small></div></div>'+
+   '<div class="duplicate-review-actions">'+
+    '<button type="button" class="btn compact" data-duplicate-review-id="'+esc(r.id)+'" data-duplicate-review-decision="CONFIRMED_DUPLICATE">Conferma duplicato · escludi</button>'+
+    '<button type="button" class="btn ghost compact" data-duplicate-review-id="'+esc(r.id)+'" data-duplicate-review-decision="CONFIRMED_REAL">È un movimento reale · includi</button>'+
+   '</div></div>').join('')+
+   (total>pendingDuplicateReviews.length?'<p class="muted small">Visualizzati '+nfmt(pendingDuplicateReviews.length)+' di '+nfmt(total)+' casi; risolvi i primi per caricare gli altri.</p>':'');
+ }catch(e){
+  panel.innerHTML='<div class="msg error">Impossibile verificare i duplicati da confermare: '+esc(e.message||'Errore')+' <button type="button" class="btn ghost compact" data-duplicate-review-refresh>Riprova</button></div>';
+ }
+}
+async function resolveImportDuplicateReview(id,decision,button){
+ const review=pendingDuplicateReviews.find(r=>String(r.id)===String(id));
+ if(!review||!['CONFIRMED_DUPLICATE','CONFIRMED_REAL'].includes(decision))return;
+ const isReal=decision==='CONFIRMED_REAL';
+ const explain=isReal?
+  'Vuoi confermare che il movimento '+euro(review.amount)+' del '+String(review.transaction_date)+' è una transazione REALE distinta? Verrà aggiunto a tutti i consuntivi e alle analisi.':
+  'Confermi che il movimento '+euro(review.amount)+' del '+String(review.transaction_date)+' è un DUPLICATO? Resterà escluso e sarà tracciato nel registro di importazione.';
+ if(!window.confirm(explain))return;
+ if(button)button.disabled=true;
+ try{
+  await rpc('dashboard_resolve_ing_duplicate_review_v1',{p_review_id:id,p_decision:decision});
+  await loadOverview();
+  await loadMovementsData();
+ }catch(e){
+  alert('Decisione non salvata: '+(e.message||String(e)));
+  if(button)button.disabled=false;
+ }
+}
 function renderImports(imports){
   const all=imports||[],rows=showAllImports?all:all.slice(0,5);
   if($('toggleImportHistory')){
@@ -4467,6 +4530,11 @@ $('openImportUpload').onclick=()=>{$('importUploadPanel').classList.toggle('hidd
 $('toggleImportHistory').onclick=()=>{showAllImports=!showAllImports;renderImports(overview?.imports||[])};
 $('cancelImportUpload').onclick=()=>{$('importUploadPanel').classList.add('hidden');importUploadMessage('');$('importFile').value=''};
 $('uploadImportFile').onclick=uploadBankImport;
+$('duplicateReviewPanel').addEventListener('click',e=>{
+ const refresh=e.target.closest('[data-duplicate-review-refresh]');if(refresh){loadImportDuplicateReviews();return}
+ const btn=e.target.closest('[data-duplicate-review-id]');
+ if(btn)resolveImportDuplicateReview(btn.dataset.duplicateReviewId,btn.dataset.duplicateReviewDecision,btn);
+});
 $('importsTable').addEventListener('click',e=>{
   const detail=e.target.closest('[data-import-detail]');if(detail){openImportDetail(detail.dataset.importDetail);return}
   const down=e.target.closest('[data-import-download]');if(down){const row=(overview?.imports||[]).find(x=>x.id===down.dataset.importDownload);downloadImportFile(row)}
