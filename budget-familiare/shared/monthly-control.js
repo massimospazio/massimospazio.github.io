@@ -229,6 +229,11 @@ function buildControl(approved,live,meta={},horizon="ROLLING_12"){
 
 // Self-contained, actionable help for every key metric and section. No external service.
 const controlHelp={
+ incomeprogress:["Entrate effettive vs Piano","Quanto è stato incassato rispetto alle entrate pianificate nel mese selezionato.","Percentuale = Consuntivo entrate diviso Piano entrate.","Un accredito può arrivare negli ultimi giorni: nessun allarme automatico dal ritmo."],
+ expenseprogress:["Uscite effettive vs Piano","Budget spese e movimenti registrati separati dal Piano.","Percentuale = Consuntivo uscite diviso Piano uscite.","Un mese parziale non dimostra risparmio strutturale."],
+ freshness:["Ultima data movimento e import","Data dell'ultimo movimento registrato e dell'ultima importazione per ING e Trade Republic.","La data del file può essere successiva all'ultimo movimento contenuto.","Le date indicano aggiornamento, non certificano completezza bancaria."],
+ natureprogress:["Avanzamento per natura","Usa le nature O, N, D e NC già presenti nella pianificazione; i risparmi/investimenti sono separati.","Ogni L2 appartiene a un solo gruppo di natura.","Il residuo del mese non è un risparmio consolidato."],
+ controlboard:["Tabellone L1/L2","Confronta il Piano con il Consuntivo per le categorie familiari già utilizzate nella pianificazione.","Delta = Consuntivo − Piano, in euro e percentuale; con Piano zero la percentuale non è definita.","Il cumulato e i warning configurabili saranno implementati nella prossima release."],
  modes:["Quattro lenti di controllo","Tre modalità principali sono assegnate a ciascuna L2 usando natura, temporalità e metodo Baseline. La quarta segnala le voci da rivedere.","Programmate = metodo fisso e ricorrenza nota; Da storico = metodo storico; Discrezionali = natura D. Da rivedere incrocia bassa affidabilità, assenza di valutazione ed evidenze reali.","L’affidabilità è trasversale: gli importi della quarta lente non devono essere sommati ai primi tre. Il mese corrente ha consuntivi parziali; il metodo Baseline mostrato è quello attuale, mentre il Piano è quello approvato."],
  outcome:["Piano approvato","Risultato economico programmato nei mesi del periodo selezionato.","Somma dei target mensili approvati di entrata meno i target di uscita.","È il riferimento principale: non cambia quando si aggiornano i movimenti. Non è il saldo del conto."],
  deviation:["Confronto tecnico non validato","Accosta la stima live al Piano approvato, senza presentarla come un Forecast deliberato.","Differenza = saldo economico della stima tecnica meno saldo economico del Piano, per gli stessi mesi. Dove disponibile si distingue la differenza iniziale da quella sorta nei ricalcoli successivi.","Una differenza negativa non prova nuove spese o un peggioramento dopo l’approvazione. Controlla le categorie, il consuntivo e l’origine del divario."],
@@ -823,38 +828,32 @@ function renderExtended(host,model){
  const partial=model.coverage.missing>0;
  const monthlyResidue=closed?"—":sm.missing?"Parziale "+money(sm.planExpense-sm.actualExpense):money(sm.planExpense-sm.actualExpense);
 
+
  const actualOvers=actualOverBudget(model,sm.month);
  const actualAlerts=actualControlAlerts(model,sm.month);
  const bodyActualAlerts=actualAlerts.map(a=>'<div class="bf-control-message bf-control-message-'+a.type+'"><strong>'+esc(a.title)+'</strong><p>'+esc(a.text)+'</p><small>'+esc(a.action)+'</small></div>').join('');
- const actualPlan=sm.planExpense!==null?sm.planExpense:0;
- const monthSpent=sm.actualExpense;
- const monthRemaining=closed?null:sm.missing?null:round(actualPlan-monthSpent);
- const spentRatio=actualPlan>0?Math.min(100,Math.max(0,Math.round(100*monthSpent/actualPlan))):monthSpent>0?100:0;
- const hero='<div class="bf-hero-kpis bf-control-first-row bf-control-actual-first">'+
-  kpi("Piano approvato · "+(controlUi.period==="CALENDAR"?"anno corrente":"12 mesi"),"outcome",eur(model.planTotal),
-   'Avanzo economico obiettivo · riferimento fisso',"neutral")+
-  '<div class="bf-kpi-card bf-kpi-actual"><div class="bf-kpi-caption"><span>Movimenti registrati · '+esc(displayMonth(sm.month))+'</span>'+infoButton("monthbalance")+'</div>'+
-    '<div class="bf-tech-comparison"><div><small>Entrate effettive</small><strong>'+money(sm.actualIncome)+'</strong></div>'+
-    '<div><small>Uscite effettive</small><strong>'+money(sm.actualExpense)+'</strong></div></div>'+
-    '<span>'+(closed?'Mese chiuso':sm.month>model.current?'Mese futuro: movimenti non ancora disponibili':'Consuntivo parziale, fino agli ultimi movimenti importati')+'</span></div>'+
-  '<div class="bf-kpi-card '+(monthRemaining!==null&&monthRemaining<0?'bf-kpi-danger':'bf-kpi-neutral')+'"><div class="bf-kpi-caption"><span>Budget spese '+esc(displayMonth(sm.month))+' · residuo</span>'+infoButton("remaining")+'</div>'+
-   '<strong>'+eur(monthRemaining)+'</strong>'+
-   '<span>Budget mensile '+eur(sm.missing?null:sm.planExpense)+' − spese registrate '+money(sm.actualExpense)+'</span>'+
-   (!closed&&!sm.missing?'<div class="bf-actual-budget-track" aria-label="Budget consumato '+spentRatio+'%"><span style="width:'+spentRatio+'%"></span></div>':'')+
-   '<span>'+(sm.missing?'Target incompleti':closed?'Mese già concluso':spentRatio+'% del budget mensile utilizzato')+'</span></div></div>';
- const minor='<div class="bf-control-kpis bf-kpi-minor bf-control-actual-minor">'+
-  kpi("Categorie già oltre il budget","breakdown",String(actualOvers.length),
-    'Solo uscite effettivamente registrate nel mese',actualOvers.length?"danger":"neutral")+
-  kpi("Copertura obiettivi Piano","coverage",coveragePct+"%",
-    model.coverage.approved+' / '+model.coverage.expected+' categoria-mesi',partial?"caution":"neutral")+
-  '</div>';
- const stageNotice='<p class="bf-control-notice"><strong>Il Controllo parte da ciò che è certo:</strong> obiettivi del Piano approvato e movimenti effettivamente registrati. La previsione automatica del futuro è ancora sperimentale: non viene usata per giudicare l’andamento né per generare allarmi. Puoi consultarla separatamente nell’approfondimento in fondo alla Sintesi.</p>';
+ const incomeTotals=controlDirectionTotals(model,sm.month,"INCOME");
+ const expenseTotals=controlDirectionTotals(model,sm.month,"EXPENSE");
+ const elapsed=controlMonthProgress(sm.month,model.freshness?.as_of_date);
+ const planPanel='<section class="bf-v828-card bf-v828-year">'+
+  '<div class="bf-kpi-caption"><span>Avanzo Piano approvato · '+(controlUi.period==="CALENDAR"?"anno corrente":"12 mesi")+'</span>'+infoButton("outcome")+'</div>'+
+  '<strong>'+eur(model.planTotal)+'</strong>'+
+  '<p>Riferimento fisso · approvato V'+esc(model.revision)+'</p>'+
+  '<div class="bf-v828-updated"><span>Avanzo aggiornato</span><b>—</b><small>Non calcolato: proiezione a finire da validare</small></div></section>';
+ const hero='<div class="bf-v828-hero">'+planPanel+
+  controlProgressCard("Entrate","incomeprogress",incomeTotals,sm.month)+
+  controlProgressCard("Uscite","expenseprogress",expenseTotals,sm.month)+'</div>';
+ const progressText=sm.month===model.current?"Mese in corso":sm.month<model.current?"Mese chiuso":"Mese futuro";
+ const freshness='<section class="bf-v828-freshness"><div><b>'+progressText+' · '+elapsed+'% trascorso</b>'+
+  '<span>Confronta questa percentuale con l’avanzamento del Piano: non indica da sola se sei sopra o sotto budget.</span></div>'+
+  '<div class="bf-v828-freshness-banks">'+controlBankFreshness(model)+'</div>'+infoButton("freshness")+'</section>';
+ const targetQuality=partial?'<p class="bf-control-notice"><strong>Attenzione:</strong> alcuni obiettivi mensili non risultano approvati. I valori mancanti restano non confrontabili.</p>':'';
+ const stageNotice='<p class="bf-control-notice"><strong>Controllo operativo:</strong> consuntivi importati confrontati con il Piano approvato. Un mese aperto è sempre parziale e il residuo non è un risparmio realizzato. Il confronto cumulato e le soglie di warning saranno disponibili nel rilascio successivo.</p>';
  const top='<div class="bf-control-header"><div><h2>Controllo · '+esc(label)+'</h2>'+
-  '<p>Piano approvato V'+esc(model.revision)+' · Consuntivi aggiornati · Proiezione tecnica non revisionata</p></div>'+
+  '<p>Piano approvato V'+esc(model.revision)+' · Consuntivi importati · Nessun Forecast revisionato</p></div>'+
   '<button class="btn compact ghost" data-bf-control-reload>↻ Aggiorna dati</button></div>'+
   '<div class="bf-control-controls">'+select+buttons+'</div>'+
-  stageNotice+hero+minor+
-  (partial?'<p class="bf-control-notice">La copertura del Piano è incompleta: i mesi/categorie senza target esplicito rimangono <strong>provvisori</strong>. Non vengono scambiati per obiettivi approvati.</p>':'');
+  stageNotice+hero+freshness+targetQuality;
  const monthMenu='<div class="bf-months-block">'+sectionHeading("Il Piano mese per mese · saldo economico programmato","months")+
   '<p class="bf-control-muted">Il numero grande è il <b>saldo del Piano</b> (entrate programmate − uscite programmate). Solo per il mese in corso compare anche il <b>consuntivo parziale</b>; i mesi futuri non sono ancora un consuntivo.</p>'+
   '<div class="bf-month-strip" aria-label="Mesi del Piano approvato">'+model.series.map(m=>{
@@ -870,20 +869,14 @@ function renderExtended(host,model){
    }).join('')+'</div></div>';
  let panel='';
  if(controlUi.tab==="SUMMARY"){
-  panel='<section class="bf-panel bf-chart-panel">'+sectionHeading("Saldo economico programmato · Piano approvato","trend")+
-   '<div class="bf-control-visual"><canvas data-bf-control-chart="overview" role="img" aria-label="Saldi economici programmati mese per mese e consuntivo parziale del mese corrente"></canvas></div>'+
-   '<p class="bf-control-muted">Le barre rappresentano il Piano: entrate mensili programmate meno uscite programmate. Il punto separato indica solo il consuntivo parziale del mese corrente, non una previsione di chiusura. Non è un saldo bancario.</p></section>'+
-   '<div class="bf-control-columns"><section class="bf-panel">'+sectionHeading("Verifica movimenti e budget · "+displayMonth(sm.month),"actions")+
-    '<div class="bf-control-messages">'+bodyActualAlerts+'</div></section>'+
-    '<section class="bf-panel">'+sectionHeading("Obiettivi e consuntivo del mese","monthbalance")+
-    '<div class="bf-control-quickrows"><div><span>Entrate da Piano</span><strong>'+eur(sm.missing?null:sm.planIncome)+'</strong></div>'+
-    '<div><span>Uscite da Piano</span><strong>'+eur(sm.missing?null:sm.planExpense)+'</strong></div>'+
-    '<div><span>Saldo economico da Piano</span><strong>'+eur(sm.planNet)+'</strong></div>'+
-    '<div><span>Entrate registrate</span><strong>'+money(sm.actualIncome)+'</strong></div>'+
-    '<div><span>Uscite registrate</span><strong>'+money(sm.actualExpense)+'</strong></div>'+
-    '<div><span>Residuo budget spese</span><strong>'+eur(sm.missing?null:round(sm.planExpense-sm.actualExpense))+'</strong></div></div>'+
-    '<p class="bf-control-muted">Il consuntivo di un mese in corso è parziale e non è direttamente confrontabile con un budget mensile intero come previsione. Nessuna interpolazione giornaliera è applicata.</p></section></div>'+
-    technicalDetails(model);
+  panel=renderNatureProgress(model,sm.month)+renderControlBoard(model,sm.month)+
+   '<section class="bf-panel bf-v828-checks">'+sectionHeading("Verifiche sui movimenti effettivi · "+displayMonth(sm.month),"actions")+
+   '<div class="bf-control-messages">'+bodyActualAlerts+'</div></section>'+
+   monthMenu+
+   '<section class="bf-panel bf-chart-panel">'+sectionHeading("Saldi programmati · Piano approvato","trend")+
+   '<div class="bf-control-visual"><canvas data-bf-control-chart="overview" role="img" aria-label="Saldi economici programmati del Piano e consuntivo parziale corrente"></canvas></div>'+
+   '<p class="bf-control-muted">Barre = saldo economico programmato, punto = consuntivo parziale del mese corrente. Non rappresenta liquidità bancaria o un Forecast revisionato.</p></section>'+
+   technicalDetails(model);
  }else if(controlUi.tab==="CATEGORIES"){
   const table='<div class="bf-control-overflow"><table class="bf-control-table bf-control-detail"><thead><tr><th>Categoria L1 / L2</th><th>Budget Piano</th><th>Consuntivo registrato</th><th>Residuo</th><th>Stato target</th></tr></thead><tbody>'+
    tableMonth(model,sm.month)+'</tbody></table></div>';
@@ -909,7 +902,7 @@ function renderExtended(host,model){
    '<p class="bf-control-muted">* Cumulato dei saldi del Piano, a partire convenzionalmente da zero: non è la giacenza dei conti. ** Per il mese corrente sono mostrati solo i movimenti registrati, senza proiezioni automatiche.</p></section>';
 
  }
- host.innerHTML=top+(controlUi.tab==="SUMMARY"?renderModeTracking(model,sm.month):"")+monthMenu+panel;
+ host.innerHTML=top+(controlUi.tab==="SUMMARY"?panel:monthMenu+panel);
  drawControlChart(host,model);
  drawCategoryChart(host,model);
 }
@@ -964,6 +957,11 @@ function handleControlClick(e){
   return true;
  }
  const attr=[
+  ["data-bf-control-board-expand-all","boardExpandAll"],
+  ["data-bf-control-board-expand","boardExpand"],
+  ["data-bf-control-board-sort","boardSort"],
+  ["data-bf-control-board-direction","boardDirection"],
+  ["data-bf-control-board-nature","boardNature"],
   ["data-bf-control-tab","tab"],
   ["data-bf-control-mode","mode"],
   ["data-bf-control-mode-more","modeMore"],
@@ -978,7 +976,16 @@ function handleControlClick(e){
  for(const [name,field] of attr){
   const el=e.target?.closest?.("["+name+"]");if(!el)continue;
   const value=el.getAttribute(name);
-  if(field==="modeMore")controlUi.modeShowAll=value==="ALL";
+  if(field==="boardExpandAll"){
+   controlUi.boardExpanded={};
+   if(value==="ALL")for(const r of currentControlModel?.rows||[])if(r.direction===controlUi.boardDirection)
+     controlUi.boardExpanded[r.l1Id+"|"+r.l1Name]=true;
+  }else if(field==="boardExpand"){
+   const id=decodeURIComponent(value);controlUi.boardExpanded[id]=!controlUi.boardExpanded[id];
+  }else if(field==="boardSort"){controlUi.boardSort=value;}
+  else if(field==="boardDirection"){controlUi.boardDirection=value;controlUi.boardNature="ALL";}
+  else if(field==="boardNature"){controlUi.boardNature=value;}
+  else if(field==="modeMore")controlUi.modeShowAll=value==="ALL";
   else if(field==="mode"){controlUi.mode=value;controlUi.modeShowAll=false}
   else if(field==="expand"){const key=decodeURIComponent(value);controlUi.expanded[key]=!controlUi.expanded[key]}
   else if(field==="category")controlUi.selectedCategory=value==="CLOSE"?null:value;

@@ -8,17 +8,17 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=74.2.7-20261026"></script>
-<script src="../shared/app-config.js?v=74.2.7-20261026"></script>
-<script src="../shared/contextual-help.js?v=74.2.7-20261026" defer></script>
+<script src="../shared/supabase-client.js?v=74.2.8-20261027"></script>
+<script src="../shared/app-config.js?v=74.2.8-20261027"></script>
+<script src="../shared/contextual-help.js?v=74.2.8-20261027" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<link rel="stylesheet" href="../shared/health-reserve.css?v=74.2.7-20261026">
-<link rel="stylesheet" href="../shared/approved-plan.css?v=74.2.7-20261026">
-<link rel="stylesheet" href="../shared/monthly-control.css?v=74.2.7-20261026">
-<link rel="stylesheet" href="../shared/scenario-strategy.css?v=74.2.7-20261026">
-<link rel="stylesheet" href="../shared/scenario-uncertainty.css?v=74.2.7-20261026">
-<link rel="stylesheet" href="../shared/baseline-uncertainty.css?v=74.2.7-20261026">
-<link rel="stylesheet" href="../shared/single-plan-board.css?v=74.2.7-20261026">
+<link rel="stylesheet" href="../shared/health-reserve.css?v=74.2.8-20261027">
+<link rel="stylesheet" href="../shared/approved-plan.css?v=74.2.8-20261027">
+<link rel="stylesheet" href="../shared/monthly-control.css?v=74.2.8-20261027">
+<link rel="stylesheet" href="../shared/scenario-strategy.css?v=74.2.8-20261027">
+<link rel="stylesheet" href="../shared/scenario-uncertainty.css?v=74.2.8-20261027">
+<link rel="stylesheet" href="../shared/baseline-uncertainty.css?v=74.2.8-20261027">
+<link rel="stylesheet" href="../shared/single-plan-board.css?v=74.2.8-20261027">
 <style>
 :root{--bg:#f4f6fa;--card:#fff;--text:#17263e;--muted:#58677d;--line:#dce4ee;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 4px 18px rgba(15,23,42,.045);--sc-blue:#2563eb;--sc-blue-soft:#eff6ff;--sc-green:#0ea87a;--sc-red:#ef5b73;--sc-purple:#7658e6;--sc-ink:#17263e}
 *{box-sizing:border-box}
@@ -2993,11 +2993,11 @@ body{font-size:16px;line-height:1.5}
   </div>
 </div>
 
-<script src="../shared/scenario-strategy.js?v=74.2.7-20261026"></script>
-<script src="../shared/scenario-uncertainty.js?v=74.2.7-20261026"></script>
-<script src="../shared/baseline-uncertainty.js?v=74.2.7-20261026"></script>
-<script src="../shared/single-plan-board.js?v=74.2.7-20261026"></script>
-<script src="../shared/monthly-control.js?v=74.2.7-20261026"></script>
+<script src="../shared/scenario-strategy.js?v=74.2.8-20261027"></script>
+<script src="../shared/scenario-uncertainty.js?v=74.2.8-20261027"></script>
+<script src="../shared/baseline-uncertainty.js?v=74.2.8-20261027"></script>
+<script src="../shared/single-plan-board.js?v=74.2.8-20261027"></script>
+<script src="../shared/monthly-control.js?v=74.2.8-20261027"></script>
 <script>
 const sb=window.appSupabase;
 if(typeof Chart!=="undefined"){
@@ -9181,6 +9181,8 @@ async function showBudgetControlView(){
    const reliability=await rpc("dashboard_reporting_list_baseline_reliability_v1");
    if(reliability&&typeof reliability==="object"&&!Array.isArray(reliability))meta.reliability=reliability;
   }catch(err){meta.reliability=null}
+  try{meta.freshness=await rpc("dashboard_control_data_freshness_v1");}
+  catch(err){meta.freshness=null}
   window.BudgetFamilyMonthlyControl?.renderTracking(host,approved,live,meta);
  }catch(error){
   host.innerHTML='<p class="bf-control-notice"><strong>Impossibile completare il controllo:</strong> '+esc(String(error?.message||error))+'</p>'+
@@ -9795,8 +9797,8 @@ $("rpcDiagnosticsModal")?.addEventListener("click",function(e){if(e.target===$("
 document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!$("rpcDiagnosticsModal")?.classList.contains("hidden"))closeRpcDiagnostics()});
 init();
 </script>
-<script src="../shared/health-reserve.js?v=74.2.7-20261026"></script>
-<script src="../shared/approved-plan.js?v=74.2.7-20261026"></script>
+<script src="../shared/health-reserve.js?v=74.2.8-20261027"></script>
+<script src="../shared/approved-plan.js?v=74.2.8-20261027"></script>
 </body>
 </html>
 
