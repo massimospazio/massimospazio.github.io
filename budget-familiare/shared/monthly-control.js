@@ -128,6 +128,8 @@ function buildControl(approved,live,meta={},horizon="ROLLING_12"){
  for(const [direction,data] of [["EXPENSE",exp],["INCOME",inc]]){
   const forecast=new Map((data.forecast_monthly||[]).map(m=>[String(m.category_id)+"|"+String(m.month),m]));
   const historic=new Map((data.actual_monthly||[]).map(m=>[String(m.category_id)+"|"+String(m.month),m]));
+  const snapshot=approved?.[direction.toLowerCase()+"_at_approval"];
+  const atApprovalMap=new Map((snapshot?.forecast_monthly||[]).map(m=>[String(m.category_id)+"|"+String(m.month),m]));
   const categories=[...(data.categories||[])];
   const categoryIds=new Set(categories.map(c=>String(c.category_id)));
   for(const compound of Object.keys(approved.month_targets)){
@@ -149,13 +151,15 @@ function buildControl(approved,live,meta={},horizon="ROLLING_12"){
    for(const month of months){
     const old=month<current;
     const f=forecast.get(id+"|"+month),a=historic.get(id+"|"+month);
+    const atApproval=atApprovalMap.get(id+"|"+month);
+    const approvalEstimate=!old&&atApproval&&Number.isFinite(Number(atApproval.effective_amount))?num(atApproval.effective_amount):null;
     const actual=old?(a?num(a.amount):0):(month===current?num(f?.actual_to_date):0);
     const predicted=old?actual:(f?num(f.effective_amount):(cat._archived?null:0));
     const planned=has(entry,month)&&Number.isFinite(Number(entry[month]))?num(entry[month]):null;
     const status=old?"CLOSED":planned!==null?"APPROVED":"PROVISIONAL";
     const delta=(!old&&planned!==null&&predicted!==null)?
        round(direction==="EXPENSE"?planned-predicted:predicted-planned):null;
-    rec.months[month]={month,actual,forecast:predicted,plan:old?null:planned,status,delta};
+    rec.months[month]={month,actual,forecast:predicted,atApproval:approvalEstimate,plan:old?null:planned,status,delta};
    }
    rows.push(rec);
   }
@@ -192,6 +196,12 @@ function buildControl(approved,live,meta={},horizon="ROLLING_12"){
  const futureForecast=activeRows.every(m=>m.net!==null)?round(activeRows.reduce((n,m)=>n+m.net,0)):null;
  const planTotal=complete&&series.every(m=>m.planNet!==null||!m.active)?
    round(activeRows.reduce((n,m)=>n+m.planNet,0)):null;
+ // Distinguish an inherited technical gap at approval from later recomputations.
+ // If the stored approval snapshot is missing, the split is explicitly unavailable.
+ const approvalCells=rows.flatMap(r=>months.filter(m=>m>=current).map(m=>({direction:r.direction,...r.months[m]})));
+ const hasApprovalSnapshot=complete&&approvalCells.length>0&&approvalCells.every(x=>x.plan!==null&&x.forecast!==null&&x.atApproval!==null);
+ const initialGap=hasApprovalSnapshot?round(approvalCells.reduce((n,x)=>n+(x.direction==="INCOME"?x.atApproval-x.plan:x.plan-x.atApproval),0)):null;
+ const afterApprovalGap=hasApprovalSnapshot?round(approvalCells.reduce((n,x)=>n+(x.direction==="INCOME"?x.forecast-x.atApproval:x.atApproval-x.forecast),0)):null;
  const coverage={approved:activeRows.reduce((n,m)=>n+(m.totalCategories-m.missing),0),
    expected:activeRows.reduce((n,m)=>n+m.totalCategories,0),
    missing:activeRows.reduce((n,m)=>n+m.missing,0)};
@@ -202,7 +212,8 @@ function buildControl(approved,live,meta={},horizon="ROLLING_12"){
  const worst=activeRows.filter(r=>r.net!==null).sort((a,b)=>a.net-b.net)[0]||null;
  return {kind:"extended",revision:approved.revision,approvedAt:approved.approved_at||"",
   current,horizon,months,series,rows,complete,coverage,
-  totalForecast,planTotal,delta:futureForecast!==null&&planTotal!==null?round(futureForecast-planTotal):null,
+  totalForecast,futureForecast,planTotal,initialGap,afterApprovalGap,
+  delta:futureForecast!==null&&planTotal!==null?round(futureForecast-planTotal):null,
   worst:worst?{month:worst.month,net:worst.net}:null,
   risksForMonth:selectedRisks,notes:"Il saldo cumulato è economico, non liquidità bancaria"};
 }
