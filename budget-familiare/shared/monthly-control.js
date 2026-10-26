@@ -229,6 +229,7 @@ function buildControl(approved,live,meta={},horizon="ROLLING_12"){
 
 // Self-contained, actionable help for every key metric and section. No external service.
 const controlHelp={
+ modes:["Quattro lenti di controllo","Tre modalità principali sono assegnate a ciascuna L2 usando natura, temporalità e metodo Baseline. La quarta segnala le voci da rivedere.","Programmate = metodo fisso e ricorrenza nota; Da storico = metodo storico; Discrezionali = natura D. Da rivedere incrocia bassa affidabilità, assenza di valutazione ed evidenze reali.","L’affidabilità è trasversale: gli importi della quarta lente non devono essere sommati ai primi tre. Il mese corrente ha consuntivi parziali; il metodo Baseline mostrato è quello attuale, mentre il Piano è quello approvato."],
  outcome:["Piano approvato","Risultato economico programmato nei mesi del periodo selezionato.","Somma dei target mensili approvati di entrata meno i target di uscita.","È il riferimento principale: non cambia quando si aggiornano i movimenti. Non è il saldo del conto."],
  deviation:["Confronto tecnico non validato","Accosta la stima live al Piano approvato, senza presentarla come un Forecast deliberato.","Differenza = saldo economico della stima tecnica meno saldo economico del Piano, per gli stessi mesi. Dove disponibile si distingue la differenza iniziale da quella sorta nei ricalcoli successivi.","Una differenza negativa non prova nuove spese o un peggioramento dopo l’approvazione. Controlla le categorie, il consuntivo e l’origine del divario."],
  remaining:["Budget residuo del mese","Quanto rimane del budget di uscita del mese approvato dopo i movimenti registrati.","Budget mensile di spesa del Piano − uscite registrate nel mese.","Non è disponibilità bancaria; il mese può ancora avere altre spese, e non è una proiezione di chiusura."],
@@ -280,7 +281,7 @@ function monthTone(m,model){
  return "neutral";
 }
 
-const controlUi={period:"ROLLING_12",tab:"SUMMARY",month:null,direction:"EXPENSE",onlyRisks:false,expanded:{},sort:"IMPACT",selectedCategory:null,openHelp:null,sensitivity:"STANDARD"};
+const controlUi={period:"ROLLING_12",tab:"SUMMARY",month:null,direction:"EXPENSE",onlyRisks:false,expanded:{},sort:"IMPACT",selectedCategory:null,openHelp:null,sensitivity:"STANDARD",mode:"ALL",modeShowAll:false};
 try{const saved=root.localStorage?.getItem("bf-control-sensitivity");if(["HIGH","STANDARD","LOW"].includes(saved))controlUi.sensitivity=saved}catch(e){}
 const sensitivityLimits={HIGH:{eur:15,pct:.05},STANDARD:{eur:30,pct:.10},LOW:{eur:75,pct:.20}};
 function materialDelta(delta,plan){
@@ -528,8 +529,10 @@ function controlHistoricalReference(row,month,current){
 function buildModeTracking(model,month){
  const current=month===model.current,past=month<model.current,realAvailable=month<=model.current;
  const expenses=model.rows.filter(r=>r.direction==="EXPENSE").map(r=>{
-  const metric=r.months[month],mode=controlMode(r);
+  const metric=r.months[month];
   const planned=metric.plan,spent=realAvailable?num(metric.actual):null,remaining=planned===null||spent===null?null:round(planned-spent);
+  const dormant=r.method==="ZERO"&&planned===0&&(spent===0||spent===null);
+  const mode=dormant?"DORMANT":controlMode(r);
   const historical=mode==="HISTORY"?controlHistoricalReference(r,month,model.current):null;
   const breach=spent!==null&&planned!==null&&spent>planned+.005;
   const near=mode==="DISCRETIONARY"&&spent!==null&&planned!==null&&planned>0&&spent>=planned*.80&&!breach;
@@ -553,14 +556,14 @@ function buildModeTracking(model,month){
  });
  const groups={};
  for(const code of ["EXECUTION","HISTORY","DISCRETIONARY","UNCLASSIFIED","ATTENTION"]){
-  const arr=code==="ATTENTION"?expenses.filter(r=>r.attention):expenses.filter(r=>r.mode===code);
+  const arr=code==="ATTENTION"?expenses.filter(r=>r.attention&&r.mode!=="DORMANT"):expenses.filter(r=>r.mode===code);
   groups[code]={items:arr,count:arr.length,
    plan:arr.reduce((n,r)=>n+num(r.planned),0),
    actual:realAvailable?arr.reduce((n,r)=>n+num(r.spent),0):null,
    missing:arr.filter(r=>r.planned===null).length,
    confirmed:arr.filter(r=>r.breach).length};
  }
- return {month,current,past,expenses,groups,realAvailable,knownReliability:expenses.some(r=>r.reliability!==null)};
+ return {month,current,past,expenses,groups,realAvailable,excludedZero:expenses.filter(r=>r.mode==="DORMANT").length,knownReliability:expenses.some(r=>r.reliability!==null)};
 }
 function modeDetail(row,month,current){
  const confidence=row.reliability===null?"Dati affidabilità non disponibili":confidenceLabels[row.reliability]||"Non valutata";
@@ -626,7 +629,7 @@ function renderModeTracking(model,month){
  (selected!=="ALL"&&data.groups[selected]?.count>12?'<button type="button" class="btn compact ghost" data-bf-control-mode-more="'+(controlUi.modeShowAll?'LESS':'ALL')+'">'+(controlUi.modeShowAll?'Mostra meno':'Mostra tutte le L2')+'</button>':'')+
  '<small>'+(data.realAvailable?'Consuntivi parziali o effettivi, senza proiezione giornaliera':'Mese futuro: solo obiettivi, nessun consuntivo')+'</small></div>'+
  chunks+nature+
- '<p class="bf-control-muted">I metodi riportati provengono dalla <strong>Baseline corrente</strong>, non da una fotografia dei metadati al momento dell’approvazione. Il budget deriva invece esclusivamente dal Piano approvato. Le categorie a zero e non ripetibili sono visibili come “Da classificare” e non producono avvisi senza nuove spese.</p></section>';
+ '<p class="bf-control-muted">I metodi riportati provengono dalla <strong>Baseline corrente</strong>, non da una fotografia dei metadati al momento dell’approvazione. Il budget deriva invece esclusivamente dal Piano approvato. Le categorie con metodo “Non si ripeterà”, budget zero e nessuna spesa sono escluse dagli elenchi operativi ('+data.excludedZero+' L2 inattive). Una nuova spesa le riporta in evidenza.</p></section>';
 }
 function actualOverBudget(model,month){
  return model.rows.filter(r=>r.direction==="EXPENSE").map(r=>({...r,metric:r.months[month]}))
@@ -739,7 +742,7 @@ function renderExtended(host,model){
  const top='<div class="bf-control-header"><div><h2>Controllo · '+esc(label)+'</h2>'+
   '<p>Piano approvato V'+esc(model.revision)+' · Consuntivi aggiornati · Proiezione tecnica non revisionata</p></div>'+
   '<button class="btn compact ghost" data-bf-control-reload>↻ Aggiorna dati</button></div>'+
-  '<div class="bf-control-controls">'+select+buttons+sensitivity+'</div>'+
+  '<div class="bf-control-controls">'+select+buttons+'</div>'+
   stageNotice+hero+minor+
   (partial?'<p class="bf-control-notice">La copertura del Piano è incompleta: i mesi/categorie senza target esplicito rimangono <strong>provvisori</strong>. Non vengono scambiati per obiettivi approvati.</p>':'');
  const monthMenu='<div class="bf-months-block">'+sectionHeading("Il Piano mese per mese · saldo economico programmato","months")+
@@ -796,7 +799,7 @@ function renderExtended(host,model){
    '<p class="bf-control-muted">* Cumulato dei saldi del Piano, a partire convenzionalmente da zero: non è la giacenza dei conti. ** Per il mese corrente sono mostrati solo i movimenti registrati, senza proiezioni automatiche.</p></section>';
 
  }
- host.innerHTML=top+monthMenu+panel;
+ host.innerHTML=top+(controlUi.tab==="SUMMARY"?renderModeTracking(model,sm.month):"")+monthMenu+panel;
  drawControlChart(host,model);
  drawCategoryChart(host,model);
 }
@@ -852,6 +855,8 @@ function handleControlClick(e){
  }
  const attr=[
   ["data-bf-control-tab","tab"],
+  ["data-bf-control-mode","mode"],
+  ["data-bf-control-mode-more","modeMore"],
   ["data-bf-control-period","period"],
   ["data-bf-control-month","month"],
   ["data-bf-control-direction","direction"],
@@ -863,7 +868,9 @@ function handleControlClick(e){
  for(const [name,field] of attr){
   const el=e.target?.closest?.("["+name+"]");if(!el)continue;
   const value=el.getAttribute(name);
-  if(field==="expand"){const key=decodeURIComponent(value);controlUi.expanded[key]=!controlUi.expanded[key]}
+  if(field==="modeMore")controlUi.modeShowAll=value==="ALL";
+  else if(field==="mode"){controlUi.mode=value;controlUi.modeShowAll=false}
+  else if(field==="expand"){const key=decodeURIComponent(value);controlUi.expanded[key]=!controlUi.expanded[key]}
   else if(field==="category")controlUi.selectedCategory=value==="CLOSE"?null:value;
   else if(field==="risk")controlUi.onlyRisks=value==="RISK";
   else controlUi[field]=value;
@@ -890,7 +897,7 @@ function handleControlKey(e){
  currentControlHost.querySelector?.('[data-bf-control-help="'+id+'"]')?.focus?.();
  return true;
 }
-const api={annualTotal,monthTotals,categoryRows,fromContinuous,compare,render,buildControl,renderTracking,handleControlClick,handleControlKey,handleControlChange};
+const api={annualTotal,monthTotals,categoryRows,fromContinuous,compare,render,buildControl,controlMode,controlHistoricalReference,buildModeTracking,renderModeTracking,renderTracking,handleControlClick,handleControlKey,handleControlChange};
 root.BudgetFamilyMonthlyControl=api;
 if(typeof module!=="undefined"&&module.exports)module.exports=api;
 })(typeof window!=="undefined"?window:globalThis);
