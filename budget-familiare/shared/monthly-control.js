@@ -479,14 +479,22 @@ function renderExtended(host,model){
  const riskAmount=mainRisk?humanDelta(mainRisk.effect):"—";
  const compareTone=model.delta===null?"neutral":model.delta<-.005?"danger":model.delta>.005?"success":"neutral";
  const outcomeTone=model.totalForecast!==null&&model.totalForecast<0&&model.delta!==null&&model.delta<0?"caution":"neutral";
- const hero='<div class="bf-hero-kpis">'+
-  kpi("Risultato stimato (proiezione tecnica)","outcome",eur(model.totalForecast),
-    'Somma dei saldi mensili · non è liquidità bancaria',outcomeTone)+
-  kpi("Scostamento stimato vs Piano","deviation",humanDelta(model.delta),
-    model.delta===null?'Confronto non disponibile: verifica la copertura':'Differenza prevista sui mesi futuri approvati',compareTone)+
-  kpi("Criticità principale · "+riskName,"periodimpact",riskAmount,
-    mainRisk?mainRisk.count+' mesi confrontabili · impatto sull’avanzo':'Nessuno scostamento negativo significativo',mainRisk?"danger":"neutral")+
-  '</div>';
+ const splitLabel=model.initialGap!==null&&model.afterApprovalGap!==null
+  ?'Di cui '+humanDelta(model.initialGap)+' già presenti all’approvazione; '+humanDelta(model.afterApprovalGap)+' da ricalcoli successivi.'
+  :'Non è ancora disponibile la scomposizione tra differenze iniziali e variazioni successive.';
+ const periodScope=controlUi.period==="CALENDAR"?"mesi aperti dell’anno":"12 mesi del Piano";
+ const hero='<div class="bf-hero-kpis bf-control-first-row">'+
+  kpi("Piano approvato · "+periodScope,"outcome",eur(model.planTotal),
+   'Avanzo economico programmato · riferimento da controllare',"neutral")+
+  '<div class="bf-kpi-card bf-kpi-caution bf-kpi-projection"><div class="bf-kpi-caption"><span>Confronto tecnico · NON validato</span>'+infoButton("deviation")+'</div>'+
+   '<div class="bf-tech-comparison"><div><small>Stima live</small><strong>'+eur(model.futureForecast)+'</strong></div>'+
+   '<div><small>Differenza vs Piano</small><strong class="'+safeClass(model.delta)+'">'+humanDelta(model.delta)+'</strong></div></div>'+
+   '<p class="bf-control-muted">La differenza non dimostra uno sforamento. '+esc(splitLabel)+'</p></div>'+
+  '<div class="bf-kpi-card bf-kpi-caution bf-risk-summary"><div class="bf-kpi-caption"><span>Maggiore differenza da verificare</span>'+infoButton("periodimpact")+'</div>'+
+   '<strong>'+esc(riskName)+' · '+riskAmount+'</strong>'+
+   '<span>'+(mainRisk?mainRisk.count+' mesi confrontati · stima, non spesa effettiva':'Nessuna differenza rilevante')+'</span>'+
+   (mainRisk?'<button type="button" class="bf-risk-jump" data-bf-control-open-risk="'+encodeURIComponent(mainRisk.id)+'">Vedi Piano, stima e differenze per mese →</button>':'')+
+   '</div></div>';
  const minor='<div class="bf-control-kpis bf-kpi-minor">'+
   kpi("Budget spese residuo · "+displayMonth(sm.month),"remaining",monthlyResidue,
    closed?"Consuntivo chiuso":sm.missing?"Valore parziale, alcuni target non sono approvati":"Piano meno Actual del mese")+
@@ -497,19 +505,21 @@ function renderExtended(host,model){
   kpi("Flusso netto più basso","worst",model.worst?displayMonth(model.worst.month):"—",
    eur(model.worst?.net)+' · non indica da solo uno sforamento')+
   '</div>';
- const stageNotice='<p class="bf-control-notice"><strong>Piano approvato</strong> = obiettivi fissi; <strong>Consuntivo</strong> = movimenti registrati; <strong>Proiezione tecnica</strong> = stima live preliminare, non validata; <strong>Forecast revisionato</strong> = non ancora creato né approvato. La proiezione non modifica il Piano.</p>';
+ const stageNotice='<p class="bf-control-notice"><strong>Come leggere questo Controllo:</strong> il Piano approvato è il riferimento. La stima tecnica è un ricalcolo preliminare, <strong>non un Forecast approvato</strong> e non dimostra nuove spese o un peggioramento già avvenuto. Verifica i movimenti e apri le categorie per capire le differenze. Nessun dato modifica il Piano.</p>';
  const top='<div class="bf-control-header"><div><h2>Controllo · '+esc(label)+'</h2>'+
   '<p>Piano approvato V'+esc(model.revision)+' · Consuntivi aggiornati · Proiezione tecnica non revisionata</p></div>'+
   '<button class="btn compact ghost" data-bf-control-reload>↻ Aggiorna dati</button></div>'+
   '<div class="bf-control-controls">'+select+buttons+sensitivity+'</div>'+
   stageNotice+hero+minor+
   (partial?'<p class="bf-control-notice">La copertura del Piano è incompleta: i mesi/categorie senza target esplicito rimangono <strong>provvisori</strong>. Non vengono scambiati per obiettivi approvati.</p>':'');
- const monthMenu='<div class="bf-months-block">'+sectionHeading("Scegli un mese · scostamenti rispetto al Piano","months")+
+ const monthMenu='<div class="bf-months-block">'+sectionHeading("Saldo economico mensile · entrate − uscite (non saldo bancario)","months")+
+  '<p class="bf-control-muted">Ogni riquadro mostra il saldo del mese della <strong>stima tecnica</strong>, il saldo del <strong>Piano approvato</strong> e la loro differenza (Δ). Seleziona un mese per aprire il dettaglio.</p>'+
   '<div class="bf-month-strip" aria-label="Scegli mese del controllo">'+model.series.map(m=>
-  '<button type="button" data-bf-control-month="'+m.month+'" aria-pressed="'+(m.month===sm.month)+'" class="'+(m.month===sm.month?'active ':'')+'bf-month-'+monthTone(m,model)+'">'+
+  '<button type="button" data-bf-control-month="'+m.month+'" aria-pressed="'+(m.month===sm.month)+'" class="'+(m.month===sm.month?'active ':'')+'bf-month-'+monthTone(m,model)+'" title="Saldo stimato: '+eur(m.net)+' · Piano: '+eur(m.planNet)+' · differenza: '+(m.planNet!==null&&m.net!==null?humanDelta(round(m.net-m.planNet)):'non disponibile')+'">'+
    '<span>'+esc(displayMonth(m.month))+'</span>'+
-   '<strong>'+eur(m.net)+'</strong>'+
-   '<small>'+(m.planNet!==null&&m.net!==null?'Δ '+humanDelta(round(m.net-m.planNet)):(m.active&&m.missing?'Da approvare':'Consuntivo / non confrontabile'))+'</small>'+
+   '<small>Saldo stimato</small><strong>'+eur(m.net)+'</strong>'+
+   '<small>Piano: '+eur(m.planNet)+'</small>'+
+   '<small>'+(m.planNet!==null&&m.net!==null?'Δ: '+humanDelta(round(m.net-m.planNet)):(m.active&&m.missing?'Obiettivo mancante':'Consuntivo / non confrontabile'))+'</small>'+
    (m.active&&m.missing?'<i title="Target provvisori"></i>':'')+
    '</button>').join('')+'</div></div>';
  let panel='';
