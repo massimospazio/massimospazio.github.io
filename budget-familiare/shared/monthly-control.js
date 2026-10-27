@@ -1071,7 +1071,7 @@ function renderExtended(host,model){
     (future?'<small class="bf-v831-future-note">Consuntivo non ancora disponibile</small>':
      '<div class="bf-v831-tile-pair"><small>Saldo Cons.</small><b>'+eur(t.actualMonthNet)+'</b></div>'+
      '<div class="bf-v831-tile-deviations"><span>Sopra '+(stat.comparable?eur(stat.aboveAmount):"—")+'</span>'+
-     '<span>Sotto '+(stat.comparable?eur(stat.belowAmount):"—")+'</span></div>')+
+     '<span>Sotto '+(stat.comparable?eur(stat.belowAmount):"—")+'</span></div>'+'<small class="bf-v831-tile-spend-net '+(stat.netEffect>.005?'positive':stat.netEffect<-.005?'negative':'')+'">Netto spese '+(stat.comparable?signed(stat.netEffect):"—")+'</small>')+
     '<div class="bf-v831-tile-cumulative"><small>Cumulato Piano</small><b>'+eur(t.planCumulativeNet)+'</b>'+
     (!future?'<small>Cumulato Cons.</small><b>'+eur(t.actualCumulativeNet)+'</b>'+
       (delta!==null?'<small>Δ cumulato '+signed(delta)+'</small>':''):'')+
