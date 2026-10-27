@@ -1,7 +1,7 @@
 // Canonical source: massimospazio/budget-familiare; public files are deployed automatically.
 (function(){
-  const APP_VERSION='V74.2.9';
-  const APP_RELEASE='Controllo · Tabellone Piano con vista L1/L2 e progressivi mensile/cumulato';
+  const APP_VERSION='V74.2.10';
+  const APP_RELEASE='Controllo · Sopra/sotto Piano, bilancio netto e percentuali corrette';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});

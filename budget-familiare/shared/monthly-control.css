@@ -429,3 +429,27 @@
 .bf-control-view .bf-v829-board .bf-v828-l2 td:first-child{padding-left:9px}
 .bf-control-view .bf-v829-board .bf-v828-l1 td:first-child{padding-left:9px}
 .bf-control-view .bf-v829-board .bf-v828-over td:nth-child(8),.bf-control-view .bf-v829-board .bf-v828-over td:nth-child(9){color:#b6364b}
+
+
+/* V74.2.10 — neutral L1 rows, good/bad deltas and above/below totals. */
+.bf-control-view .bf-v829-table .bf-v828-l1 td,
+.bf-control-view .bf-v829-board:has([data-bf-control-board-direction="INCOME"].btn:not(.ghost)) .bf-v828-l1 td{background:#edf3fa}
+.bf-control-view .bf-v829-table .bf-v828-l1:hover td{background:#e5edf8}
+.bf-control-view .bf-v829-board .bf-v829-table .bf-v828-over td:nth-child(6),
+.bf-control-view .bf-v829-board .bf-v829-table .bf-v828-over td:nth-child(7),
+.bf-control-view .bf-v829-board .bf-v829-table .bf-v828-over td:nth-child(8),
+.bf-control-view .bf-v829-board .bf-v829-table .bf-v828-over td:nth-child(9){color:#b32e43;font-weight:800}
+.bf-control-view .bf-v829-board .bf-v829-table .bf-v828-under td:nth-child(6),
+.bf-control-view .bf-v829-board .bf-v829-table .bf-v828-under td:nth-child(7),
+.bf-control-view .bf-v829-board .bf-v829-table .bf-v828-under td:nth-child(8),
+.bf-control-view .bf-v829-board .bf-v829-table .bf-v828-under td:nth-child(9){color:#167149;font-weight:800}
+.bf-v830-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:12px 0 4px}
+.bf-v830-stat{min-width:0;display:flex;flex-direction:column;gap:6px;border:1px solid #d9e4f0;background:#f8fafc;border-left:4px solid #8ba1b9;border-radius:9px;padding:10px 12px;font-variant-numeric:tabular-nums}
+.bf-v830-stat small{font-size:11px;font-weight:650;color:#546a83}
+.bf-v830-stat strong{font-size:20px;color:#21415f;font-weight:800;white-space:nowrap}
+.bf-v830-stat-bad{border-left-color:#c54858;background:#fff9f9}
+.bf-v830-stat-bad strong{color:#a72940}
+.bf-v830-stat-good{border-left-color:#218263;background:#f7fcfa}
+.bf-v830-stat-good strong{color:#126b49}
+.bf-v830-summary-note{color:#62758b;font-size:11px;line-height:1.45;margin:5px 0 12px}
+@media(max-width:660px){.bf-v830-summary{grid-template-columns:1fr}.bf-v830-stat{padding:9px 12px}}

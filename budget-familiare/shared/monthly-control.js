@@ -237,7 +237,7 @@ const controlHelp={
  expenseprogress:["Uscite effettive vs Piano","Budget spese e movimenti registrati separati dal Piano.","Percentuale = Consuntivo uscite diviso Piano uscite.","Un mese parziale non dimostra risparmio strutturale."],
  freshness:["Ultima data movimento e import","Data dell'ultimo movimento registrato e dell'ultima importazione per ING e Trade Republic.","La data del file può essere successiva all'ultimo movimento contenuto.","Le date indicano aggiornamento, non certificano completezza bancaria."],
  natureprogress:["Avanzamento per natura","Le barre aggregano O, N, D, NC e l'eventuale risparmio/investimenti dalla tassonomia di pianificazione.","Mese e Cumulato sono selezionabili; le due percentuali sono sempre visibili e non vengono inventate se il Piano è zero.","Cumulato dai mesi approvati, non da gennaio. Nel mese aperto il budget residuo non è risparmio consolidato."],
- controlboard:["Tabellone L1/L2","Due viste: L1 aggregate oppure L2 in elenco unico con etichetta L1. Ordinamenti L1 e L2 indipendenti, su tutte le colonne.","Mese/Cumulato per gli importi, entrambe le percentuali visibili. Δ = Consuntivo − Piano; con Piano zero Δ% e avanzamento non sono calcolabili. Le righe con Piano e Consuntivo entrambi zero sono nascoste.","Cumulato da inizio Piano. Le icone di affidabilità sono le stesse cinque barre della Baseline/Piano; il livello L1 è quello meno affidabile oppure non disponibile."],
+ controlboard:["Tabellone L1/L2","Due viste: L1 aggregate oppure L2 in elenco unico con etichetta L1. Ordinamenti L1 e L2 indipendenti, su tutte le colonne.","Mese/Cumulato per gli importi, entrambe le percentuali visibili. Δ = Consuntivo − Piano; con Piano zero Δ% e avanzamento non sono calcolabili. Il riepilogo conta le L2 sopra/sotto Piano e il saldo netto (anche nella vista L1); nel mese aperto sotto Piano è provvisorio. Le righe con Piano e Consuntivo entrambi zero sono nascoste.","Cumulato da inizio Piano. Le icone di affidabilità sono le stesse cinque barre della Baseline/Piano; il livello L1 è quello meno affidabile oppure non disponibile."],
  modes:["Quattro lenti di controllo","Tre modalità principali sono assegnate a ciascuna L2 usando natura, temporalità e metodo Baseline. La quarta segnala le voci da rivedere.","Programmate = metodo fisso e ricorrenza nota; Da storico = metodo storico; Discrezionali = natura D. Da rivedere incrocia bassa affidabilità, assenza di valutazione ed evidenze reali.","L’affidabilità è trasversale: gli importi della quarta lente non devono essere sommati ai primi tre. Il mese corrente ha consuntivi parziali; il metodo Baseline mostrato è quello attuale, mentre il Piano è quello approvato."],
  outcome:["Piano approvato","Risultato economico programmato nei mesi del periodo selezionato.","Somma dei target mensili approvati di entrata meno i target di uscita.","È il riferimento principale: non cambia quando si aggiornano i movimenti. Non è il saldo del conto."],
  deviation:["Confronto tecnico non validato","Accosta la stima live al Piano approvato, senza presentarla come un Forecast deliberato.","Differenza = saldo economico della stima tecnica meno saldo economico del Piano, per gli stessi mesi. Dove disponibile si distingue la differenza iniziale da quella sorta nei ricalcoli successivi.","Una differenza negativa non prova nuove spese o un peggioramento dopo l’approvazione. Controlla le categorie, il consuntivo e l’origine del divario."],
@@ -708,7 +708,8 @@ function technicalDetails(model){
 const controlNatures=[["MANDATORY","O · Obbligatorie","#d95762"],["NECESSARY","N · Necessarie","#d7a03d"],["DISCRETIONARY","D · Discrezionali","#2f9a81"],["OTHER","NC · Non classificate","#8999b0"],["SAVINGS","Risparmio / investimenti","#4e95ba"]];
 const controlKind=n=>n==="SAVINGS"||n==="INVESTMENT"?"SAVINGS":["MANDATORY","NECESSARY","DISCRETIONARY"].includes(n)?n:"OTHER";
 const controlPct=n=>n===null?"—":new Intl.NumberFormat("it-IT",{maximumFractionDigits:1}).format(n)+"%";
-const controlRatio=(actual,plan)=>actual===null||plan===null||plan<=0?null:Math.round(1000*actual/plan)/10;
+const controlHasPercentDenominator=plan=>plan!==null&&Number.isFinite(Number(plan))&&round(plan)>=.5;
+const controlRatio=(actual,plan)=>actual===null||!controlHasPercentDenominator(plan)?null:Math.round(1000*actual/plan)/10;
 const controlDayLabel=d=>/^\d{4}-\d{2}-\d{2}/.test(String(d||""))?String(d).slice(8,10)+"/"+String(d).slice(5,7)+"/"+String(d).slice(0,4):"n/d";
 function controlMonthProgress(month,date){
  const today=String(date||new Date().toISOString().slice(0,10)).slice(0,10);
@@ -795,7 +796,7 @@ function controlRowCumulative(row,month,model){
 function controlBoardMetric(plan,actual){
  const delta=plan===null||actual===null?null:round(actual-plan);
  return {plan,actual,delta,residual:delta===null?null:round(-delta),
-  variancePct:delta===null||plan<=0?null:round(delta*100/plan),
+  variancePct:delta===null||!controlHasPercentDenominator(plan)?null:round(delta*100/plan),
   progress:controlRatio(actual,plan)};
 }
 function controlBoardEntries(model,month,direction){
@@ -872,9 +873,10 @@ function controlBoardRow(r,group){
  const deltaFmt=r.delta===null?"—":(r.delta>0?"+":"")+money(r.delta);
  const monthPct=pctLabel(r.monthMetric.progress),cumPct=pctLabel(r.cumulativeMetric.progress);
  const monthsLabel=r.plannedMonthKeys.length?r.plannedMonthKeys.map(displayMonth).join(", "):"Nessun mese con importo pianificato";
- const isBad=r.delta!==null&&r.delta>0&& !income;
+ const isBad=r.delta!==null&&(income?r.delta<-.005:r.delta>.005);
+ const isGood=r.delta!==null&&(income?r.delta>.005:r.delta<-.005);
  const level=Number.isInteger(r.reliability)?r.reliability:null;
- return '<tr class="'+(group?'bf-v828-l1 planning-l1-row ':'bf-v828-l2 planning-l2-row ')+(isBad?'bf-v828-over':'')+'">'+
+ return '<tr class="'+(group?'bf-v828-l1 planning-l1-row ':'bf-v828-l2 planning-l2-row ')+(isBad?'bf-v828-over':isGood?'bf-v828-under':'')+'">'+
   '<td class="bf-v829-category">'+label+'</td>'+
   '<td><span class="bf-v828-nature-pill nature-'+nature.toLowerCase()+'">'+(badges[nature]||"?")+'</span></td>'+
   '<td class="bf-v829-trust">'+controlBaselineReliabilityBars(level,group?"Livello meno affidabile delle L2; n/d quando la valutazione non è completa":"Valutazione Baseline")+'</td>'+
@@ -885,6 +887,35 @@ function controlBoardRow(r,group){
   '<td class="bf-v829-progress"><div class="bf-v829-dual"><span class="'+(controlUi.boardScope==="MONTH"?'focused':'')+'"><small>Mese</small> '+monthPct+'</span>'+
   '<span class="'+(controlUi.boardScope==="CUMULATIVE"?'focused':'')+'"><small>Cum.</small> '+cumPct+'</span></div></td></tr>';
 }
+
+/* V74.2.10 — aggregate L2 only, not L1 and L2 together. */
+function controlBoardStatistics(items,direction){
+ const comparable=items.filter(r=>r.plan!==null&&r.actual!==null&&r.delta!==null);
+ const above=comparable.filter(r=>r.delta>.005),below=comparable.filter(r=>r.delta<-.005);
+ const aboveAmount=round(above.reduce((sum,r)=>sum+r.delta,0));
+ const belowAmount=round(-below.reduce((sum,r)=>sum+r.delta,0));
+ const netEffect=round(direction==="INCOME"?aboveAmount-belowAmount:belowAmount-aboveAmount);
+ return {comparable:comparable.length,unavailable:items.length-comparable.length,
+  aboveCount:above.length,belowCount:below.length,aboveAmount,belowAmount,netEffect};
+}
+function renderControlBoardStatistics(items,direction){
+ const stat=controlBoardStatistics(items,direction),ready=stat.comparable>0,income=direction==="INCOME";
+ const value=n=>ready?eur(n):"—",count=n=>ready?n+" categorie L2":"— categorie L2";
+ const signed=n=>n>0?"+"+eur(n):eur(n);
+ const card=(tone,name,number,amount)=>'<div class="bf-v830-stat bf-v830-stat-'+tone+'">'+
+  '<small>'+name+' · '+count(number)+'</small><strong>'+value(amount)+'</strong></div>';
+ return '<div class="bf-v830-summary" role="group" aria-label="Riepilogo scostamenti rispetto al Piano">'+
+  card(income?"good":"bad","Sopra Piano",stat.aboveCount,stat.aboveAmount)+
+  card(income?"bad":"good","Sotto Piano",stat.belowCount,stat.belowAmount)+
+  '<div class="bf-v830-stat bf-v830-stat-'+(ready?(stat.netEffect>.005?"good":stat.netEffect<-.005?"bad":"neutral"):"neutral")+'">'+
+   '<small>Effetto netto sull’avanzo</small><strong>'+(ready?signed(stat.netEffect):"—")+'</strong></div></div>'+
+  '<p class="bf-v830-summary-note">'+(ready?'Conteggio delle L2 confrontabili, incluse le spese con Piano zero. ':
+   'Nessun consuntivo confrontabile per il periodo selezionato. ')+
+   (income?'Per le entrate, sopra Piano migliora l’avanzo. ':'Per le uscite, sotto Piano migliora l’avanzo. ')+
+   'Le L1 non si contano due volte; sotto Piano nel mese aperto non è risparmio definitivo.'+
+   (stat.unavailable?' '+stat.unavailable+' L2 non confrontabili.':'')+'</p>';
+}
+
 function renderControlBoard(model,month){
  const direction=controlUi.boardDirection;
  const entries=controlBoardEntries(model,month,direction).filter(r=>
@@ -920,13 +951,14 @@ function renderControlBoard(model,month){
   '<div class="bf-v829-controls"><div class="bf-v829-switch"><strong>Vista</strong>'+viewButton("L1","Solo L1")+viewButton("L1_L2","L1 + L2")+'</div>'+
   '<div class="bf-v829-switch"><strong>Periodo</strong>'+scopeButton("MONTH","Mese")+scopeButton("CUMULATIVE","Cumulato")+'</div>'+
   '<div class="bf-v829-period-note">Cumulato dal '+esc(displayMonth(model.approvedStart))+' al '+esc(displayMonth(month))+'</div></div>'+
-  '<p class="bf-control-muted">Δ = Consuntivo − Piano. Le percentuali sono <strong>—</strong> quando il Piano è zero. '+
+  '<p class="bf-control-muted">Δ = Consuntivo − Piano. Le percentuali sono <strong>—</strong> quando il Piano è zero (o visualizzato come €0). '+
    'Sono nascoste le categorie con Piano e Consuntivo entrambi a zero nel periodo selezionato. '+
    (flat?'L2 ordinate su tutta la selezione, indipendentemente dalle L1. ':'L1 aggregate. ')+
    'Durante il mese il Consuntivo è parziale.</p>'+
    filters+(focus?'<div class="bf-v829-filter-note">L1 selezionata: '+esc(summaries.find(g=>g.id===focus)?.name||"")+
      ' <button type="button" class="btn compact ghost" data-bf-control-board-clear-l1>Mostra tutte le L2</button></div>':"")+
-  '<div class="planning-board-card bf-v829-panel"><div class="planning-board-table-wrap bf-control-overflow"><table class="planning-board-table bf-v828-table bf-v829-table"><thead><tr>'+th+'</tr></thead><tbody>'+
+  renderControlBoardStatistics(subset,direction)+
+   '<div class="planning-board-card bf-v829-panel"><div class="planning-board-table-wrap bf-control-overflow"><table class="planning-board-table bf-v828-table bf-v829-table"><thead><tr>'+th+'</tr></thead><tbody>'+
   (body||'<tr><td colspan="10">Nessuna categoria con importi nel periodo selezionato.</td></tr>')+
   '</tbody></table></div></div>'+
   '<p class="bf-control-muted">Affidabilità con le cinque barre della Baseline/Piano. Mesi Piano = mesi con importo previsto diverso da zero; con valutazioni incomplete la L1 mostra icona neutra.</p></section>';
@@ -1158,7 +1190,7 @@ function handleControlKey(e){
  currentControlHost.querySelector?.('[data-bf-control-help="'+id+'"]')?.focus?.();
  return true;
 }
-const api={annualTotal,monthTotals,categoryRows,fromContinuous,compare,render,buildControl,controlMode,controlHistoricalReference,buildModeTracking,renderModeTracking,renderTracking,handleControlClick,handleControlKey,handleControlChange};
+const api={annualTotal,monthTotals,categoryRows,fromContinuous,compare,render,buildControl,controlMode,controlHistoricalReference,buildModeTracking,renderModeTracking,renderTracking,handleControlClick,handleControlKey,handleControlChange,controlBoardMetric,controlBoardStatistics};
 root.BudgetFamilyMonthlyControl=api;
 if(typeof module!=="undefined"&&module.exports)module.exports=api;
 })(typeof window!=="undefined"?window:globalThis);
