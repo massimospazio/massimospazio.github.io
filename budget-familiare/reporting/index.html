@@ -8,19 +8,19 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=74.3.1-20261027"></script>
-<script src="../shared/app-config.js?v=74.3.1-20261027"></script>
-<link rel="stylesheet" href="../shared/perspectives.css?v=74.3.1-20261027">
-<script src="../shared/perspectives.js?v=74.3.1-20261027"></script>
-<script src="../shared/contextual-help.js?v=74.3.1-20261027" defer></script>
+<script src="../shared/supabase-client.js?v=74.3.4-20261028"></script>
+<script src="../shared/app-config.js?v=74.3.4-20261028"></script>
+<link rel="stylesheet" href="../shared/perspectives.css?v=74.3.4-20261028">
+<script src="../shared/perspectives.js?v=74.3.4-20261028"></script>
+<script src="../shared/contextual-help.js?v=74.3.4-20261028" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<link rel="stylesheet" href="../shared/health-reserve.css?v=74.3.1-20261027">
-<link rel="stylesheet" href="../shared/approved-plan.css?v=74.3.1-20261027">
-<link rel="stylesheet" href="../shared/monthly-control.css?v=74.3.1-20261027">
-<link rel="stylesheet" href="../shared/scenario-strategy.css?v=74.3.1-20261027">
-<link rel="stylesheet" href="../shared/scenario-uncertainty.css?v=74.3.1-20261027">
-<link rel="stylesheet" href="../shared/baseline-uncertainty.css?v=74.3.1-20261027">
-<link rel="stylesheet" href="../shared/single-plan-board.css?v=74.3.1-20261027">
+<link rel="stylesheet" href="../shared/health-reserve.css?v=74.3.4-20261028">
+<link rel="stylesheet" href="../shared/approved-plan.css?v=74.3.4-20261028">
+<link rel="stylesheet" href="../shared/monthly-control.css?v=74.3.4-20261028">
+<link rel="stylesheet" href="../shared/scenario-strategy.css?v=74.3.4-20261028">
+<link rel="stylesheet" href="../shared/scenario-uncertainty.css?v=74.3.4-20261028">
+<link rel="stylesheet" href="../shared/baseline-uncertainty.css?v=74.3.4-20261028">
+<link rel="stylesheet" href="../shared/single-plan-board.css?v=74.3.4-20261028">
 <style>
 :root{--bg:#f4f6fa;--card:#fff;--text:#17263e;--muted:#58677d;--line:#dce4ee;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 4px 18px rgba(15,23,42,.045);--sc-blue:#2563eb;--sc-blue-soft:#eff6ff;--sc-green:#0ea87a;--sc-red:#ef5b73;--sc-purple:#7658e6;--sc-ink:#17263e}
 *{box-sizing:border-box}
@@ -3016,11 +3016,11 @@ body{font-size:16px;line-height:1.5}
   </div>
 </div>
 
-<script src="../shared/scenario-strategy.js?v=74.3.1-20261027"></script>
-<script src="../shared/scenario-uncertainty.js?v=74.3.1-20261027"></script>
-<script src="../shared/baseline-uncertainty.js?v=74.3.1-20261027"></script>
-<script src="../shared/single-plan-board.js?v=74.3.1-20261027"></script>
-<script src="../shared/monthly-control.js?v=74.3.1-20261027"></script>
+<script src="../shared/scenario-strategy.js?v=74.3.4-20261028"></script>
+<script src="../shared/scenario-uncertainty.js?v=74.3.4-20261028"></script>
+<script src="../shared/baseline-uncertainty.js?v=74.3.4-20261028"></script>
+<script src="../shared/single-plan-board.js?v=74.3.4-20261028"></script>
+<script src="../shared/monthly-control.js?v=74.3.4-20261028"></script>
 <script>
 const sb=window.appSupabase;
 if(typeof Chart!=="undefined"){
@@ -5593,7 +5593,7 @@ function renderHistoricalStructural(){
     item("Avanzo ordinario",t.available,"Dopo spese, rate e risparmio","residual");
 }
 function balanceDrillNatureLabel(v){
-  return {INCOME:"Entrate",MANDATORY:"Obbligatorie",NECESSARY:"Necessarie",UNCLASSIFIED:"NC · Non classificate",DISCRETIONARY:"Discrezionali",UNKNOWN:"Altre uscite operative",INVESTMENT:"Risparmio / investimenti",ALL_EXPENSE:"Tutte le uscite operative"}[v]||String(v||"Dettaglio");
+  return {INCOME:"Entrate",MANDATORY:"Obbligatorie",NECESSARY:"Necessarie",UNCLASSIFIED:"NC · Non classificate",DISCRETIONARY:"Discrezionali",UNKNOWN:"Altre uscite operative",INVESTMENT:"Risparmio / investimenti",ALL_EXPENSE:"Tutte le uscite del Cash flow"}[v]||String(v||"Dettaglio");
 }
 function balanceDrillDirection(){return balanceDrillSelection&&balanceDrillSelection.nature==="INCOME"?"INCOME":"EXPENSE"}
 function balanceDrillNatureForProjectionCat(cat){
@@ -5638,7 +5638,7 @@ function balanceDrillRowsForSelection(){
     const dir=String(x.direction||"");
     let match=false;
     if(nature==="INCOME")match=dir==="INCOME"&&(!historicalIsFinancingCategory(x)||balanceDrillSelection.origin==="MONTH_CASHFLOW");
-    else if(nature==="ALL_EXPENSE")match=dir==="EXPENSE";
+    else if(nature==="ALL_EXPENSE")match=dir==="EXPENSE"||(balanceDrillSelection.origin==="MONTH_CASHFLOW"&&dir==="INVESTMENT");
     else if(nature==="INVESTMENT"){
       if(dir==="INVESTMENT"){
         const temporal=String(x.investment_temporality||""),funding=String(x.investment_funding_source||"CURRENT_SURPLUS");
@@ -5742,10 +5742,17 @@ function renderBalanceDrill(){
   ["income","mandatory","necessary","unclassified","discretionary","unknown","investment","all_expense"].forEach(function(k){box.classList.remove("nature-"+k)});
   box.classList.add("nature-"+String(balanceDrillSelection.nature||"").toLowerCase());
   $("balanceDrillTitle").textContent=balanceDrillNatureLabel(balanceDrillSelection.nature)+" · "+balanceDrillPeriodLabel();
-  $("balanceDrillSubtitle").textContent=mixed?"Consuntivo + previsione per categoria; controparti sul solo consuntivo.":forecastOnly?"Previsione per categoria; controparti e movimenti mostrano il contesto storico.":"L1 → L2 → controparti. Clicca una controparte per aprire i movimenti.";
+  $("balanceDrillSubtitle").textContent=balanceDrillSelection.origin==="MONTH_CASHFLOW"&&balanceDrillSelection.nature==="ALL_EXPENSE"?"Spese operative e investimenti, come nella barra selezionata. Trasferimenti esclusi.":mixed?"Consuntivo + previsione per categoria; controparti sul solo consuntivo.":forecastOnly?"Previsione per categoria; controparti e movimenti mostrano il contesto storico.":"L1 → L2 → controparti. Clicca una controparte per aprire i movimenti.";
   const temporal=balanceTemporalEmpty();balanceDrillRows.forEach(function(x){BALANCE_TEMPORAL_DEFS.forEach(function(d){balanceTemporalAdd(temporal,d[0],x.temporal[d[0]])})});
   $("balanceDrillTemporality").innerHTML=balanceTemporalSummaryHtml(temporal);
   $("balanceDrillTotal").textContent=money(total);
+   if(balanceDrillSelection.origin==="MONTH_CASHFLOW"&&balanceDrillSelection.nature==="ALL_EXPENSE"){
+     const months=new Set(balanceDrillMonthSets().actual);
+     const cashRows=historicalRowsFor(balanceDrillSelection.mode||historicalPeriodMode).filter(r=>months.has(String(r.month_start)));
+     const expected=cashRows.reduce((sum,r)=>sum+num(balanceDrillSelection.scope==="TOTAL"?r.outgoing:r.outgoing_ordinary),0);
+     const diff=Math.round((expected-total)*100)/100;
+     $("balanceDrillSubtitle").textContent+=" Barra "+money(expected)+" · dettaglio "+money(total)+(Math.abs(diff)>.02?" · Differenza "+money(diff)+" da verificare.":" · riconciliato.");
+   }
   $("balanceDrillCategoryHint").textContent=groups.length+" categorie · % sul totale";
   $("balanceDrillSort").value=balanceDrillSort;$("balanceDrillL2Sort").value=balanceDrillL2Sort;$("balanceDrillCpSort").value=balanceDrillCpSort;
   let group=groups.find(function(g){return String(g.id)===String(balanceDrillSelectedL1)});
@@ -5962,15 +5969,16 @@ function renderBalanceWaterfall(){
   renderBalanceErosion();renderBalanceFlowSide();
 }
 
+function flowPeriodRangeLabel(months){return months&&months.length?monthLabel(months[0])+" – "+monthLabel(months[months.length-1]):"nessun mese disponibile";}
 function flowYearChoices(){
-  const now=historicalCurrentMonth(),year=Number(now.slice(0,4));
-  const years=Array.from(new Set((scenarioActualRows||[]).map(function(r){return Number(String(r.month_start||"").slice(0,4))}).filter(function(y){return y>=year-4&&y<=year}))).sort(function(a,b){return b-a});
-  const loaded=new Set(flowAvailableMonths((scenarioActualRows||[]).map(function(r){return String(r.month_start)})));
-  const completeYears=years.filter(function(y){return y===year||monthSeries(y+"-01-01",12).every(function(m){return loaded.has(m)})});
-  if(!completeYears.includes(year))completeYears.unshift(year);
-  return [["ROLLING_12","Ultimi 12 mesi completi"],["PREVIOUS_12","12 mesi precedenti"],["ROLLING_6","Ultimi 6 mesi completi"],["ROLLING_24","Ultimi 24 mesi completi"]].concat(
-    completeYears.map(function(y){return ["YEAR:"+y,y===year?"Anno "+y+" fino a "+monthLabel(addMonthsISO(now,-1)):"Anno solare "+y]})
-  );
+ const now=historicalCurrentMonth(),year=Number(now.slice(0,4));
+ const years=Array.from(new Set((scenarioActualRows||[]).map(r=>Number(String(r.month_start||"").slice(0,4))).filter(y=>y>=year-4&&y<=year))).sort((a,b)=>b-a);
+ const loaded=new Set(flowAvailableMonths((scenarioActualRows||[]).map(r=>String(r.month_start))));
+ const completeYears=years.filter(y=>y===year||monthSeries(y+"-01-01",12).every(m=>loaded.has(m)));
+ if(!completeYears.includes(year))completeYears.unshift(year);
+ const base=[["ROLLING_12","Ultimi 12 mesi chiusi"],["PREVIOUS_12","12 mesi prima degli ultimi 12"],["ROLLING_6","Ultimi 6 mesi chiusi"],["ROLLING_24","Ultimi 24 mesi chiusi"]];
+ const annual=completeYears.map(y=>["YEAR:"+y,y===year?"Anno in corso "+y+" (fino al mese chiuso)":"Anno solare "+y]);
+ return base.concat(annual).map(row=>[row[0],row[1]+" · "+flowPeriodRangeLabel(flowMonthsFor(row[0]))]);
 }
 function flowMonthsFor(key){
   const now=historicalCurrentMonth(),year=Number(now.slice(0,4));
@@ -5985,7 +5993,7 @@ function flowMonthsFor(key){
 }
 function flowPeriodLabel(key,months){
   const found=flowYearChoices().find(function(row){return row[0]===key});
-  return (found?found[1]:"Periodo")+' · '+months.length+' mesi';
+  return found?found[1]:"Periodo · "+flowPeriodRangeLabel(months);
 }
 function flowAvailableMonths(months){
   // The RPC creates monthly rows even when there are no movements; zero rows
@@ -9925,8 +9933,8 @@ $("rpcDiagnosticsModal")?.addEventListener("click",function(e){if(e.target===$("
 document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!$("rpcDiagnosticsModal")?.classList.contains("hidden"))closeRpcDiagnostics()});
 init();
 </script>
-<script src="../shared/health-reserve.js?v=74.3.1-20261027"></script>
-<script src="../shared/approved-plan.js?v=74.3.1-20261027"></script>
+<script src="../shared/health-reserve.js?v=74.3.4-20261028"></script>
+<script src="../shared/approved-plan.js?v=74.3.4-20261028"></script>
 </body>
 </html>
 
