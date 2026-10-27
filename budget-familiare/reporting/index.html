@@ -2366,7 +2366,8 @@ body{font-size:16px;line-height:1.5}
             <span>Periodo storico</span>
             <div class="where-period-buttons" role="group" aria-label="Periodo storico">
               <button type="button" data-where-period="6">6 mesi</button>
-              <button type="button" data-where-period="12" class="active">12 mesi</button>
+              <button type="button" data-where-period="12" class="active">Ultimi 12 mesi</button>
+              <button type="button" data-where-period="YEAR">Ultimo anno solare</button>
               <button type="button" data-where-period="24">24 mesi</button>
               <button type="button" data-where-period="0">Tutto</button>
             </div>
@@ -5290,6 +5291,7 @@ function renderHistoricalYearOptions(){
 function historicalMonthsFor(mode){
   const current=historicalCurrentMonth(),year=Number(current.slice(0,4)),m=mode||historicalPeriodMode;
   if(m==="YEAR")return monthSeries(String(historicalYearSelection||year-1)+"-01-01",12);
+   if(m==="LAST_CALENDAR_YEAR")return monthSeries(String(year-1)+"-01-01",12);
   if(m==="CURRENT_YEAR")return monthSeries(String(year)+"-01-01",12);
   if(m==="FORECAST_12")return monthSeries(current,12);
   if(m==="ROLLING_6")return monthSeries(addMonthsISO(current,-6),6);
@@ -5369,7 +5371,7 @@ function balanceProjectionDirectionTotal(data,actualMonths,forecastMonths,exclud
 }
 function balanceFlowModel(mode){
   const m=mode||historicalPeriodMode;
-  if(["ROLLING_6","ROLLING_12","ROLLING_24","ALL","YEAR"].includes(m)){
+  if(["ROLLING_6","ROLLING_12","ROLLING_24","ALL","YEAR","LAST_CALENDAR_YEAR"].includes(m)){
     const t=historicalTotalsFor(m),n=historicalNatureTotals(m,"ORDINARY"),inv=historicalInvestmentTotals(m,"ORDINARY");
     const other=Math.max(0,t.ordinaryOut-n.MANDATORY-n.NECESSARY-n.DISCRETIONARY-n.UNCLASSIFIED);
     return {mode:m,label:historicalPeriodLabel(m),historical:true,
@@ -5415,6 +5417,7 @@ function balanceFlowModel(mode){
 function historicalPeriodLabel(mode){
   const m=mode||historicalPeriodMode,months=historicalMonthsFor(m),first=months[0],last=months[months.length-1];
   if(m==="YEAR")return "Anno "+String(historicalYearSelection||first.slice(0,4));
+   if(m==="LAST_CALENDAR_YEAR")return "Ultimo anno solare completo · "+first.slice(0,4);
   if(m==="CURRENT_YEAR")return "Anno "+first.slice(0,4)+" · consuntivo + previsione";
   if(m==="FORECAST_12")return "Prossimi 12 mesi";
   if(m==="ROLLING_6")return "Ultimi 6 mesi completi";
@@ -5570,7 +5573,7 @@ function renderHistoricalKpis(){
       historicalKpiCard("Saldo operativo",t.operatingNet,pct(t.operatingNet),"balance","Entrate meno uscite operative prima delle allocazioni di risparmio.")+
       historicalKpiCard(balanceSurplusLabel(),final,pct(final),"margin","Risultato della gestione corrente nel periodo.");
   }
-  if($("historicalBalanceStatus"))$("historicalBalanceStatus").innerHTML='<div class="historical-period-chip">'+esc(t.label)+'</div>';
+  if($("historicalBalanceStatus"))$("historicalBalanceStatus").innerHTML='<div class="historical-period-chip">'+esc(t.label)+" · "+esc((()=>{const mm=historicalMonthsFor(historicalPeriodMode);return mm.length?monthLabel(mm[0])+" → "+monthLabel(mm[mm.length-1]):""})())+'</div>';
 }
 function renderHistoricalStructural(){
   const t=balanceFlowModel(historicalPeriodMode);if(!t)return;
@@ -7338,7 +7341,7 @@ function renderHistoricalChart(){
 }
 function renderHistoricalBalance(){
   if(!Array.isArray(scenarioActualRows)){msg($("historicalBalanceStatus"),"Carico il bilancio…");return}
-  if(!["ROLLING_6","ROLLING_12","ROLLING_24","ALL","YEAR"].includes(historicalPeriodMode))historicalPeriodMode="ROLLING_12";
+  if(!["ROLLING_6","ROLLING_12","ROLLING_24","ALL","YEAR","LAST_CALENDAR_YEAR"].includes(historicalPeriodMode))historicalPeriodMode="ROLLING_12";
   balanceHubMode="HISTORY";historicalChartMode="CASHFLOW";
   renderHistoricalKpis();renderBalanceWaterfall();renderHistoricalChart();renderHistoricalPeriodComparison();applyBalanceSubview();syncWherePeriodUI();
 }
@@ -7899,7 +7902,7 @@ function showProcessRoadmap(phase,featureKey){
 }
 function wherePeriodValue(){
   if(balanceSubview==="analysis")return String(analysisPeriodMonths());
-  return historicalPeriodMode==="ROLLING_6"?"6":historicalPeriodMode==="ROLLING_24"?"24":historicalPeriodMode==="ALL"?"0":"12";
+  return historicalPeriodMode==="ROLLING_6"?"6":historicalPeriodMode==="ROLLING_24"?"24":historicalPeriodMode==="ALL"?"0":historicalPeriodMode==="LAST_CALENDAR_YEAR"?"YEAR":"12";
 }
 function syncWherePeriodUI(){
   const bar=$("wherePeriodBar"),periodGroup=$("wherePeriodGroup"),scopeGroup=$("whereScopeGroup");if(!bar)return;
@@ -7922,10 +7925,10 @@ function syncWherePeriodUI(){
   document.querySelectorAll("[data-history-scope]").forEach(function(b){const active=b.dataset.historyScope===historicalScope;b.classList.toggle("active",active);b.setAttribute("aria-pressed",String(active))});
 }
 function historicalModeFromPeriodValue(value){
-  return String(value)==="6"?"ROLLING_6":String(value)==="24"?"ROLLING_24":String(value)==="0"?"ALL":"ROLLING_12";
+  return String(value)==="6"?"ROLLING_6":String(value)==="24"?"ROLLING_24":String(value)==="0"?"ALL":String(value)==="YEAR"?"LAST_CALENDAR_YEAR":"ROLLING_12";
 }
 async function setWherePeriod(value){
-  const v=["0","6","12","24"].includes(String(value))?String(value):"12";
+  const v=["0","6","12","24","YEAR"].includes(String(value))?String(value):"12";
   historicalPeriodMode=historicalModeFromPeriodValue(v);
   if($("analysisPeriod"))$("analysisPeriod").value=v;
   if(balanceSubview==="analysis"){
