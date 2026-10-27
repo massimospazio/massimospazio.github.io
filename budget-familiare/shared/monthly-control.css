@@ -402,3 +402,30 @@
 .bf-v829-nature-compare span.focused{background:#e5edf8;color:#24517b}
 .bf-v829-nature-compare b{font-size:12px}
 @media(max-width:720px){.bf-v829-controls{gap:10px}.bf-v829-period-note{margin-left:0;width:100%}.bf-v829-switch{flex:1 1 auto}}
+
+/* V74.2.9.1 — mirror Baseline/Piano visual primitives in Control */
+.bf-control-view .bf-v829-table td.bf-v829-category{min-width:225px;white-space:normal}
+.bf-control-view .bf-v829-table .bf-v829-category .bf-l1-tag{
+ display:inline-flex;align-items:center;max-width:112px;min-width:0;margin:0 7px 0 0;
+ padding:3px 6px;border-radius:6px;font-size:11px;font-weight:750;vertical-align:middle;
+ white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+}
+.bf-control-view .bf-v829-table .bf-v829-l2-name{font-size:12px;font-weight:650;color:#365879;text-align:left;vertical-align:middle}
+.bf-control-view .bf-v829-table .bf-reliability-bars{display:inline-flex;gap:2px;align-items:flex-end;min-width:43px;height:16px;vertical-align:middle}
+.bf-control-view .bf-v829-table .bf-reliability-bars i{width:6px;height:13px;border-radius:2px;background:#dce3ec;display:inline-block;border:0}
+.bf-control-view .bf-v829-table .bf-reliability-bars i.on{height:13px}
+.bf-control-view .bf-v829-table th:first-child{width:24%}
+.bf-control-view .bf-v829-table th:nth-child(2){width:5%}
+.bf-control-view .bf-v829-table th:nth-child(3){width:7%}
+.bf-control-view .bf-v829-table th:nth-child(4){width:7%}
+.bf-control-view .bf-v829-table th:nth-child(5){width:10%}
+.bf-control-view .bf-v829-table th:nth-child(6){width:10%}
+.bf-control-view .bf-v829-table th:nth-child(7){width:10%}
+.bf-control-view .bf-v829-table th:nth-child(8){width:8%}
+.bf-control-view .bf-v829-table th:nth-child(9){width:7%}
+.bf-control-view .bf-v829-table th:nth-child(10){width:12%}
+.bf-control-view .bf-v829-table th:first-child .bf-v828-sort{display:inline;white-space:nowrap;text-align:left}
+.bf-control-view .bf-v829-filter-note{margin:8px 0;display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:12px;font-weight:650;color:#345779;background:#eaf2fb;border-radius:8px;padding:7px 10px}
+.bf-control-view .bf-v829-board .bf-v828-l2 td:first-child{padding-left:9px}
+.bf-control-view .bf-v829-board .bf-v828-l1 td:first-child{padding-left:9px}
+.bf-control-view .bf-v829-board .bf-v828-over td:nth-child(8),.bf-control-view .bf-v829-board .bf-v828-over td:nth-child(9){color:#b6364b}
