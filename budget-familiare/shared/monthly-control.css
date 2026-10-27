@@ -453,3 +453,33 @@
 .bf-v830-stat-good strong{color:#126b49}
 .bf-v830-summary-note{color:#62758b;font-size:11px;line-height:1.45;margin:5px 0 12px}
 @media(max-width:660px){.bf-v830-summary{grid-template-columns:1fr}.bf-v830-stat{padding:9px 12px}}
+
+
+/* V74.2.11 — readable six-column month grid with plan/actual, spending deviation and cumulatives. */
+.bf-control-view .bf-month-strip.bf-v831-months{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:9px;overflow:visible}
+.bf-control-view .bf-month-strip.bf-v831-months button{display:flex;min-height:185px;padding:10px 11px;gap:7px;border-bottom:3px solid #bdcad9;text-align:left}
+.bf-control-view .bf-month-strip.bf-v831-months button>span:first-child{font-size:13px;color:#244c79;font-weight:800;display:flex;justify-content:space-between;align-items:center;width:100%;gap:4px}
+.bf-control-view .bf-month-strip.bf-v831-months button em{font-size:9px;font-style:normal;font-weight:600;color:#5d7188}
+.bf-v831-tile-pair{display:flex;justify-content:space-between;align-items:baseline;width:100%;gap:7px}
+.bf-control-view .bf-v831-tile-pair small{font-size:10px}
+.bf-control-view .bf-v831-tile-pair strong,.bf-control-view .bf-v831-tile-pair b{font-size:13px;font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums}
+.bf-v831-tile-deviations{display:grid;grid-template-columns:1fr 1fr;gap:4px;width:100%;border-top:1px solid #e8edf4;padding-top:6px}
+.bf-v831-tile-deviations span{font-size:10px;font-weight:750;white-space:nowrap}
+.bf-v831-tile-deviations span:first-child{color:#ae3246}
+.bf-v831-tile-deviations span:last-child{color:#16724c}
+.bf-v831-tile-cumulative{display:grid;grid-template-columns:1fr auto;gap:3px 7px;align-items:baseline;width:100%;margin-top:auto;padding-top:6px;border-top:1px dashed #d6e0ed}
+.bf-control-view .bf-v831-tile-cumulative small{font-size:10px;color:#546a81}
+.bf-v831-tile-cumulative b{font-size:11px;font-weight:800;color:#22496f;white-space:nowrap;font-variant-numeric:tabular-nums}
+.bf-v831-tile-cumulative small:last-child:nth-child(odd){grid-column:1/-1;font-size:10px;font-weight:750}
+.bf-v831-future-note{margin:8px 0}
+.bf-v831-signals{border-top:2px solid #d7aa50}
+.bf-v831-signal-list{display:grid;gap:7px;margin-top:12px}
+.bf-v831-signal{display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap;align-items:baseline;background:#fffbf3;border:1px solid #eee0bd;border-radius:8px;padding:10px 12px;font-size:12px;color:#765319}
+.bf-v831-signal b{font-size:12px;color:#665025}
+@media(max-width:1170px){.bf-control-view .bf-month-strip.bf-v831-months{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:790px){.bf-control-view .bf-month-strip.bf-v831-months{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:380px){.bf-control-view .bf-month-strip.bf-v831-months{grid-template-columns:1fr}}
+
+.bf-control-view .bf-v831-tile-spend-net{font-size:10px;font-weight:800;color:#385877}
+.bf-control-view .bf-v831-tile-spend-net.positive{color:#16724c}
+.bf-control-view .bf-v831-tile-spend-net.negative{color:#ae3246}
