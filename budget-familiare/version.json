@@ -1,5 +1,5 @@
 {
-  "version": "V74.3.1",
-  "source_sha": "e10409d82efa8982c4e8d356a337e5364f90067b",
-  "built_at": "2026-10-27T22:57:25.518994+00:00"
+  "version": "V74.3.4",
+  "source_sha": "bb3d0b085468695b78146ffa8e2dcdfa31d0312b",
+  "note": "manual publication recovery; verify GitHub Pages and publishing workflow"
 }
