@@ -1,5 +1,5 @@
 {
-  "version": "V74.3.4",
-  "source_sha": "bb3d0b085468695b78146ffa8e2dcdfa31d0312b",
-  "note": "manual publication recovery; verify GitHub Pages and publishing workflow"
+  "version": "V74.3.5",
+  "source_sha": "0c25b332f1cd61e9cb42c3808b2bca8ccdf3e33e",
+  "note": "Direct publication recovery; automation diagnosis pending"
 }
