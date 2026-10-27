@@ -236,8 +236,8 @@ const controlHelp={
  incomeprogress:["Entrate effettive vs Piano","Quanto è stato incassato rispetto alle entrate pianificate nel mese selezionato.","Percentuale = Consuntivo entrate diviso Piano entrate.","Un accredito può arrivare negli ultimi giorni: nessun allarme automatico dal ritmo."],
  expenseprogress:["Uscite effettive vs Piano","Budget spese e movimenti registrati separati dal Piano.","Percentuale = Consuntivo uscite diviso Piano uscite.","Un mese parziale non dimostra risparmio strutturale."],
  freshness:["Ultima data movimento e import","Data dell'ultimo movimento registrato e dell'ultima importazione per ING e Trade Republic.","La data del file può essere successiva all'ultimo movimento contenuto.","Le date indicano aggiornamento, non certificano completezza bancaria."],
- natureprogress:["Avanzamento per natura","Usa le nature O, N, D e NC già presenti nella pianificazione; i risparmi/investimenti sono separati.","Ogni L2 appartiene a un solo gruppo di natura.","Il residuo del mese non è un risparmio consolidato."],
- controlboard:["Tabellone L1/L2","Confronta il Piano con il Consuntivo per le categorie familiari già utilizzate nella pianificazione.","Delta = Consuntivo − Piano, in euro e percentuale; con Piano zero la percentuale non è definita.","Il cumulato e i warning configurabili saranno implementati nella prossima release."],
+ natureprogress:["Avanzamento per natura","Le barre aggregano O, N, D, NC e l'eventuale risparmio/investimenti dalla tassonomia di pianificazione.","Mese e Cumulato sono selezionabili; le due percentuali sono sempre visibili e non vengono inventate se il Piano è zero.","Cumulato dai mesi approvati, non da gennaio. Nel mese aperto il budget residuo non è risparmio consolidato."],
+ controlboard:["Tabellone L1/L2","Due viste: L1 aggregata e L1 + L2; puoi ordinare tutte le colonne e filtrare per natura.","Selettore Mese/Cumulato per gli importi; entrambe le percentuali sono sempre visibili. Δ = Consuntivo − Piano; con Piano zero Δ% e avanzamento sono non calcolabili.","Cumulato dall'inizio del Piano approvato, non dal 1° gennaio; il mese aperto resta parziale. Affidabilità L1: valore meno affidabile fra tutte le L2, oppure n/d."],
  modes:["Quattro lenti di controllo","Tre modalità principali sono assegnate a ciascuna L2 usando natura, temporalità e metodo Baseline. La quarta segnala le voci da rivedere.","Programmate = metodo fisso e ricorrenza nota; Da storico = metodo storico; Discrezionali = natura D. Da rivedere incrocia bassa affidabilità, assenza di valutazione ed evidenze reali.","L’affidabilità è trasversale: gli importi della quarta lente non devono essere sommati ai primi tre. Il mese corrente ha consuntivi parziali; il metodo Baseline mostrato è quello attuale, mentre il Piano è quello approvato."],
  outcome:["Piano approvato","Risultato economico programmato nei mesi del periodo selezionato.","Somma dei target mensili approvati di entrata meno i target di uscita.","È il riferimento principale: non cambia quando si aggiornano i movimenti. Non è il saldo del conto."],
  deviation:["Confronto tecnico non validato","Accosta la stima live al Piano approvato, senza presentarla come un Forecast deliberato.","Differenza = saldo economico della stima tecnica meno saldo economico del Piano, per gli stessi mesi. Dove disponibile si distingue la differenza iniziale da quella sorta nei ricalcoli successivi.","Una differenza negativa non prova nuove spese o un peggioramento dopo l’approvazione. Controlla le categorie, il consuntivo e l’origine del divario."],
@@ -738,79 +738,162 @@ function controlProgressCard(title,key,data,month){
   '<p><b>'+controlPct(pct)+'</b> del Piano · Residuo '+eur(data.remaining)+'</p></section>';
 }
 function renderNatureProgress(model,month){
- const visible=month<=model.current;
+ const visible=month<=model.current,scope=controlUi.boardScope;
  const rows=model.rows.filter(r=>r.direction==="EXPENSE");
  const items=controlNatures.map(([kind,title,color])=>{
   const chosen=rows.filter(r=>controlKind(r.nature)===kind);
   if(kind==="SAVINGS"&&!chosen.length)return "";
-  const cells=chosen.map(r=>r.months[month]);
-  const plan=cells.every(x=>x.plan!==null)?round(cells.reduce((n,x)=>n+num(x.plan),0)):null;
-  const actual=visible?round(cells.reduce((n,x)=>n+num(x.actual),0)):null;
-  const pct=controlRatio(actual,plan);
+  function totals(metric){
+   const list=chosen.map(r=>metric==="MONTH"?r.months[month]:controlRowCumulative(r,month,model));
+   const plan=list.every(x=>x.plan!==null)?round(list.reduce((n,x)=>n+num(x.plan),0)):null;
+   const actual=list.every(x=>x.actual!==null)?round(list.reduce((n,x)=>n+num(x.actual),0)):null;
+   return {plan,actual,percent:controlRatio(actual,plan)};
+  }
+  const m=totals("MONTH"),c=totals("CUMULATIVE"),focus=scope==="CUMULATIVE"?c:m;
   return '<div class="bf-v828-nature-item"><div class="bf-v828-nature-head"><b><i style="background:'+color+'"></i>'+esc(title)+'</b>'+
-   '<span>'+eur(actual)+' / '+eur(plan)+'</span></div>'+
-   '<div class="bf-v828-meter"><i style="background:'+color+';width:'+Math.min(100,Math.max(0,pct||0))+'%"></i></div>'+
-   '<small>'+controlPct(pct)+' del Piano · residuo '+eur(actual===null||plan===null?null:round(plan-actual))+
+   '<span>'+eur(focus.actual)+' / '+eur(focus.plan)+'</span></div>'+
+   '<div class="bf-v828-meter"><i style="background:'+color+';width:'+Math.min(100,Math.max(0,focus.percent||0))+'%"></i></div>'+
+   '<div class="bf-v829-nature-compare"><span class="'+(scope==="MONTH"?"focused":"")+'">Mese <b>'+controlPct(m.percent)+'</b></span>'+
+   '<span class="'+(scope==="CUMULATIVE"?"focused":"")+'">Cumulato <b>'+controlPct(c.percent)+'</b></span></div>'+
+   '<small>Residuo '+eur(focus.plan===null||focus.actual===null?null:round(focus.plan-focus.actual))+
    ' · '+chosen.length+' L2</small></div>';
  }).filter(Boolean).join('');
- return '<section class="bf-panel bf-v828-natures">'+sectionHeading("Avanzamento spese per natura · O / N / D","natureprogress")+
-  '<p class="bf-control-muted">I gruppi utilizzano la natura già assegnata in pianificazione. NC è esplicita; gli investimenti, se presenti, sono separati. Il budget ancora disponibile non è risparmio consolidato.</p>'+
+ const button=(mode,label)=>'<button type="button" class="btn compact '+(scope===mode?'':'ghost')+
+  '" data-bf-control-board-scope="'+mode+'" aria-pressed="'+(scope===mode)+'">'+label+'</button>';
+ return '<section class="bf-panel bf-v828-natures">'+
+  '<div class="bf-control-section-head">'+sectionHeading("Avanzamento per natura · O / N / D","natureprogress")+
+  '<div class="bf-control-buttons">'+button("MONTH","Mese")+button("CUMULATIVE","Cumulato")+'</div></div>'+
+  '<p class="bf-control-muted">I valori della barra seguono il periodo selezionato; entrambe le percentuali restano visibili. Il cumulato parte da '+
+   esc(displayMonth(model.approvedStart))+'. Il mese aperto è parziale, NC resta esplicita e gli investimenti sono separati.</p>'+
   '<div class="bf-v828-nature-grid">'+items+'</div></section>';
+}
+/* V74.2.9 · One table / two views / two time-scopes. Percentages need a >0 denominator. */
+const controlReliabilityLabels=["Non valutata","Certa","Alta","Consolidata","Stimata","Incerta"];
+function controlReliability(value){
+ if(value===null||value===undefined)return "n/d";
+ if(value===0)return "N/V";
+ return controlReliabilityLabels[value]||"n/d";
+}
+function controlApprovedMonthList(row){
+ return Object.keys(row.approvedTargets||{}).filter(m=>/^\d{4}-\d\d-01$/.test(m)).sort();
+}
+function controlRowCumulative(row,month,model){
+ const start=model.approvedStart;
+ if(!start||month<start)return {plan:null,actual:null};
+ const keys=controlApprovedMonthList(row).filter(m=>m>=start&&m<=month);
+ const range=[];for(let d=start;d<=month;d=addMonth(d,1))range.push(d);
+ if(!range.length||keys.length!==range.length||range.some(m=>!has(row.approvedTargets,m)))return {plan:null,actual:null};
+ const plan=round(range.reduce((n,m)=>n+num(row.approvedTargets[m]),0));
+ // Past actuals are provided by the historical projection dataset; the current month is a partial amount.
+ if(month>model.current)return {plan,actual:null};
+ const actual=round(range.reduce((n,m)=>{
+  if(m===model.current)return n+num(row.months[model.current]?.actual);
+  return n+num(row.actualByMonth?.[m]);
+ },0));
+ return {plan,actual};
+}
+function controlBoardMetric(plan,actual){
+ const delta=plan===null||actual===null?null:round(actual-plan);
+ return {plan,actual,delta,residual:delta===null?null:round(-delta),
+  variancePct:delta===null||plan<=0?null:round(delta*100/plan),
+  progress:controlRatio(actual,plan)};
 }
 function controlBoardEntries(model,month,direction){
  return model.rows.filter(r=>r.direction===direction).map(r=>{
-  const x=r.months[month],actual=month<=model.current?num(x.actual):null,plan=x.plan;
-  const delta=actual===null||plan===null?null:round(actual-plan);
-  return {...r,plan,actual,delta,residual:delta===null?null:round(-delta),
-   variancePct:delta===null||plan<=0?null:round(100*delta/plan),progress:controlRatio(actual,plan)};
+  const entry=r.months[month],monthPlan=entry.plan,monthActual=month<=model.current?num(entry.actual):null;
+  const cumulative=controlRowCumulative(r,month,model);
+  const monthMetric=controlBoardMetric(monthPlan,monthActual),cumulativeMetric=controlBoardMetric(cumulative.plan,cumulative.actual);
+  const plannedMonths=controlApprovedMonthList(r).filter(m=>num(r.approvedTargets[m])!==0);
+  const metric=controlUi.boardScope==="CUMULATIVE"?cumulativeMetric:monthMetric;
+  return {...r,...metric,monthMetric,cumulativeMetric,monthsCount:plannedMonths.length,
+   plannedMonthKeys:plannedMonths,sourceIds:[r.id]};
  });
 }
 function controlBoardSummary(items,groupName,groupId){
- const plan=items.every(r=>r.plan!==null)?round(items.reduce((n,r)=>n+num(r.plan),0)):null;
- const actual=items.every(r=>r.actual!==null)?round(items.reduce((n,r)=>n+num(r.actual),0)):null;
- const delta=plan===null||actual===null?null:round(actual-plan);
+ function aggregate(field){
+  const src=items.map(r=>r[field]);
+  const plan=src.every(x=>x.plan!==null)?round(src.reduce((n,x)=>n+x.plan,0)):null;
+  const actual=src.every(x=>x.actual!==null)?round(src.reduce((n,x)=>n+x.actual,0)):null;
+  return controlBoardMetric(plan,actual);
+ }
+ const monthMetric=aggregate("monthMetric"),cumulativeMetric=aggregate("cumulativeMetric");
+ const selected=controlUi.boardScope==="CUMULATIVE"?cumulativeMetric:monthMetric;
  const natures=[...new Set(items.map(r=>controlKind(r.nature)))];
- return {name:groupName,id:groupId,items,plan,actual,delta,residual:delta===null?null:round(-delta),
-  variancePct:delta===null||plan<=0?null:round(100*delta/plan),progress:controlRatio(actual,plan),
-  nature:natures.length===1?natures[0]:"MIXED"};
+ const rel=items.every(r=>Number.isInteger(r.reliability)&&r.reliability>=1&&r.reliability<=5)?
+   Math.max(...items.map(r=>r.reliability)):null;
+ const planned=[...new Set(items.flatMap(r=>r.plannedMonthKeys))];
+ return {name:groupName,id:groupId,items,...selected,monthMetric,cumulativeMetric,
+  nature:natures.length===1?natures[0]:"MIXED",reliability:rel,
+  monthsCount:planned.length,plannedMonthKeys:planned,sourceIds:items.map(r=>r.id)};
 }
 function controlBoardRow(r,group,expanded){
  const nature=group?r.nature:controlKind(r.nature);
  const badges={MANDATORY:"O",NECESSARY:"N",DISCRETIONARY:"D",OTHER:"NC",SAVINGS:"I",MIXED:"M"};
- const label=group?'<button type="button" class="bf-tree-toggle bf-v828-group-btn" data-bf-control-board-expand="'+encodeURIComponent(r.id)+'" aria-expanded="'+expanded+'">'+
+ const label=group?'<button type="button" class="bf-tree-toggle bf-v829-group-btn" data-bf-control-board-expand="'+encodeURIComponent(r.id)+'" aria-expanded="'+expanded+'">'+
   (expanded?"▾":"▸")+' '+esc(r.name)+' <small>('+r.items.length+')</small></button>':
   '<button type="button" class="bf-tree-toggle bf-control-indent" data-bf-control-open-risk="'+encodeURIComponent(r.id)+'">'+esc(r.name)+'</button>';
- const fmtDelta=r.delta===null?"—":(r.delta>0?"+":"")+money(r.delta);
- const color=r.delta!==null&&r.delta>0&&controlUi.boardDirection==="EXPENSE"?"bf-v828-over":"";
- return '<tr class="'+(group?'bf-v828-l1 ':'bf-v828-l2 ')+color+'"><td>'+label+'</td>'+
+ const positive=r.delta!==null&&r.delta>0&&controlUi.boardDirection==="EXPENSE";
+ const pctLabel=v=>v===null?"—":controlPct(v);
+ const deltaFmt=r.delta===null?"—":(r.delta>0?"+":"")+money(r.delta);
+ const monthPct=pctLabel(r.monthMetric.progress),cumPct=pctLabel(r.cumulativeMetric.progress);
+ const monthLabel=r.plannedMonthKeys.length?r.plannedMonthKeys.map(displayMonth).join(", "):"Nessun mese con importo pianificato";
+ const reliabilityLabel=controlReliability(r.reliability);
+ return '<tr class="'+(group?'bf-v828-l1 planning-l1-row ':'bf-v828-l2 planning-l2-row ')+(positive?'bf-v828-over':'')+'">'+
+  '<td>'+label+'</td>'+
   '<td><span class="bf-v828-nature-pill nature-'+nature.toLowerCase()+'">'+(badges[nature]||"?")+'</span></td>'+
+  '<td class="bf-v829-trust" title="'+esc(group?"Affidabilità meno elevata fra tutte le L2; n/d se manca una valutazione":"Affidabilità della Baseline")+'">'+
+   '<span class="bf-v829-reliability v-'+(r.reliability===null?0:r.reliability)+'">'+esc(reliabilityLabel)+'</span></td>'+
+  '<td class="bf-v828-number" title="'+esc(monthLabel)+'">'+r.monthsCount+'</td>'+
   '<td class="bf-v828-number">'+eur(r.plan)+'</td><td class="bf-v828-number">'+eur(r.actual)+'</td>'+
-  '<td class="bf-v828-number">'+eur(r.residual)+'</td><td class="bf-v828-number">'+fmtDelta+'</td>'+
-  '<td class="bf-v828-number">'+controlPct(r.variancePct)+'</td><td><div class="bf-v828-meter"><i style="width:'+Math.min(100,Math.max(0,r.progress||0))+'%"></i></div>'+
-  '<small>'+(r.progress===null?(r.plan===0&&r.actual>0?"Non pianificata":"—"):controlPct(r.progress))+'</small></td></tr>';
+  '<td class="bf-v828-number">'+eur(r.residual)+'</td><td class="bf-v828-number">'+deltaFmt+'</td>'+
+  '<td class="bf-v828-number">'+pctLabel(r.variancePct)+'</td>'+
+  '<td class="bf-v829-progress"><div class="bf-v829-dual"><span class="'+(controlUi.boardScope==="MONTH"?'focused':'')+'"><small>Mese</small> '+monthPct+'</span>'+
+  '<span class="'+(controlUi.boardScope==="CUMULATIVE"?'focused':'')+'"><small>Cum.</small> '+cumPct+'</span></div></td></tr>';
 }
 function renderControlBoard(model,month){
  const direction=controlUi.boardDirection;
  const entries=controlBoardEntries(model,month,direction).filter(r=>direction==="INCOME"||controlUi.boardNature==="ALL"||controlKind(r.nature)===controlUi.boardNature);
  const groups=new Map();
  for(const r of entries){const id=r.l1Id+"|"+r.l1Name;if(!groups.has(id))groups.set(id,[]);groups.get(id).push(r);}
- const compare=(a,b)=>controlUi.boardSort==="NAME"?a.name.localeCompare(b.name,"it"):num(b[controlUi.boardSort])-num(a[controlUi.boardSort]);
- const grouped=[...groups].map(([id,items])=>controlBoardSummary(items,items[0].l1Name,id)).sort(compare);
- const headings=[["Categoria L1 / L2","NAME"],["Natura",null],["Piano mese","plan"],["Consuntivo mese","actual"],["Residuo","residual"],["Δ €","delta"],["Δ %","variancePct"],["Avanzamento",null]];
- const th=headings.map(([name,key])=>'<th>'+(key?'<button type="button" class="bf-v828-sort" data-bf-control-board-sort="'+key+'">'+esc(name)+(controlUi.boardSort===key?' ↓':' ↕')+'</button>':esc(name))+'</th>').join('');
- const body=grouped.map(g=>controlBoardRow(g,true,!!controlUi.boardExpanded[g.id])+
-   (controlUi.boardExpanded[g.id]?g.items.sort(compare).map(r=>controlBoardRow(r,false,false)).join(''):"")).join('');
- const filters=direction==="INCOME"?"":'<div class="bf-v828-filters">'+[["ALL","Tutte"],["MANDATORY","O"],["NECESSARY","N"],["DISCRETIONARY","D"],["OTHER","NC"]].map(([key,name])=>
+ const groupRows=[...groups].map(([id,items])=>controlBoardSummary(items,items[0].l1Name,id));
+ const sortName=controlUi.boardSort,asc=controlUi.boardSortAscending?1:-1;
+ const compare=(x,y)=>{
+  let a=sortName==="NAME"?x.name:x[sortName],b=sortName==="NAME"?y.name:y[sortName];
+  if(sortName==="nature"){a=x.nature;b=y.nature;}
+  if(sortName==="progress"){a=x.progress;b=y.progress;}
+  if(sortName==="reliability"){a=x.reliability;b=y.reliability;}
+  if(a===null||a===undefined)return b===null||b===undefined?x.name.localeCompare(y.name,"it"):1;
+  if(b===null||b===undefined)return -1;
+  const diff=typeof a==="string"?a.localeCompare(b,"it"):a-b;
+  return diff?diff*asc:x.name.localeCompare(y.name,"it");
+ };
+ groupRows.sort(compare);
+ const selectedScope=controlUi.boardScope==="CUMULATIVE"?"Cumulato":"Mese";
+ const thEntries=[["Categoria L1 / L2","NAME"],["Natura","nature"],["Affidabilità","reliability"],["Mesi Piano","monthsCount"],
+  ["Piano "+selectedScope,"plan"],["Consuntivo "+selectedScope,"actual"],["Residuo","residual"],["Δ €","delta"],["Δ %","variancePct"],["Avanzamento","progress"]];
+ const th=thEntries.map(([name,key])=>'<th><button type="button" class="bf-v828-sort" data-bf-control-board-sort="'+key+'" aria-label="Ordina per '+esc(name)+'">'+esc(name)+
+  (sortName===key?(asc?" ↑":" ↓"):" ↕")+'</button></th>').join('');
+ const detailsEnabled=controlUi.boardView==="L1_L2";
+ const body=groupRows.map(g=>{
+  const expanded=detailsEnabled&&(controlUi.boardExpanded[g.id]!==false);
+  return controlBoardRow(g,true,expanded)+(expanded?g.items.slice().sort(compare).map(r=>controlBoardRow(r,false,false)).join(''):"");
+ }).join('');
+ const filters=direction==="INCOME"?"":'<div class="bf-v828-filters">'+[["ALL","Tutte"],["MANDATORY","O"],["NECESSARY","N"],["DISCRETIONARY","D"],["OTHER","NC"],["SAVINGS","I"]].map(([key,name])=>
   '<button type="button" class="btn compact '+(controlUi.boardNature===key?'':'ghost')+'" data-bf-control-board-nature="'+key+'">'+name+'</button>').join('')+'</div>';
- return '<section class="bf-panel bf-v828-board" id="bfControlBoard">'+
+ const viewButton=(value,label)=>'<button type="button" data-bf-control-board-view="'+value+'" class="btn compact '+(controlUi.boardView===value?'':'ghost')+'" aria-pressed="'+(controlUi.boardView===value)+'">'+label+'</button>';
+ const scopeButton=(value,label)=>'<button type="button" data-bf-control-board-scope="'+value+'" class="btn compact '+(controlUi.boardScope===value?'':'ghost')+'" aria-pressed="'+(controlUi.boardScope===value)+'">'+label+'</button>';
+ return '<section class="bf-panel bf-v828-board bf-v829-board" id="bfControlBoard">'+
   '<div class="bf-control-section-head">'+sectionHeading("Tabellone di Controllo · L1 / L2","controlboard")+
-   '<div class="bf-control-buttons">'+[["EXPENSE","Uscite"],["INCOME","Entrate"]].map(([k,name])=>'<button type="button" class="btn compact '+(direction===k?'':'ghost')+'" data-bf-control-board-direction="'+k+'">'+name+'</button>').join('')+
-   '<button type="button" class="btn compact ghost" data-bf-control-board-expand-all="ALL">Espandi L1</button>'+
-   '<button type="button" class="btn compact ghost" data-bf-control-board-expand-all="NONE">Comprimi</button></div></div>'+
-  '<p class="bf-control-muted">Δ € e Δ % = Consuntivo − Piano del mese selezionato. Durante il mese un residuo positivo non è un risparmio consolidato. Seleziona la L1 per aprire le L2.</p>'+
-  filters+'<div class="bf-control-overflow"><table class="bf-control-table bf-v828-table"><thead><tr>'+th+'</tr></thead><tbody>'+
-   (body||'<tr><td colspan="8">Nessuna categoria disponibile.</td></tr>')+'</tbody></table></div>'+
-  '<p class="bf-control-muted">Confronto cumulato e warning configurabili: rilascio successivo. Nessun Forecast è stato ricalcolato o approvato automaticamente.</p></section>';
+  '<div class="bf-control-buttons">'+[["EXPENSE","Uscite"],["INCOME","Entrate"]].map(([k,name])=>'<button type="button" class="btn compact '+(direction===k?'':'ghost')+'" data-bf-control-board-direction="'+k+'">'+name+'</button>').join('')+'</div></div>'+
+  '<div class="bf-v829-controls"><div class="bf-v829-switch"><strong>Vista</strong>'+viewButton("L1","Solo L1")+viewButton("L1_L2","L1 + L2")+'</div>'+
+  '<div class="bf-v829-switch"><strong>Periodo</strong>'+scopeButton("MONTH","Mese")+scopeButton("CUMULATIVE","Cumulato")+'</div>'+
+  '<div class="bf-v829-period-note">Cumulato dal '+esc(displayMonth(model.approvedStart))+' al '+esc(displayMonth(month))+'</div></div>'+
+  '<p class="bf-control-muted">Δ = Consuntivo − Piano; le percentuali sono <b>—</b> se il Piano è zero o non disponibile. Le due percentuali Mese/Cumulato restano visibili. Nel mese aperto il confronto non è ancora un risparmio consolidato.</p>'+
+  filters+
+  '<div class="planning-board-card bf-v829-panel"><div class="planning-board-table-wrap bf-control-overflow"><table class="planning-board-table bf-v828-table bf-v829-table"><thead><tr>'+th+'</tr></thead><tbody>'+
+  (body||'<tr><td colspan="10">Nessuna categoria per la selezione corrente.</td></tr>')+
+  '</tbody></table></div></div>'+
+  '<p class="bf-control-muted">Per le L1 l’affidabilità è quella meno elevata fra le L2; “n/d” se non sono tutte valutate. I mesi previsti contano i mesi del Piano con importo diverso da zero. Eventuali warning automatici sul cumulato sono riservati alla prossima fase.</p></section>';
 }
 
 function renderExtended(host,model){
@@ -852,7 +935,7 @@ function renderExtended(host,model){
   '<span>Confronta questa percentuale con l’avanzamento del Piano: non indica da sola se sei sopra o sotto budget.</span></div>'+
   '<div class="bf-v828-freshness-banks">'+controlBankFreshness(model)+'</div>'+infoButton("freshness")+'</section>';
  const targetQuality=partial?'<p class="bf-control-notice"><strong>Attenzione:</strong> alcuni obiettivi mensili non risultano approvati. I valori mancanti restano non confrontabili.</p>':'';
- const stageNotice='<p class="bf-control-notice"><strong>Controllo operativo:</strong> consuntivi importati confrontati con il Piano approvato. Un mese aperto è sempre parziale e il residuo non è un risparmio realizzato. Il confronto cumulato e le soglie di warning saranno disponibili nel rilascio successivo.</p>';
+ const stageNotice='<p class="bf-control-notice"><strong>Controllo operativo:</strong> consuntivi importati confrontati con il Piano approvato. Un mese aperto è sempre parziale e il residuo non è un risparmio realizzato. Il confronto cumulato è disponibile nel tabellone e per natura; i warning con soglie configurabili saranno introdotti in un rilascio separato.</p>';
  const top='<div class="bf-control-header"><div><h2>Controllo · '+esc(label)+'</h2>'+
   '<p>Piano approvato V'+esc(model.revision)+' · Consuntivi importati · Nessun Forecast revisionato</p></div>'+
   '<button class="btn compact ghost" data-bf-control-reload>↻ Aggiorna dati</button></div>'+
@@ -961,6 +1044,8 @@ function handleControlClick(e){
   return true;
  }
  const attr=[
+  ["data-bf-control-board-view","boardView"],
+  ["data-bf-control-board-scope","boardScope"],
   ["data-bf-control-board-expand-all","boardExpandAll"],
   ["data-bf-control-board-expand","boardExpand"],
   ["data-bf-control-board-sort","boardSort"],
@@ -980,13 +1065,20 @@ function handleControlClick(e){
  for(const [name,field] of attr){
   const el=e.target?.closest?.("["+name+"]");if(!el)continue;
   const value=el.getAttribute(name);
-  if(field==="boardExpandAll"){
+  if(field==="boardView"){controlUi.boardView=value;}
+  else if(field==="boardScope"){controlUi.boardScope=value;}
+  else if(field==="boardExpandAll"){
    controlUi.boardExpanded={};
    if(value==="ALL")for(const r of currentControlModel?.rows||[])if(r.direction===controlUi.boardDirection)
      controlUi.boardExpanded[r.l1Id+"|"+r.l1Name]=true;
   }else if(field==="boardExpand"){
-   const id=decodeURIComponent(value);controlUi.boardExpanded[id]=!controlUi.boardExpanded[id];
-  }else if(field==="boardSort"){controlUi.boardSort=value;}
+   const id=decodeURIComponent(value);
+   if(controlUi.boardView==="L1"){controlUi.boardView="L1_L2";controlUi.boardExpanded[id]=true;}
+   else controlUi.boardExpanded[id]=!controlUi.boardExpanded[id];
+  }else if(field==="boardSort"){
+   if(controlUi.boardSort===value)controlUi.boardSortAscending=!controlUi.boardSortAscending;
+   else {controlUi.boardSort=value;controlUi.boardSortAscending=value==="NAME"||value==="nature";}
+  }
   else if(field==="boardDirection"){controlUi.boardDirection=value;controlUi.boardNature="ALL";}
   else if(field==="boardNature"){controlUi.boardNature=value;}
   else if(field==="modeMore")controlUi.modeShowAll=value==="ALL";

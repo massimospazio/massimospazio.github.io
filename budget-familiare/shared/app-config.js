@@ -1,7 +1,7 @@
 // Canonical source: massimospazio/budget-familiare; public files are deployed automatically.
 (function(){
-  const APP_VERSION='V74.2.8';
-  const APP_RELEASE='Controllo · KPI entrate e uscite, natura O/N/D e tabellone L1/L2';
+  const APP_VERSION='V74.2.9';
+  const APP_RELEASE='Controllo · Tabellone Piano con vista L1/L2 e progressivi mensile/cumulato';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});
