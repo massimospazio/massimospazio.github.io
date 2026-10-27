@@ -8,7 +8,7 @@ const mon=x=>String(x||"").slice(0,7);
 function totals(months){return (months||[]).reduce((a,r)=>{for(const k of ["income","expense","investment","economic_net","account_flow_net","transfer_in","transfer_out"])a[k]+=num(r[k]);return a},{income:0,expense:0,investment:0,economic_net:0,account_flow_net:0,transfer_in:0,transfer_out:0})}
 function categories(rows){const map=new Map();for(const r of rows||[]){const k=[r.direction,r.l1_name,r.l2_name].join("|"),v=map.get(k)||{type:r.direction,l1:r.l1_name,l2:r.l2_name,amount:0};v.amount+=num(r.amount);map.set(k,v)}return [...map.values()].sort((a,b)=>b.amount-a.amount)}
 function table(head,rows){return '<div class="bf-sp-scroll"><table><thead><tr>'+head.map(x=>'<th>'+x+'</th>').join("")+'</tr></thead><tbody>'+rows.join("")+'</tbody></table></div>'}
-function mount({app,rpc,legacy}){
+function mount({app,rpc,legacy,management=false}){
  if(app._bfScope)return app._bfScope.legacy();
  const top=app.querySelector(".top");if(!top)return true;
  let scope;try{scope=root.localStorage.getItem(key)}catch(e){}
@@ -23,8 +23,8 @@ function mount({app,rpc,legacy}){
   panel.classList.toggle("bf-sp-hidden",classic);
   bar.innerHTML='<strong>Modalità: '+names[scope]+'</strong><div class="bf-sp-switch">'+modes.map(x=>'<button data-sp-mode="'+x+'" class="'+(x===scope?"active":"")+'" aria-pressed="'+(x===scope)+'">'+names[x]+'</button>').join("")+'</div>'+
   '<div class="bf-sp-actions"><button data-sp-modern '+(!classic?'disabled':'')+'>Analisi per prospettiva</button>'+
-   (scope==="MASSIMO"?'<button data-sp-classic '+(classic?'disabled':'')+'>Strumenti storici Massimo</button>':"")+'</div>'+
-  '<small>'+(classic?"Strumenti storici: alcune schermate gestionali comprendono tutti i conti":"Dati filtrati per "+names[scope])+'</small>';
+   ((scope==="MASSIMO"||management)?'<button data-sp-classic '+(classic?'disabled':'')+'>'+(management?"Gestione conti · tutti":"Strumenti storici Massimo")+'</button>':"")+'</div>'+
+  '<small>'+(classic?(management?"Gestione operativa: dati di tutti i conti (non filtrati)": "Strumenti storici Massimo"): "Dati filtrati per "+names[scope])+'</small>';
   if(classic)return;
   if(loading){panel.innerHTML='<p>Caricamento movimenti '+names[scope]+'…</p>';return}
   if(error){panel.innerHTML='<div class="bf-sp-error">'+esc(error)+'</div><button data-sp-retry>Riprova</button>';return}
@@ -56,7 +56,7 @@ function mount({app,rpc,legacy}){
   finally{if(current===seq){loading=false;draw()}}
  }
  function choose(value){if(!modes.includes(value))return;scope=value;classic=false;tab="SUMMARY";try{root.localStorage.setItem(key,value)}catch(e){}draw();load()}
- function classicMode(){if(scope!=="MASSIMO")return;classic=true;seq++;draw();legacy?.()}
+ function classicMode(){if(scope!=="MASSIMO"&&!management)return;classic=true;seq++;draw();legacy?.()}
  function modern(){classic=false;draw();load()}
  bar.addEventListener("click",e=>{const m=e.target.closest("[data-sp-mode]");if(m){choose(m.dataset.spMode);return}if(e.target.closest("[data-sp-classic]"))classicMode();else if(e.target.closest("[data-sp-modern]"))modern()});
  panel.addEventListener("click",e=>{const t=e.target.closest("[data-sp-tab]"),p=e.target.closest("[data-sp-period]");if(t){tab=t.dataset.spTab;draw()}else if(p){period=+p.dataset.spPeriod;load()}else if(e.target.closest("[data-sp-classic]"))classicMode();else if(e.target.closest("[data-sp-retry]"))load()});
