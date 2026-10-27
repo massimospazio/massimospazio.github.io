@@ -9,9 +9,9 @@
 <title>Budget Familiare — Dashboard gestione</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
 <script src="shared/supabase-client.js?v=73.30.10.59-20261023"></script>
-<script src="shared/app-config.js?v=74.3.0-20261027"></script>
-<link rel="stylesheet" href="shared/perspectives.css?v=74.3.0-20261027">
-<script src="shared/perspectives.js?v=74.3.0-20261027"></script>
+<script src="shared/app-config.js?v=74.3.1-20261027"></script>
+<link rel="stylesheet" href="shared/perspectives.css?v=74.3.1-20261027">
+<script src="shared/perspectives.js?v=74.3.1-20261027"></script>
 <script src="shared/contextual-help.js?v=73.30.10.59-20261023" defer></script>
 <style>
 :root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#6b7280;--line:#e5e7eb;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 8px 24px rgba(15,23,42,.06)}
@@ -1002,7 +1002,7 @@ async function rpc(name,args={}){
 }
 async function init(){const {data:{session}}=await sb.auth.getSession();if(session)showApp(session.user);else showLogin()}
 function showLogin(){$('loginView').classList.remove('hidden');$('appView').classList.add('hidden')}
-async function showApp(user){$('loginView').classList.add('hidden');$('appView').classList.remove('hidden');$('userEmail').textContent=user.email||user.id;const useLegacy=window.BudgetFamilyPerspectives?.mount({app:$('appView'),rpc,legacy:()=>loadAll(),management:true})??true;if(useLegacy)await loadAll()}
+async function showApp(user){$('loginView').classList.add('hidden');$('appView').classList.remove('hidden');$('userEmail').textContent=user.email||user.id;window.BudgetFamilyPerspectives?.mount({app:$('appView'),area:'management',onChange:()=>window.location.reload()});await loadAll()}
 async function loadAll(){await loadOverview();await loadMovementsData()}
 async function loadOverview(){try{overview=await rpc('dashboard_read_v1');renderOverview();await loadImportDuplicateReviews()}catch(e){console.error(e);$('accountsTable').innerHTML=`<div class="msg error">${esc(e.message)}</div>`}}
 async function loadMovementsData(){
@@ -1455,8 +1455,16 @@ async function downloadImportFile(row){
   setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 function renderOverview(){
-  const accounts=overview?.accounts||[],imports=overview?.imports||[],transactions=overview?.transactions||[];
-  syncImportOwnerOptions(accounts);
+  const perspective=window.BudgetFamilyPerspectives?.current?.()||"MASSIMO";
+  const owned=row=>perspective==="FAMILY"||String(row?.owner||"").toUpperCase()===perspective;
+  const accounts=(overview?.accounts||[]).filter(owned);
+  const imports=(overview?.imports||[]).filter(owned);
+  const transactions=(overview?.transactions||[]).filter(owned);
+  // Import forms are operational: keep every authorized account selectable.
+  syncImportOwnerOptions(overview?.accounts||[]);
+  const label=perspective==="FAMILY"?"familiari":perspective==="LUISA"?"di Luisa":"di Massimo";
+  const expenseLabel=$('ovExpenseYear')?.closest('.kpi')?.querySelector('.label');
+  if(expenseLabel)expenseLabel.textContent="Spese "+label;
   const mov=accounts.reduce((s,x)=>s+Number(x.movements||0),0);
   const an=imports.reduce((s,x)=>s+Number(x.open_anomalies||0),0);
   const dates=accounts.flatMap(x=>[x.first_date,x.last_date]).filter(Boolean).sort();

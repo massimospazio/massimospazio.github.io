@@ -8,19 +8,19 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=74.3.0-20261027"></script>
-<script src="../shared/app-config.js?v=74.3.0-20261027"></script>
-<link rel="stylesheet" href="../shared/perspectives.css?v=74.3.0-20261027">
-<script src="../shared/perspectives.js?v=74.3.0-20261027"></script>
-<script src="../shared/contextual-help.js?v=74.3.0-20261027" defer></script>
+<script src="../shared/supabase-client.js?v=74.3.1-20261027"></script>
+<script src="../shared/app-config.js?v=74.3.1-20261027"></script>
+<link rel="stylesheet" href="../shared/perspectives.css?v=74.3.1-20261027">
+<script src="../shared/perspectives.js?v=74.3.1-20261027"></script>
+<script src="../shared/contextual-help.js?v=74.3.1-20261027" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<link rel="stylesheet" href="../shared/health-reserve.css?v=74.3.0-20261027">
-<link rel="stylesheet" href="../shared/approved-plan.css?v=74.3.0-20261027">
-<link rel="stylesheet" href="../shared/monthly-control.css?v=74.3.0-20261027">
-<link rel="stylesheet" href="../shared/scenario-strategy.css?v=74.3.0-20261027">
-<link rel="stylesheet" href="../shared/scenario-uncertainty.css?v=74.3.0-20261027">
-<link rel="stylesheet" href="../shared/baseline-uncertainty.css?v=74.3.0-20261027">
-<link rel="stylesheet" href="../shared/single-plan-board.css?v=74.3.0-20261027">
+<link rel="stylesheet" href="../shared/health-reserve.css?v=74.3.1-20261027">
+<link rel="stylesheet" href="../shared/approved-plan.css?v=74.3.1-20261027">
+<link rel="stylesheet" href="../shared/monthly-control.css?v=74.3.1-20261027">
+<link rel="stylesheet" href="../shared/scenario-strategy.css?v=74.3.1-20261027">
+<link rel="stylesheet" href="../shared/scenario-uncertainty.css?v=74.3.1-20261027">
+<link rel="stylesheet" href="../shared/baseline-uncertainty.css?v=74.3.1-20261027">
+<link rel="stylesheet" href="../shared/single-plan-board.css?v=74.3.1-20261027">
 <style>
 :root{--bg:#f4f6fa;--card:#fff;--text:#17263e;--muted:#58677d;--line:#dce4ee;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 4px 18px rgba(15,23,42,.045);--sc-blue:#2563eb;--sc-blue-soft:#eff6ff;--sc-green:#0ea87a;--sc-red:#ef5b73;--sc-purple:#7658e6;--sc-ink:#17263e}
 *{box-sizing:border-box}
@@ -2735,7 +2735,7 @@ body{font-size:16px;line-height:1.5}
     <div id="scenarioView" class="hidden scenario-shell">
       <div class="balance-hub-head">
         <div>
-          <div class="scenario-eyebrow">MiaFinanza · Bilancio familiare</div>
+          <div class="scenario-eyebrow">MiaFinanza · <span id="bfBalanceScopeTitle">Bilancio Massimo</span></div>
           <h2 id="balanceHubTitle">Flusso economico</h2>
           <p id="balanceHubDescription">Come entrate e uscite si trasformano nell’avanzo ordinario della famiglia.</p>
         </div>
@@ -2749,7 +2749,7 @@ body{font-size:16px;line-height:1.5}
         <div id="balanceFlowGrid" class="balance-flow-grid">
           <section class="scenario-card balance-waterfall-card">
             <div class="scenario-card-head">
-              <div><h3>Flusso economico della famiglia <button class="context-help-trigger" type="button" data-context-help="flow-period-comparison" aria-label="Aiuto: differenza fra Flusso e Cash flow">?</button></h3><p id="balanceWaterfallSubtitle">Come le entrate si trasformano nell’avanzo ordinario.</p></div>
+              <div><h3>Flusso economico · <span id="bfFlowScopeTitle">Massimo</span> <button class="context-help-trigger" type="button" data-context-help="flow-period-comparison" aria-label="Aiuto: differenza fra Flusso e Cash flow">?</button></h3><p id="balanceWaterfallSubtitle">Come le entrate si trasformano nell’avanzo ordinario.</p></div>
               <span id="balanceWaterfallMode" class="balance-mode-badge">—</span>
             </div>
             <div id="flowUnifiedControls" class="flow-compare-controls">
@@ -2846,6 +2846,7 @@ body{font-size:16px;line-height:1.5}
         </div><!-- flowDetailWorkspace: trend + categoria nello stesso approfondimento -->
 
         <section id="historicalMonthlySection" class="scenario-card scenario-chart-card">
+          <div id="bfScopeTransfers" class="bf-scope-flow-detail" aria-label="Trasferimenti e flussi finanziari"></div>
           <div class="scenario-card-head">
             <div><h3 id="historicalChartTitle">Cash flow storico mese per mese</h3><p id="historicalChartSubtitle">Entrate, uscite, saldo mensile e saldo cumulato del periodo.</p></div>
             <div class="context-help-chart-tools"><button class="context-help-trigger" type="button" data-context-help="budget-vs-cashflow" aria-label="Aiuto: come leggere Cash flow e saldi">?</button><div id="historicalChartLegend" class="scenario-legend-inline"></div></div>
@@ -2995,11 +2996,11 @@ body{font-size:16px;line-height:1.5}
   </div>
 </div>
 
-<script src="../shared/scenario-strategy.js?v=74.3.0-20261027"></script>
-<script src="../shared/scenario-uncertainty.js?v=74.3.0-20261027"></script>
-<script src="../shared/baseline-uncertainty.js?v=74.3.0-20261027"></script>
-<script src="../shared/single-plan-board.js?v=74.3.0-20261027"></script>
-<script src="../shared/monthly-control.js?v=74.3.0-20261027"></script>
+<script src="../shared/scenario-strategy.js?v=74.3.1-20261027"></script>
+<script src="../shared/scenario-uncertainty.js?v=74.3.1-20261027"></script>
+<script src="../shared/baseline-uncertainty.js?v=74.3.1-20261027"></script>
+<script src="../shared/single-plan-board.js?v=74.3.1-20261027"></script>
+<script src="../shared/monthly-control.js?v=74.3.1-20261027"></script>
 <script>
 const sb=window.appSupabase;
 if(typeof Chart!=="undefined"){
@@ -3195,6 +3196,43 @@ function isJwtFutureError(error){
   return /jwt issued at future|issued at future/.test(t);
 }
 function waitMs(ms){return new Promise(function(resolve){setTimeout(resolve,ms)})}
+const BF_SCOPED_READS=new Set([
+ "dashboard_reporting_read_v5","dashboard_reporting_liquidity_history_v1",
+ "dashboard_reporting_liquidity_history_v2","dashboard_reporting_analysis_workspace_v2",
+ "dashboard_reporting_analysis_projection_v1","dashboard_reporting_analysis_detail_v2",
+ "dashboard_reporting_cashflow_analysis_v1","dashboard_reporting_cashflow_v68",
+ "dashboard_reporting_category_detail_v1","dashboard_reporting_scenario_actual_v3"
+]);
+function bfScope(){return window.BudgetFamilyPerspectives?.current?.()||"MASSIMO"}
+function bfPlanningAvailable(){return bfScope()==="MASSIMO"}
+function bfMarkExcludedPlanning(){
+ const disabled=!bfPlanningAvailable(),note="Da adattare alla prospettiva "+({LUISA:"Luisa",FAMILY:"Famiglia"}[bfScope()]||"selezionata");
+ document.querySelectorAll('#baselineWhereTab, #planningBoardTab, #planningSimulatorTab, [data-process-route="simulator"], [data-process-route="control"], [data-analysis-time="PROJECTION"], [data-flow-dataset="BASELINE"], [data-flow-dataset="PLAN"]').forEach(function(b){
+   b.disabled=disabled;
+   b.title=disabled?note:"";
+   b.setAttribute("aria-disabled",String(disabled));
+ });
+}
+function bfUnscopedPlanNotice(){
+ msg($("reportMsg"),"Baseline, Piano e Controllo non sono ancora configurati per "+({LUISA:"Luisa",FAMILY:"Famiglia"}[bfScope()]||"questa prospettiva")+". Sono disponibili Analisi storico, Flusso economico e Cash flow.",false);
+}
+let bfScopeTransfers=null;
+function bfTransferStrip(){
+ const host=$("bfScopeTransfers");if(!host)return;
+ const months=bfScopeTransfers?.monthly||[];
+ if(!months.length){host.innerHTML="";return}
+ const allowed=new Set(historicalMonthsFor(historicalPeriodMode));
+ const visible=months.filter(r=>allowed.has(r.month_start));
+ const total=(field)=>visible.reduce((sum,r)=>sum+num(r[field]),0);
+ const limited=historicalPeriodMode==="ALL"&&months.length<allowed.size;
+ const unit=n=>money(n);
+ host.innerHTML='<div class="bf-scope-flow-subrow"><div><strong>Trasferimenti registrati · '+esc(({MASSIMO:"Massimo",LUISA:"Luisa",FAMILY:"Famiglia"})[bfScope()])+'</strong><small>Operazioni finanziarie, non nuovi consumi o redditi.</small></div>'+
+ '<div><small>Entrate trasferimenti</small><b>'+unit(total("transfer_in"))+'</b></div>'+
+ '<div><small>Uscite trasferimenti</small><b>'+unit(total("transfer_out"))+'</b></div>'+
+ '<div><small>Saldo movimenti conti</small><b>'+unit(total("account_flow_net"))+'</b></div></div>'+
+ (limited?'<p class="muted small">Dettaglio trasferimenti limitato agli ultimi 24 mesi rispetto a tutto lo storico.</p>':'')+
+ '<p class="muted small">Il campo Trasferimenti include anche operazioni ancora da riconciliare; non tutti sono bonifici fra i due titolari.</p>';
+}
 async function rpc(name,args){
   const started=performance.now(),retryDelays=[0,1800,3200];
   let lastError=null,attempts=0,waiting=0,networkTime=0;
@@ -3203,7 +3241,11 @@ async function rpc(name,args){
     attempts++;
     const callStart=performance.now();
     let r;
-    try{r=await sb.rpc(name,args||{})}
+    try{
+      const selected=bfScope(),scoped=BF_SCOPED_READS.has(name);
+      r=await sb.rpc(scoped?"dashboard_reporting_scoped_read_v1":name,
+        scoped?{p_scope:selected,p_function:name,p_args:args||{}}:args||{});
+    }
     catch(error){
       networkTime+=performance.now()-callStart;
       lastError=error;
@@ -3227,7 +3269,7 @@ async function rpc(name,args){
 
 window.budgetFamilyPlanRpc=rpc;
 function showLogin(){$("loginView").classList.remove("hidden");$("appView").classList.add("hidden")}
-function showApp(user){$("loginView").classList.add("hidden");$("appView").classList.remove("hidden");$("userEmail").textContent=user&&user.email?user.email:"";const useLegacy=window.BudgetFamilyPerspectives?.mount({app:$("appView"),rpc,legacy:()=>loadReport()})??true;if(useLegacy)loadReport()}
+function showApp(user){$("loginView").classList.add("hidden");$("appView").classList.remove("hidden");$("userEmail").textContent=user&&user.email?user.email:"";window.BudgetFamilyPerspectives?.mount({app:$("appView"),area:"reporting",onChange:()=>window.location.reload()});loadReport()}
 async function init(){const s=await sb.auth.getSession();if(s.data.session)showApp(s.data.session.user);else showLogin()}
 
 async function loadReport(){
@@ -3255,11 +3297,14 @@ async function loadReport(){
   try{
     const data=await Promise.all([
       rpc("dashboard_reporting_read_v5"),
-      rpc("dashboard_reporting_liquidity_history_v1").catch(function(){return {available:false,reason:"UNAVAILABLE",rows:[]}})
+      rpc("dashboard_reporting_liquidity_history_v1").catch(function(){return {available:false,reason:"UNAVAILABLE",rows:[]}}),
+      sb.rpc("dashboard_scope_actuals_v1",{p_scope:bfScope(),p_months:24}).then(r=>r.error?null:r.data).catch(()=>null)
     ]);
     report=data[0]||{};
     report.liquidity_history=data[1]||{available:false,rows:[]};
+    bfScopeTransfers=data[2]||null;
     renderAll();
+    bfMarkExcludedPlanning();
     openReportingFromUrl();
   }catch(e){
     console.error(e);
@@ -3714,6 +3759,7 @@ function resetAnalysisSelection(){
   analysisDetailData=null;analysisDetailKey="";analysisCalibrationData=null;analysisCalibrationKey="";analysisForecastEditor=null;analysisForecastEditorKey="";analysisForecastDraft=null;analysisForecastDraftKey="";
 }
 function renderAnalysisModeButtons(){
+  if(!bfPlanningAvailable())analysisTimeMode="HISTORY";
   if(!planningBoardVisible&&analysisTimeMode==="PROJECTION")analysisTimeMode="HISTORY";
   document.querySelectorAll("[data-analysis-view]").forEach(function(b){
     const active=b.dataset.analysisView===analysisViewMode;b.className="btn "+(active?"":"ghost ")+"compact";
@@ -6217,6 +6263,7 @@ function flowRenderSvg(t,limits,code){
   return svg+'</svg>';
 }
 function renderFlowUnified(){
+  if(!bfPlanningAvailable())flowDataset="HISTORICAL";
   if(balanceSubview!=="flow"||!Array.isArray(scenarioActualRows))return;
   flowSyncControls();
   flowFutureResetSecondary(flowDataset==="HISTORICAL");
@@ -7868,9 +7915,12 @@ async function setWherePeriod(value){
   balanceHubMode="HISTORY";closeBalanceNatureDrill();renderBalanceHub();syncWherePeriodUI();
 }
 function applyBalanceSubview(){
+  const displayScope=({MASSIMO:"Massimo",LUISA:"Luisa",FAMILY:"Famiglia"})[bfScope()];
+  if($("bfFlowScopeTitle"))$("bfFlowScopeTitle").textContent=displayScope;
+  if($("bfBalanceScopeTitle"))$("bfBalanceScopeTitle").textContent="Bilancio "+displayScope;
   const flow=balanceSubview==="flow",cash=balanceSubview==="cashflow",compare=balanceSubview==="compare";
   $("balanceHubTitle").textContent=flow?"Flusso economico":(cash?"Cash flow":"Confronto periodi");
-  $("balanceHubDescription").textContent=flow?"Come le entrate si trasformano nell’avanzo ordinario della famiglia.":(cash?"Evoluzione mensile di entrate, uscite, saldo e cumulato.":"Confronta periodi realmente omogenei e individua i contributori alle differenze.");
+  $("balanceHubDescription").textContent=flow?"Come le entrate si trasformano nell’avanzo ordinario di "+displayScope+".":(cash?"Evoluzione mensile di entrate, uscite, saldo e cumulato.":"Confronta periodi realmente omogenei e individua i contributori alle differenze.");
   $("balanceFlowGrid")?.classList.toggle("balance-section-hidden",!flow);
   $("flowDetailWorkspace")?.classList.toggle("flow-active",flow);
   $("flowMonthlyNatureSection")?.classList.toggle("balance-section-hidden",!flow);
@@ -7883,6 +7933,7 @@ function applyBalanceSubview(){
   $("historicalBalanceStatus")?.classList.toggle("hidden",!cash);
   $("historicalBalanceKpis")?.classList.toggle("hidden",compare||flow);
   if(Array.isArray(scenarioActualRows))renderHistoricalKpis();
+  if(cash)bfTransferStrip();
   document.querySelectorAll("[data-where-view]").forEach(function(b){const active=b.dataset.whereView===balanceSubview;b.classList.toggle("active",active);b.setAttribute("aria-pressed",String(active))});
   syncWherePeriodUI();
 }
@@ -7892,6 +7943,7 @@ function showBalanceSubview(kind){
   showScenarioView(balanceSubview);
 }
 function showScenarioView(subview){
+  if(!bfPlanningAvailable())flowDataset="HISTORICAL";
   if(subview)balanceSubview=["flow","cashflow","compare"].includes(subview)?subview:"flow";
   scenarioVisible=true;planningBoardVisible=false;planningSimulatorVisible=false;hideProcessRoadmap();
   $("standardReportingView").classList.add("hidden");$("planningBoardView").classList.add("hidden");$("planningSimulatorView").classList.add("hidden");$("scenarioView").classList.remove("hidden");
@@ -9152,6 +9204,7 @@ async function loadPlanningBoard(force){
 }
 let budgetControlLoading=false;
 async function showBudgetControlView(){
+ if(!bfPlanningAvailable()){showStandardReportingView();bfUnscopedPlanNotice();return}
  scenarioVisible=false;planningBoardVisible=false;planningSimulatorVisible=false;
  hideMainProcessViews();hideProcessRoadmap();
  $("budgetControlView").classList.remove("hidden");
@@ -9194,6 +9247,7 @@ async function showBudgetControlView(){
 window.showBudgetControlView=showBudgetControlView;
 
 function showPlanningBoardView(context){
+ if(!bfPlanningAvailable()){showStandardReportingView();bfUnscopedPlanNotice();return}
  if(!baselineReliabilityLoaded)baselineReliabilityLoad();
  window.BudgetFamilyBaselineUncertainty?.load(rpc,()=>{
   if(planningBoardVisible)renderPlanningBoard();
@@ -9261,6 +9315,13 @@ function renderReportReturnBar(params){
   bar.innerHTML='<span>Sei arrivato qui dal controllo dipendenze delle categorie.</span><a class="btn compact" href="../?'+back.toString()+'">← Torna alle dipendenze</a>';
 }
 function openReportingFromUrl(){
+  if(!bfPlanningAvailable()){
+   const params=new URLSearchParams(window.location.search);
+   if(["control","baseline-board","board","simulator"].includes(params.get("view"))||
+     ["control","strategy","plan"].includes(params.get("phase"))){
+    reportDeepLinkHandled=true;showStandardReportingView();bfUnscopedPlanNotice();return;
+   }
+  }
   if(reportDeepLinkHandled)return;const params=new URLSearchParams(window.location.search),category=params.get("category"),phase=params.get("phase"),feature=params.get("feature");renderReportReturnBar(params);
   if(params.get("view")==="control"||(phase==="control"&&(!feature||feature==="monthly-cockpit"))){reportDeepLinkHandled=true;void showBudgetControlView();return}
   if(PROCESS_ROADMAP[phase]){reportDeepLinkHandled=true;showProcessRoadmap(phase,feature);return}
@@ -9799,8 +9860,8 @@ $("rpcDiagnosticsModal")?.addEventListener("click",function(e){if(e.target===$("
 document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!$("rpcDiagnosticsModal")?.classList.contains("hidden"))closeRpcDiagnostics()});
 init();
 </script>
-<script src="../shared/health-reserve.js?v=74.3.0-20261027"></script>
-<script src="../shared/approved-plan.js?v=74.3.0-20261027"></script>
+<script src="../shared/health-reserve.js?v=74.3.1-20261027"></script>
+<script src="../shared/approved-plan.js?v=74.3.1-20261027"></script>
 </body>
 </html>
 
