@@ -5646,9 +5646,10 @@ function balanceDrillRowsForSelection(){
       }
     }else match=dir==="EXPENSE"&&historicalNatureForCategory(x)===nature;
     if(!match)return;
-    const id=String(x.l2_id||x.l1_id||"");
+    const cashInvestment=nature==="ALL_EXPENSE"&&balanceDrillSelection.origin==="MONTH_CASHFLOW"&&dir==="INVESTMENT";
+    const id=cashInvestment?"cacdf29a-a9f6-484c-bd06-f1502c40a87d":String(x.l2_id||x.l1_id||"");
     if(!id)return;
-    if(!rows.has(id))rows.set(id,{id:id,name:x.l2_name||x.l1_name||"Senza categoria",l1:x.l1_name||"",l1Id:String(x.l1_id||id),level:x.l2_id?"L2":"L1",actual:0,forecast:0,temporal:balanceTemporalEmpty()});
+    if(!rows.has(id))rows.set(id,{id:id,name:cashInvestment?"Investimenti":x.l2_name||x.l1_name||"Senza categoria",l1:cashInvestment?"Investimenti":x.l1_name||"",l1Id:cashInvestment?"__CASHFLOW_INVESTMENTS__":String(x.l1_id||id),level:cashInvestment?"L2":x.l2_id?"L2":"L1",actual:0,forecast:0,temporal:balanceTemporalEmpty()});
     const row=rows.get(id),defaultTime=(temporalMeta.get(id)||{}).temporality;
     const cash=balanceDrillSelection.origin==="MONTH_CASHFLOW";
     row.actual+=historicalCategoryAmount(x,scope,cash);
