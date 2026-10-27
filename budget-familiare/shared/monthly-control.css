@@ -483,3 +483,24 @@
 .bf-control-view .bf-v831-tile-spend-net{font-size:10px;font-weight:800;color:#385877}
 .bf-control-view .bf-v831-tile-spend-net.positive{color:#16724c}
 .bf-control-view .bf-v831-tile-spend-net.negative{color:#ae3246}
+
+
+/* V74.3 — Controllo: nessuno scroll verticale interno al tabellone L1/L2.
+   La pagina gestisce lo scorrimento verticale; solo su viewport stretti
+   resta lo scorrimento orizzontale delle colonne. */
+.bf-control-view .bf-v829-board .bf-control-overflow,
+.bf-control-view .bf-v829-board .bf-control-overflow.bf-control-overflow,
+.bf-control-view .bf-v829-board .planning-board-table-wrap{
+  max-height:none;
+  height:auto;
+  overflow-y:visible;
+  overflow-x:visible;
+}
+@media (max-width:1200px){
+  .bf-control-view .bf-v829-board .bf-control-overflow,
+  .bf-control-view .bf-v829-board .bf-control-overflow.bf-control-overflow,
+  .bf-control-view .bf-v829-board .planning-board-table-wrap{
+    overflow-x:auto;
+    overflow-y:hidden;
+  }
+}
