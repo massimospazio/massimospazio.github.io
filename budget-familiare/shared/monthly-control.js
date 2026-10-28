@@ -247,6 +247,7 @@ const controlHelp={
  coverage:["Copertura degli obiettivi","Percentuale delle coppie categoria–mese del periodo futuro con target esplicitamente approvato.","100 × obiettivi categoria–mese approvati / totale categoria–mese attesi nel periodo.","100% è una condizione di qualità della pianificazione, non un risultato economico. Se è inferiore, alcuni confronti non sono attendibili."],
  worst:["Saldo mese stimato più basso","Identifica il mese con entrate meno uscite più basse nella stima tecnica.","Minimo del saldo economico mensile stimato tra i mesi ancora aperti.","Non è il saldo del conto. Può essere previsto dal Piano, ad esempio per vacanze o acquisti programmati."],
  months:["Piano e Consuntivo mese per mese","Ogni scheda presenta saldi Piano e Consuntivo, importi sopra/sotto target delle uscite e cumulati.","Saldo mensile = entrate meno uscite; scostamenti = differenze delle L2 di spesa confrontabili; cumulato dal primo mese di Piano.","Il mese aperto è parziale, nei futuri il Consuntivo non è disponibile; il sotto Piano corrente non rappresenta risparmio definitivo."],
+ expenseTrend:["Uscite: Piano e Consuntivo","Confronta le uscite economiche pianificate con quelle registrate, mese per mese e cumulate.","Le curve cumulate partono dal primo mese del Piano approvato. Margine cumulato = uscite Piano − uscite Consuntivo: positivo se sotto Piano, negativo se oltre.","Sono inclusi risparmio e investimenti presenti nel Piano. Il mese corrente è parziale; i mesi futuri non hanno Consuntivo. Lo scostamento non è liquidità né una previsione."],
  trend:["Saldi mensili e cumulati","Confronta il saldo economico Piano con quello effettivamente registrato.","Mensile: barre Piano e punti Consuntivo, verdi se positivi e rossi se negativi; le linee mostrano i cumulati dal primo mese approvato. Cumulato: solo linee.","Non sono saldi bancari né previsioni future. Il Consuntivo corrente è parziale."],
  actions:["Scostamenti cumulati da verificare","Dopo almeno tre mesi chiusi, segnala categorie con spesa cumulata significativamente sopra il Piano.","Confronta, su ciascuna L2, Consuntivo e target dal primo mese del Piano all’ultimo mese chiuso usando una soglia materiale.","Verificare anticipi e concentrazioni delle spese e aggiornamento degli import prima di intervenire."],
  monthbalance:["Obiettivi e consuntivo del mese","Riepiloga entrate, uscite e saldo del Piano e i movimenti effettivamente registrati.","Entrate e uscite Piano provengono dai target approvati; i consuntivi sono la somma dei movimenti importati e classificati.","Il consuntivo è parziale fino alla chiusura del mese e non è automaticamente confrontabile con un budget per il mese completo."],
@@ -471,6 +472,35 @@ function drawControlChart(host,model){
     y:{beginAtZero:true,grid:{color:ctx=>ctx.tick.value===0?"#64748b":"rgba(103,122,148,.13)",lineWidth:ctx=>ctx.tick.value===0?2:1},ticks:{callback:v=>new Intl.NumberFormat("it-IT",{notation:"compact",maximumFractionDigits:0}).format(v)+" €"}}}
   }
  });
+}
+let visualExpenseMonthlyChart=null,visualExpenseCumulativeChart=null;
+function drawExpenseCharts(host,model){
+ if(visualExpenseMonthlyChart){visualExpenseMonthlyChart.destroy();visualExpenseMonthlyChart=null}
+ if(visualExpenseCumulativeChart){visualExpenseCumulativeChart.destroy();visualExpenseCumulativeChart=null}
+ const monthly=host?.querySelector?.("[data-bf-expense-chart='monthly']");
+ const cumulative=host?.querySelector?.("[data-bf-expense-chart='cumulative']");
+ const ChartCtor=root.Chart;
+ if(!monthly||!cumulative||!ChartCtor||!monthly.getContext||!cumulative.getContext)return;
+ const mctx=monthly.getContext("2d"),cctx=cumulative.getContext("2d");if(!mctx||!cctx)return;
+ const shown=model.series,ledger=shown.map(x=>controlExpenseTimelineMetric(model,x.month)),labels=shown.map(x=>displayMonth(x.month));
+ const choose=(_event,elements)=>{if(elements.length){controlUi.month=shown[elements[0].index].month;renderTracking(currentControlHost,currentControlRecord,currentControlLive,currentControlMeta)}};
+ const tooltip={callbacks:{label(context){const row=ledger[context.dataIndex],partial=context.dataset.label.includes("Consuntivo")&&row?.month===model.current?" (mese in corso, parziale)":"";
+  return context.dataset.label+partial+": "+(context.parsed.y===null?"—":money(context.parsed.y))},
+  afterBody(items){const row=ledger[items[0]?.dataIndex];if(!row||row.gap===null)return [];
+   const label=row.gap>=0?"Sotto Piano":"Oltre Piano",partial=row.month===model.current?" · parziale":"";
+   return [label+" cumulato"+partial+": "+money(Math.abs(row.gap))]}}};
+ const makeScales=()=>({x:{offset:true,grid:{display:false},ticks:{maxRotation:0,minRotation:0,font:{size:10}}},
+  y:{beginAtZero:true,afterFit(scale){scale.width=86},grid:{color:"rgba(103,122,148,.13)"},ticks:{callback:v=>new Intl.NumberFormat("it-IT",{notation:"compact",maximumFractionDigits:0}).format(v)+" €"}}});
+ const makeOptions=()=>({responsive:true,maintainAspectRatio:false,animation:false,interaction:{mode:"index",intersect:false},onClick:choose,
+  plugins:{legend:{position:"bottom",labels:{usePointStyle:true,boxWidth:10,font:{size:11}}},tooltip},scales:makeScales()});
+ visualExpenseMonthlyChart=new ChartCtor(mctx,{type:"bar",data:{labels,datasets:[
+  {label:"Uscite Piano",data:ledger.map(x=>x.planMonth),backgroundColor:"#4d7fc1",borderRadius:3,maxBarThickness:32},
+  {label:"Uscite Consuntivo",data:ledger.map(x=>x.actualMonth),backgroundColor:"#d68742",borderRadius:3,maxBarThickness:32}
+ ]},options:makeOptions()});
+ visualExpenseCumulativeChart=new ChartCtor(cctx,{type:"line",data:{labels,datasets:[
+  {label:"Uscite cumulate Piano",data:ledger.map(x=>x.planCumulative),borderColor:"#315bbc",backgroundColor:"#315bbc",pointRadius:3,spanGaps:false,tension:0},
+  {label:"Uscite cumulate Consuntivo",data:ledger.map(x=>x.actualCumulative),borderColor:"#c46a2d",backgroundColor:"#c46a2d",borderDash:[6,4],pointRadius:4,spanGaps:false,tension:0}
+ ]},options:makeOptions()});
 }
 function drawCategoryChart(host,model){
  if(visualCategoryChart){visualCategoryChart.destroy();visualCategoryChart=null}
@@ -995,6 +1025,27 @@ function controlTimelineMetric(model,month){
   planCumulativeNet:net(cumInc,cumExp,"plan"),actualCumulativeNet:net(cumInc,cumExp,"actual"),
   expenseMonth:controlBoardStatistics(expenseMetrics,"EXPENSE")};
 }
+function controlExpenseTimelineMetric(model,month){
+ const rows=model.rows.filter(r=>r.direction==="EXPENSE");
+ if(!rows.length)return {month,planMonth:null,actualMonth:null,planCumulative:null,actualCumulative:null,gap:null};
+ const hasPlan=r=>has(r.approvedTargets,month)&&r.approvedTargets[month]!==null&&r.approvedTargets[month]!==""&&Number.isFinite(Number(r.approvedTargets[month]));
+ const monthlyPlan=rows.every(hasPlan)?round(rows.reduce((n,r)=>n+num(r.approvedTargets[month]),0)):null;
+ const monthlyActual=month<=model.current&&rows.every(r=>r.months?.[month]?.actual!==undefined&&r.months?.[month]?.actual!==null)?
+  round(rows.reduce((n,r)=>n+num(r.months[month].actual),0)):null;
+ const cumulative=rows.map(r=>{
+  const start=model.approvedStart;
+  if(!start||month<start)return {plan:null,actual:null};
+  for(let d=start;d<=month;d=addMonth(d,1)){
+   const v=r.approvedTargets?.[d];
+   if(!has(r.approvedTargets,d)||v===null||v===""||!Number.isFinite(Number(v)))return {plan:null,actual:null};
+  }
+  return controlRowCumulative(r,month,model);
+ });
+ const cumPlan=cumulative.every(c=>c.plan!==null)?round(cumulative.reduce((n,c)=>n+c.plan,0)):null;
+ const cumActual=cumulative.every(c=>c.actual!==null)?round(cumulative.reduce((n,c)=>n+c.actual,0)):null;
+ return {month,planMonth:monthlyPlan,actualMonth:monthlyActual,planCumulative:cumPlan,actualCumulative:cumActual,
+  gap:cumPlan!==null&&cumActual!==null?round(cumPlan-cumActual):null};
+}
 function controlCumulativeSignals(model){
  const start=model.approvedStart;
  if(!start||start>=model.current)return {closedMonths:0,signals:[]};
@@ -1021,6 +1072,18 @@ function renderCumulativeSignals(model){
   '<div class="bf-v831-signal-list">'+cards+'</div></section>';
 }
 
+function renderExpenseTracking(model,month){
+ const metric=controlExpenseTimelineMetric(model,month),partial=month===model.current;
+ const gap=metric.gap,kind=gap===null?"Non disponibile":gap>=0?"Sotto Piano":"Oltre Piano";
+ const tone=gap===null?"":gap>=0?"positive":"negative";
+ const amount=gap===null?"—":money(Math.abs(gap));
+ return '<section class="bf-panel bf-chart-panel"><div class="bf-control-section-head">'+sectionHeading("Uscite: Piano e Consuntivo","expenseTrend")+'</div>'+
+  '<p class="bf-control-muted">Importi mensili e cumulati dal primo mese del Piano approvato · clicca un mese per il dettaglio.</p>'+
+  '<div class="bf-expense-gap '+tone+'" aria-live="polite"><strong>'+esc(kind)+' cumulato · '+esc(displayMonth(month))+'</strong> <b>'+amount+'</b>'+(partial?' <span>Consuntivo parziale</span>':'')+'</div>'+
+  '<h4>Uscite mensili</h4><div class="bf-control-visual bf-control-visual-short"><canvas data-bf-expense-chart="monthly" role="img" aria-label="Uscite mensili Piano e Consuntivo"></canvas></div>'+
+  '<h4>Uscite cumulate</h4><div class="bf-control-visual bf-control-visual-short"><canvas data-bf-expense-chart="cumulative" role="img" aria-label="Uscite cumulate Piano e Consuntivo"></canvas></div>'+
+  '<p class="bf-control-muted">Sotto Piano = uscite pianificate meno consuntivate; oltre Piano indica l’eccedenza. Le differenze si compensano nel tempo e non sono liquidità. Include risparmio e investimenti del Piano. Il mese corrente è parziale; verifica che gli import siano aggiornati.</p></section>';
+}
 function renderExtended(host,model){
  if(!host||!model||model.error){if(host)host.innerHTML='<p class="bf-control-notice">'+esc(model?.error||"Dati assenti")+'</p>';return}
  const sm=showMonth(model,controlUi.month);
@@ -1092,6 +1155,7 @@ function renderExtended(host,model){
    '<button type="button" data-bf-control-chart-scope="CUMULATIVE" class="btn compact '+(controlUi.chartScope==="CUMULATIVE"?"":"ghost")+'">Cumulato</button></div></div>'+
    '<div class="bf-control-visual"><canvas data-bf-control-chart="overview" role="img" aria-label="Confronto mensile e cumulato Piano e Consuntivo"></canvas></div>'+
    '<p class="bf-control-muted">Mensile: barre Piano e punti Consuntivo, verdi se positivi e rossi se negativi; le linee mostrano i rispettivi cumulati dal primo mese approvato. Il Consuntivo del mese in corso è parziale; i mesi futuri non hanno Consuntivo. Saldi economici, non liquidità bancaria.</p></section>'+
+   renderExpenseTracking(model,sm.month)+
    technicalDetails(model);
  }else if(controlUi.tab==="CATEGORIES"){
   const table='<div class="bf-control-overflow"><table class="bf-control-table bf-control-detail"><thead><tr><th>Categoria L1 / L2</th><th>Budget Piano</th><th>Consuntivo registrato</th><th>Residuo</th><th>Stato target</th></tr></thead><tbody>'+
@@ -1120,6 +1184,7 @@ function renderExtended(host,model){
  }
  host.innerHTML=top+(controlUi.tab==="SUMMARY"?panel:monthMenu+panel);
  drawControlChart(host,model);
+ drawExpenseCharts(host,model);
  drawCategoryChart(host,model);
 }
 function periodRiskTable(model){
@@ -1252,7 +1317,7 @@ function handleControlKey(e){
  currentControlHost.querySelector?.('[data-bf-control-help="'+id+'"]')?.focus?.();
  return true;
 }
-const api={annualTotal,monthTotals,categoryRows,fromContinuous,compare,render,buildControl,controlMode,controlHistoricalReference,buildModeTracking,renderModeTracking,renderTracking,handleControlClick,handleControlKey,handleControlChange,controlBoardMetric,controlBoardStatistics,controlTimelineMetric,controlCumulativeSignals};
+const api={annualTotal,monthTotals,categoryRows,fromContinuous,compare,render,buildControl,controlMode,controlHistoricalReference,buildModeTracking,renderModeTracking,renderTracking,handleControlClick,handleControlKey,handleControlChange,controlBoardMetric,controlBoardStatistics,controlTimelineMetric,controlExpenseTimelineMetric,drawExpenseCharts,controlCumulativeSignals};
 root.BudgetFamilyMonthlyControl=api;
 if(typeof module!=="undefined"&&module.exports)module.exports=api;
 })(typeof window!=="undefined"?window:globalThis);
