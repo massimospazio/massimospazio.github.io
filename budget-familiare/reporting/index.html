@@ -8,19 +8,19 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=74.3.14-20261028"></script>
-<script src="../shared/app-config.js?v=74.3.14-20261028"></script>
-<link rel="stylesheet" href="../shared/perspectives.css?v=74.3.14-20261028">
-<script src="../shared/perspectives.js?v=74.3.14-20261028"></script>
-<script src="../shared/contextual-help.js?v=74.3.14-20261028" defer></script>
+<script src="../shared/supabase-client.js?v=74.3.15-20261028"></script>
+<script src="../shared/app-config.js?v=74.3.15-20261028"></script>
+<link rel="stylesheet" href="../shared/perspectives.css?v=74.3.15-20261028">
+<script src="../shared/perspectives.js?v=74.3.15-20261028"></script>
+<script src="../shared/contextual-help.js?v=74.3.15-20261028" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<link rel="stylesheet" href="../shared/health-reserve.css?v=74.3.14-20261028">
-<link rel="stylesheet" href="../shared/approved-plan.css?v=74.3.14-20261028">
-<link rel="stylesheet" href="../shared/monthly-control.css?v=74.3.14-20261028">
-<link rel="stylesheet" href="../shared/scenario-strategy.css?v=74.3.14-20261028">
-<link rel="stylesheet" href="../shared/scenario-uncertainty.css?v=74.3.14-20261028">
-<link rel="stylesheet" href="../shared/baseline-uncertainty.css?v=74.3.14-20261028">
-<link rel="stylesheet" href="../shared/single-plan-board.css?v=74.3.14-20261028">
+<link rel="stylesheet" href="../shared/health-reserve.css?v=74.3.15-20261028">
+<link rel="stylesheet" href="../shared/approved-plan.css?v=74.3.15-20261028">
+<link rel="stylesheet" href="../shared/monthly-control.css?v=74.3.15-20261028">
+<link rel="stylesheet" href="../shared/scenario-strategy.css?v=74.3.15-20261028">
+<link rel="stylesheet" href="../shared/scenario-uncertainty.css?v=74.3.15-20261028">
+<link rel="stylesheet" href="../shared/baseline-uncertainty.css?v=74.3.15-20261028">
+<link rel="stylesheet" href="../shared/single-plan-board.css?v=74.3.15-20261028">
 <style>
 :root{--bg:#f4f6fa;--card:#fff;--text:#17263e;--muted:#58677d;--line:#dce4ee;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 4px 18px rgba(15,23,42,.045);--sc-blue:#2563eb;--sc-blue-soft:#eff6ff;--sc-green:#0ea87a;--sc-red:#ef5b73;--sc-purple:#7658e6;--sc-ink:#17263e}
 *{box-sizing:border-box}
@@ -3016,11 +3016,11 @@ body{font-size:16px;line-height:1.5}
   </div>
 </div>
 
-<script src="../shared/scenario-strategy.js?v=74.3.14-20261028"></script>
-<script src="../shared/scenario-uncertainty.js?v=74.3.14-20261028"></script>
-<script src="../shared/baseline-uncertainty.js?v=74.3.14-20261028"></script>
-<script src="../shared/single-plan-board.js?v=74.3.14-20261028"></script>
-<script src="../shared/monthly-control.js?v=74.3.14-20261028"></script>
+<script src="../shared/scenario-strategy.js?v=74.3.15-20261028"></script>
+<script src="../shared/scenario-uncertainty.js?v=74.3.15-20261028"></script>
+<script src="../shared/baseline-uncertainty.js?v=74.3.15-20261028"></script>
+<script src="../shared/single-plan-board.js?v=74.3.15-20261028"></script>
+<script src="../shared/monthly-control.js?v=74.3.15-20261028"></script>
 <script>
 const sb=window.appSupabase;
 if(typeof Chart!=="undefined"){
@@ -3238,6 +3238,7 @@ function bfUnscopedPlanNotice(){
  msg($("reportMsg"),"Baseline, Piano e Controllo non sono ancora configurati per "+({LUISA:"Luisa",FAMILY:"Famiglia"}[bfScope()]||"questa prospettiva")+". Sono disponibili Analisi storico, Flusso economico e Cash flow.",false);
 }
 let bfScopeTransfers=null;
+let bfConsolidatedTransfers=null;
 function bfTransferStrip(){
  const host=$("bfScopeTransfers");if(!host)return;
  const months=bfScopeTransfers?.monthly||[];
@@ -3319,11 +3320,13 @@ async function loadReport(){
     const data=await Promise.all([
       rpc("dashboard_reporting_read_v5"),
       rpc("dashboard_reporting_liquidity_history_v1").catch(function(){return {available:false,reason:"UNAVAILABLE",rows:[]}}),
-      sb.rpc("dashboard_scope_actuals_v1",{p_scope:bfScope(),p_months:24}).then(r=>r.error?null:r.data).catch(()=>null)
+      sb.rpc("dashboard_scope_actuals_v1",{p_scope:bfScope(),p_months:24}).then(r=>r.error?null:r.data).catch(()=>null),
+      sb.rpc("dashboard_reporting_scope_transfers_v2",{p_scope:bfScope()}).then(r=>r.error?null:r.data).catch(()=>null)
     ]);
     report=data[0]||{};
     report.liquidity_history=data[1]||{available:false,rows:[]};
     bfScopeTransfers=data[2]||null;
+    bfConsolidatedTransfers=data[3]||null;
     renderAll();
     bfMarkExcludedPlanning();
     openReportingFromUrl();
@@ -7305,15 +7308,15 @@ function renderHistoricalChart(){
     const coverage=purchaseFinancingTotals([month]);
     const excludedLoan=num(scope==="TOTAL"?financing.total:financing.ordinary);
     const coveredPurchase=num(scope==="TOTAL"?coverage.total:coverage.ordinary);
-    // Unmatched transfer aggregates cannot distinguish ING↔Trade Republic from an external transfer.
-    // Do not count them as consolidated cash flows until account-level matching is available.
-    const transferIn=0,transferOut=0;
+    // V74.3.15: server-side classified external flows for the selected perspective.
+    const tr=(bfConsolidatedTransfers?.monthly||[]).find(v=>String(v.month_start)===String(month));
+    const transferIn=num(tr?.external_in),transferOut=num(tr?.external_out);
     const operatingIn=Math.max(0,fullIn-excludedLoan);
     const operatingOut=Math.max(0,fullOut-wealth-coveredPurchase);
     return {month:month,operatingIn:operatingIn,operatingOut:operatingOut,wealth:wealth,
       financing:excludedLoan,coveredPurchase:coveredPurchase,transferIn:transferIn,transferOut:transferOut,
       unverifiedTransferIn:num(tm[i]?.transfer_in),unverifiedTransferOut:num(tm[i]?.transfer_out),
-      accountIn:fullIn,accountOut:fullOut,covered:true};
+      accountIn:fullIn+transferIn,accountOut:fullOut+transferOut,covered:!!bfConsolidatedTransfers,unresolvedCount:num(tr?.unresolved_count)};
   });
   const income=breakdown.map(x=>financial?x.accountIn:x.operatingIn);
   const outgoing=breakdown.map(x=>financial?x.accountOut:x.operatingOut);
@@ -7323,7 +7326,7 @@ function renderHistoricalChart(){
   let datasets=[];
   if(historicalChartMode==="CASHFLOW"){
     $("historicalChartTitle").textContent="Cash flow · economico e movimenti finanziari";
-    $("historicalChartSubtitle").textContent=financial?"Componenti economiche, investimenti patrimoniali e finanziamenti distinti; giroconti non riconciliati esclusi prudenzialmente.":"Solo flusso economico gestionale (PAC ricorrente incluso). Passa a Flussi dei conti per vedere anche i movimenti patrimoniali.";
+    $("historicalChartSubtitle").textContent=financial?"Componenti economiche, investimenti patrimoniali e finanziamenti distinti; solo trasferimenti esterni al perimetro selezionato inclusi.":"Solo flusso economico gestionale (PAC ricorrente incluso). Passa a Flussi dei conti per vedere anche i movimenti patrimoniali.";
     const series=(label,key,color,stack)=>({type:"bar",label:label,data:breakdown.map(x=>financial&&!x.covered?null:x[key]),backgroundColor:color,borderRadius:2,stack:stack,yAxisID:"y"});
     datasets=[
       series("Entrate economiche","operatingIn","#0ea87a","in"),
@@ -7333,11 +7336,13 @@ function renderHistoricalChart(){
       datasets.push(series("Investimenti patrimoniali","wealth","#6478c8","out"));
       datasets.push(series("Prestiti ricevuti","financing","#d7a24c","in"));
       datasets.push(series("Quota acquisti coperta da prestito","coveredPurchase","#a6a0a0","out"));
+    datasets.push(series("Trasferimenti esterni in entrata","transferIn","#d7a24c","in"));
+    datasets.push(series("Trasferimenti esterni in uscita","transferOut","#d7a24c","out"));
     }
     datasets.push({type:"line",label:"Saldo mese",data:net,borderColor:"#15803d",backgroundColor:"#15803d",borderWidth:2,pointRadius:2.5,tension:.2,yAxisID:"y2"});
     datasets.push({type:"line",label:"Cumulato periodo",data:cumulative,borderColor:"#334155",backgroundColor:"#334155",borderWidth:2.4,pointRadius:2.7,tension:.2,yAxisID:"y2"});
-    $("historicalChartLegend").innerHTML='<span>Verde: entrate economiche · Rosso: uscite economiche · Blu: investimenti patrimoniali · Ambra: prestiti · Grigio: acquisti coperti</span>';
-    $("historicalChartNote").textContent="Ogni colore rappresenta una componente distinta. I giroconti non riconciliati tra conti sono temporaneamente esclusi dal grafico consolidato per evitare doppi conteggi; la loro riconciliazione puntuale è ancora necessaria.";
+    $("historicalChartLegend").innerHTML='<span>Verde: entrate economiche · Rosso: uscite economiche · Blu: investimenti patrimoniali · Ambra: finanziamenti/trasferimenti esterni · Grigio: acquisti coperti</span>';
+    $("historicalChartNote").textContent="Ogni colore rappresenta una componente distinta. I giroconti interni vengono esclusi in base al perimetro; i trasferimenti esterni e quelli non risolti sono separati in lettura Supabase. Eventuali operazioni incerte richiedono controllo.";
   }else{
     const natureMap=historicalMonthlyNature(historicalPeriodMode,scope),get=function(key){return months.map(function(m){return num(natureMap.get(m)&&natureMap.get(m)[key])})};
     const O=get("MANDATORY"),N=get("NECESSARY"),D=get("DISCRETIONARY"),NC=get("UNCLASSIFIED"),OTHER=get("UNKNOWN"),INV=get("INVESTMENT");
@@ -7367,7 +7372,7 @@ function renderHistoricalChart(){
         const hit=chart.getElementsAtEventForMode(evt,"nearest",{intersect:true},true);
         if(!hit.length){chart.canvas.style.cursor="default";return}
         const label=chart.data.datasets[hit[0].datasetIndex]&&chart.data.datasets[hit[0].datasetIndex].label;
-        const clickable=historicalChartMode==="NATURE"?["Entrate","Obbligatorie","Necessarie","NC · Non classificate","Discrezionali","Altre operative","Investimenti"].includes(label):["Entrate economiche","Uscite economiche","Investimenti patrimoniali","Prestiti ricevuti","Quota acquisti coperta da prestito"].includes(label);
+        const clickable=historicalChartMode==="NATURE"?["Entrate","Obbligatorie","Necessarie","NC · Non classificate","Discrezionali","Altre operative","Investimenti"].includes(label):["Entrate economiche","Uscite economiche","Investimenti patrimoniali","Prestiti ricevuti","Quota acquisti coperta da prestito","Trasferimenti esterni in entrata","Trasferimenti esterni in uscita"].includes(label);
         chart.canvas.style.cursor=clickable?"pointer":"default";
       },
       onClick:function(evt,els,chart){
@@ -7375,7 +7380,7 @@ function renderHistoricalChart(){
         const h=hit[0],ds=chart.data.datasets[h.datasetIndex],label=ds&&ds.label,month=months[h.index],map={"Obbligatorie":"MANDATORY","Necessarie":"NECESSARY","NC · Non classificate":"UNCLASSIFIED","Discrezionali":"DISCRETIONARY","Altre operative":"UNKNOWN","Investimenti":"INVESTMENT"};
         if(historicalChartMode==="CASHFLOW"){
           const b=breakdown[h.index],d=$("cashLensBreakdown");
-          if(d)d.innerHTML="<strong>"+esc(monthLabel(month))+"</strong> · entrate economiche "+money(b.operatingIn)+" + prestiti "+money(b.financing)+" = entrate conti "+(b.covered?money(b.accountIn):"non disponibili")+" · uscite economiche "+money(b.operatingOut)+" + investimenti patrimoniali "+money(b.wealth)+" + acquisti finanziati "+money(b.coveredPurchase)+" = uscite conti "+(b.covered?money(b.accountOut):"non disponibili");
+          if(d)d.innerHTML="<strong>"+esc(monthLabel(month))+"</strong> · entrate economiche "+money(b.operatingIn)+" + prestiti "+money(b.financing)+" + trasferimenti esterni "+money(b.transferIn)+" = entrate conti "+(b.covered?money(b.accountIn):"non disponibili")+" · uscite economiche "+money(b.operatingOut)+" + investimenti patrimoniali "+money(b.wealth)+" + acquisti finanziati "+money(b.coveredPurchase)+" + trasferimenti esterni "+money(b.transferOut)+" = uscite conti "+(b.covered?money(b.accountOut):"non disponibili");
           if(label==="Entrate economiche")openBalanceNatureDrill("INCOME",month,"MONTH_CASHFLOW",{cashLens:"ECONOMIC"});
           else if(label==="Uscite economiche")openBalanceNatureDrill("ALL_EXPENSE",month,"MONTH_CASHFLOW",{cashLens:"ECONOMIC"});
           // Investment and transfer amounts are already listed separately above; do not open an unrelated expense-category drill.
@@ -9978,8 +9983,8 @@ $("rpcDiagnosticsModal")?.addEventListener("click",function(e){if(e.target===$("
 document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!$("rpcDiagnosticsModal")?.classList.contains("hidden"))closeRpcDiagnostics()});
 init();
 </script>
-<script src="../shared/health-reserve.js?v=74.3.14-20261028"></script>
-<script src="../shared/approved-plan.js?v=74.3.14-20261028"></script>
+<script src="../shared/health-reserve.js?v=74.3.15-20261028"></script>
+<script src="../shared/approved-plan.js?v=74.3.15-20261028"></script>
 </body>
 </html>
 
