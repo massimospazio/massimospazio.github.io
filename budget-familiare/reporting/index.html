@@ -8,19 +8,19 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=74.3.27-20261028"></script>
-<script src="../shared/app-config.js?v=74.3.27-20261028"></script>
-<link rel="stylesheet" href="../shared/perspectives.css?v=74.3.27-20261028">
-<script src="../shared/perspectives.js?v=74.3.27-20261028"></script>
-<script src="../shared/contextual-help.js?v=74.3.27-20261028" defer></script>
+<script src="../shared/supabase-client.js?v=74.3.28-20261028"></script>
+<script src="../shared/app-config.js?v=74.3.28-20261028"></script>
+<link rel="stylesheet" href="../shared/perspectives.css?v=74.3.28-20261028">
+<script src="../shared/perspectives.js?v=74.3.28-20261028"></script>
+<script src="../shared/contextual-help.js?v=74.3.28-20261028" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<link rel="stylesheet" href="../shared/health-reserve.css?v=74.3.27-20261028">
-<link rel="stylesheet" href="../shared/approved-plan.css?v=74.3.27-20261028">
-<link rel="stylesheet" href="../shared/monthly-control.css?v=74.3.27-20261028">
-<link rel="stylesheet" href="../shared/scenario-strategy.css?v=74.3.27-20261028">
-<link rel="stylesheet" href="../shared/scenario-uncertainty.css?v=74.3.27-20261028">
-<link rel="stylesheet" href="../shared/baseline-uncertainty.css?v=74.3.27-20261028">
-<link rel="stylesheet" href="../shared/single-plan-board.css?v=74.3.27-20261028">
+<link rel="stylesheet" href="../shared/health-reserve.css?v=74.3.28-20261028">
+<link rel="stylesheet" href="../shared/approved-plan.css?v=74.3.28-20261028">
+<link rel="stylesheet" href="../shared/monthly-control.css?v=74.3.28-20261028">
+<link rel="stylesheet" href="../shared/scenario-strategy.css?v=74.3.28-20261028">
+<link rel="stylesheet" href="../shared/scenario-uncertainty.css?v=74.3.28-20261028">
+<link rel="stylesheet" href="../shared/baseline-uncertainty.css?v=74.3.28-20261028">
+<link rel="stylesheet" href="../shared/single-plan-board.css?v=74.3.28-20261028">
 <style>
 :root{--bg:#f4f6fa;--card:#fff;--text:#17263e;--muted:#58677d;--line:#dce4ee;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 4px 18px rgba(15,23,42,.045);--sc-blue:#2563eb;--sc-blue-soft:#eff6ff;--sc-green:#0ea87a;--sc-red:#ef5b73;--sc-purple:#7658e6;--sc-ink:#17263e}
 *{box-sizing:border-box}
@@ -3028,11 +3028,11 @@ body{font-size:16px;line-height:1.5}
   </div>
 </div>
 
-<script src="../shared/scenario-strategy.js?v=74.3.27-20261028"></script>
-<script src="../shared/scenario-uncertainty.js?v=74.3.27-20261028"></script>
-<script src="../shared/baseline-uncertainty.js?v=74.3.27-20261028"></script>
-<script src="../shared/single-plan-board.js?v=74.3.27-20261028"></script>
-<script src="../shared/monthly-control.js?v=74.3.27-20261028"></script>
+<script src="../shared/scenario-strategy.js?v=74.3.28-20261028"></script>
+<script src="../shared/scenario-uncertainty.js?v=74.3.28-20261028"></script>
+<script src="../shared/baseline-uncertainty.js?v=74.3.28-20261028"></script>
+<script src="../shared/single-plan-board.js?v=74.3.28-20261028"></script>
+<script src="../shared/monthly-control.js?v=74.3.28-20261028"></script>
 <script>
 const sb=window.appSupabase;
 if(typeof Chart!=="undefined"){
@@ -5593,6 +5593,20 @@ function balanceKpiShareHtml(value,total,tone){
   else if(overflow)slice+='<path d="M14 20 H26 M20 14 V26" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>';
   return '<span class="balance-kpi-share '+esc(tone||"")+(negative?' negative':!valid?' unavailable':'')+'" role="img" title="'+esc(title)+'" aria-label="'+esc(title)+'"><svg viewBox="0 0 40 40" width="36" height="36" aria-hidden="true" focusable="false"><circle class="balance-pie-base" cx="20" cy="20" r="17"/>'+slice+'</svg><span><strong>'+esc(formatted)+'</strong>'+(valid?'<small> delle entrate</small>':'')+'</span></span>';
 }
+function financialCashflowPeriod(mode,scope){
+  const rows=historicalRowsFor(mode),months=historicalMonthsFor(mode);
+  if(!Array.isArray(bfConsolidatedTransfers?.monthly)||rows.length!==months.length)return null;
+  let incoming=0,outgoing=0,unresolved=0;
+  for(let i=0;i<months.length;i++){
+    const row=rows[i],fieldIn=scope==="TOTAL"?"account_gross_in":"account_gross_in_ordinary",fieldOut=scope==="TOTAL"?"account_gross_out":"account_gross_out_ordinary";
+    if(row[fieldIn]===undefined||row[fieldIn]===null||row[fieldOut]===undefined||row[fieldOut]===null)return null;
+    const tr=bfConsolidatedTransfers.monthly.find(x=>String(x.month_start)===String(months[i]));
+    incoming+=num(row[fieldIn])+num(tr?.external_in);
+    outgoing+=num(row[fieldOut])+num(tr?.external_out);
+    unresolved+=num(tr?.unresolved_count);
+  }
+  return {income:incoming,outgoing:outgoing,net:incoming-outgoing,months:months.length,unresolved:unresolved};
+}
 function renderHistoricalKpis(){
   const t=balanceFlowModel(historicalPeriodMode);if(!t)return;
   const months=Math.max(1,historicalMonthsFor(historicalPeriodMode).length),income=Math.max(0,num(t.income));
@@ -5603,6 +5617,18 @@ function renderHistoricalKpis(){
     $("historicalBalanceKpis").innerHTML=
       historicalKpiCard("Margine strutturale",margin,balanceKpiShareHtml(margin,income,"balance"),"balance","Quanto resta dopo Obbligatorie, Necessarie e NC, prima delle Discrezionali e del risparmio.")+
       historicalKpiCard(balanceSurplusLabel(),final,balanceKpiShareHtml(final,income,"margin"),"margin","Avanzo dopo spese, rate e risparmio; acquisti al netto delle quote finanziate. Il Totale include gli eventi E. Non è il saldo dei conti.");
+  }else if(balanceSubview==="cashflow"&&historicalCashFlowLens==="ACCOUNTS"){
+    const financial=financialCashflowPeriod(historicalPeriodMode,historicalScope);
+    if(!financial){
+      $("historicalBalanceKpis").innerHTML='<div class="historical-kpi balance"><div class="label">Dati finanziari non disponibili</div><div class="sub">Impossibile calcolare i totali del periodo con i dati caricati.</div></div>';
+    }else{
+      const n=Math.max(1,financial.months),note=financial.unresolved?financial.unresolved+(financial.unresolved===1?" trasferimento da verificare":" trasferimenti da verificare"):"Perimetro selezionato";
+      $("historicalBalanceKpis").innerHTML=
+        '<div class="historical-kpi income"><div class="label">Entrate finanziarie '+historicalInfo("Incassi sui conti nel periodo, inclusi finanziamenti e trasferimenti esterni al perimetro.")+'</div><div class="value positive">'+money(financial.income)+'</div><div class="sub">Ø '+money(financial.income/n)+'/mese</div></div>'+
+        '<div class="historical-kpi expense"><div class="label">Uscite finanziarie '+historicalInfo("Pagamenti dai conti nel periodo, inclusi investimenti e trasferimenti esterni al perimetro.")+'</div><div class="value negative">'+money(financial.outgoing)+'</div><div class="sub">Ø '+money(financial.outgoing/n)+'/mese</div></div>'+
+        historicalKpiCard("Saldo finanziario del periodo",financial.net,esc(note),"balance","Entrate meno uscite finanziarie del periodo. Non comprende il saldo iniziale dei conti.")+
+        historicalKpiCard("Saldo medio mensile",financial.net/n,"Media del periodo","margin","Saldo finanziario del periodo diviso per il numero di mesi selezionati.");
+    }
   }else{
     $("historicalBalanceKpis").innerHTML=
       '<div class="historical-kpi income"><div class="label">Entrate economiche '+historicalInfo("Entrate economiche del periodo selezionato. Giroconti interni e finanziamenti ricevuti esclusi.")+'</div><div class="value positive">'+money(t.income)+'</div><div class="sub">Ø '+money(t.income/months)+'/mese</div></div>'+
@@ -7353,7 +7379,7 @@ function renderHistoricalChart(){
     return {month:month,operatingIn:operatingIn,operatingOut:operatingOut,wealth:wealth,
       financing:excludedLoan,coveredPurchase:coveredPurchase,splitIn:splitIn,splitOut:splitOut,transferIn:transferIn,transferOut:transferOut,
       unverifiedTransferIn:num(tm[i]?.transfer_in),unverifiedTransferOut:num(tm[i]?.transfer_out),
-      accountIn:grossIn+transferIn,accountOut:grossOut+transferOut,covered:!!bfConsolidatedTransfers,unresolvedCount:num(tr?.unresolved_count)};
+      accountIn:grossIn+transferIn,accountOut:grossOut+transferOut,covered:Array.isArray(bfConsolidatedTransfers?.monthly)&&(scope==="TOTAL"?x.account_gross_in!=null&&x.account_gross_out!=null:x.account_gross_in_ordinary!=null&&x.account_gross_out_ordinary!=null),unresolvedCount:num(tr?.unresolved_count)};
   });
   const income=breakdown.map(x=>financial?x.accountIn:x.operatingIn);
   const outgoing=breakdown.map(x=>financial?x.accountOut:x.operatingOut);
@@ -9661,7 +9687,7 @@ $("analysisDetailContent").addEventListener("click",function(e){
  showPlanningBoardView("BASELINE");
 });
 $("planningBoardRefresh").onclick=function(){planningBoardData=null;loadPlanningBoard(true)};
-document.addEventListener("click",function(e){const b=e.target.closest("[data-cash-lens]");if(b){historicalCashFlowLens=b.dataset.cashLens;closeBalanceNatureDrill();renderHistoricalChart()}});
+document.addEventListener("click",function(e){const b=e.target.closest("[data-cash-lens]");if(b){historicalCashFlowLens=b.dataset.cashLens;closeBalanceNatureDrill();renderHistoricalKpis();renderHistoricalChart()}});
 document.addEventListener("change",function(e){
  const el=e.target.closest("[data-baseline-reliability]");
  if(el&&!el.closest("#planningBoardView"))baselineReliabilitySave(el.dataset.baselineReliability,el.value,el);
@@ -10112,8 +10138,8 @@ $("rpcDiagnosticsModal")?.addEventListener("click",function(e){if(e.target===$("
 document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!$("rpcDiagnosticsModal")?.classList.contains("hidden"))closeRpcDiagnostics()});
 init();
 </script>
-<script src="../shared/health-reserve.js?v=74.3.27-20261028"></script>
-<script src="../shared/approved-plan.js?v=74.3.27-20261028"></script>
+<script src="../shared/health-reserve.js?v=74.3.28-20261028"></script>
+<script src="../shared/approved-plan.js?v=74.3.28-20261028"></script>
 </body>
 </html>
 
