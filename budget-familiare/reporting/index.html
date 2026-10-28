@@ -8,19 +8,19 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=74.3.16-20261028"></script>
-<script src="../shared/app-config.js?v=74.3.16-20261028"></script>
-<link rel="stylesheet" href="../shared/perspectives.css?v=74.3.16-20261028">
-<script src="../shared/perspectives.js?v=74.3.16-20261028"></script>
-<script src="../shared/contextual-help.js?v=74.3.16-20261028" defer></script>
+<script src="../shared/supabase-client.js?v=74.3.17-20261028"></script>
+<script src="../shared/app-config.js?v=74.3.17-20261028"></script>
+<link rel="stylesheet" href="../shared/perspectives.css?v=74.3.17-20261028">
+<script src="../shared/perspectives.js?v=74.3.17-20261028"></script>
+<script src="../shared/contextual-help.js?v=74.3.17-20261028" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<link rel="stylesheet" href="../shared/health-reserve.css?v=74.3.16-20261028">
-<link rel="stylesheet" href="../shared/approved-plan.css?v=74.3.16-20261028">
-<link rel="stylesheet" href="../shared/monthly-control.css?v=74.3.16-20261028">
-<link rel="stylesheet" href="../shared/scenario-strategy.css?v=74.3.16-20261028">
-<link rel="stylesheet" href="../shared/scenario-uncertainty.css?v=74.3.16-20261028">
-<link rel="stylesheet" href="../shared/baseline-uncertainty.css?v=74.3.16-20261028">
-<link rel="stylesheet" href="../shared/single-plan-board.css?v=74.3.16-20261028">
+<link rel="stylesheet" href="../shared/health-reserve.css?v=74.3.17-20261028">
+<link rel="stylesheet" href="../shared/approved-plan.css?v=74.3.17-20261028">
+<link rel="stylesheet" href="../shared/monthly-control.css?v=74.3.17-20261028">
+<link rel="stylesheet" href="../shared/scenario-strategy.css?v=74.3.17-20261028">
+<link rel="stylesheet" href="../shared/scenario-uncertainty.css?v=74.3.17-20261028">
+<link rel="stylesheet" href="../shared/baseline-uncertainty.css?v=74.3.17-20261028">
+<link rel="stylesheet" href="../shared/single-plan-board.css?v=74.3.17-20261028">
 <style>
 :root{--bg:#f4f6fa;--card:#fff;--text:#17263e;--muted:#58677d;--line:#dce4ee;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 4px 18px rgba(15,23,42,.045);--sc-blue:#2563eb;--sc-blue-soft:#eff6ff;--sc-green:#0ea87a;--sc-red:#ef5b73;--sc-purple:#7658e6;--sc-ink:#17263e}
 *{box-sizing:border-box}
@@ -2875,6 +2875,16 @@ body{font-size:16px;line-height:1.5}
           <div id="historicalChartNote" class="legend-note"></div>
         </section>
 
+        <section id="cashMovementAuditSection" class="scenario-card" aria-label="Verifica movimenti del Cash Flow">
+          <div class="scenario-card-head"><div><h3>Verifica movimenti</h3><p>Investimenti e movimenti particolari esclusi, inclusi o da verificare. La classificazione è indicativa quando mancano prove sul perimetro: i dati bancari originali non vengono alterati.</p></div></div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0">
+            <label for="cashAuditFilter" class="small muted">Visualizza</label>
+            <select id="cashAuditFilter" class="input" aria-label="Filtra stato movimenti"><option value="ALL">Tutti</option><option value="EXCLUDED">Esclusi</option><option value="INCLUDED">Inclusi speciali</option><option value="REVIEW">Da verificare</option></select>
+            <span id="cashAuditSummary" class="small muted" aria-live="polite"></span>
+          </div>
+          <div id="cashAuditRows" style="overflow-x:auto"><p class="muted small">Caricamento delle operazioni particolari…</p></div>
+          <p class="muted small">Per modificare una classificazione usa la funzione di revisione movimenti esistente. La riclassificazione direttamente da questa tabella, con anteprima e cronologia, è prevista nella fase successiva.</p>
+        </section>
         <div id="historicalBottomGrid" class="historical-bottom-grid">
           <section id="historicalComparisonSection" class="scenario-card historical-comparison-workspace">
             <div class="scenario-card-head"><div><h3>Confronto storico <button class="context-help-trigger" type="button" data-context-help="budget-vs-cashflow" aria-label="Aiuto: importi del Confronto e quote finanziate">?</button></h3><p>Non solo quanto è cambiato: individua quali categorie hanno prodotto il miglioramento o il peggioramento.</p></div></div>
@@ -3016,11 +3026,11 @@ body{font-size:16px;line-height:1.5}
   </div>
 </div>
 
-<script src="../shared/scenario-strategy.js?v=74.3.16-20261028"></script>
-<script src="../shared/scenario-uncertainty.js?v=74.3.16-20261028"></script>
-<script src="../shared/baseline-uncertainty.js?v=74.3.16-20261028"></script>
-<script src="../shared/single-plan-board.js?v=74.3.16-20261028"></script>
-<script src="../shared/monthly-control.js?v=74.3.16-20261028"></script>
+<script src="../shared/scenario-strategy.js?v=74.3.17-20261028"></script>
+<script src="../shared/scenario-uncertainty.js?v=74.3.17-20261028"></script>
+<script src="../shared/baseline-uncertainty.js?v=74.3.17-20261028"></script>
+<script src="../shared/single-plan-board.js?v=74.3.17-20261028"></script>
+<script src="../shared/monthly-control.js?v=74.3.17-20261028"></script>
 <script>
 const sb=window.appSupabase;
 if(typeof Chart!=="undefined"){
@@ -3239,6 +3249,7 @@ function bfUnscopedPlanNotice(){
 }
 let bfScopeTransfers=null;
 let bfConsolidatedTransfers=null;
+let bfMovementAudit=null;
 function bfTransferStrip(){
  const host=$("bfScopeTransfers");if(!host)return;
  const months=bfScopeTransfers?.monthly||[];
@@ -3321,12 +3332,14 @@ async function loadReport(){
       rpc("dashboard_reporting_read_v5"),
       rpc("dashboard_reporting_liquidity_history_v1").catch(function(){return {available:false,reason:"UNAVAILABLE",rows:[]}}),
       sb.rpc("dashboard_scope_actuals_v1",{p_scope:bfScope(),p_months:24}).then(r=>r.error?null:r.data).catch(()=>null),
-      sb.rpc("dashboard_reporting_scope_transfers_v2",{p_scope:bfScope()}).then(r=>r.error?null:r.data).catch(()=>null)
+      sb.rpc("dashboard_reporting_scope_transfers_v2",{p_scope:bfScope()}).then(r=>r.error?null:r.data).catch(()=>null),
+      sb.rpc("dashboard_reporting_movement_audit_v1",{p_scope:bfScope()}).then(r=>r.error?null:r.data).catch(()=>null)
     ]);
     report=data[0]||{};
     report.liquidity_history=data[1]||{available:false,rows:[]};
     bfScopeTransfers=data[2]||null;
     bfConsolidatedTransfers=data[3]||null;
+    bfMovementAudit=data[4]||null;
     renderAll();
     bfMarkExcludedPlanning();
     openReportingFromUrl();
@@ -7409,11 +7422,31 @@ function renderHistoricalChart(){
     }
   });
 }
+document.addEventListener("change",function(e){if(e.target&&e.target.id==="cashAuditFilter")renderCashMovementAudit()});
+function renderCashMovementAudit(){
+ const box=$("cashAuditRows"),summary=$("cashAuditSummary"),filter=$("cashAuditFilter");
+ if(!box)return;
+ if(!bfMovementAudit||!Array.isArray(bfMovementAudit.rows)){
+   box.innerHTML='<p class="muted small">Dati di verifica non disponibili. Non interpretare una lista vuota come assenza di anomalie.</p>';
+   if(summary)summary.textContent="Dati non disponibili";
+   return;
+ }
+ const months=new Set(historicalMonthsFor(historicalPeriodMode));
+ const all=bfMovementAudit.rows.filter(r=>months.has(String(r.date||"").slice(0,7)+"-01"));
+ const state=filter?.value||"ALL",rows=all.filter(r=>state==="ALL"||r.status===state);
+ const count=x=>all.filter(r=>r.status===x).length;
+ if(summary)summary.textContent=all.length+" movimenti · "+count("EXCLUDED")+" esclusi · "+count("INCLUDED")+" inclusi · "+count("REVIEW")+" da verificare";
+ if(!rows.length){box.innerHTML='<p class="muted small">Nessun movimento nella selezione corrente.</p>';return}
+ const status=x=>({EXCLUDED:"Escluso economico",INCLUDED:"Incluso economico",REVIEW:"Da verificare"})[x]||x;
+ box.innerHTML='<table class="table" style="width:100%;min-width:790px"><thead><tr><th>Data</th><th>Conto / titolare</th><th>Movimento</th><th>Importo</th><th>Trattamento</th><th>Motivazione</th></tr></thead><tbody>'+rows.map(function(r){
+   return '<tr><td>'+esc(r.date||"")+'</td><td>'+esc(r.owner||"")+' · '+esc(r.bank||"")+'</td><td><strong>'+esc(r.category||r.type||"")+'</strong><div class="muted small">'+esc(r.description||"")+'</div></td><td style="white-space:nowrap">'+money(num(r.amount))+'</td><td>'+esc(status(r.status))+(r.manual_lock?' · Manuale':'')+'</td><td>'+esc(r.reason||"")+'</td></tr>';
+ }).join("")+'</tbody></table>';
+}
 function renderHistoricalBalance(){
   if(!Array.isArray(scenarioActualRows)){msg($("historicalBalanceStatus"),"Carico il bilancio…");return}
   if(!["ROLLING_6","ROLLING_12","ROLLING_24","ALL","YEAR","LAST_CALENDAR_YEAR"].includes(historicalPeriodMode))historicalPeriodMode="ROLLING_12";
   balanceHubMode="HISTORY";historicalChartMode="CASHFLOW";
-  renderHistoricalKpis();renderBalanceWaterfall();renderHistoricalChart();renderHistoricalPeriodComparison();applyBalanceSubview();syncWherePeriodUI();
+  renderHistoricalKpis();renderBalanceWaterfall();renderHistoricalChart();renderCashMovementAudit();renderHistoricalPeriodComparison();applyBalanceSubview();syncWherePeriodUI();
 }
 function renderBalanceHub(){
   balanceHubMode="HISTORY";
@@ -9996,8 +10029,8 @@ $("rpcDiagnosticsModal")?.addEventListener("click",function(e){if(e.target===$("
 document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!$("rpcDiagnosticsModal")?.classList.contains("hidden"))closeRpcDiagnostics()});
 init();
 </script>
-<script src="../shared/health-reserve.js?v=74.3.16-20261028"></script>
-<script src="../shared/approved-plan.js?v=74.3.16-20261028"></script>
+<script src="../shared/health-reserve.js?v=74.3.17-20261028"></script>
+<script src="../shared/approved-plan.js?v=74.3.17-20261028"></script>
 </body>
 </html>
 
