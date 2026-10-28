@@ -8,19 +8,19 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=74.3.20-20261028"></script>
-<script src="../shared/app-config.js?v=74.3.20-20261028"></script>
-<link rel="stylesheet" href="../shared/perspectives.css?v=74.3.20-20261028">
-<script src="../shared/perspectives.js?v=74.3.20-20261028"></script>
-<script src="../shared/contextual-help.js?v=74.3.20-20261028" defer></script>
+<script src="../shared/supabase-client.js?v=74.3.21-20261028"></script>
+<script src="../shared/app-config.js?v=74.3.21-20261028"></script>
+<link rel="stylesheet" href="../shared/perspectives.css?v=74.3.21-20261028">
+<script src="../shared/perspectives.js?v=74.3.21-20261028"></script>
+<script src="../shared/contextual-help.js?v=74.3.21-20261028" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<link rel="stylesheet" href="../shared/health-reserve.css?v=74.3.20-20261028">
-<link rel="stylesheet" href="../shared/approved-plan.css?v=74.3.20-20261028">
-<link rel="stylesheet" href="../shared/monthly-control.css?v=74.3.20-20261028">
-<link rel="stylesheet" href="../shared/scenario-strategy.css?v=74.3.20-20261028">
-<link rel="stylesheet" href="../shared/scenario-uncertainty.css?v=74.3.20-20261028">
-<link rel="stylesheet" href="../shared/baseline-uncertainty.css?v=74.3.20-20261028">
-<link rel="stylesheet" href="../shared/single-plan-board.css?v=74.3.20-20261028">
+<link rel="stylesheet" href="../shared/health-reserve.css?v=74.3.21-20261028">
+<link rel="stylesheet" href="../shared/approved-plan.css?v=74.3.21-20261028">
+<link rel="stylesheet" href="../shared/monthly-control.css?v=74.3.21-20261028">
+<link rel="stylesheet" href="../shared/scenario-strategy.css?v=74.3.21-20261028">
+<link rel="stylesheet" href="../shared/scenario-uncertainty.css?v=74.3.21-20261028">
+<link rel="stylesheet" href="../shared/baseline-uncertainty.css?v=74.3.21-20261028">
+<link rel="stylesheet" href="../shared/single-plan-board.css?v=74.3.21-20261028">
 <style>
 :root{--bg:#f4f6fa;--card:#fff;--text:#17263e;--muted:#58677d;--line:#dce4ee;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 4px 18px rgba(15,23,42,.045);--sc-blue:#2563eb;--sc-blue-soft:#eff6ff;--sc-green:#0ea87a;--sc-red:#ef5b73;--sc-purple:#7658e6;--sc-ink:#17263e}
 *{box-sizing:border-box}
@@ -3026,11 +3026,11 @@ body{font-size:16px;line-height:1.5}
   </div>
 </div>
 
-<script src="../shared/scenario-strategy.js?v=74.3.20-20261028"></script>
-<script src="../shared/scenario-uncertainty.js?v=74.3.20-20261028"></script>
-<script src="../shared/baseline-uncertainty.js?v=74.3.20-20261028"></script>
-<script src="../shared/single-plan-board.js?v=74.3.20-20261028"></script>
-<script src="../shared/monthly-control.js?v=74.3.20-20261028"></script>
+<script src="../shared/scenario-strategy.js?v=74.3.21-20261028"></script>
+<script src="../shared/scenario-uncertainty.js?v=74.3.21-20261028"></script>
+<script src="../shared/baseline-uncertainty.js?v=74.3.21-20261028"></script>
+<script src="../shared/single-plan-board.js?v=74.3.21-20261028"></script>
+<script src="../shared/monthly-control.js?v=74.3.21-20261028"></script>
 <script>
 const sb=window.appSupabase;
 if(typeof Chart!=="undefined"){
@@ -7315,6 +7315,12 @@ function renderHistoricalPeriodComparison(){
 }
 function historicalChartRows(){return historicalRowsFor(historicalPeriodMode)}
 function cashLensTransfer(month){return (bfScopeTransfers?.monthly||[]).find(x=>String(x.month_start)===String(month))||null}
+// Managerial settlement of tax refund received in payroll and passed to spouse.
+// Not a generic inter-owner transfer: preserve the income counterpart in Massimo scope.
+function cashflowTaxSettlement(month){
+ if(bfScope()!=="MASSIMO")return 0;
+ return (bfMovementAudit?.rows||[]).filter(r=>String(r.date||"").slice(0,7)+"-01"===month&&r.type==="TRANSFER"&&r.owner==="Massimo"&&num(r.amount)<0&&/RIMBORSO\s*730/i.test(String(r.description||""))&&/LUISA\s+TAMBURRO/i.test(String(r.description||""))).reduce((sum,r)=>sum+Math.abs(num(r.amount)),0);
+}
 function renderHistoricalChart(){
   if(historicalBalanceChart){historicalBalanceChart.destroy();historicalBalanceChart=null}
   const rows=historicalChartRows(),months=historicalMonthsFor(historicalPeriodMode),labels=months.map(monthLabel),scope=historicalScope;
@@ -7338,9 +7344,10 @@ function renderHistoricalChart(){
     const tr=(bfConsolidatedTransfers?.monthly||[]).find(v=>String(v.month_start)===String(month));
     const transferIn=num(tr?.external_in),transferOut=num(tr?.external_out);
     const operatingIn=Math.max(0,fullIn-excludedLoan);
-    const operatingOut=Math.max(0,fullOut-wealth-coveredPurchase);
+    const taxSettlement=cashflowTaxSettlement(month);
+    const operatingOut=Math.max(0,fullOut-wealth-coveredPurchase)+taxSettlement;
     return {month:month,operatingIn:operatingIn,operatingOut:operatingOut,wealth:wealth,
-      financing:excludedLoan,coveredPurchase:coveredPurchase,transferIn:transferIn,transferOut:transferOut,
+      financing:excludedLoan,coveredPurchase:coveredPurchase,taxSettlement:taxSettlement,transferIn:transferIn,transferOut:transferOut,
       unverifiedTransferIn:num(tm[i]?.transfer_in),unverifiedTransferOut:num(tm[i]?.transfer_out),
       accountIn:fullIn+transferIn,accountOut:fullOut+transferOut,covered:!!bfConsolidatedTransfers,unresolvedCount:num(tr?.unresolved_count)};
   });
@@ -7460,7 +7467,7 @@ function cashAuditFlowDecision(r){
  if(kind==="TRANSFER"){
   if(desc.includes("DISINVESTIMENTO")||desc.includes("MFM INVESTMENT"))return {economic:"No",financial:"Sì"};
   const otherOwner=r.owner==="Massimo"?/LUISA\s+TAMBURRO/.test(desc):/MASSIMO\s+PICCI/.test(desc);
-  if(otherOwner)return {economic:"No",financial:bfScope()==="FAMILY"?"No":"Sì"};
+  if(otherOwner)return {economic:bfScope()==="MASSIMO"&&/RIMBORSO\s*730/.test(desc)?"Sì":"No",financial:bfScope()==="FAMILY"?"No":"Sì"};
   const selfOwner=r.owner==="Massimo"?/MASSIMO\s+PICCI/.test(desc):/LUISA\s+TAMBURRO/.test(desc);
   if(selfOwner)return {economic:"No",financial:"No"};
   return {economic:"No",financial:"Da verificare"};
@@ -10078,8 +10085,8 @@ $("rpcDiagnosticsModal")?.addEventListener("click",function(e){if(e.target===$("
 document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!$("rpcDiagnosticsModal")?.classList.contains("hidden"))closeRpcDiagnostics()});
 init();
 </script>
-<script src="../shared/health-reserve.js?v=74.3.20-20261028"></script>
-<script src="../shared/approved-plan.js?v=74.3.20-20261028"></script>
+<script src="../shared/health-reserve.js?v=74.3.21-20261028"></script>
+<script src="../shared/approved-plan.js?v=74.3.21-20261028"></script>
 </body>
 </html>
 
