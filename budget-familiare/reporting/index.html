@@ -8,19 +8,19 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=74.3.22-20261028"></script>
-<script src="../shared/app-config.js?v=74.3.22-20261028"></script>
-<link rel="stylesheet" href="../shared/perspectives.css?v=74.3.22-20261028">
-<script src="../shared/perspectives.js?v=74.3.22-20261028"></script>
-<script src="../shared/contextual-help.js?v=74.3.22-20261028" defer></script>
+<script src="../shared/supabase-client.js?v=74.3.23-20261028"></script>
+<script src="../shared/app-config.js?v=74.3.23-20261028"></script>
+<link rel="stylesheet" href="../shared/perspectives.css?v=74.3.23-20261028">
+<script src="../shared/perspectives.js?v=74.3.23-20261028"></script>
+<script src="../shared/contextual-help.js?v=74.3.23-20261028" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<link rel="stylesheet" href="../shared/health-reserve.css?v=74.3.22-20261028">
-<link rel="stylesheet" href="../shared/approved-plan.css?v=74.3.22-20261028">
-<link rel="stylesheet" href="../shared/monthly-control.css?v=74.3.22-20261028">
-<link rel="stylesheet" href="../shared/scenario-strategy.css?v=74.3.22-20261028">
-<link rel="stylesheet" href="../shared/scenario-uncertainty.css?v=74.3.22-20261028">
-<link rel="stylesheet" href="../shared/baseline-uncertainty.css?v=74.3.22-20261028">
-<link rel="stylesheet" href="../shared/single-plan-board.css?v=74.3.22-20261028">
+<link rel="stylesheet" href="../shared/health-reserve.css?v=74.3.23-20261028">
+<link rel="stylesheet" href="../shared/approved-plan.css?v=74.3.23-20261028">
+<link rel="stylesheet" href="../shared/monthly-control.css?v=74.3.23-20261028">
+<link rel="stylesheet" href="../shared/scenario-strategy.css?v=74.3.23-20261028">
+<link rel="stylesheet" href="../shared/scenario-uncertainty.css?v=74.3.23-20261028">
+<link rel="stylesheet" href="../shared/baseline-uncertainty.css?v=74.3.23-20261028">
+<link rel="stylesheet" href="../shared/single-plan-board.css?v=74.3.23-20261028">
 <style>
 :root{--bg:#f4f6fa;--card:#fff;--text:#17263e;--muted:#58677d;--line:#dce4ee;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 4px 18px rgba(15,23,42,.045);--sc-blue:#2563eb;--sc-blue-soft:#eff6ff;--sc-green:#0ea87a;--sc-red:#ef5b73;--sc-purple:#7658e6;--sc-ink:#17263e}
 *{box-sizing:border-box}
@@ -3026,11 +3026,11 @@ body{font-size:16px;line-height:1.5}
   </div>
 </div>
 
-<script src="../shared/scenario-strategy.js?v=74.3.22-20261028"></script>
-<script src="../shared/scenario-uncertainty.js?v=74.3.22-20261028"></script>
-<script src="../shared/baseline-uncertainty.js?v=74.3.22-20261028"></script>
-<script src="../shared/single-plan-board.js?v=74.3.22-20261028"></script>
-<script src="../shared/monthly-control.js?v=74.3.22-20261028"></script>
+<script src="../shared/scenario-strategy.js?v=74.3.23-20261028"></script>
+<script src="../shared/scenario-uncertainty.js?v=74.3.23-20261028"></script>
+<script src="../shared/baseline-uncertainty.js?v=74.3.23-20261028"></script>
+<script src="../shared/single-plan-board.js?v=74.3.23-20261028"></script>
+<script src="../shared/monthly-control.js?v=74.3.23-20261028"></script>
 <script>
 const sb=window.appSupabase;
 if(typeof Chart!=="undefined"){
@@ -7980,6 +7980,7 @@ async function loadScenarioData(force){
     if(needExpense)jobs.push({kind:"EXPENSE",promise:rpc("dashboard_reporting_analysis_projection_v1",{p_direction:"EXPENSE"})});
     if(needIncome)jobs.push({kind:"INCOME",promise:rpc("dashboard_reporting_analysis_projection_v1",{p_direction:"INCOME"})});
     if(needActual)jobs.push({kind:"ACTUAL",promise:rpc("dashboard_reporting_scenario_actual_v3",{p_months:36})});
+    if(needActual||force)jobs.push({kind:"COVERAGE",promise:sb.rpc("dashboard_reporting_purchase_coverage_v1",{p_scope:bfScope()}).then(r=>{if(r.error)throw r.error;return r.data})});
     if(needRationales)jobs.push({kind:"RATIONALES",promise:rpc("dashboard_reporting_scenario_rationales_v1",{p_months:12})});
     if(needMeta)jobs.push({kind:"META",promise:rpc("dashboard_reporting_planning_meta_v1")});
     const values=await Promise.all(jobs.map(function(x){return x.promise}));
@@ -7990,6 +7991,10 @@ async function loadScenarioData(force){
         scenarioActualCategories=Array.isArray(actual.category_monthly)?actual.category_monthly:[];
         scenarioPurchaseFinancing=Array.isArray(actual.purchase_financing)?actual.purchase_financing:[];
         scenarioExtraordinaryMovements=Array.isArray(actual.extraordinary_movements)?actual.extraordinary_movements:[];
+      }else if(job.kind==="COVERAGE"){
+        const financed=values[i];
+        if(!Array.isArray(financed))throw Error("La copertura degli acquisti finanziati non è disponibile: impossibile calcolare in modo affidabile il Cash Flow economico.");
+        scenarioPurchaseFinancing=financed;
       }else if(job.kind==="RATIONALES"){
         const semantic=values[i]||{};scenarioForecastRationales=Array.isArray(semantic.rows)?semantic.rows:[];
       }else if(job.kind==="META"){
@@ -10086,8 +10091,8 @@ $("rpcDiagnosticsModal")?.addEventListener("click",function(e){if(e.target===$("
 document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!$("rpcDiagnosticsModal")?.classList.contains("hidden"))closeRpcDiagnostics()});
 init();
 </script>
-<script src="../shared/health-reserve.js?v=74.3.22-20261028"></script>
-<script src="../shared/approved-plan.js?v=74.3.22-20261028"></script>
+<script src="../shared/health-reserve.js?v=74.3.23-20261028"></script>
+<script src="../shared/approved-plan.js?v=74.3.23-20261028"></script>
 </body>
 </html>
 
