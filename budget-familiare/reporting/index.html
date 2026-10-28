@@ -8,19 +8,19 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=74.3.23-20261028"></script>
-<script src="../shared/app-config.js?v=74.3.23-20261028"></script>
-<link rel="stylesheet" href="../shared/perspectives.css?v=74.3.23-20261028">
-<script src="../shared/perspectives.js?v=74.3.23-20261028"></script>
-<script src="../shared/contextual-help.js?v=74.3.23-20261028" defer></script>
+<script src="../shared/supabase-client.js?v=74.3.24-20261028"></script>
+<script src="../shared/app-config.js?v=74.3.24-20261028"></script>
+<link rel="stylesheet" href="../shared/perspectives.css?v=74.3.24-20261028">
+<script src="../shared/perspectives.js?v=74.3.24-20261028"></script>
+<script src="../shared/contextual-help.js?v=74.3.24-20261028" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<link rel="stylesheet" href="../shared/health-reserve.css?v=74.3.23-20261028">
-<link rel="stylesheet" href="../shared/approved-plan.css?v=74.3.23-20261028">
-<link rel="stylesheet" href="../shared/monthly-control.css?v=74.3.23-20261028">
-<link rel="stylesheet" href="../shared/scenario-strategy.css?v=74.3.23-20261028">
-<link rel="stylesheet" href="../shared/scenario-uncertainty.css?v=74.3.23-20261028">
-<link rel="stylesheet" href="../shared/baseline-uncertainty.css?v=74.3.23-20261028">
-<link rel="stylesheet" href="../shared/single-plan-board.css?v=74.3.23-20261028">
+<link rel="stylesheet" href="../shared/health-reserve.css?v=74.3.24-20261028">
+<link rel="stylesheet" href="../shared/approved-plan.css?v=74.3.24-20261028">
+<link rel="stylesheet" href="../shared/monthly-control.css?v=74.3.24-20261028">
+<link rel="stylesheet" href="../shared/scenario-strategy.css?v=74.3.24-20261028">
+<link rel="stylesheet" href="../shared/scenario-uncertainty.css?v=74.3.24-20261028">
+<link rel="stylesheet" href="../shared/baseline-uncertainty.css?v=74.3.24-20261028">
+<link rel="stylesheet" href="../shared/single-plan-board.css?v=74.3.24-20261028">
 <style>
 :root{--bg:#f4f6fa;--card:#fff;--text:#17263e;--muted:#58677d;--line:#dce4ee;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 4px 18px rgba(15,23,42,.045);--sc-blue:#2563eb;--sc-blue-soft:#eff6ff;--sc-green:#0ea87a;--sc-red:#ef5b73;--sc-purple:#7658e6;--sc-ink:#17263e}
 *{box-sizing:border-box}
@@ -3026,11 +3026,11 @@ body{font-size:16px;line-height:1.5}
   </div>
 </div>
 
-<script src="../shared/scenario-strategy.js?v=74.3.23-20261028"></script>
-<script src="../shared/scenario-uncertainty.js?v=74.3.23-20261028"></script>
-<script src="../shared/baseline-uncertainty.js?v=74.3.23-20261028"></script>
-<script src="../shared/single-plan-board.js?v=74.3.23-20261028"></script>
-<script src="../shared/monthly-control.js?v=74.3.23-20261028"></script>
+<script src="../shared/scenario-strategy.js?v=74.3.24-20261028"></script>
+<script src="../shared/scenario-uncertainty.js?v=74.3.24-20261028"></script>
+<script src="../shared/baseline-uncertainty.js?v=74.3.24-20261028"></script>
+<script src="../shared/single-plan-board.js?v=74.3.24-20261028"></script>
+<script src="../shared/monthly-control.js?v=74.3.24-20261028"></script>
 <script>
 const sb=window.appSupabase;
 if(typeof Chart!=="undefined"){
@@ -3333,13 +3333,16 @@ async function loadReport(){
       rpc("dashboard_reporting_liquidity_history_v1").catch(function(){return {available:false,reason:"UNAVAILABLE",rows:[]}}),
       sb.rpc("dashboard_scope_actuals_v1",{p_scope:bfScope(),p_months:24}).then(r=>r.error?null:r.data).catch(()=>null),
       sb.rpc("dashboard_reporting_scope_transfers_v2",{p_scope:bfScope()}).then(r=>r.error?null:r.data).catch(()=>null),
-      sb.rpc("dashboard_reporting_movement_audit_v1",{p_scope:bfScope()}).then(r=>r.error?null:r.data).catch(()=>null)
+      sb.rpc("dashboard_reporting_movement_audit_v1",{p_scope:bfScope()}).then(r=>r.error?null:r.data).catch(()=>null),
+      sb.rpc("dashboard_reporting_purchase_coverage_v1",{p_scope:bfScope()}).then(r=>{if(r.error)throw r.error;return r.data})
     ]);
     report=data[0]||{};
     report.liquidity_history=data[1]||{available:false,rows:[]};
     bfScopeTransfers=data[2]||null;
     bfConsolidatedTransfers=data[3]||null;
     bfMovementAudit=data[4]||null;
+    if(!Array.isArray(data[5]))throw Error("Copertura acquisti finanziati mancante: il Cash Flow economico non può essere mostrato correttamente.");
+    scenarioPurchaseFinancing=data[5];
     renderAll();
     bfMarkExcludedPlanning();
     openReportingFromUrl();
@@ -5682,7 +5685,7 @@ function balanceDrillRowsForSelection(){
     if(!id)return;
     if(!rows.has(id))rows.set(id,{id:id,name:cashInvestment?"Investimenti":x.l2_name||x.l1_name||"Senza categoria",l1:cashInvestment?"Investimenti":x.l1_name||"",l1Id:cashInvestment?"__CASHFLOW_INVESTMENTS__":String(x.l1_id||id),level:cashInvestment?"L2":x.l2_id?"L2":"L1",actual:0,forecast:0,temporal:balanceTemporalEmpty()});
     const row=rows.get(id),defaultTime=(temporalMeta.get(id)||{}).temporality;
-    const cash=balanceDrillSelection.origin==="MONTH_CASHFLOW";
+    const cash=balanceDrillSelection.origin==="MONTH_CASHFLOW"&&balanceDrillSelection.cashLens==="ACCOUNTS";
     row.actual+=historicalCategoryAmount(x,scope,cash);
     row.financed=(row.financed||0)+(cash?0:purchaseFinancingCategoryAmount(x,scope));
     balanceTemporalAdd(row.temporal,balanceTemporalKey(dir==="INVESTMENT"?x.investment_temporality:x.effective_temporality||defaultTime),historicalCategoryAmount(x,"ORDINARY",cash));
@@ -7989,7 +7992,7 @@ async function loadScenarioData(force){
         const actual=values[i]||{};
         scenarioActualRows=Array.isArray(actual.monthly)?actual.monthly:[];
         scenarioActualCategories=Array.isArray(actual.category_monthly)?actual.category_monthly:[];
-        scenarioPurchaseFinancing=Array.isArray(actual.purchase_financing)?actual.purchase_financing:[];
+        if(!scenarioPurchaseFinancing.length&&Array.isArray(actual.purchase_financing))scenarioPurchaseFinancing=actual.purchase_financing;
         scenarioExtraordinaryMovements=Array.isArray(actual.extraordinary_movements)?actual.extraordinary_movements:[];
       }else if(job.kind==="COVERAGE"){
         const financed=values[i];
@@ -10091,8 +10094,8 @@ $("rpcDiagnosticsModal")?.addEventListener("click",function(e){if(e.target===$("
 document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!$("rpcDiagnosticsModal")?.classList.contains("hidden"))closeRpcDiagnostics()});
 init();
 </script>
-<script src="../shared/health-reserve.js?v=74.3.23-20261028"></script>
-<script src="../shared/approved-plan.js?v=74.3.23-20261028"></script>
+<script src="../shared/health-reserve.js?v=74.3.24-20261028"></script>
+<script src="../shared/approved-plan.js?v=74.3.24-20261028"></script>
 </body>
 </html>
 
