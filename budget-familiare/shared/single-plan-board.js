@@ -15,7 +15,12 @@ let rollingApprovalNeedsRevision=false;
 // Canonical monthly ledger, shared by calendar-year and rolling views.
 // Approved server revisions are immutable; this ledger is the editable draft.
 let continuousLoaded=false,continuousLoading=null,continuousRevision=0;
-let ledger={},ledgerNotes={};
+let ledger={},ledgerNotes={},approvedLedger={},approvedNotes={};
+let planReference=true,activeContext='';
+function referenceActive(){return activeContext==='PLAN'&&continuousRevision>0&&planReference}
+function setContext(context){activeContext=context||''}
+function setPlanReference(enabled){planReference=!!enabled}
+
 const CONTINUOUS_DRAFT_KEY="budget-family-continuous-draft-v1";
 function copy(o){return JSON.parse(JSON.stringify(o||{}))}
 function syncVisibleLedger(){
@@ -55,6 +60,7 @@ async function ensureContinuous(){
   continuousRevision=Number(p?.revision||0);
   ledger=copy(p?.month_targets);
   ledgerNotes=copy(p?.notes);
+  approvedLedger=copy(p?.month_targets);approvedNotes=copy(p?.notes);
   try{
    const raw=JSON.parse(root.localStorage?.getItem(CONTINUOUS_DRAFT_KEY)||"null");
    if(raw&&raw.revision===continuousRevision&&raw.months){
@@ -335,6 +341,7 @@ async function approve(){
   if(errors.length)throw new Error("Salvataggio non verificato per "+errors.length+" mesi: ricarica il Piano prima di riprovare.");
   continuousRevision=Number(plan.revision);
   ledger=copy(plan.month_targets);ledgerNotes=copy(plan.notes);
+   approvedLedger=copy(plan.month_targets);approvedNotes=copy(plan.notes);planReference=true;
   root.localStorage?.removeItem(CONTINUOUS_DRAFT_KEY);
   const k=state.year+"|"+state.horizon;
   savedDrafts[k]=snapshot();justSaved=true;saveError=false;
@@ -348,6 +355,11 @@ function render(originalExp,originalInc,isPlan,context,extra={}){
  const wrapper=root.document.getElementById("bfSinglePlanDraft");if(!wrapper)return;
  wrapper.hidden=!isPlan;
  if(!isPlan){const bar=root.document.getElementById("bfDraftSaveToolbar");if(bar)bar.hidden=true;return;}
+ if(referenceActive()){
+  const bar=root.document.getElementById("bfDraftSaveToolbar");if(bar)bar.hidden=true;
+  wrapper.innerHTML='<div class="bf-plan-inline-head"><div class="bf-strategy-intro"><strong>Piano approvato V'+continuousRevision+'</strong><span> Riferimento immutabile. Per gli scostamenti e i consuntivi usa Controllo.</span></div><div class="bf-plan-inline-actions"><button type="button" class="btn compact" data-bf-plan-revise>Prepara revisione</button></div></div>';
+  return;
+ }
  const quick=root.document.getElementById("bfDraftSaveToolbar");
  if(quick){
   quick.hidden=false;
@@ -359,9 +371,9 @@ function render(originalExp,originalInc,isPlan,context,extra={}){
  const exp=applyRows(originalExp),inc=applyRows(originalInc);
  const baseline=totals(originalInc)-totals(originalExp),planned=totals(inc)-totals(exp),improvement=planned-baseline;
  let html='<div class="bf-plan-inline-head"><div class="bf-strategy-intro"><strong>'+
- (strategy?'Strategia · Elabora il tuo scenario':'Piano continuo · '+(continuousRevision?'revisione V'+continuousRevision:'prima approvazione'))+'</strong>'+
+ (strategy?'Strategia · Elabora il tuo scenario':'Piano continuo · '+(continuousRevision?'bozza revisione V'+(continuousRevision+1):'prima approvazione'))+'</strong>'+
  '<span> '+(strategy?'Usa le leve o modifica i target L2 nella tabella sottostante.':'Puoi modificare tutti i mesi futuri, anche oltre dicembre. Le revisioni approvate sono conservate.')+'</span></div>'+
- '<div class="bf-plan-inline-actions">'+(strategy?'':'<label>Entrate <select data-bf-draft-risk>'+
+ '<div class="bf-plan-inline-actions">'+(strategy?'':(continuousRevision?'<button type="button" class="btn ghost compact" data-bf-plan-reference>Mostra Piano approvato V'+continuousRevision+'</button>':'')+'<label>Entrate <select data-bf-draft-risk>'+
  '<option value="LOW"'+(state.bonus==="LOW"?' selected':'')+'>Prudente</option>'+
  '<option value="BASE"'+(state.bonus==="BASE"?' selected':'')+'>Base</option>'+
  '<option value="HIGH"'+(state.bonus==="HIGH"?' selected':'')+'>Favorevole</option></select></label>')+
@@ -423,7 +435,23 @@ function render(originalExp,originalInc,isPlan,context,extra={}){
   });
  }
 }
+function approvedRows(rows){
+ return rows.map(r=>{
+  const values=approvedLedger[key(r)]||{};
+  const months=(r.months||[]).map(m=>{const exists=Object.prototype.hasOwnProperty.call(values,m.month)&&Number.isFinite(Number(values[m.month]));return {...m,amount:exists?value(values[m.month]):0,futureAmount:0,kind:'approved',approvedMissing:!exists,scenarioOverride:false};});
+  const annual=round2(months.reduce((sum,m)=>sum+value(m.amount),0));
+  return {...r,annual,deltaAbs:annual-value(r.comparison),deltaPct:value(r.comparison)>0?(annual/value(r.comparison)-1)*100:null,months};
+ });
+}
+function approvedCoverage(rows){
+ const missing=[];
+ for(const row of rows)for(const m of row.months||[])if(m.approvedMissing)missing.push(key(row)+'|'+m.month);
+ const ids=new Set(rows.map(key)),months=new Set(rows.flatMap(r=>(r.months||[]).map(m=>m.month)));
+ for(const [id,values] of Object.entries(approvedLedger))if(!ids.has(id))for(const month of months)if(Object.prototype.hasOwnProperty.call(values,month))missing.push(id+'|'+month);
+ return {complete:missing.length===0,missing:missing.length};
+}
 function inlineAmount(row){
+ if(referenceActive()){const monthly=root.document.getElementById('planningBoardDisplayUnit')?.value==='MONTH';return '<span>'+money(monthly?row.annual/12:row.annual)+'</span>';}
  const k=key(row),base=state.originals[k]||row,amount=state.targets[k]===undefined?value(base.annual):Math.max(locked(base),value(state.targets[k]));
  const monthly=root.document.getElementById("planningBoardDisplayUnit")?.value==="MONTH";
  const changed=isChanged(row);
@@ -432,10 +460,12 @@ function inlineAmount(row){
  '<button type="button" class="bf-plan-row-baseline" data-bf-draft-row-reset="'+escape(k)+'" title="'+escape(title)+'" aria-label="'+escape(title)+'" '+(changed?'':'disabled ')+'>&#8634;</button></div>';
 }
 function inlineNote(row){
- const k=key(row),note=state.notes[k]||"",baselineNote=row.meta?.rationale_note||"";
+ const k=key(row),note=(referenceActive()?approvedNotes[k]:state.notes[k])||"",baselineNote=row.meta?.rationale_note||"";
+ if(referenceActive())return '<span title="'+escape(note||baselineNote||"—")+'">'+escape(note||baselineNote||"—")+'</span>';
  return '<button class="bf-plan-note-button '+(note?'has-note':'')+'" type="button" data-bf-note-open="'+escape(k)+'" title="'+escape('Baseline: '+(baselineNote||'nessuna nota')+' | Piano: '+(note||'aggiungi impegno'))+'" aria-label="'+escape('Note '+row.l2_name+(baselineNote?' — nota Baseline presente':''))+'">✎'+(baselineNote?' ⓘ':'')+(note?' ●':'')+'</button>';
 }
 function isChanged(row){
+ if(referenceActive())return Math.abs(value(row.annual)-value(row.comparison))>=.005;
  const id=key(row);
  const base=state.originals[id]||row;
  const revised=applyRows([base])[0];
@@ -556,6 +586,8 @@ function init(){
     });
     persist();root.renderPlanningBoard?.();return;
   }
+  if(e.target.closest("[data-bf-plan-revise]")){setPlanReference(false);root.renderPlanningBoard?.();return}
+  if(e.target.closest("[data-bf-plan-reference]")){setPlanReference(true);root.renderPlanningBoard?.();return}
   if(e.target.closest("[data-bf-draft-to-plan]")){root.showPlanningBoardView?.("PLAN");return}
   if(e.target.closest("[data-bf-draft-show-calendar]")){root.document.querySelector('[data-planning-horizon="CALENDAR"]')?.click();return}
   if(e.target.closest("[data-bf-draft-approve]")){approve();return}
@@ -564,7 +596,8 @@ function init(){
  });
 }
 root.BudgetFamilySinglePlan={
- prepare(exp,inc,year,horizon){resetIfYearChanged(year,horizon||'CALENDAR');[...exp,...inc].forEach(r=>state.originals[key(r)]=r);applyLedgerToRows([...exp,...inc]);return {exp:applyRows(exp),inc:applyRows(inc)}},
+ prepare(exp,inc,year,horizon){resetIfYearChanged(year,horizon||'CALENDAR');[...exp,...inc].forEach(r=>state.originals[key(r)]=r);if(referenceActive()){const e=approvedRows(exp),i=approvedRows(inc);return {exp:e,inc:i,coverage:approvedCoverage(e.concat(i))}}applyLedgerToRows([...exp,...inc]);return {exp:applyRows(exp),inc:applyRows(inc)}},
+ setContext,referenceActive,setPlanReference,
  render,inlineAmount,inlineNote,isChanged,showOnlyChanged,scenarioPreset,saveDraft,discardUnsaved,resetCategoryToBaseline,details(){return {year:state.year,targets:{...state.targets},monthTargets:JSON.parse(JSON.stringify(state.monthTargets)),notes:{...state.notes},reserve:state.reserve,project:state.project,targetUnit:state.targetUnit}},
  applyDecisionTargets,ensureContinuous,continuousEnabled(){return continuousLoaded},continuousStatus,startRevision,cancelRevision,revisionActive,needsRollingRevision(){return rollingApprovalNeedsRevision},hasPendingRollingTransfer(){return !!rollingTransfer},isDraft(){return Object.keys(state.targets).length>0||Object.keys(state.monthTargets).length>0}
 };

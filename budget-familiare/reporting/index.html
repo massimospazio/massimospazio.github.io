@@ -8,19 +8,19 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=74.3.29-20261028"></script>
-<script src="../shared/app-config.js?v=74.3.29-20261028"></script>
-<link rel="stylesheet" href="../shared/perspectives.css?v=74.3.29-20261028">
-<script src="../shared/perspectives.js?v=74.3.29-20261028"></script>
-<script src="../shared/contextual-help.js?v=74.3.29-20261028" defer></script>
+<script src="../shared/supabase-client.js?v=74.3.30-20261028"></script>
+<script src="../shared/app-config.js?v=74.3.30-20261028"></script>
+<link rel="stylesheet" href="../shared/perspectives.css?v=74.3.30-20261028">
+<script src="../shared/perspectives.js?v=74.3.30-20261028"></script>
+<script src="../shared/contextual-help.js?v=74.3.30-20261028" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<link rel="stylesheet" href="../shared/health-reserve.css?v=74.3.29-20261028">
-<link rel="stylesheet" href="../shared/approved-plan.css?v=74.3.29-20261028">
-<link rel="stylesheet" href="../shared/monthly-control.css?v=74.3.29-20261028">
-<link rel="stylesheet" href="../shared/scenario-strategy.css?v=74.3.29-20261028">
-<link rel="stylesheet" href="../shared/scenario-uncertainty.css?v=74.3.29-20261028">
-<link rel="stylesheet" href="../shared/baseline-uncertainty.css?v=74.3.29-20261028">
-<link rel="stylesheet" href="../shared/single-plan-board.css?v=74.3.29-20261028">
+<link rel="stylesheet" href="../shared/health-reserve.css?v=74.3.30-20261028">
+<link rel="stylesheet" href="../shared/approved-plan.css?v=74.3.30-20261028">
+<link rel="stylesheet" href="../shared/monthly-control.css?v=74.3.30-20261028">
+<link rel="stylesheet" href="../shared/scenario-strategy.css?v=74.3.30-20261028">
+<link rel="stylesheet" href="../shared/scenario-uncertainty.css?v=74.3.30-20261028">
+<link rel="stylesheet" href="../shared/baseline-uncertainty.css?v=74.3.30-20261028">
+<link rel="stylesheet" href="../shared/single-plan-board.css?v=74.3.30-20261028">
 <style>
 :root{--bg:#f4f6fa;--card:#fff;--text:#17263e;--muted:#58677d;--line:#dce4ee;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 4px 18px rgba(15,23,42,.045);--sc-blue:#2563eb;--sc-blue-soft:#eff6ff;--sc-green:#0ea87a;--sc-red:#ef5b73;--sc-purple:#7658e6;--sc-ink:#17263e}
 *{box-sizing:border-box}
@@ -3028,11 +3028,11 @@ body{font-size:16px;line-height:1.5}
   </div>
 </div>
 
-<script src="../shared/scenario-strategy.js?v=74.3.29-20261028"></script>
-<script src="../shared/scenario-uncertainty.js?v=74.3.29-20261028"></script>
-<script src="../shared/baseline-uncertainty.js?v=74.3.29-20261028"></script>
-<script src="../shared/single-plan-board.js?v=74.3.29-20261028"></script>
-<script src="../shared/monthly-control.js?v=74.3.29-20261028"></script>
+<script src="../shared/scenario-strategy.js?v=74.3.30-20261028"></script>
+<script src="../shared/scenario-uncertainty.js?v=74.3.30-20261028"></script>
+<script src="../shared/baseline-uncertainty.js?v=74.3.30-20261028"></script>
+<script src="../shared/single-plan-board.js?v=74.3.30-20261028"></script>
+<script src="../shared/monthly-control.js?v=74.3.30-20261028"></script>
 <script>
 const sb=window.appSupabase;
 if(typeof Chart!=="undefined"){
@@ -8474,14 +8474,14 @@ function planningSharedChartSlot(key,name,level){
 function planningMonthPanelHtml(row){
  if(planningBoardContext==="BASELINE")return planningSharedChartSlot(row.direction+"|"+row.category_id,row.l2_name,"L2");
  const editable=(planningBoardContext==="STRATEGY"||planningBoardContext==="PLAN")&&
-   !planningBoardData?.meta?.strategic_plan&&!!window.BudgetFamilySinglePlan;
+   !planningBoardData?.meta?.strategic_plan&&!!window.BudgetFamilySinglePlan&&!window.BudgetFamilySinglePlan.referenceActive?.();
  const id=row.direction+":"+row.category_id;
  const values=row.months.map(function(m){
    const manual=!!m.scenarioOverride;
    const actual=m.kind==="actual";
    const minimum=actual?num(m.amount):Math.max(0,num(m.amount)-num(m.futureAmount));
    const amount=new Intl.NumberFormat("it-IT",{maximumFractionDigits:2}).format(num(m.amount));
-   const label=actual?"Consuntivo":manual?"Modifica manuale":m.override?"Override Baseline":
+   const label=m.kind==="approved"?"Piano approvato":actual?"Consuntivo":manual?"Modifica manuale":m.override?"Override Baseline":
      editable?"Modificabile":planningBoardContext==="STRATEGY"?"Scenario":"Piano";
    const field=editable&&!actual?
      '<input type="text" inputmode="decimal" class="bf-scenario-month-input" data-bf-draft-month-amount="'+esc(id)+
@@ -8502,7 +8502,7 @@ function planningMonthPanelHtml(row){
 function planningComparisonUsesBaseline(){
   return planningBoardContext==="STRATEGY"||planningBoardContext==="PLAN";
 }
-function planningComparisonLabel(){return planningComparisonUsesBaseline()?"Baseline":"Storico"}
+function planningComparisonLabel(){return planningBoardContext==="PLAN"&&typeof window!=="undefined"&&window.BudgetFamilySinglePlan?.referenceActive?.()?"Baseline attuale":planningComparisonUsesBaseline()?"Baseline":"Storico"}
 function planningCurrentValueLabel(){
   return planningBoardContext==="STRATEGY"?"Scenario":
     planningBoardContext==="PLAN"?"Piano":
@@ -8641,6 +8641,8 @@ function planningRenderFilterButtons(){
   document.querySelectorAll('[data-planning-horizon="ROLLING_12"]').forEach(function(b){
     const strategy=planningBoardContext==="STRATEGY";
     b.disabled=false;
+    const period=planningBoardData?.expense?planningDefinition(planningBoardData.expense,"ROLLING_12")?.targetMonths:[];
+    b.textContent=planningBoardContext==="PLAN"&&period?.length?"12 mesi · "+monthLabel(period[0])+" – "+monthLabel(period[period.length-1]):"12 mesi";
     b.title=strategy?"Rolling 12 mesi in sola lettura: il draft strategico annuale rimane invariato.":"";
   });
   document.querySelectorAll("[data-planning-filter]").forEach(function(b){b.classList.toggle("ghost",b.dataset.planningFilter!==planningBoardFilter)});document.querySelectorAll("[data-planning-level]").forEach(function(b){b.classList.toggle("ghost",b.dataset.planningLevel!==planningBoardLevel)});document.querySelectorAll("[data-planning-horizon]").forEach(function(b){b.classList.toggle("ghost",b.dataset.planningHorizon!==planningBoardHorizon)});if($("planningNatureFilter"))$("planningNatureFilter").value=planningBoardNatureFilter;if($("planningForecastFilter"))$("planningForecastFilter").value=planningBoardForecastFilter;if($("planningNoteFilter"))$("planningNoteFilter").value=planningBoardNoteFilter;if($("planningIntervalFilter"))$("planningIntervalFilter").value=planningBoardIntervalFilter;if($("planningBaselineReviewFilter"))$("planningBaselineReviewFilter").value=planningBaselineReviewFilter}
@@ -8928,7 +8930,7 @@ function planningOverviewRenderModel(model,context){
     planningOverviewBlock("Uscite · "+baseLabel,"expense",b.totalExpenses,h.totalExpenses,"EXPENSE",expenseHtml)+
     planningOverviewBlock("Margine strutturale","margin",b.margin,h.margin,"INCOME",null,
       "Entrate − O − N − NC (escluse D e altre uscite)")+
-    planningOverviewBlock("Avanzo","surplus",b.surplus,h.surplus,"INCOME",surplusBody,
+    planningOverviewBlock(context==="PLAN"&&typeof window!=="undefined"&&window.BudgetFamilySinglePlan?.referenceActive?.()?"Avanzo Piano approvato V"+window.BudgetFamilySinglePlan.continuousStatus().revision:"Avanzo","surplus",b.surplus,h.surplus,"INCOME",surplusBody,
       "Margine − D − altre uscite − risparmio")+
     (showAttribution?planningInvestmentIndicator(model):"");
 }
@@ -9288,6 +9290,7 @@ function renderPlanningBoard(){
   }
   // The simulation is annual: do not fall through to Rolling Forecast vs historical.
   // Il rolling 12 mesi resta consultabile anche in Strategia; i target annuali non vengono toccati.
+  window.BudgetFamilySinglePlan?.setContext?.(planningBoardContext);
   const liveBoardData=planningBoardData;
   const calendarYear=String(liveBoardData.expense.current_year_start||"").slice(0,4);
   if(planningBoardContext==="PLAN"&&planningBoardHorizon==="CALENDAR"&&(window.BudgetFamilySinglePlan?.needsRollingRevision?.()||window.BudgetFamilySinglePlan?.hasPendingRollingTransfer?.())){
@@ -9343,10 +9346,13 @@ function renderPlanningBoard(){
     }
     if(planningBoardContext==="PLAN"&&window.BudgetFamilySinglePlan?.continuousEnabled?.()){
       const revision=window.BudgetFamilySinglePlan.continuousStatus().revision;
-      view.title="Tabellone · Piano continuo"+(revision?" · V"+revision:" · prima approvazione");
-      view.column="Obiettivo Piano · "+(rolling?"12 mesi":"anno corrente");
-      view.subtitle=rolling?"Puoi modificare e approvare anche i mesi dell’anno successivo.":"Il Piano rimane continuo oltre il 31 dicembre.";
-      view.note="Una sola pianificazione mensile e revisioni versionate. I consuntivi sono protetti; la Baseline è il confronto, non il Piano.";
+      const reference=window.BudgetFamilySinglePlan.referenceActive();
+      const period=def.targetMonths.length?monthLabel(def.targetMonths[0])+" – "+monthLabel(def.targetMonths[def.targetMonths.length-1]):"";
+      view.period=period;
+      view.title="Tabellone · "+(reference?"Piano approvato V"+revision:(revision?"Bozza revisione V"+(revision+1):"Piano in elaborazione"));
+      view.column=(reference?"Piano approvato V"+revision:"Bozza")+' · '+period;
+      view.subtitle=reference?"Valori congelati alla data di approvazione.":"Bozza modificabile: i consuntivi già registrati sono protetti.";
+      view.note=reference?"Il Piano approvato non cambia con i consuntivi. Usa Controllo per seguire gli scostamenti.":"La bozza può riflettere i consuntivi; resta distinta dal Piano approvato fino a una nuova approvazione.";
     }
     $("planningBoardView").dataset.boardContext=planningBoardContext;
     $("planningBoardView").dataset.displayUnit=planningBoardDisplayUnit;
@@ -9389,9 +9395,18 @@ function renderPlanningBoard(){
     const shownInc=canDraft?withBaselineComparison(draft.inc,inc):isStrategic?withBaselineComparison(inc,baseInc):inc;
     if(canDraft||isStrategic){
       $("planningBoardHistoryHead").innerHTML='<button type="button" class="bf-sort-head" data-baseline-sort="comparison">Baseline ↕</button>';
-      $("planningBoardYearHead").innerHTML='<button type="button" class="bf-sort-head" data-baseline-sort="annual">'+esc(isStrategic?"Piano approvato":planningBoardContext==="STRATEGY"?"Scenario simulato":"Piano in elaborazione")+' ↕</button>';
+      $("planningBoardYearHead").innerHTML='<button type="button" class="bf-sort-head" data-baseline-sort="annual">'+esc(isStrategic||window.BudgetFamilySinglePlan?.referenceActive?.()?"Piano approvato":planningBoardContext==="STRATEGY"?"Scenario simulato":"Bozza revisione")+' ↕</button>';
     }
     $("planningBoardDeltaHead").title="Variazione vs "+(canDraft||isStrategic?"Baseline":"storico")+" (ordinabile per € e %)";
+    if(draft?.coverage&&!draft.coverage.complete){
+      $("planningBoardOverview").innerHTML='<p class="muted">Il Piano approvato non copre interamente questo periodo o alcune categorie non sono più disponibili. Seleziona un periodo coperto o prepara una revisione; i valori mancanti non vengono stimati.</p>';
+      $("planningBoardBody").innerHTML='<tr><td colspan="10" class="muted">Piano approvato incompleto per il periodo selezionato.</td></tr>';
+      if(planningNatureChart){planningNatureChart.destroy();planningNatureChart=null}
+      if(planningMonthlyChart){planningMonthlyChart.destroy();planningMonthlyChart=null}
+      if($("planningNatureLegend"))$("planningNatureLegend").innerHTML="";
+      window.BudgetFamilySinglePlan?.render(exp,inc,canDraft,planningBoardContext,{currentMonth:planningBoardData.expense.current_month});
+      return;
+    }
     renderPlanningOverview(shownExp,shownInc,view);
     renderPlanningBaselineAudit(exp,inc);
     window.BudgetFamilySinglePlan?.render(exp,inc,canDraft,planningBoardContext,{
@@ -9404,7 +9419,7 @@ function renderPlanningBoard(){
     $("planningBoardBody").innerHTML=html||'<tr><td colspan="10" class="muted">Nessuna voce corrisponde ai filtri.</td></tr>';
     $("planningBoardLegend").textContent="Valori: "+(planningBoardDisplayUnit==="MONTH"?"media mensile":"totale periodo")+". Confronto con "+planningComparisonLabel()+". Verde sulle spese = riduzione, verde sulle entrate = aumento. "+
       (isStrategic?"Piano approvato V"+approved.revision+": confronto con la Baseline congelata alla stessa data.":
-       canDraft?(planningBoardContext==="STRATEGY"?"Scenario vs Baseline: gli interventi modificano soltanto le quote future; nessun dato storico o Baseline viene sovrascritto.":"Piano in elaborazione vs Baseline: i target non modificano la Baseline e rimangono una bozza fino all’approvazione."):
+       canDraft?(window.BudgetFamilySinglePlan?.referenceActive?.()?"Piano approvato immutabile; confronto con la Baseline attuale. I consuntivi sono mostrati nel Controllo.":planningBoardContext==="STRATEGY"?"Scenario vs Baseline: gli interventi modificano soltanto le quote future; nessun dato storico o Baseline viene sovrascritto.":"Bozza di revisione: i target restano distinti dal Piano approvato fino a una nuova approvazione."):
        rolling?"Previsione rolling corrente, non Piano annuale.":"Baseline: confronto con periodo storico.");
     if(planningBoardContext!=="BASELINE"){renderPlanningNatureChart(shownExp);renderPlanningMonthlyChart(shownExp,shownInc)}
   }finally{
@@ -10137,8 +10152,8 @@ $("rpcDiagnosticsModal")?.addEventListener("click",function(e){if(e.target===$("
 document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!$("rpcDiagnosticsModal")?.classList.contains("hidden"))closeRpcDiagnostics()});
 init();
 </script>
-<script src="../shared/health-reserve.js?v=74.3.29-20261028"></script>
-<script src="../shared/approved-plan.js?v=74.3.29-20261028"></script>
+<script src="../shared/health-reserve.js?v=74.3.30-20261028"></script>
+<script src="../shared/approved-plan.js?v=74.3.30-20261028"></script>
 </body>
 </html>
 
