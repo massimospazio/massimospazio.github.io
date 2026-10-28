@@ -8,19 +8,19 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=74.3.28-20261028"></script>
-<script src="../shared/app-config.js?v=74.3.28-20261028"></script>
-<link rel="stylesheet" href="../shared/perspectives.css?v=74.3.28-20261028">
-<script src="../shared/perspectives.js?v=74.3.28-20261028"></script>
-<script src="../shared/contextual-help.js?v=74.3.28-20261028" defer></script>
+<script src="../shared/supabase-client.js?v=74.3.29-20261028"></script>
+<script src="../shared/app-config.js?v=74.3.29-20261028"></script>
+<link rel="stylesheet" href="../shared/perspectives.css?v=74.3.29-20261028">
+<script src="../shared/perspectives.js?v=74.3.29-20261028"></script>
+<script src="../shared/contextual-help.js?v=74.3.29-20261028" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<link rel="stylesheet" href="../shared/health-reserve.css?v=74.3.28-20261028">
-<link rel="stylesheet" href="../shared/approved-plan.css?v=74.3.28-20261028">
-<link rel="stylesheet" href="../shared/monthly-control.css?v=74.3.28-20261028">
-<link rel="stylesheet" href="../shared/scenario-strategy.css?v=74.3.28-20261028">
-<link rel="stylesheet" href="../shared/scenario-uncertainty.css?v=74.3.28-20261028">
-<link rel="stylesheet" href="../shared/baseline-uncertainty.css?v=74.3.28-20261028">
-<link rel="stylesheet" href="../shared/single-plan-board.css?v=74.3.28-20261028">
+<link rel="stylesheet" href="../shared/health-reserve.css?v=74.3.29-20261028">
+<link rel="stylesheet" href="../shared/approved-plan.css?v=74.3.29-20261028">
+<link rel="stylesheet" href="../shared/monthly-control.css?v=74.3.29-20261028">
+<link rel="stylesheet" href="../shared/scenario-strategy.css?v=74.3.29-20261028">
+<link rel="stylesheet" href="../shared/scenario-uncertainty.css?v=74.3.29-20261028">
+<link rel="stylesheet" href="../shared/baseline-uncertainty.css?v=74.3.29-20261028">
+<link rel="stylesheet" href="../shared/single-plan-board.css?v=74.3.29-20261028">
 <style>
 :root{--bg:#f4f6fa;--card:#fff;--text:#17263e;--muted:#58677d;--line:#dce4ee;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 4px 18px rgba(15,23,42,.045);--sc-blue:#2563eb;--sc-blue-soft:#eff6ff;--sc-green:#0ea87a;--sc-red:#ef5b73;--sc-purple:#7658e6;--sc-ink:#17263e}
 *{box-sizing:border-box}
@@ -3028,11 +3028,11 @@ body{font-size:16px;line-height:1.5}
   </div>
 </div>
 
-<script src="../shared/scenario-strategy.js?v=74.3.28-20261028"></script>
-<script src="../shared/scenario-uncertainty.js?v=74.3.28-20261028"></script>
-<script src="../shared/baseline-uncertainty.js?v=74.3.28-20261028"></script>
-<script src="../shared/single-plan-board.js?v=74.3.28-20261028"></script>
-<script src="../shared/monthly-control.js?v=74.3.28-20261028"></script>
+<script src="../shared/scenario-strategy.js?v=74.3.29-20261028"></script>
+<script src="../shared/scenario-uncertainty.js?v=74.3.29-20261028"></script>
+<script src="../shared/baseline-uncertainty.js?v=74.3.29-20261028"></script>
+<script src="../shared/single-plan-board.js?v=74.3.29-20261028"></script>
+<script src="../shared/monthly-control.js?v=74.3.29-20261028"></script>
 <script>
 const sb=window.appSupabase;
 if(typeof Chart!=="undefined"){
@@ -7463,15 +7463,14 @@ function renderHistoricalChart(){
     historicalSaldoChart=new Chart($("historicalSaldoChart"),{
       data:{labels:labels,datasets:[
         {type:"bar",label:"Saldo del mese",data:net,backgroundColor:net.map(v=>v===null?"transparent":v>=0?"#159b6d":"#e05260"),borderRadius:3,yAxisID:"y",order:2},
-        {type:"line",label:"Saldo cumulato del periodo",data:cumulative,borderColor:"#315bbc",backgroundColor:"#315bbc",borderWidth:2.5,pointRadius:3,tension:0,yAxisID:"y2",order:1,spanGaps:false}
+        {type:"line",label:"Saldo cumulato del periodo",data:cumulative,borderColor:"#315bbc",backgroundColor:"#315bbc",borderWidth:2.5,pointRadius:3,tension:0,yAxisID:"y",order:1,spanGaps:false}
       ]},
-      options:{responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},
+      options:{responsive:true,maintainAspectRatio:false,layout:{padding:{right:90}},interaction:{mode:"index",intersect:false},
         plugins:{legend:{display:true,position:"bottom",labels:{boxWidth:10,boxHeight:10,font:{size:14}}},
           tooltip:{callbacks:{label:function(ctx){const v=ctx.raw;return ctx.dataset.label+": "+(v===null?"non disponibile":(v>0?"+":"")+money(v))}}}},
         scales:{
           x:{offset:true,grid:{display:false},ticks:{font:{size:14},maxRotation:0,autoSkip:true}},
-          y:{beginAtZero:true,afterFit:function(scale){scale.width=90},ticks:{font:{size:14},callback:function(v){return money(v)}},grid:{color:function(ctx){return ctx.tick.value===0?"#64748b":"rgba(148,163,184,.18)"},lineWidth:function(ctx){return ctx.tick.value===0?2:1}}},
-          y2:{position:"right",afterFit:function(scale){scale.width=90},grid:{drawOnChartArea:false},ticks:{font:{size:14},callback:function(v){return money(v)}}}
+          y:{beginAtZero:true,afterFit:function(scale){scale.width=90},ticks:{font:{size:14},callback:function(v){return money(v)}},grid:{color:function(ctx){return ctx.tick.value===0?"#64748b":"rgba(148,163,184,.18)"},lineWidth:function(ctx){return ctx.tick.value===0?2:1}}}
         }
       }
     });
@@ -10138,8 +10137,8 @@ $("rpcDiagnosticsModal")?.addEventListener("click",function(e){if(e.target===$("
 document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!$("rpcDiagnosticsModal")?.classList.contains("hidden"))closeRpcDiagnostics()});
 init();
 </script>
-<script src="../shared/health-reserve.js?v=74.3.28-20261028"></script>
-<script src="../shared/approved-plan.js?v=74.3.28-20261028"></script>
+<script src="../shared/health-reserve.js?v=74.3.29-20261028"></script>
+<script src="../shared/approved-plan.js?v=74.3.29-20261028"></script>
 </body>
 </html>
 
