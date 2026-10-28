@@ -8,19 +8,19 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=74.3.19-20261028"></script>
-<script src="../shared/app-config.js?v=74.3.19-20261028"></script>
-<link rel="stylesheet" href="../shared/perspectives.css?v=74.3.19-20261028">
-<script src="../shared/perspectives.js?v=74.3.19-20261028"></script>
-<script src="../shared/contextual-help.js?v=74.3.19-20261028" defer></script>
+<script src="../shared/supabase-client.js?v=74.3.20-20261028"></script>
+<script src="../shared/app-config.js?v=74.3.20-20261028"></script>
+<link rel="stylesheet" href="../shared/perspectives.css?v=74.3.20-20261028">
+<script src="../shared/perspectives.js?v=74.3.20-20261028"></script>
+<script src="../shared/contextual-help.js?v=74.3.20-20261028" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<link rel="stylesheet" href="../shared/health-reserve.css?v=74.3.19-20261028">
-<link rel="stylesheet" href="../shared/approved-plan.css?v=74.3.19-20261028">
-<link rel="stylesheet" href="../shared/monthly-control.css?v=74.3.19-20261028">
-<link rel="stylesheet" href="../shared/scenario-strategy.css?v=74.3.19-20261028">
-<link rel="stylesheet" href="../shared/scenario-uncertainty.css?v=74.3.19-20261028">
-<link rel="stylesheet" href="../shared/baseline-uncertainty.css?v=74.3.19-20261028">
-<link rel="stylesheet" href="../shared/single-plan-board.css?v=74.3.19-20261028">
+<link rel="stylesheet" href="../shared/health-reserve.css?v=74.3.20-20261028">
+<link rel="stylesheet" href="../shared/approved-plan.css?v=74.3.20-20261028">
+<link rel="stylesheet" href="../shared/monthly-control.css?v=74.3.20-20261028">
+<link rel="stylesheet" href="../shared/scenario-strategy.css?v=74.3.20-20261028">
+<link rel="stylesheet" href="../shared/scenario-uncertainty.css?v=74.3.20-20261028">
+<link rel="stylesheet" href="../shared/baseline-uncertainty.css?v=74.3.20-20261028">
+<link rel="stylesheet" href="../shared/single-plan-board.css?v=74.3.20-20261028">
 <style>
 :root{--bg:#f4f6fa;--card:#fff;--text:#17263e;--muted:#58677d;--line:#dce4ee;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 4px 18px rgba(15,23,42,.045);--sc-blue:#2563eb;--sc-blue-soft:#eff6ff;--sc-green:#0ea87a;--sc-red:#ef5b73;--sc-purple:#7658e6;--sc-ink:#17263e}
 *{box-sizing:border-box}
@@ -3026,11 +3026,11 @@ body{font-size:16px;line-height:1.5}
   </div>
 </div>
 
-<script src="../shared/scenario-strategy.js?v=74.3.19-20261028"></script>
-<script src="../shared/scenario-uncertainty.js?v=74.3.19-20261028"></script>
-<script src="../shared/baseline-uncertainty.js?v=74.3.19-20261028"></script>
-<script src="../shared/single-plan-board.js?v=74.3.19-20261028"></script>
-<script src="../shared/monthly-control.js?v=74.3.19-20261028"></script>
+<script src="../shared/scenario-strategy.js?v=74.3.20-20261028"></script>
+<script src="../shared/scenario-uncertainty.js?v=74.3.20-20261028"></script>
+<script src="../shared/baseline-uncertainty.js?v=74.3.20-20261028"></script>
+<script src="../shared/single-plan-board.js?v=74.3.20-20261028"></script>
+<script src="../shared/monthly-control.js?v=74.3.20-20261028"></script>
 <script>
 const sb=window.appSupabase;
 if(typeof Chart!=="undefined"){
@@ -7425,16 +7425,31 @@ function renderHistoricalChart(){
 document.addEventListener("change",function(e){if(e.target&&e.target.id==="cashAuditFilter")renderCashMovementAudit()});
 let cashAuditSortKey="date",cashAuditSortAsc=false;
 function cashAuditMatchedIds(rows){
- const transfers=rows.filter(x=>x.type==="TRANSFER" && ["ING","Trade Republic"].includes(x.bank));
- const matched=new Set(),available=transfers.slice().sort((a,b)=>String(a.date).localeCompare(String(b.date))||String(a.id).localeCompare(String(b.id)));
- for(const a of available){
-  if(matched.has(a.id))continue;
-  const candidates=available.filter(b=>!matched.has(b.id)&&b.id!==a.id&&b.owner===a.owner&&b.bank!==a.bank&&Math.abs(num(a.amount)+num(b.amount))<0.005&&Math.abs((Date.parse(a.date)-Date.parse(b.date))/86400000)<=5);
-  if(candidates.length===1){
-   const b=candidates[0];
-   const reverse=available.filter(x=>!matched.has(x.id)&&x.id!==b.id&&x.owner===b.owner&&x.bank!==b.bank&&Math.abs(num(x.amount)+num(b.amount))<0.005&&Math.abs((Date.parse(x.date)-Date.parse(b.date))/86400000)<=5);
-   if(reverse.length===1){matched.add(a.id);matched.add(b.id)}
+ // One-to-one maximum-cardinality matching for repeated same-value transfers.
+ // Unique-candidate-only logic failed when two €200 or €5000 pairs shared a 5-day window.
+ const transfers=rows.filter(x=>x.type==="TRANSFER"&&["ING","Trade Republic"].includes(x.bank));
+ const matched=new Set(),groups=new Map();
+ transfers.forEach(r=>{
+  const key=String(r.owner)+"|"+Math.abs(num(r.amount)).toFixed(2);
+  if(!groups.has(key))groups.set(key,[]);
+  groups.get(key).push(r);
+ });
+ for(const group of groups.values()){
+  const left=group.filter(r=>r.bank==="ING").sort((a,b)=>String(a.date).localeCompare(String(b.date))||String(a.id).localeCompare(String(b.id)));
+  const right=group.filter(r=>r.bank==="Trade Republic").sort((a,b)=>String(a.date).localeCompare(String(b.date))||String(a.id).localeCompare(String(b.id)));
+  const edges=left.map(a=>right.map((b,j)=>({j,days:Math.abs((Date.parse(a.date)-Date.parse(b.date))/86400000),opposite:Math.abs(num(a.amount)+num(b.amount))<.005})));
+  const owners=new Array(right.length).fill(-1);
+  function augment(i,seen){
+   const candidates=edges[i].filter(x=>x.opposite&&x.days<=5).sort((a,b)=>a.days-b.days||a.j-b.j);
+   for(const c of candidates){
+    if(seen.has(c.j))continue;
+    seen.add(c.j);
+    if(owners[c.j]===-1||augment(owners[c.j],seen)){owners[c.j]=i;return true}
+   }
+   return false;
   }
+  left.forEach((_,i)=>augment(i,new Set()));
+  owners.forEach((i,j)=>{if(i!==-1){matched.add(left[i].id);matched.add(right[j].id)}});
  }
  return matched;
 }
@@ -10063,8 +10078,8 @@ $("rpcDiagnosticsModal")?.addEventListener("click",function(e){if(e.target===$("
 document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!$("rpcDiagnosticsModal")?.classList.contains("hidden"))closeRpcDiagnostics()});
 init();
 </script>
-<script src="../shared/health-reserve.js?v=74.3.19-20261028"></script>
-<script src="../shared/approved-plan.js?v=74.3.19-20261028"></script>
+<script src="../shared/health-reserve.js?v=74.3.20-20261028"></script>
+<script src="../shared/approved-plan.js?v=74.3.20-20261028"></script>
 </body>
 </html>
 
