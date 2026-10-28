@@ -247,7 +247,7 @@ const controlHelp={
  coverage:["Copertura degli obiettivi","Percentuale delle coppie categoria–mese del periodo futuro con target esplicitamente approvato.","100 × obiettivi categoria–mese approvati / totale categoria–mese attesi nel periodo.","100% è una condizione di qualità della pianificazione, non un risultato economico. Se è inferiore, alcuni confronti non sono attendibili."],
  worst:["Saldo mese stimato più basso","Identifica il mese con entrate meno uscite più basse nella stima tecnica.","Minimo del saldo economico mensile stimato tra i mesi ancora aperti.","Non è il saldo del conto. Può essere previsto dal Piano, ad esempio per vacanze o acquisti programmati."],
  months:["Piano e Consuntivo mese per mese","Ogni scheda presenta saldi Piano e Consuntivo, importi sopra/sotto target delle uscite e cumulati.","Saldo mensile = entrate meno uscite; scostamenti = differenze delle L2 di spesa confrontabili; cumulato dal primo mese di Piano.","Il mese aperto è parziale, nei futuri il Consuntivo non è disponibile; il sotto Piano corrente non rappresenta risparmio definitivo."],
- trend:["Saldi mensili e cumulati","Confronta il saldo economico Piano con quello effettivamente registrato.","Mensile: barre Piano e punti Consuntivo; Cumulato: due linee dal primo mese del Piano approvato.","Non sono saldi bancari né previsioni future. Il Consuntivo corrente è parziale."],
+ trend:["Saldi mensili e cumulati","Confronta il saldo economico Piano con quello effettivamente registrato.","Mensile: barre Piano e punti Consuntivo, verdi se positivi e rossi se negativi; le linee mostrano i cumulati dal primo mese approvato. Cumulato: solo linee.","Non sono saldi bancari né previsioni future. Il Consuntivo corrente è parziale."],
  actions:["Scostamenti cumulati da verificare","Dopo almeno tre mesi chiusi, segnala categorie con spesa cumulata significativamente sopra il Piano.","Confronta, su ciascuna L2, Consuntivo e target dal primo mese del Piano all’ultimo mese chiuso usando una soglia materiale.","Verificare anticipi e concentrazioni delle spese e aggiornamento degli import prima di intervenire."],
  monthbalance:["Obiettivi e consuntivo del mese","Riepiloga entrate, uscite e saldo del Piano e i movimenti effettivamente registrati.","Entrate e uscite Piano provengono dai target approvati; i consuntivi sono la somma dei movimenti importati e classificati.","Il consuntivo è parziale fino alla chiusura del mese e non è automaticamente confrontabile con un budget per il mese completo."],
  periodimpact:["Differenze tecniche per categoria","Mostra quale categoria contribuisce maggiormente alla differenza fra Piano approvato e stima tecnica nei mesi confrontabili.","Uscite: Piano − stima tecnica; entrate: stima tecnica − Piano. La somma degli impatti ricompone il delta complessivo.","Clicca la categoria per confrontare i mesi, distinguere l’eventuale gap iniziale e verificare il reale andamento prima di intervenire."],
@@ -439,17 +439,22 @@ function drawControlChart(host,model){
  if(!ctx)return;
  const shown=model.series,ledger=shown.map(m=>controlTimelineMetric(model,m.month));
  const cumulative=controlUi.chartScope==="CUMULATIVE";
- const plan=ledger.map(x=>cumulative?x.planCumulativeNet:x.planMonthNet);
- const actual=ledger.map(x=>cumulative?x.actualCumulativeNet:x.actualMonthNet);
- const datasets=cumulative?[
-  {type:"line",label:"Saldo cumulato Piano",data:plan,borderColor:"#497EC7",backgroundColor:"#497EC7",
-   spanGaps:false,tension:0.14,pointRadius:3,pointHoverRadius:6,borderWidth:3,order:2},
-  {type:"line",label:"Saldo cumulato Consuntivo (mese aperto parziale)",data:actual,borderColor:"#1B886E",backgroundColor:"#1B886E",
-   spanGaps:false,tension:0.14,pointRadius:4,pointHoverRadius:6,borderWidth:3,order:1}
- ]:[
-  {type:"bar",label:"Saldo mensile Piano",data:plan,backgroundColor:"#5887C7",borderRadius:4,maxBarThickness:36,order:2},
-  {type:"line",label:"Saldo mensile Consuntivo (mese aperto parziale)",data:actual,borderColor:"#1B886E",
-   backgroundColor:"#1B886E",pointRadius:5,pointHoverRadius:8,showLine:false,borderWidth:0,spanGaps:false,order:1}
+ const overview=canvas.getAttribute("data-bf-control-chart")==="overview";
+ const plan=ledger.map(x=>x.planMonthNet),actual=ledger.map(x=>x.actualMonthNet);
+ const planCumulative=ledger.map(x=>x.planCumulativeNet),actualCumulative=ledger.map(x=>x.actualCumulativeNet);
+ const signColor=v=>v===null||v===undefined?"transparent":num(v)>0?"#14815d":num(v)<0?"#d84e5b":"#718096";
+ const cumulativeDatasets=[
+  {type:"line",label:"Saldo cumulato Piano",data:planCumulative,borderColor:"#315bbc",backgroundColor:"#315bbc",
+   spanGaps:false,tension:0,pointRadius:3,pointHoverRadius:6,borderWidth:2.5,order:1},
+  {type:"line",label:"Saldo cumulato Consuntivo",data:actualCumulative,borderColor:"#8353a3",backgroundColor:"#8353a3",
+   borderDash:[6,4],pointBackgroundColor:actualCumulative.map(signColor),pointBorderColor:"#ffffff",pointBorderWidth:1.5,spanGaps:false,tension:0,pointRadius:4,pointHoverRadius:6,borderWidth:2.5,order:0}
+ ];
+ const datasets=cumulative?cumulativeDatasets:[
+  {type:"bar",label:"Saldo mensile Piano (+ verde / − rosso)",data:plan,backgroundColor:plan.map(signColor),borderRadius:4,maxBarThickness:36,order:3},
+  {type:"line",label:"Saldo mensile Consuntivo (+ verde / − rosso)",data:actual,backgroundColor:actual.map(signColor),
+   pointBackgroundColor:actual.map(signColor),pointBorderColor:"#ffffff",pointBorderWidth:1.5,
+   pointRadius:5,pointHoverRadius:8,showLine:false,borderWidth:0,spanGaps:false,order:0},
+  ...(overview?cumulativeDatasets:[])
  ];
  visualControlChart=new ChartCtor(ctx,{
   type:cumulative?"line":"bar",
@@ -460,10 +465,10 @@ function drawControlChart(host,model){
     renderTracking(currentControlHost,currentControlRecord,currentControlLive,currentControlMeta);
    }},
    plugins:{legend:{position:"bottom",labels:{usePointStyle:true,boxWidth:10,font:{size:11}}},
-    tooltip:{callbacks:{label(context){return context.dataset.label+": "+
-      (context.parsed.y===null?"—":money(context.parsed.y))}}}},
+    tooltip:{callbacks:{label(context){const partial=context.dataset.label.includes("Consuntivo")&&shown[context.dataIndex]?.month===model.current?" (mese in corso, parziale)":"";
+      return context.dataset.label+partial+": "+(context.parsed.y===null?"—":money(context.parsed.y))}}}},
    scales:{x:{grid:{display:false},ticks:{maxRotation:0,minRotation:0,font:{size:10}}},
-    y:{grid:{color:"rgba(103,122,148,.13)"},ticks:{callback:v=>new Intl.NumberFormat("it-IT",{notation:"compact",maximumFractionDigits:0}).format(v)+" €"}}}
+    y:{beginAtZero:true,grid:{color:ctx=>ctx.tick.value===0?"#64748b":"rgba(103,122,148,.13)",lineWidth:ctx=>ctx.tick.value===0?2:1},ticks:{callback:v=>new Intl.NumberFormat("it-IT",{notation:"compact",maximumFractionDigits:0}).format(v)+" €"}}}
   }
  });
 }
@@ -1086,7 +1091,7 @@ function renderExtended(host,model){
    '<div class="bf-control-buttons"><button type="button" data-bf-control-chart-scope="MONTH" class="btn compact '+(controlUi.chartScope==="MONTH"?"":"ghost")+'">Mensile</button>'+
    '<button type="button" data-bf-control-chart-scope="CUMULATIVE" class="btn compact '+(controlUi.chartScope==="CUMULATIVE"?"":"ghost")+'">Cumulato</button></div></div>'+
    '<div class="bf-control-visual"><canvas data-bf-control-chart="overview" role="img" aria-label="Confronto mensile e cumulato Piano e Consuntivo"></canvas></div>'+
-   '<p class="bf-control-muted">Mensile: barre Piano, punti Consuntivo. Cumulato: due linee dal primo mese del Piano approvato. Ultimo mese parziale e futuri senza Consuntivo. Saldi economici, non liquidità bancaria.</p></section>'+
+   '<p class="bf-control-muted">Mensile: barre Piano e punti Consuntivo, verdi se positivi e rossi se negativi; le linee mostrano i rispettivi cumulati dal primo mese approvato. Il Consuntivo del mese in corso è parziale; i mesi futuri non hanno Consuntivo. Saldi economici, non liquidità bancaria.</p></section>'+
    technicalDetails(model);
  }else if(controlUi.tab==="CATEGORIES"){
   const table='<div class="bf-control-overflow"><table class="bf-control-table bf-control-detail"><thead><tr><th>Categoria L1 / L2</th><th>Budget Piano</th><th>Consuntivo registrato</th><th>Residuo</th><th>Stato target</th></tr></thead><tbody>'+
