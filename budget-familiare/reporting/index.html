@@ -8,19 +8,19 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=74.3.17-20261028"></script>
-<script src="../shared/app-config.js?v=74.3.17-20261028"></script>
-<link rel="stylesheet" href="../shared/perspectives.css?v=74.3.17-20261028">
-<script src="../shared/perspectives.js?v=74.3.17-20261028"></script>
-<script src="../shared/contextual-help.js?v=74.3.17-20261028" defer></script>
+<script src="../shared/supabase-client.js?v=74.3.18-20261028"></script>
+<script src="../shared/app-config.js?v=74.3.18-20261028"></script>
+<link rel="stylesheet" href="../shared/perspectives.css?v=74.3.18-20261028">
+<script src="../shared/perspectives.js?v=74.3.18-20261028"></script>
+<script src="../shared/contextual-help.js?v=74.3.18-20261028" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<link rel="stylesheet" href="../shared/health-reserve.css?v=74.3.17-20261028">
-<link rel="stylesheet" href="../shared/approved-plan.css?v=74.3.17-20261028">
-<link rel="stylesheet" href="../shared/monthly-control.css?v=74.3.17-20261028">
-<link rel="stylesheet" href="../shared/scenario-strategy.css?v=74.3.17-20261028">
-<link rel="stylesheet" href="../shared/scenario-uncertainty.css?v=74.3.17-20261028">
-<link rel="stylesheet" href="../shared/baseline-uncertainty.css?v=74.3.17-20261028">
-<link rel="stylesheet" href="../shared/single-plan-board.css?v=74.3.17-20261028">
+<link rel="stylesheet" href="../shared/health-reserve.css?v=74.3.18-20261028">
+<link rel="stylesheet" href="../shared/approved-plan.css?v=74.3.18-20261028">
+<link rel="stylesheet" href="../shared/monthly-control.css?v=74.3.18-20261028">
+<link rel="stylesheet" href="../shared/scenario-strategy.css?v=74.3.18-20261028">
+<link rel="stylesheet" href="../shared/scenario-uncertainty.css?v=74.3.18-20261028">
+<link rel="stylesheet" href="../shared/baseline-uncertainty.css?v=74.3.18-20261028">
+<link rel="stylesheet" href="../shared/single-plan-board.css?v=74.3.18-20261028">
 <style>
 :root{--bg:#f4f6fa;--card:#fff;--text:#17263e;--muted:#58677d;--line:#dce4ee;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 4px 18px rgba(15,23,42,.045);--sc-blue:#2563eb;--sc-blue-soft:#eff6ff;--sc-green:#0ea87a;--sc-red:#ef5b73;--sc-purple:#7658e6;--sc-ink:#17263e}
 *{box-sizing:border-box}
@@ -2880,7 +2880,7 @@ body{font-size:16px;line-height:1.5}
           <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0">
             <label for="cashAuditFilter" class="small muted">Visualizza</label>
             <select id="cashAuditFilter" class="input" aria-label="Filtra stato movimenti"><option value="ALL">Tutti</option><option value="EXCLUDED">Esclusi</option><option value="INCLUDED">Inclusi speciali</option><option value="REVIEW">Da verificare</option></select>
-            <span id="cashAuditSummary" class="small muted" aria-live="polite"></span>
+            <label class="small muted"><input id="cashAuditShowMatched" type="checkbox"> Mostra giroconti abbinati ING–Trade (±5 giorni)</label><label class="small muted"><input id="cashAuditShowOrdinaryInvestments" type="checkbox"> Mostra investimenti inclusi</label><span id="cashAuditSummary" class="small muted" aria-live="polite"></span>
           </div>
           <div id="cashAuditRows" style="overflow-x:auto"><p class="muted small">Caricamento delle operazioni particolari…</p></div>
           <p class="muted small">Per modificare una classificazione usa la funzione di revisione movimenti esistente. La riclassificazione direttamente da questa tabella, con anteprima e cronologia, è prevista nella fase successiva.</p>
@@ -3026,11 +3026,11 @@ body{font-size:16px;line-height:1.5}
   </div>
 </div>
 
-<script src="../shared/scenario-strategy.js?v=74.3.17-20261028"></script>
-<script src="../shared/scenario-uncertainty.js?v=74.3.17-20261028"></script>
-<script src="../shared/baseline-uncertainty.js?v=74.3.17-20261028"></script>
-<script src="../shared/single-plan-board.js?v=74.3.17-20261028"></script>
-<script src="../shared/monthly-control.js?v=74.3.17-20261028"></script>
+<script src="../shared/scenario-strategy.js?v=74.3.18-20261028"></script>
+<script src="../shared/scenario-uncertainty.js?v=74.3.18-20261028"></script>
+<script src="../shared/baseline-uncertainty.js?v=74.3.18-20261028"></script>
+<script src="../shared/single-plan-board.js?v=74.3.18-20261028"></script>
+<script src="../shared/monthly-control.js?v=74.3.18-20261028"></script>
 <script>
 const sb=window.appSupabase;
 if(typeof Chart!=="undefined"){
@@ -5453,7 +5453,7 @@ function cashflowEconomicInvestment(x){
   if(String(x&&x.direction)!=="INVESTMENT")return false;
   const funding=String(x.investment_funding_source||"CURRENT_SURPLUS");
   const temporal=String(x.investment_temporality||"");
-  return funding!=="PRIOR_WEALTH"&&(temporal==="RECURRING"||(temporal==="PLANNED_OCCASIONAL"&&funding==="CURRENT_SURPLUS"));
+  return funding!=="PRIOR_WEALTH";
 }
 function cashflowInvestmentAmount(x,scope,economic){
   if(String(x&&x.direction)!=="INVESTMENT")return 0;
@@ -7423,25 +7423,44 @@ function renderHistoricalChart(){
   });
 }
 document.addEventListener("change",function(e){if(e.target&&e.target.id==="cashAuditFilter")renderCashMovementAudit()});
+let cashAuditSortKey="date",cashAuditSortAsc=false;
+function cashAuditMatchedIds(rows){
+ const transfers=rows.filter(x=>x.type==="TRANSFER" && ["ING","Trade Republic"].includes(x.bank));
+ const matched=new Set(),available=transfers.slice().sort((a,b)=>String(a.date).localeCompare(String(b.date))||String(a.id).localeCompare(String(b.id)));
+ for(const a of available){
+  if(matched.has(a.id))continue;
+  const candidates=available.filter(b=>!matched.has(b.id)&&b.id!==a.id&&b.owner===a.owner&&b.bank!==a.bank&&Math.abs(num(a.amount)+num(b.amount))<0.005&&Math.abs((Date.parse(a.date)-Date.parse(b.date))/86400000)<=5);
+  if(candidates.length===1){
+   const b=candidates[0];
+   const reverse=available.filter(x=>!matched.has(x.id)&&x.id!==b.id&&x.owner===b.owner&&x.bank!==b.bank&&Math.abs(num(x.amount)+num(b.amount))<0.005&&Math.abs((Date.parse(x.date)-Date.parse(b.date))/86400000)<=5);
+   if(reverse.length===1){matched.add(a.id);matched.add(b.id)}
+  }
+ }
+ return matched;
+}
 function renderCashMovementAudit(){
  const box=$("cashAuditRows"),summary=$("cashAuditSummary"),filter=$("cashAuditFilter");
  if(!box)return;
  if(!bfMovementAudit||!Array.isArray(bfMovementAudit.rows)){
-   box.innerHTML='<p class="muted small">Dati di verifica non disponibili. Non interpretare una lista vuota come assenza di anomalie.</p>';
-   if(summary)summary.textContent="Dati non disponibili";
-   return;
+  box.innerHTML='<p class="muted small">Dati di verifica non disponibili: non interpretare come assenza di anomalie.</p>';
+  if(summary)summary.textContent="Dati non disponibili";return;
  }
  const months=new Set(historicalMonthsFor(historicalPeriodMode));
  const all=bfMovementAudit.rows.filter(r=>months.has(String(r.date||"").slice(0,7)+"-01"));
- const state=filter?.value||"ALL",rows=all.filter(r=>state==="ALL"||r.status===state);
- const count=x=>all.filter(r=>r.status===x).length;
- if(summary)summary.textContent=all.length+" movimenti · "+count("EXCLUDED")+" esclusi · "+count("INCLUDED")+" inclusi · "+count("REVIEW")+" da verificare";
- if(!rows.length){box.innerHTML='<p class="muted small">Nessun movimento nella selezione corrente.</p>';return}
- const status=x=>({EXCLUDED:"Escluso economico",INCLUDED:"Incluso economico",REVIEW:"Da verificare"})[x]||x;
- box.innerHTML='<table class="table" style="width:100%;min-width:790px"><thead><tr><th>Data</th><th>Conto / titolare</th><th>Movimento</th><th>Importo</th><th>Trattamento</th><th>Motivazione</th></tr></thead><tbody>'+rows.map(function(r){
-   return '<tr><td>'+esc(r.date||"")+'</td><td>'+esc(r.owner||"")+' · '+esc(r.bank||"")+'</td><td><strong>'+esc(r.category||r.type||"")+'</strong><div class="muted small">'+esc(r.description||"")+'</div></td><td style="white-space:nowrap">'+money(num(r.amount))+'</td><td>'+esc(status(r.status))+(r.manual_lock?' · Manuale':'')+'</td><td>'+esc(r.reason||"")+'</td></tr>';
- }).join("")+'</tbody></table>';
+ const matched=cashAuditMatchedIds(all),showMatched=$("cashAuditShowMatched")?.checked,showInv=$("cashAuditShowOrdinaryInvestments")?.checked;
+ const state=filter?.value||"ALL";
+ const enriched=all.map(r=>({...r,matched:matched.has(r.id),effectiveStatus:r.type==="INVESTMENT"&&r.funding!=="PRIOR_WEALTH"?"INCLUDED":r.status}));
+ const visible=enriched.filter(r=>(showMatched||!r.matched)&&(showInv||!(r.type==="INVESTMENT"&&r.effectiveStatus==="INCLUDED"))&&(state==="ALL"||r.effectiveStatus===state));
+ const cols=[["date","Data"],["owner","Titolare"],["bank","Conto"],["description","Movimento"],["amount","Importo"],["effectiveStatus","Trattamento"],["reason","Motivazione"]];
+ const value=(r,k)=>k==="effectiveStatus"?(r.matched?"GIROCONTO_ABBINATO":r[k]):r[k]||"";
+ visible.sort((a,b)=>{const x=value(a,cashAuditSortKey),y=value(b,cashAuditSortKey),c=cashAuditSortKey==="amount"?num(x)-num(y):String(x).localeCompare(String(y),"it",{numeric:true});return cashAuditSortAsc?c:-c});
+ if(summary)summary.textContent=all.length+" movimenti · "+matched.size+" gambe giroconto abbinate · "+enriched.filter(r=>r.type==="INVESTMENT"&&r.funding!=="PRIOR_WEALTH").length+" investimenti ordinari · "+visible.length+" visualizzati";
+ if(!visible.length){box.innerHTML='<p class="muted small">Nessun movimento nella selezione.</p>';return}
+ const status=x=>({EXCLUDED:"Escluso economico",INCLUDED:"Incluso economico",REVIEW:"Da verificare",GIROCONTO_ABBINATO:"Giroconto interno abbinato"})[x]||x;
+ box.innerHTML='<table class="table" style="width:100%;min-width:980px"><thead><tr>'+cols.map(([k,title])=>'<th><button type="button" data-cash-audit-sort="'+k+'" style="cursor:pointer;background:none;border:0;color:inherit;font:inherit;font-weight:700">'+title+(cashAuditSortKey===k?(cashAuditSortAsc?" ▲":" ▼"):" ↕")+'</button></th>').join("")+'</tr></thead><tbody>'+visible.map(r=>'<tr>'+cols.map(([k])=>'<td>'+ (k==="amount"?money(num(r.amount)):k==="effectiveStatus"?esc(status(value(r,k))):k==="reason"&&r.matched?"Coppia ING–Trade: importi opposti entro 5 giorni":esc(String(value(r,k))))+'</td>').join("")+'</tr>').join("")+'</tbody></table>';
 }
+document.addEventListener("click",function(e){const b=e.target.closest?.("[data-cash-audit-sort]");if(!b)return;const k=b.dataset.cashAuditSort;if(cashAuditSortKey===k)cashAuditSortAsc=!cashAuditSortAsc;else{cashAuditSortKey=k;cashAuditSortAsc=k!=="date"}renderCashMovementAudit()});
+document.addEventListener("change",function(e){if(["cashAuditShowMatched","cashAuditShowOrdinaryInvestments"].includes(e.target?.id))renderCashMovementAudit()});
 function renderHistoricalBalance(){
   if(!Array.isArray(scenarioActualRows)){msg($("historicalBalanceStatus"),"Carico il bilancio…");return}
   if(!["ROLLING_6","ROLLING_12","ROLLING_24","ALL","YEAR","LAST_CALENDAR_YEAR"].includes(historicalPeriodMode))historicalPeriodMode="ROLLING_12";
@@ -10029,8 +10048,8 @@ $("rpcDiagnosticsModal")?.addEventListener("click",function(e){if(e.target===$("
 document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!$("rpcDiagnosticsModal")?.classList.contains("hidden"))closeRpcDiagnostics()});
 init();
 </script>
-<script src="../shared/health-reserve.js?v=74.3.17-20261028"></script>
-<script src="../shared/approved-plan.js?v=74.3.17-20261028"></script>
+<script src="../shared/health-reserve.js?v=74.3.18-20261028"></script>
+<script src="../shared/approved-plan.js?v=74.3.18-20261028"></script>
 </body>
 </html>
 
