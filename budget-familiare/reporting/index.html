@@ -8,19 +8,19 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=74.3.7-20261028"></script>
-<script src="../shared/app-config.js?v=74.3.7-20261028"></script>
-<link rel="stylesheet" href="../shared/perspectives.css?v=74.3.7-20261028">
-<script src="../shared/perspectives.js?v=74.3.7-20261028"></script>
-<script src="../shared/contextual-help.js?v=74.3.7-20261028" defer></script>
+<script src="../shared/supabase-client.js?v=74.3.9-20261028"></script>
+<script src="../shared/app-config.js?v=74.3.9-20261028"></script>
+<link rel="stylesheet" href="../shared/perspectives.css?v=74.3.9-20261028">
+<script src="../shared/perspectives.js?v=74.3.9-20261028"></script>
+<script src="../shared/contextual-help.js?v=74.3.9-20261028" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<link rel="stylesheet" href="../shared/health-reserve.css?v=74.3.7-20261028">
-<link rel="stylesheet" href="../shared/approved-plan.css?v=74.3.7-20261028">
-<link rel="stylesheet" href="../shared/monthly-control.css?v=74.3.7-20261028">
-<link rel="stylesheet" href="../shared/scenario-strategy.css?v=74.3.7-20261028">
-<link rel="stylesheet" href="../shared/scenario-uncertainty.css?v=74.3.7-20261028">
-<link rel="stylesheet" href="../shared/baseline-uncertainty.css?v=74.3.7-20261028">
-<link rel="stylesheet" href="../shared/single-plan-board.css?v=74.3.7-20261028">
+<link rel="stylesheet" href="../shared/health-reserve.css?v=74.3.9-20261028">
+<link rel="stylesheet" href="../shared/approved-plan.css?v=74.3.9-20261028">
+<link rel="stylesheet" href="../shared/monthly-control.css?v=74.3.9-20261028">
+<link rel="stylesheet" href="../shared/scenario-strategy.css?v=74.3.9-20261028">
+<link rel="stylesheet" href="../shared/scenario-uncertainty.css?v=74.3.9-20261028">
+<link rel="stylesheet" href="../shared/baseline-uncertainty.css?v=74.3.9-20261028">
+<link rel="stylesheet" href="../shared/single-plan-board.css?v=74.3.9-20261028">
 <style>
 :root{--bg:#f4f6fa;--card:#fff;--text:#17263e;--muted:#58677d;--line:#dce4ee;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 4px 18px rgba(15,23,42,.045);--sc-blue:#2563eb;--sc-blue-soft:#eff6ff;--sc-green:#0ea87a;--sc-red:#ef5b73;--sc-purple:#7658e6;--sc-ink:#17263e}
 *{box-sizing:border-box}
@@ -3016,11 +3016,11 @@ body{font-size:16px;line-height:1.5}
   </div>
 </div>
 
-<script src="../shared/scenario-strategy.js?v=74.3.7-20261028"></script>
-<script src="../shared/scenario-uncertainty.js?v=74.3.7-20261028"></script>
-<script src="../shared/baseline-uncertainty.js?v=74.3.7-20261028"></script>
-<script src="../shared/single-plan-board.js?v=74.3.7-20261028"></script>
-<script src="../shared/monthly-control.js?v=74.3.7-20261028"></script>
+<script src="../shared/scenario-strategy.js?v=74.3.9-20261028"></script>
+<script src="../shared/scenario-uncertainty.js?v=74.3.9-20261028"></script>
+<script src="../shared/baseline-uncertainty.js?v=74.3.9-20261028"></script>
+<script src="../shared/single-plan-board.js?v=74.3.9-20261028"></script>
+<script src="../shared/monthly-control.js?v=74.3.9-20261028"></script>
 <script>
 const sb=window.appSupabase;
 if(typeof Chart!=="undefined"){
@@ -7292,6 +7292,17 @@ function renderHistoricalChart(){
   const income=rows.map(function(x){return scope==="TOTAL"?num(x.incoming):num(x.incoming_ordinary)});
   const outgoing=rows.map(function(x){return scope==="TOTAL"?num(x.outgoing):num(x.outgoing_ordinary)});
   const financial=historicalChartMode==="CASHFLOW"&&historicalCashFlowLens==="ACCOUNTS";
+  // V74.3.8: il flusso economico gestionale include il PAC ricorrente,
+  // ma esclude gli altri investimenti patrimoniali. I flussi dei conti restano lordi.
+  if(historicalChartMode==="CASHFLOW"&&!financial){
+    const excludedInvestments=new Map();
+    historicalCategoryRows(historicalPeriodMode).forEach(function(x){
+      if(String(x.direction)!=="INVESTMENT"||String(x.investment_temporality||"")==="RECURRING")return;
+      const month=String(x.month_start);
+      excludedInvestments.set(month,(excludedInvestments.get(month)||0)+historicalCategoryAmount(x,scope));
+    });
+    months.forEach(function(month,i){outgoing[i]=Math.max(0,outgoing[i]-(excludedInvestments.get(String(month))||0))});
+  }
   const tm=months.map(cashLensTransfer),inTransfers=tm.map(x=>num(x?.transfer_in)),outTransfers=tm.map(x=>num(x?.transfer_out));
   if(financial)months.forEach((m,i)=>{income[i]=tm[i]?num(rows[i].incoming)+inTransfers[i]:null;outgoing[i]=tm[i]?num(rows[i].outgoing)+outTransfers[i]:null});
   document.querySelectorAll("[data-cash-lens]").forEach(b=>{const selected=b.dataset.cashLens===historicalCashFlowLens;b.classList.toggle("active",selected);b.setAttribute("aria-pressed",String(selected))});
@@ -7300,7 +7311,7 @@ function renderHistoricalChart(){
   let datasets=[];
   if(historicalChartMode==="CASHFLOW"){
     $("historicalChartTitle").textContent=financial?"Flussi dei conti mese per mese":"Flusso economico di cassa mese per mese";
-    $("historicalChartSubtitle").textContent=financial?"Entrate e uscite lorde dei conti, trasferimenti compresi (anche straordinari).":"Entrate e uscite di cassa senza giroconti. "+(scope==="TOTAL"?"Straordinari inclusi.":"Straordinari esclusi.");
+    $("historicalChartSubtitle").textContent=financial?"Entrate e uscite lorde dei conti, trasferimenti compresi (anche straordinari).":"Entrate e uscite gestionali: PAC ricorrente incluso, altri investimenti esclusi. "+(scope==="TOTAL"?"Straordinari inclusi.":"Straordinari esclusi.");
     $("historicalChartLegend").innerHTML='<span><i class="scenario-bar income"></i> Entrate</span><span><i class="scenario-bar expense"></i> Uscite</span><span><i class="scenario-bar balance"></i> Saldo mese</span><span><i class="scenario-line solid"></i> Cumulato periodo</span>';
     datasets=[
       {type:"bar",label:"Entrate",data:income,backgroundColor:"rgba(14,168,122,.78)",borderRadius:3,yAxisID:"y"},
@@ -9947,8 +9958,8 @@ $("rpcDiagnosticsModal")?.addEventListener("click",function(e){if(e.target===$("
 document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!$("rpcDiagnosticsModal")?.classList.contains("hidden"))closeRpcDiagnostics()});
 init();
 </script>
-<script src="../shared/health-reserve.js?v=74.3.7-20261028"></script>
-<script src="../shared/approved-plan.js?v=74.3.7-20261028"></script>
+<script src="../shared/health-reserve.js?v=74.3.9-20261028"></script>
+<script src="../shared/approved-plan.js?v=74.3.9-20261028"></script>
 </body>
 </html>
 

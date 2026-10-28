@@ -1,7 +1,7 @@
 // Canonical source: massimospazio/budget-familiare; public files are deployed automatically.
 (function(){
-  const APP_VERSION='V74.3.7';
-  const APP_RELEASE='Cash flow: viste economica e flussi dei conti';
+  const APP_VERSION='V74.3.9';
+  const APP_RELEASE='Release verificabili e diagnostica pubblicazione';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});
