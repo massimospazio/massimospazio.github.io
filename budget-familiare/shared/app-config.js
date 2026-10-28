@@ -1,7 +1,7 @@
 // Canonical source: massimospazio/budget-familiare; public files are deployed automatically.
 (function(){
-  const APP_VERSION='V74.3.21';
-  const APP_RELEASE='Rimborso 730 e quota auto finanziata';
+  const APP_VERSION='V74.3.22';
+  const APP_RELEASE='Rimborso 730: grafico e KPI coerenti';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});

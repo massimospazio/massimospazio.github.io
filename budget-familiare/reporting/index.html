@@ -8,19 +8,19 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=74.3.21-20261028"></script>
-<script src="../shared/app-config.js?v=74.3.21-20261028"></script>
-<link rel="stylesheet" href="../shared/perspectives.css?v=74.3.21-20261028">
-<script src="../shared/perspectives.js?v=74.3.21-20261028"></script>
-<script src="../shared/contextual-help.js?v=74.3.21-20261028" defer></script>
+<script src="../shared/supabase-client.js?v=74.3.22-20261028"></script>
+<script src="../shared/app-config.js?v=74.3.22-20261028"></script>
+<link rel="stylesheet" href="../shared/perspectives.css?v=74.3.22-20261028">
+<script src="../shared/perspectives.js?v=74.3.22-20261028"></script>
+<script src="../shared/contextual-help.js?v=74.3.22-20261028" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<link rel="stylesheet" href="../shared/health-reserve.css?v=74.3.21-20261028">
-<link rel="stylesheet" href="../shared/approved-plan.css?v=74.3.21-20261028">
-<link rel="stylesheet" href="../shared/monthly-control.css?v=74.3.21-20261028">
-<link rel="stylesheet" href="../shared/scenario-strategy.css?v=74.3.21-20261028">
-<link rel="stylesheet" href="../shared/scenario-uncertainty.css?v=74.3.21-20261028">
-<link rel="stylesheet" href="../shared/baseline-uncertainty.css?v=74.3.21-20261028">
-<link rel="stylesheet" href="../shared/single-plan-board.css?v=74.3.21-20261028">
+<link rel="stylesheet" href="../shared/health-reserve.css?v=74.3.22-20261028">
+<link rel="stylesheet" href="../shared/approved-plan.css?v=74.3.22-20261028">
+<link rel="stylesheet" href="../shared/monthly-control.css?v=74.3.22-20261028">
+<link rel="stylesheet" href="../shared/scenario-strategy.css?v=74.3.22-20261028">
+<link rel="stylesheet" href="../shared/scenario-uncertainty.css?v=74.3.22-20261028">
+<link rel="stylesheet" href="../shared/baseline-uncertainty.css?v=74.3.22-20261028">
+<link rel="stylesheet" href="../shared/single-plan-board.css?v=74.3.22-20261028">
 <style>
 :root{--bg:#f4f6fa;--card:#fff;--text:#17263e;--muted:#58677d;--line:#dce4ee;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 4px 18px rgba(15,23,42,.045);--sc-blue:#2563eb;--sc-blue-soft:#eff6ff;--sc-green:#0ea87a;--sc-red:#ef5b73;--sc-purple:#7658e6;--sc-ink:#17263e}
 *{box-sizing:border-box}
@@ -3026,11 +3026,11 @@ body{font-size:16px;line-height:1.5}
   </div>
 </div>
 
-<script src="../shared/scenario-strategy.js?v=74.3.21-20261028"></script>
-<script src="../shared/scenario-uncertainty.js?v=74.3.21-20261028"></script>
-<script src="../shared/baseline-uncertainty.js?v=74.3.21-20261028"></script>
-<script src="../shared/single-plan-board.js?v=74.3.21-20261028"></script>
-<script src="../shared/monthly-control.js?v=74.3.21-20261028"></script>
+<script src="../shared/scenario-strategy.js?v=74.3.22-20261028"></script>
+<script src="../shared/scenario-uncertainty.js?v=74.3.22-20261028"></script>
+<script src="../shared/baseline-uncertainty.js?v=74.3.22-20261028"></script>
+<script src="../shared/single-plan-board.js?v=74.3.22-20261028"></script>
+<script src="../shared/monthly-control.js?v=74.3.22-20261028"></script>
 <script>
 const sb=window.appSupabase;
 if(typeof Chart!=="undefined"){
@@ -5332,6 +5332,7 @@ function historicalTotalsFor(mode){
   const rows=historicalRowsFor(mode);
   const sum=function(key){return rows.reduce(function(s,x){return s+num(x[key])},0)};
   const financing=historicalFinancingTotals(historicalMonthsFor(mode)),coverage=purchaseFinancingTotals(historicalMonthsFor(mode));
+  const settlement=historicalMonthsFor(mode).reduce((v,m)=>v+cashflowTaxSettlement(m),0);
   const ordinaryIncome=sum("incoming_ordinary")-financing.ordinary;
   const cashOrdinaryOut=sum("outgoing_ordinary"),cashOrdinaryNet=sum("net_ordinary");
   const recurringInvestments=sum("investments_recurring_ordinary");
@@ -5341,13 +5342,13 @@ function historicalTotalsFor(mode){
   const ordinaryOut=rows.reduce(function(s,x){
     const v=x.outgoing_operating_ordinary;
     return s+(v!==undefined&&v!==null?num(v):Math.max(0,num(x.outgoing_ordinary)-num(x.investments_ordinary)));
-  },0)-coverage.ordinary;
+  },0)-coverage.ordinary+settlement;
   const ordinaryNet=rows.reduce(function(s,x){
     const v=x.net_operating_ordinary;
     return s+(v!==undefined&&v!==null?num(v):num(x.incoming_ordinary)-Math.max(0,num(x.outgoing_ordinary)-num(x.investments_ordinary)));
-  },0)-financing.ordinary+coverage.ordinary;
+  },0)-financing.ordinary+coverage.ordinary-settlement;
   const availableAfterSavings=ordinaryNet-recurringInvestments-currentSurplusInvestments;
-  const totalIncome=sum("incoming")-financing.total,totalOut=sum("outgoing")-coverage.total,totalNet=sum("net")-financing.total+coverage.total,extraIncome=sum("incoming_extraordinary")-financing.extraordinary,extraOut=sum("outgoing_extraordinary")-coverage.extraordinary,extraNet=extraIncome-extraOut;
+  const totalIncome=sum("incoming")-financing.total,totalOut=sum("outgoing")-coverage.total+settlement,totalNet=sum("net")-financing.total+coverage.total-settlement,extraIncome=sum("incoming_extraordinary")-financing.extraordinary,extraOut=sum("outgoing_extraordinary")-coverage.extraordinary,extraNet=extraIncome-extraOut;
   return {rows:rows,ordinaryIncome:ordinaryIncome,ordinaryOut:ordinaryOut,ordinaryNet:ordinaryNet,cashOrdinaryOut:cashOrdinaryOut,cashOrdinaryNet:cashOrdinaryNet,
     recurringInvestments:recurringInvestments,currentSurplusInvestments:currentSurplusInvestments,priorWealthInvestments:priorWealthInvestments,plannedInvestments:plannedInvestments,availableAfterSavings:availableAfterSavings,
     totalIncome:totalIncome,totalOut:totalOut,totalNet:totalNet,extraIncome:extraIncome,extraOut:extraOut,extraNet:extraNet,
@@ -10085,8 +10086,8 @@ $("rpcDiagnosticsModal")?.addEventListener("click",function(e){if(e.target===$("
 document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!$("rpcDiagnosticsModal")?.classList.contains("hidden"))closeRpcDiagnostics()});
 init();
 </script>
-<script src="../shared/health-reserve.js?v=74.3.21-20261028"></script>
-<script src="../shared/approved-plan.js?v=74.3.21-20261028"></script>
+<script src="../shared/health-reserve.js?v=74.3.22-20261028"></script>
+<script src="../shared/approved-plan.js?v=74.3.22-20261028"></script>
 </body>
 </html>
 
