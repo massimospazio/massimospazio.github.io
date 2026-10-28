@@ -8,19 +8,19 @@
 <meta http-equiv="Expires" content="0" />
 <title>MiaFinanza — Reporting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
-<script src="../shared/supabase-client.js?v=74.3.26-20261028"></script>
-<script src="../shared/app-config.js?v=74.3.26-20261028"></script>
-<link rel="stylesheet" href="../shared/perspectives.css?v=74.3.26-20261028">
-<script src="../shared/perspectives.js?v=74.3.26-20261028"></script>
-<script src="../shared/contextual-help.js?v=74.3.26-20261028" defer></script>
+<script src="../shared/supabase-client.js?v=74.3.27-20261028"></script>
+<script src="../shared/app-config.js?v=74.3.27-20261028"></script>
+<link rel="stylesheet" href="../shared/perspectives.css?v=74.3.27-20261028">
+<script src="../shared/perspectives.js?v=74.3.27-20261028"></script>
+<script src="../shared/contextual-help.js?v=74.3.27-20261028" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<link rel="stylesheet" href="../shared/health-reserve.css?v=74.3.26-20261028">
-<link rel="stylesheet" href="../shared/approved-plan.css?v=74.3.26-20261028">
-<link rel="stylesheet" href="../shared/monthly-control.css?v=74.3.26-20261028">
-<link rel="stylesheet" href="../shared/scenario-strategy.css?v=74.3.26-20261028">
-<link rel="stylesheet" href="../shared/scenario-uncertainty.css?v=74.3.26-20261028">
-<link rel="stylesheet" href="../shared/baseline-uncertainty.css?v=74.3.26-20261028">
-<link rel="stylesheet" href="../shared/single-plan-board.css?v=74.3.26-20261028">
+<link rel="stylesheet" href="../shared/health-reserve.css?v=74.3.27-20261028">
+<link rel="stylesheet" href="../shared/approved-plan.css?v=74.3.27-20261028">
+<link rel="stylesheet" href="../shared/monthly-control.css?v=74.3.27-20261028">
+<link rel="stylesheet" href="../shared/scenario-strategy.css?v=74.3.27-20261028">
+<link rel="stylesheet" href="../shared/scenario-uncertainty.css?v=74.3.27-20261028">
+<link rel="stylesheet" href="../shared/baseline-uncertainty.css?v=74.3.27-20261028">
+<link rel="stylesheet" href="../shared/single-plan-board.css?v=74.3.27-20261028">
 <style>
 :root{--bg:#f4f6fa;--card:#fff;--text:#17263e;--muted:#58677d;--line:#dce4ee;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--danger:#b91c1c;--shadow:0 4px 18px rgba(15,23,42,.045);--sc-blue:#2563eb;--sc-blue-soft:#eff6ff;--sc-green:#0ea87a;--sc-red:#ef5b73;--sc-purple:#7658e6;--sc-ink:#17263e}
 *{box-sizing:border-box}
@@ -1264,6 +1264,7 @@ button,input,select{font:inherit}
 .historical-structural-item{border:1px solid #e2e8f0;border-radius:9px;padding:9px 10px;background:#fbfcfe;display:grid;gap:3px}.historical-structural-item>span{font-size:14px;color:#61708a}.historical-structural-item strong{font-size:18px;font-weight:700}.historical-structural-item small{font-size:14px;color:#7b879a}
 .historical-structural-item.margin{background:#eef9f4;border-color:#ccebdd}.historical-structural-item.unclassified{background:#f8fafc;border-color:#cbd5e1}.historical-structural-item.residual{background:#eef6ff;border-color:#d6e5f6}
 .historical-chart{height:390px}
+.historical-saldo-chart{height:300px}.historical-saldo-section{margin-top:20px}.historical-saldo-section h4{margin:0 0 6px}
 .historical-bottom-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .historical-compare-table{display:grid;margin-top:7px;border:1px solid #e1e7f0;border-radius:9px;overflow:hidden}.historical-compare-table .row{display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr;gap:7px;align-items:center;padding:9px 10px;border-top:1px solid #e7edf5;font-size:14px}.historical-compare-table .row:first-child{border-top:0}.historical-compare-table .row.head{background:#f4f7fb;font-size:14px;font-weight:700;color:#5d6b83}.historical-compare-table .row.active{background:#eef6ff}.historical-compare-table strong{text-align:right}.historical-compare-table .row span:not(:first-child){text-align:right}
 @media(max-width:1150px){.historical-kpis{grid-template-columns:repeat(3,1fr)}.historical-structural-strip{grid-template-columns:repeat(3,1fr)}}
@@ -2871,7 +2872,8 @@ body{font-size:16px;line-height:1.5}
             <div><h3 id="historicalChartTitle">Cash flow storico mese per mese</h3><p id="historicalChartSubtitle">Entrate, uscite, saldo mensile e saldo cumulato del periodo.</p></div>
             <div class="context-help-chart-tools"><button class="context-help-trigger" type="button" data-context-help="budget-vs-cashflow" aria-label="Aiuto: come leggere Cash flow e saldi">?</button><div id="historicalChartLegend" class="scenario-legend-inline"></div></div>
           </div>
-          <div class="scenario-chart scenario-chart-main historical-chart"><canvas id="historicalBalanceChart"></canvas></div>
+          <div class="scenario-chart scenario-chart-main historical-chart"><canvas id="historicalBalanceChart" role="img" aria-label="Entrate e uscite mensili"></canvas></div>
+          <div id="historicalSaldoSection" class="historical-saldo-section"><h4>Saldo mensile e cumulato</h4><p class="legend-note">Saldo del mese: entrate meno uscite. Cumulato: somma dei saldi dall’inizio del periodo, non saldo iniziale dei conti.</p><div class="scenario-chart historical-saldo-chart"><canvas id="historicalSaldoChart" role="img" aria-label="Saldo mensile positivo e negativo e saldo cumulato del periodo"></canvas></div></div>
           <div id="historicalChartNote" class="legend-note"></div>
         </section>
 
@@ -3026,11 +3028,11 @@ body{font-size:16px;line-height:1.5}
   </div>
 </div>
 
-<script src="../shared/scenario-strategy.js?v=74.3.26-20261028"></script>
-<script src="../shared/scenario-uncertainty.js?v=74.3.26-20261028"></script>
-<script src="../shared/baseline-uncertainty.js?v=74.3.26-20261028"></script>
-<script src="../shared/single-plan-board.js?v=74.3.26-20261028"></script>
-<script src="../shared/monthly-control.js?v=74.3.26-20261028"></script>
+<script src="../shared/scenario-strategy.js?v=74.3.27-20261028"></script>
+<script src="../shared/scenario-uncertainty.js?v=74.3.27-20261028"></script>
+<script src="../shared/baseline-uncertainty.js?v=74.3.27-20261028"></script>
+<script src="../shared/single-plan-board.js?v=74.3.27-20261028"></script>
+<script src="../shared/monthly-control.js?v=74.3.27-20261028"></script>
 <script>
 const sb=window.appSupabase;
 if(typeof Chart!=="undefined"){
@@ -3047,6 +3049,7 @@ let scenarioFlowChart=null;
 let scenarioExpenseChart=null;
 let scenarioCompareChart=null;
 let historicalBalanceChart=null;
+let historicalSaldoChart=null;
 let balanceWaterfallObserver=null;
 let balanceWaterfallRenderWidth=0;
 let balanceHubMode="HISTORY";
@@ -7321,6 +7324,8 @@ function historicalChartRows(){return historicalRowsFor(historicalPeriodMode)}
 function cashLensTransfer(month){return (bfScopeTransfers?.monthly||[]).find(x=>String(x.month_start)===String(month))||null}
 function renderHistoricalChart(){
   if(historicalBalanceChart){historicalBalanceChart.destroy();historicalBalanceChart=null}
+  if(historicalSaldoChart){historicalSaldoChart.destroy();historicalSaldoChart=null}
+  $("historicalSaldoSection").classList.toggle("hidden",historicalChartMode!=="CASHFLOW");
   const rows=historicalChartRows(),months=historicalMonthsFor(historicalPeriodMode),labels=months.map(monthLabel),scope=historicalScope;
   $("historicalNatureFocusWrap")?.classList.toggle("hidden",historicalChartMode!=="NATURE");
   syncWherePeriodUI();
@@ -7353,8 +7358,8 @@ function renderHistoricalChart(){
   const income=breakdown.map(x=>financial?x.accountIn:x.operatingIn);
   const outgoing=breakdown.map(x=>financial?x.accountOut:x.operatingOut);
   document.querySelectorAll("[data-cash-lens]").forEach(b=>{const selected=b.dataset.cashLens===historicalCashFlowLens;b.classList.toggle("active",selected);b.setAttribute("aria-pressed",String(selected))});
-  const net=income.map(function(v,i){return v===null||outgoing[i]===null?null:v-outgoing[i]});
-  let running=0,cumulative=net.map(function(v){if(v===null)return null;running+=v;return running});
+  const net=income.map(function(v,i){return (financial&&!breakdown[i].covered)||v===null||outgoing[i]===null?null:v-outgoing[i]});
+  let running=0,complete=true,cumulative=net.map(function(v){if(v===null){complete=false;return null}if(!complete)return null;running+=v;return running});
   let datasets=[];
   if(historicalChartMode==="CASHFLOW"){
     $("historicalChartTitle").textContent="Cash flow · economico e movimenti finanziari";
@@ -7373,8 +7378,7 @@ function renderHistoricalChart(){
     datasets.push(series("Trasferimenti esterni in entrata","transferIn","#d7a24c","in"));
     datasets.push(series("Trasferimenti esterni in uscita","transferOut","#d7a24c","out"));
     }
-    datasets.push({type:"line",label:"Saldo mese",data:net,borderColor:"#15803d",backgroundColor:"#15803d",borderWidth:2,pointRadius:2.5,tension:.2,yAxisID:"y2"});
-    datasets.push({type:"line",label:"Cumulato periodo",data:cumulative,borderColor:"#334155",backgroundColor:"#334155",borderWidth:2.4,pointRadius:2.7,tension:.2,yAxisID:"y2"});
+
     $("historicalChartLegend").innerHTML='<span>Verde: entrate economiche · Rosso: uscite economiche · Blu: investimenti patrimoniali · Ambra: finanziamenti/trasferimenti esterni · Grigio: acquisti coperti</span>';
     $("historicalChartNote").textContent="Ogni colore rappresenta una componente distinta. I giroconti interni vengono esclusi in base al perimetro; i trasferimenti esterni e quelli non risolti sono separati in lettura Supabase. Eventuali operazioni incerte richiedono controllo.";
   }else{
@@ -7424,11 +7428,28 @@ function renderHistoricalChart(){
         else if(historicalChartMode==="NATURE"&&map[label])openBalanceNatureDrill(map[label],month,"MONTH_NATURE");
       },
       plugins:{legend:{display:true,position:"bottom",labels:{boxWidth:10,boxHeight:10,font:{size:14}}},tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+": "+money(ctx.raw)}}}},
-      scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:14}}},
-        y:{stacked:true,beginAtZero:false,ticks:{font:{size:14},callback:function(v){return money(v)}},grid:{color:"rgba(148,163,184,.18)"}},
-        y2:{display:historicalChartMode==="CASHFLOW",position:"right",grid:{drawOnChartArea:false},ticks:{font:{size:14},callback:function(v){return money(v)}}}}
+      scales:{x:{stacked:true,offset:true,grid:{display:false},ticks:{font:{size:14},maxRotation:0,autoSkip:true}},
+        y:{stacked:true,beginAtZero:false,afterFit:function(scale){if(historicalChartMode==="CASHFLOW")scale.width=90},ticks:{font:{size:14},callback:function(v){return money(v)}},grid:{color:"rgba(148,163,184,.18)"}},
+        y2:{display:historicalChartMode==="CASHFLOW",position:"right",afterFit:function(scale){scale.width=90},grid:{display:false,drawOnChartArea:false},border:{display:false},ticks:{display:false}}}
     }
   });
+  if(historicalChartMode==="CASHFLOW"){
+    historicalSaldoChart=new Chart($("historicalSaldoChart"),{
+      data:{labels:labels,datasets:[
+        {type:"bar",label:"Saldo del mese",data:net,backgroundColor:net.map(v=>v===null?"transparent":v>=0?"#159b6d":"#e05260"),borderRadius:3,yAxisID:"y",order:2},
+        {type:"line",label:"Saldo cumulato del periodo",data:cumulative,borderColor:"#315bbc",backgroundColor:"#315bbc",borderWidth:2.5,pointRadius:3,tension:0,yAxisID:"y2",order:1,spanGaps:false}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},
+        plugins:{legend:{display:true,position:"bottom",labels:{boxWidth:10,boxHeight:10,font:{size:14}}},
+          tooltip:{callbacks:{label:function(ctx){const v=ctx.raw;return ctx.dataset.label+": "+(v===null?"non disponibile":(v>0?"+":"")+money(v))}}}},
+        scales:{
+          x:{offset:true,grid:{display:false},ticks:{font:{size:14},maxRotation:0,autoSkip:true}},
+          y:{beginAtZero:true,afterFit:function(scale){scale.width=90},ticks:{font:{size:14},callback:function(v){return money(v)}},grid:{color:function(ctx){return ctx.tick.value===0?"#64748b":"rgba(148,163,184,.18)"},lineWidth:function(ctx){return ctx.tick.value===0?2:1}}},
+          y2:{position:"right",afterFit:function(scale){scale.width=90},grid:{drawOnChartArea:false},ticks:{font:{size:14},callback:function(v){return money(v)}}}
+        }
+      }
+    });
+  }
 }
 document.addEventListener("change",function(e){if(e.target&&e.target.id==="cashAuditFilter")renderCashMovementAudit()});
 let cashAuditSortKey="date",cashAuditSortAsc=false;
@@ -10091,8 +10112,8 @@ $("rpcDiagnosticsModal")?.addEventListener("click",function(e){if(e.target===$("
 document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!$("rpcDiagnosticsModal")?.classList.contains("hidden"))closeRpcDiagnostics()});
 init();
 </script>
-<script src="../shared/health-reserve.js?v=74.3.26-20261028"></script>
-<script src="../shared/approved-plan.js?v=74.3.26-20261028"></script>
+<script src="../shared/health-reserve.js?v=74.3.27-20261028"></script>
+<script src="../shared/approved-plan.js?v=74.3.27-20261028"></script>
 </body>
 </html>
 
