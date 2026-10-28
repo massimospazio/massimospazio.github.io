@@ -1,5 +1,5 @@
 {
-  "version": "V74.3.6",
-  "source_sha": "5662eddc369448b3eef675b687e931df926ae67f",
-  "note": "Database scoped reporting financing fix; authenticated validation pending"
+  "version": "V74.3.7",
+  "source_sha": "af74ea2b658660db56c9b4ca6854960c5e0e3407",
+  "note": "Economic / accounts cash flow lenses; live site verification pending"
 }
