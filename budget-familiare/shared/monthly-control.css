@@ -507,3 +507,7 @@
 
 /* V74.3.32 · scostamento delle uscite rispetto al Piano */
 .bf-expense-gap{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;margin:10px 0;color:#334155}.bf-expense-gap b{font-size:1.15em}.bf-expense-gap.positive b{color:#087653}.bf-expense-gap.negative b{color:#b8323d}.bf-expense-gap span{font-size:.9em;color:#52677f}.bf-chart-panel h4{margin:14px 0 5px}
+
+/* V74.3.33 · dettaglio movimenti nel tabellone */
+.bf-control-movements{margin-top:14px;padding:14px;border:1px solid #cddbef;border-radius:12px;background:#f7faff}
+.bf-control-movements h3{margin:0}.bf-control-movements .bf-control-section-head p{margin:4px 0 0}.bf-control-movements-link{margin-left:8px;padding:2px 6px;border:1px solid #aac2df;border-radius:6px;background:#fff;color:#1d4f85;font:inherit;cursor:pointer}.bf-control-movements .bf-control-table td{vertical-align:top}.bf-control-movements .bf-control-muted{overflow-wrap:anywhere}

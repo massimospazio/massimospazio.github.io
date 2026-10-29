@@ -901,12 +901,76 @@ function controlBoardCompare(key,ascending){
   return cmp?(ascending?cmp:-cmp):x.name.localeCompare(y.name,"it");
  };
 }
+let boardMovements=null,boardMovementSeq=0;
+function controlMovementRange(model,month,scope){
+ if(!/^\d{4}-\d\d-01$/.test(String(month||""))||!/^\d{4}-\d\d-01$/.test(String(model?.current||"")))return null;
+ if(month>model.current)return null;
+ const start=scope==="CUMULATIVE"?model.approvedStart:month;
+ if(!/^\d{4}-\d\d-01$/.test(String(start||""))||start>month)return null;
+ return {start,end:addMonth(month,1)};
+}
+function boardMovementKey(model,month,scope,direction){
+ return [model?.revision,model?.current,model?.approvedStart,month,scope,direction].join("|");
+}
+function moneyExact(n){return new Intl.NumberFormat("it-IT",{style:"currency",currency:"EUR",minimumFractionDigits:2,maximumFractionDigits:2}).format(num(n))}
+function renderBoardMovements(model,month){
+ const state=boardMovements;
+ if(!state||state.key!==boardMovementKey(model,month,controlUi.boardScope,controlUi.boardDirection))return "";
+ const heading=state.scope==="CUMULATIVE"?"Cumulato · "+displayMonth(state.start)+" – "+displayMonth(state.month):"Mese · "+displayMonth(state.month);
+ let content="";
+ if(state.loading)content='<p class="bf-control-muted">Carico i movimenti…</p>';
+ else if(state.error)content='<p class="bf-control-notice">'+esc(state.error)+'</p>';
+ else if(state.unavailable)content='<p class="bf-control-muted">Il consuntivo non è disponibile per il periodo selezionato.</p>';
+ else{
+  const rows=Array.isArray(state.result?.rows)?state.result.rows:[],total=num(state.result?.total);
+  const delta=state.expected===null?null:round(total-state.expected);
+  const check=delta===null?"Confronto con il totale del tabellone non disponibile.":Math.abs(delta)<=.02?"Il totale coincide con il Consuntivo del tabellone.":"Differenza rispetto al Consuntivo del tabellone: "+moneyExact(delta)+". Verifica i dati prima di confrontarli.";
+  content='<p class="bf-control-muted">'+rows.length+' quote · Totale '+moneyExact(total)+' · '+esc(check)+'</p>';
+  if(rows.length){
+   content+='<div class="bf-control-overflow"><table class="bf-control-table"><thead><tr><th>Data</th><th>Controparte e descrizione</th><th>Categoria</th><th>Conto</th><th>Importo</th></tr></thead><tbody>'+
+    rows.map(x=>{const gross=Math.abs(num(x.bank_amount)),amount=num(x.amount),split=Math.abs(gross-amount)>.005;
+     const date=String(x.date||"").slice(0,10).split("-").reverse().join("/");
+     return '<tr><td>'+esc(date)+'</td><td><strong>'+esc(x.counterparty||"Senza controparte")+'</strong><div class="bf-control-muted">'+esc(x.description||"")+'</div>'+(x.note?'<div class="bf-control-muted">'+esc(x.note)+'</div>':'')+'</td><td>'+esc(x.category||"—")+'</td><td>'+esc([x.bank,x.account].filter(Boolean).join(" · ")||"—")+'</td><td>'+moneyExact(amount)+(split?'<div class="bf-control-muted">Quota di '+moneyExact(gross)+'</div>':'')+'</td></tr>';
+    }).join("")+'</tbody></table></div>';
+  }else content+='<p class="bf-control-muted">Nessun movimento per la selezione.</p>';
+ }
+ return '<section class="bf-control-movements" aria-live="polite"><div class="bf-control-section-head"><div><h3>Movimenti · '+esc(state.name)+'</h3><p>'+esc(heading)+(state.month===model.current?' · mese in corso parziale':'')+'</p></div><button type="button" class="btn compact ghost" data-bf-control-close-movements>Chiudi</button></div>'+content+'</section>';
+}
+async function openBoardMovements(raw){
+ const model=currentControlModel,host=currentControlHost;
+ if(!model||!host)return;
+ let payload;try{payload=JSON.parse(decodeURIComponent(raw))}catch(_){return}
+ if(!Array.isArray(payload.ids)||payload.ids.length===0||payload.ids.length>100)return;
+ const ids=[...new Set(payload.ids.map(String))],direction=controlUi.boardDirection,month=controlUi.month,scope=controlUi.boardScope;
+ const entries=controlBoardEntries(model,month,direction).filter(r=>ids.includes(String(r.categoryId)));
+ if(entries.length!==ids.length)return;
+ const expected=entries.every(r=>r.actual!==null)?round(entries.reduce((n,r)=>n+num(r.actual),0)):null;
+ const range=controlMovementRange(model,month,scope),seq=++boardMovementSeq;
+ const key=boardMovementKey(model,month,scope,direction);
+ boardMovements={key,month,scope,name:String(payload.name||"Categoria"),start:range?.start||month,loading:!!range,unavailable:!range,expected};
+ renderTracking(currentControlHost,currentControlRecord,currentControlLive,currentControlMeta);
+ if(!range)return;
+ try{
+  if(typeof root.budgetFamilyPlanRpc!=="function")throw new Error("Connessione ai movimenti non disponibile.");
+  const result=await root.budgetFamilyPlanRpc("dashboard_control_category_movements_v1",{
+   p_category_ids:ids,p_direction:direction,p_start:range.start,p_end:range.end
+  });
+  if(seq!==boardMovementSeq||!boardMovements||boardMovements.key!==key||boardMovementKey(currentControlModel,controlUi.month,controlUi.boardScope,controlUi.boardDirection)!==key)return;
+  if(!result||!Array.isArray(result.rows)||!Number.isFinite(Number(result.total)))throw new Error("Risposta movimenti incompleta.");
+  boardMovements={...boardMovements,loading:false,result};
+ }catch(e){
+  if(seq!==boardMovementSeq||!boardMovements||boardMovements.key!==key)return;
+  boardMovements={...boardMovements,loading:false,error:String(e?.message||"Errore nel caricamento dei movimenti.")};
+ }
+ if(seq===boardMovementSeq&&currentControlHost===host)renderTracking(currentControlHost,currentControlRecord,currentControlLive,currentControlMeta);
+}
 function controlBoardRow(r,group){
  const nature=group?r.nature:controlKind(r.nature),income=controlUi.boardDirection==="INCOME";
  const badges={MANDATORY:"O",NECESSARY:"N",DISCRETIONARY:"D",OTHER:"NC",SAVINGS:"I",MIXED:"M"};
+ const payload=encodeURIComponent(JSON.stringify({ids:(group?r.items:[r]).map(x=>x.categoryId),name:r.name}));
  const label=group?'<button type="button" class="bf-tree-toggle bf-v829-group-btn" data-bf-control-board-l1="'+encodeURIComponent(r.id)+'" title="Apri le L2 di questa L1">'+
-   esc(r.name)+' <small>('+r.items.length+')</small></button>':
-   controlL1Tag(r.l1Name)+'<button type="button" class="bf-tree-toggle bf-v829-l2-name" data-bf-control-open-risk="'+encodeURIComponent(r.id)+'">'+esc(r.name)+'</button>';
+   esc(r.name)+' <small>('+r.items.length+')</small></button> <button type="button" class="bf-control-movements-link" data-bf-control-board-movements="'+esc(payload)+'" aria-label="Movimenti '+esc(r.name)+'">Movimenti</button>':
+   controlL1Tag(r.l1Name)+'<button type="button" class="bf-tree-toggle bf-v829-l2-name" data-bf-control-board-movements="'+esc(payload)+'" title="Mostra movimenti del periodo selezionato">'+esc(r.name)+'</button>';
  const pctLabel=v=>v===null?"—":controlPct(v);
  const deltaFmt=r.delta===null?"—":(r.delta>0?"+":"")+money(r.delta);
  const monthPct=pctLabel(r.monthMetric.progress),cumPct=pctLabel(r.cumulativeMetric.progress);
@@ -999,6 +1063,7 @@ function renderControlBoard(model,month){
    '<div class="planning-board-card bf-v829-panel"><div class="planning-board-table-wrap bf-control-overflow"><table class="planning-board-table bf-v828-table bf-v829-table"><thead><tr>'+th+'</tr></thead><tbody>'+
   (body||'<tr><td colspan="10">Nessuna categoria con importi nel periodo selezionato.</td></tr>')+
   '</tbody></table></div></div>'+
+  renderBoardMovements(model,month)+
   '<p class="bf-control-muted">Affidabilità con le cinque barre della Baseline/Piano. Mesi Piano = mesi con importo previsto diverso da zero; con valutazioni incomplete la L1 mostra icona neutra.</p></section>';
 }
 
@@ -1211,6 +1276,10 @@ function renderTracking(host,approved,live,meta){
 }
 function handleControlClick(e){
  if(!currentControlHost)return false;
+ const closeMovements=e.target?.closest?.("[data-bf-control-close-movements]");
+ if(closeMovements){boardMovementSeq++;boardMovements=null;renderTracking(currentControlHost,currentControlRecord,currentControlLive,currentControlMeta);return true}
+ const movementButton=e.target?.closest?.("[data-bf-control-board-movements]");
+ if(movementButton){void openBoardMovements(movementButton.getAttribute("data-bf-control-board-movements"));return true}
  const jump=e.target?.closest?.("[data-bf-control-open-risk]");
  if(jump){
   const id=decodeURIComponent(jump.getAttribute("data-bf-control-open-risk")||"");
@@ -1264,6 +1333,7 @@ function handleControlClick(e){
  for(const [name,field] of attr){
   const el=e.target?.closest?.("["+name+"]");if(!el)continue;
   const value=el.getAttribute(name);
+  if(["month","period","boardScope","boardDirection"].includes(field)){boardMovementSeq++;boardMovements=null}
   if(field==="boardView"){controlUi.boardView=value;controlUi.boardFocusL1=null;}
   else if(field==="boardSelectL1"){controlUi.boardView="L1_L2";controlUi.boardFocusL1=decodeURIComponent(value);controlUi.boardL2Sort="NAME";controlUi.boardL2SortAscending=true;}
   else if(field==="boardClearL1"){controlUi.boardFocusL1=null;}
@@ -1317,7 +1387,7 @@ function handleControlKey(e){
  currentControlHost.querySelector?.('[data-bf-control-help="'+id+'"]')?.focus?.();
  return true;
 }
-const api={annualTotal,monthTotals,categoryRows,fromContinuous,compare,render,buildControl,controlMode,controlHistoricalReference,buildModeTracking,renderModeTracking,renderTracking,handleControlClick,handleControlKey,handleControlChange,controlBoardMetric,controlBoardStatistics,controlTimelineMetric,controlExpenseTimelineMetric,drawExpenseCharts,controlCumulativeSignals};
+const api={annualTotal,monthTotals,categoryRows,fromContinuous,compare,render,buildControl,controlMode,controlHistoricalReference,buildModeTracking,renderModeTracking,renderTracking,handleControlClick,handleControlKey,handleControlChange,controlBoardMetric,controlBoardStatistics,controlTimelineMetric,controlExpenseTimelineMetric,drawExpenseCharts,controlCumulativeSignals,controlMovementRange};
 root.BudgetFamilyMonthlyControl=api;
 if(typeof module!=="undefined"&&module.exports)module.exports=api;
 })(typeof window!=="undefined"?window:globalThis);
