@@ -291,7 +291,7 @@ function monthTone(m,model){
  return "neutral";
 }
 
-const controlUi={period:"ROLLING_12",tab:"SUMMARY",month:null,direction:"EXPENSE",onlyRisks:false,expanded:{},sort:"IMPACT",selectedCategory:null,openHelp:null,sensitivity:"STANDARD",mode:"ALL",modeShowAll:false,boardExpanded:{},boardSort:"NAME",boardSortAscending:true,boardDirection:"EXPENSE",boardNature:"ALL",boardScope:"MONTH",boardView:"L1",boardL1Sort:"NAME",boardL1SortAscending:true,boardL2Sort:"NAME",boardL2SortAscending:true,boardFocusL1:null,chartScope:"MONTH"};
+const controlUi={period:"ROLLING_12",tab:"SUMMARY",month:null,direction:"EXPENSE",onlyRisks:false,expanded:{},sort:"IMPACT",selectedCategory:null,openHelp:null,sensitivity:"STANDARD",mode:"ALL",modeShowAll:false,boardExpanded:{},boardSort:"NAME",boardSortAscending:true,boardDirection:"EXPENSE",boardNature:"ALL",boardScope:"MONTH",boardView:"L1",boardL1Sort:"NAME",boardL1SortAscending:true,boardL2Sort:"NAME",boardL2SortAscending:true,boardFocusL1:null,chartScope:"MONTH",categoryGraphL1:"",categoryGraphL2:""};
 try{const saved=root.localStorage?.getItem("bf-control-sensitivity");if(["HIGH","STANDARD","LOW"].includes(saved))controlUi.sensitivity=saved}catch(e){}
 const sensitivityLimits={HIGH:{eur:15,pct:.05},STANDARD:{eur:30,pct:.10},LOW:{eur:75,pct:.20}};
 function materialDelta(delta,plan){
@@ -1018,6 +1018,59 @@ function renderControlBoardStatistics(items,direction){
    (stat.unavailable?' '+stat.unavailable+' L2 non confrontabili.':'')+'</p>';
 }
 
+ function categoryGraphData(model,month,rows){
+  const end=month<model.current?month:model.current, months=[];
+  for(let m=model.approvedStart;m&&m<=end&&months.length<120;m=addMonth(m,1))months.push(m);
+  const values=months.map(m=>{
+   const metrics=rows.map(r=>controlRowCumulative(r,m,model));
+   const plan=metrics.every(x=>x.plan!==null)?round(metrics.reduce((a,x)=>a+x.plan,0)):null;
+   const actual=metrics.every(x=>x.actual!==null)?round(metrics.reduce((a,x)=>a+x.actual,0)):null;
+   return {month:m,plan,actual};
+  });
+  const deviations=rows.map(r=>months.map(m=>{
+   if(!has(r.approvedTargets,m)||!Number.isFinite(Number(r.approvedTargets[m])))return null;
+   const actual=m===model.current?num(r.months[model.current]?.actual):num(r.actualByMonth?.[m]);
+   return round(actual-num(r.approvedTargets[m]));
+  }));
+  return {months,values,deviations};
+ }
+ let categoryGraphCharts=[];
+ function drawBoardCategoryGraphs(host,model,month){
+  categoryGraphCharts.forEach(c=>c.destroy());categoryGraphCharts=[];
+  const first=host.querySelector?.('[data-bf-category-graph="monthly"]'),second=host.querySelector?.('[data-bf-category-graph="cumulative"]');
+  if(!first||!second||!root.Chart)return;
+  const rows=model.rows.filter(r=>r.direction===controlUi.boardDirection&&r.l1Id+"|"+r.l1Name===controlUi.categoryGraphL1&&(!controlUi.categoryGraphL2||r.id===controlUi.categoryGraphL2));
+  if(!rows.length)return;
+  const d=categoryGraphData(model,month,rows),colors=["#315bbc","#dd8c2d","#8059b4","#178b79","#c55769","#817336","#5f83a8","#a2643f"];
+  const common={responsive:true,maintainAspectRatio:false,animation:false,interaction:{mode:"index",intersect:false},plugins:{legend:{position:"bottom",labels:{usePointStyle:true,boxWidth:9,font:{size:11}}},tooltip:{callbacks:{label:c=>c.dataset.label+": "+(c.parsed.y===null?"—":money(c.parsed.y))}}},scales:{x:{grid:{display:false},ticks:{maxRotation:0}},y:{ticks:{callback:v=>new Intl.NumberFormat("it-IT",{notation:"compact",maximumFractionDigits:1}).format(v)+" €"}}}};
+  categoryGraphCharts.push(new root.Chart(first.getContext("2d"),{type:"bar",data:{labels:d.months.map(displayMonth),datasets:rows.map((r,i)=>({label:r.name,data:d.deviations[i],backgroundColor:colors[i%colors.length],stack:"scostamenti"}))},options:{...common,scales:{...common.scales,x:{...common.scales.x,stacked:true},y:{...common.scales.y,stacked:true}}}}));
+  categoryGraphCharts.push(new root.Chart(second.getContext("2d"),{type:"line",data:{labels:d.months.map(displayMonth),datasets:[{label:"Piano cumulato",data:d.values.map(x=>x.plan),borderColor:"#315bbc",backgroundColor:"#315bbc",pointRadius:3,tension:0,spanGaps:false},{label:"Consuntivo cumulato",data:d.values.map(x=>x.actual),borderColor:"#c46a2d",backgroundColor:"#c46a2d",borderDash:[6,4],pointRadius:4,tension:0,spanGaps:false}]},options:common}));
+ }
+ function renderBoardCategoryGraphs(model,month){
+  const rows=model.rows.filter(r=>r.direction===controlUi.boardDirection), groups=new Map();
+  rows.forEach(r=>{const key=r.l1Id+"|"+r.l1Name;if(!groups.has(key))groups.set(key,[]);groups.get(key).push(r)});
+  const keys=[...groups.keys()].sort((a,b)=>groups.get(a)[0].l1Name.localeCompare(groups.get(b)[0].l1Name,"it"));
+  if(!keys.length)return "";
+  if(!groups.has(controlUi.categoryGraphL1)){controlUi.categoryGraphL1=keys[0];controlUi.categoryGraphL2=""}
+  const items=groups.get(controlUi.categoryGraphL1).sort((a,b)=>a.name.localeCompare(b.name,"it"));
+  if(controlUi.categoryGraphL2&&!items.some(r=>r.id===controlUi.categoryGraphL2))controlUi.categoryGraphL2="";
+  const selected=items.filter(r=>!controlUi.categoryGraphL2||r.id===controlUi.categoryGraphL2);
+  const d=categoryGraphData(model,month,selected),last=d.values[d.values.length-1];
+  const delta=last&&last.plan!==null&&last.actual!==null?round(last.actual-last.plan):null;
+  let cutoff=month<model.current?month:addMonth(model.current,-1),closed=0;
+  for(let m=model.approvedStart;m&&m<=cutoff&&closed<120;m=addMonth(m,1))closed++;
+  const check=closed>=3?categoryGraphData(model,cutoff,selected).values.at(-1):null;
+  const checkDelta=check&&check.plan!==null&&check.actual!==null?round(check.actual-check.plan):null;
+  const advice=closed<3?"Servono almeno tre mesi chiusi per valutare uno scostamento.":checkDelta===null?"Valutazione non disponibile: mancano obiettivi approvati.":materialDelta(checkDelta,check.plan)?"Scostamento significativo sui mesi chiusi: verifica anticipi, spese periodiche e importazioni; valuta se aggiornare il forecast.":"Nessuno scostamento significativo sui mesi chiusi secondo la sensibilità selezionata.";
+  return '<section class="bf-panel bf-chart-panel"><div class="bf-control-section-head"><h3>Andamento categorie · Piano e Consuntivo</h3></div>'+
+   '<div class="bf-category-graph-select"><label>Categoria L1 <select data-bf-category-graph-l1>'+keys.map(k=>'<option value="'+esc(k)+'"'+(k===controlUi.categoryGraphL1?' selected':'')+'>'+esc(groups.get(k)[0].l1Name)+'</option>').join('')+'</select></label> '+
+   '<label>Dettaglio L2 <select data-bf-category-graph-l2><option value="">Tutte le L2</option>'+items.map(r=>'<option value="'+esc(r.id)+'"'+(r.id===controlUi.categoryGraphL2?' selected':'')+'>'+esc(r.name)+'</option>').join('')+'</select></label></div>'+
+   '<p class="bf-control-muted">Dal '+esc(displayMonth(model.approvedStart))+' a '+(last?esc(displayMonth(last.month)):'—')+(last&&last.month===model.current?' · mese corrente parziale':'')+'. Scostamento = Consuntivo − Piano; '+(controlUi.boardDirection==='EXPENSE'?'positivo significa maggiori uscite':'positivo significa maggiori entrate')+'.</p>'+
+   '<p><strong>Piano cumulato: '+eur(last?.plan)+' · Consuntivo cumulato: '+eur(last?.actual)+' · Scostamento: '+humanDelta(delta)+'</strong></p>'+
+   '<h4>Scostamenti mensili per L2</h4><div class="bf-control-visual bf-control-visual-short"><canvas data-bf-category-graph="monthly" role="img" aria-label="Scostamenti mensili per categoria L2"></canvas></div>'+
+   '<h4>Piano e Consuntivo cumulati</h4><div class="bf-control-visual bf-control-visual-short"><canvas data-bf-category-graph="cumulative" role="img" aria-label="Piano e consuntivo cumulati per categoria"></canvas></div>'+
+   '<p class="bf-control-notice">'+esc(advice)+'</p><p class="bf-control-muted">Le barre sopra e sotto zero mostrano la compensazione tra L2 e mesi; le curve mostrano lo scostamento che resta nel cumulato. La valutazione usa solo mesi chiusi e la sensibilità degli avvisi: è un invito alla verifica, non un aggiornamento automatico. Il consuntivo del mese aperto è parziale; i mesi futuri non sono inclusi.</p></section>';
+ }
 function renderControlBoard(model,month){
  const direction=controlUi.boardDirection;
  const entries=controlBoardEntries(model,month,direction).filter(r=>
@@ -1212,7 +1265,7 @@ function renderExtended(host,model){
   }).join('')+'</div></div>';
  let panel='';
  if(controlUi.tab==="SUMMARY"){
-  panel=renderNatureProgress(model,sm.month)+renderControlBoard(model,sm.month)+
+  panel=renderNatureProgress(model,sm.month)+renderControlBoard(model,sm.month)+renderBoardCategoryGraphs(model,sm.month)+
    renderCumulativeSignals(model)+
    monthMenu+
    '<section class="bf-panel bf-chart-panel"><div class="bf-control-section-head">'+sectionHeading("Saldi Piano e Consuntivo","trend")+
@@ -1250,6 +1303,7 @@ function renderExtended(host,model){
  host.innerHTML=top+(controlUi.tab==="SUMMARY"?panel:monthMenu+panel);
  drawControlChart(host,model);
  drawExpenseCharts(host,model);
+ drawBoardCategoryGraphs(host,model,sm.month);
  drawCategoryChart(host,model);
 }
 function periodRiskTable(model){
@@ -1371,6 +1425,11 @@ function handleControlClick(e){
 }
 
 function handleControlChange(e){
+ const graphL1=e.target?.closest?.("[data-bf-category-graph-l1]"),graphL2=e.target?.closest?.("[data-bf-category-graph-l2]");
+ if((graphL1||graphL2)&&currentControlHost){
+  if(graphL1){controlUi.categoryGraphL1=graphL1.value;controlUi.categoryGraphL2=""}else controlUi.categoryGraphL2=graphL2.value;
+  renderTracking(currentControlHost,currentControlRecord,currentControlLive,currentControlMeta);return true;
+ }
  const el=e.target?.closest?.("[data-bf-control-sensitivity]");
  if(!el||!currentControlHost)return false;
  const value=el.value;
@@ -1387,7 +1446,8 @@ function handleControlKey(e){
  currentControlHost.querySelector?.('[data-bf-control-help="'+id+'"]')?.focus?.();
  return true;
 }
-const api={annualTotal,monthTotals,categoryRows,fromContinuous,compare,render,buildControl,controlMode,controlHistoricalReference,buildModeTracking,renderModeTracking,renderTracking,handleControlClick,handleControlKey,handleControlChange,controlBoardMetric,controlBoardStatistics,controlTimelineMetric,controlExpenseTimelineMetric,drawExpenseCharts,controlCumulativeSignals,controlMovementRange};
+const api={annualTotal,monthTotals,categoryRows,fromContinuous,compare,render,buildControl,controlMode,controlHistoricalReference,buildModeTracking,renderModeTracking,renderTracking,handleControlClick,handleControlKey,handleControlChange,controlBoardMetric,controlBoardStatistics,controlTimelineMetric,controlExpenseTimelineMetric,drawExpenseCharts,controlCumulativeSignals,controlMovementRange,categoryGraphData};
 root.BudgetFamilyMonthlyControl=api;
 if(typeof module!=="undefined"&&module.exports)module.exports=api;
 })(typeof window!=="undefined"?window:globalThis);
+
