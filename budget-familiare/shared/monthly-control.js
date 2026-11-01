@@ -1205,6 +1205,33 @@ function renderExpenseTracking(model,month){
   '<h4>Uscite cumulate</h4><div class="bf-control-visual bf-control-visual-short"><canvas data-bf-expense-chart="cumulative" role="img" aria-label="Uscite cumulate Piano e Consuntivo"></canvas></div>'+
   '<p class="bf-control-muted">Sotto Piano = uscite pianificate meno consuntivate; oltre Piano indica l’eccedenza. Le differenze si compensano nel tempo e non sono liquidità. Include risparmio e investimenti del Piano. Il mese corrente è parziale; verifica che gli import siano aggiornati.</p></section>';
 }
+function planLiquidityEstimate(model,balances,today){
+ if(!Array.isArray(balances)||!balances.length)return {reason:"Nessun conto disponibile nel perimetro del Piano."};
+ if(balances.some(b=>b.balance===null||b.balance===undefined||!Number.isFinite(Number(b.balance))||b.snapshot_date!==today))return {reason:"Inserisci e salva oggi il saldo di ogni conto: devono essere riferiti alla stessa data."};
+ if(!today||today.slice(0,7)!==model.current.slice(0,7))return {reason:"Il mese del Piano e la data attuale non sono allineati: aggiorna i dati."};
+ if(model.current>model.approvedEnd)return {reason:"Il Piano è terminato: approva un nuovo Piano per stimare il saldo futuro."};
+ if(model.current<model.approvedStart)return {reason:"Il Piano non è ancora iniziato: mancano i flussi tra oggi e l’inizio del Piano."};
+ let income=0,expense=0;
+ for(const row of model.rows){
+  for(const month of model.months.filter(m=>m>=model.current)){
+   const entry=row.months[month];
+   if(entry?.plan===null||entry?.plan===undefined)return {reason:"Mancano obiettivi approvati per alcuni mesi o categorie: la stima non è disponibile."};
+   const remaining=month===model.current?Math.max(0,num(entry.plan)-num(entry.actual)):num(entry.plan);
+   if(row.direction==="INCOME")income+=remaining;else if(row.direction==="EXPENSE")expense+=remaining;
+  }
+ }
+ const start=round(balances.reduce((sum,b)=>sum+Number(b.balance),0));
+ return {start,income:round(income),expense:round(expense),end:round(start+income-expense)};
+}
+function renderPlanLiquidity(model,meta){
+ const balances=Array.isArray(meta?.balances)?meta.balances:[],today=String(meta?.balanceToday||"");
+ const result=planLiquidityEstimate(model,balances,today);
+ const fields=balances.map(b=>'<div class="balance-row"><div><strong>'+esc(b.bank||"Conto")+' · '+esc(b.account||"")+'</strong><div class="bf-control-muted">Saldo al '+esc(b.snapshot_date||"non inserito")+'</div></div><input type="number" step="0.01" class="input balance-input" data-control-balance-input="'+esc(b.account_id)+'" value="'+(b.balance===null||b.balance===undefined?"":esc(b.balance))+'" aria-label="Saldo '+esc(b.bank||"conto")+'" placeholder="Saldo €"><button type="button" class="btn compact" data-control-balance-save="'+esc(b.account_id)+'">Salva saldo</button></div>').join("");
+ return '<section class="bf-panel"><div class="bf-control-section-head"><h3>Liquidità prevista a fine Piano</h3></div><p class="bf-control-muted">Inserisci i saldi disponibili dei conti del perimetro Massimo, riferiti a oggi; includi tutti i movimenti registrati fino a questo momento.</p>'+
+  (fields||'<p class="bf-control-notice">Nessun conto disponibile.</p>')+'<p data-control-balance-message aria-live="polite"></p>'+
+  (result.reason?'<p class="bf-control-notice">'+esc(result.reason)+'</p>':'<div class="bf-category-compare"><div><small>Saldo conti oggi</small><strong>'+money(result.start)+'</strong></div><div><small>Entrate Piano ancora previste</small><strong>'+money(result.income)+'</strong></div><div><small>Uscite Piano ancora previste</small><strong>'+money(result.expense)+'</strong></div><div><small>Stima al '+esc(displayMonth(model.approvedEnd))+'</small><strong>'+money(result.end)+'</strong></div></div>')+
+  '<p class="bf-control-muted">Stima indicativa basata sul Piano economico: per ogni categoria nel mese in corso usa il Piano meno il consuntivo registrato, con minimo zero; per i mesi successivi usa il Piano approvato. Non aggiunge automaticamente prestiti, investimenti patrimoniali o altri flussi finanziari esclusi dal Piano. Trasferimenti tra i conti non modificano il totale. Verifica che gli import dei movimenti siano aggiornati alla data dei saldi: movimenti mancanti, futuri o successivi al saldo possono alterare la stima.</p></section>';
+}
 function renderExtended(host,model){
  if(!host||!model||model.error){if(host)host.innerHTML='<p class="bf-control-notice">'+esc(model?.error||"Dati assenti")+'</p>';return}
  const sm=showMonth(model,controlUi.month);
@@ -1245,7 +1272,7 @@ function renderExtended(host,model){
   '<p>Piano approvato V'+esc(model.revision)+' · Consuntivi importati · Nessun Forecast revisionato</p></div>'+
   '<button class="btn compact ghost" data-bf-control-reload>↻ Aggiorna dati</button></div>'+
   '<div class="bf-control-controls">'+select+buttons+'</div>'+
-  stageNotice+hero+freshness+targetQuality;
+  stageNotice+hero+freshness+targetQuality+(controlUi.tab==="SUMMARY"?renderPlanLiquidity(model,currentControlMeta):"");
  const tiles=model.series.map(m=>controlTimelineMetric(model,m.month));
  const signed=n=>n===null?"—":(n>0?"+":"")+money(n);
  const monthMenu='<div class="bf-months-block">'+sectionHeading("Piano e Consuntivo · mese per mese","months")+
@@ -1449,7 +1476,7 @@ function handleControlKey(e){
  currentControlHost.querySelector?.('[data-bf-control-help="'+id+'"]')?.focus?.();
  return true;
 }
-const api={annualTotal,monthTotals,categoryRows,fromContinuous,compare,render,buildControl,controlMode,controlHistoricalReference,buildModeTracking,renderModeTracking,renderTracking,handleControlClick,handleControlKey,handleControlChange,controlBoardMetric,controlBoardStatistics,controlTimelineMetric,controlExpenseTimelineMetric,drawExpenseCharts,controlCumulativeSignals,controlMovementRange,categoryGraphData};
+const api={annualTotal,monthTotals,categoryRows,fromContinuous,compare,render,buildControl,controlMode,controlHistoricalReference,buildModeTracking,renderModeTracking,renderTracking,handleControlClick,handleControlKey,handleControlChange,controlBoardMetric,controlBoardStatistics,controlTimelineMetric,controlExpenseTimelineMetric,drawExpenseCharts,controlCumulativeSignals,controlMovementRange,categoryGraphData,planLiquidityEstimate};
 root.BudgetFamilyMonthlyControl=api;
 if(typeof module!=="undefined"&&module.exports)module.exports=api;
 })(typeof window!=="undefined"?window:globalThis);
