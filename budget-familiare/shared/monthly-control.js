@@ -116,16 +116,18 @@ const addMonth=(iso,offset)=>{
 const displayMonth=m=>new Intl.DateTimeFormat("it-IT",{month:"short",year:"2-digit",timeZone:"UTC"}).format(new Date(m+"T12:00:00Z"));
 const has=(o,k)=>Object.prototype.hasOwnProperty.call(o||{},k);
 const eur=n=>n===null||n===undefined?"—":money(n);
-function buildControl(approved,live,meta={},horizon="ROLLING_12"){
+function buildControl(approved,live,meta={},horizon="PLAN"){
  const exp=live?.expense,inc=live?.income;
  if(!exp||!inc||!approved?.month_targets)return {error:"Piano o proiezione mancanti"};
  const current=String(exp.current_month||"");
  if(!/^\d{4}-\d\d-01$/.test(current))return {error:"Mese di proiezione non valido"};
  const approvedMonths=Object.values(approved.month_targets).flatMap(r=>Object.keys(r||{}))
   .filter(m=>/^\d{4}-\d\d-01$/.test(m)).sort();
- const approvedStart=approvedMonths[0]||current,approvedEnd=approvedMonths[approvedMonths.length-1]||current;
- const start=horizon==="CALENDAR"?current.slice(0,4)+"-01-01":current;
- const months=Array.from({length:12},(_,i)=>addMonth(start,i));
+ if(!approvedMonths.length)return {error:"Il Piano approvato non contiene mesi: verifica il Piano salvato."};
+ const approvedStart=approvedMonths[0],approvedEnd=approvedMonths[approvedMonths.length-1];
+ const start=horizon==="CALENDAR"?current.slice(0,4)+"-01-01":horizon==="ROLLING_12"?current:approvedStart;
+ const end=horizon==="CALENDAR"||horizon==="ROLLING_12"?addMonth(start,11):approvedEnd;
+ const months=[];for(let m=start;m<=end&&months.length<120;m=addMonth(m,1))months.push(m);
  const metaMap=new Map((meta?.rows||[]).map(r=>[String(r.category_id),r]));
  const reliabilityMap=meta?.reliability&&typeof meta.reliability==="object"?meta.reliability:null;
  const rows=[];
@@ -172,7 +174,7 @@ function buildControl(approved,live,meta={},horizon="ROLLING_12"){
     const status=old?"CLOSED":planned!==null?"APPROVED":"PROVISIONAL";
     const delta=(!old&&planned!==null&&predicted!==null)?
        round(direction==="EXPENSE"?planned-predicted:predicted-planned):null;
-    rec.months[month]={month,actual,forecast:predicted,atApproval:approvalEstimate,plan:old?null:planned,status,delta};
+    rec.months[month]={month,actual,forecast:predicted,atApproval:approvalEstimate,plan:planned,status,delta};
    }
    rows.push(rec);
   }
@@ -187,9 +189,9 @@ function buildControl(approved,live,meta={},horizon="ROLLING_12"){
   const incForecast=completeForecast?round(total(incRows,"forecast")):null;
   const expForecast=completeForecast?round(total(expRows,"forecast")):null;
   const forecastNet=completeForecast?round(incForecast-expForecast):null;
-  const planIncome=active?round(total(incRows.filter(x=>x.plan!==null),"plan")):null;
-  const planExpense=active?round(total(expRows.filter(x=>x.plan!==null),"plan")):null;
-  const planNet=active&&missing===0?round(planIncome-planExpense):null;
+  const planIncome=round(total(incRows.filter(x=>x.plan!==null),"plan"));
+  const planExpense=round(total(expRows.filter(x=>x.plan!==null),"plan"));
+  const planNet=records.every(x=>x.plan!==null)?round(planIncome-planExpense):null;
   const deltaComparable=active?round(comparable.reduce((n,x)=>n+num(x.delta),0)):null;
   return {month,active,income:incForecast,expense:expForecast,net:forecastNet,
    planIncome,planExpense,planNet,actualIncome:round(total(incRows,"actual")),
@@ -207,8 +209,9 @@ function buildControl(approved,live,meta={},horizon="ROLLING_12"){
  const complete=activeRows.length>0&&activeRows.every(m=>m.missing===0&&m.completeForecast);
  const totalForecast=series.every(m=>m.net!==null)?round(series.reduce((n,m)=>n+m.net,0)):null;
  const futureForecast=activeRows.every(m=>m.net!==null)?round(activeRows.reduce((n,m)=>n+m.net,0)):null;
- const planTotal=complete&&series.every(m=>m.planNet!==null||!m.active)?
-   round(activeRows.reduce((n,m)=>n+m.planNet,0)):null;
+ const plannedCells=rows.flatMap(r=>months.map(m=>r.months[m].plan));
+ const planTotal=plannedCells.every(x=>x!==null)?round(rows.reduce((n,r)=>n+months.reduce((v,m)=>v+(r.direction==="INCOME"?1:-1)*num(r.months[m].plan),0),0)):null;
+ const remainingPlan=activeRows.length&&activeRows.every(m=>m.planNet!==null)?round(activeRows.reduce((n,m)=>n+m.planNet,0)):null;
  // Distinguish an inherited technical gap at approval from later recomputations.
  // If the stored approval snapshot is missing, the split is explicitly unavailable.
  const approvalCells=rows.flatMap(r=>months.filter(m=>m>=current).map(m=>({direction:r.direction,...r.months[m]})));
@@ -225,8 +228,8 @@ function buildControl(approved,live,meta={},horizon="ROLLING_12"){
  const worst=activeRows.filter(r=>r.net!==null).sort((a,b)=>a.net-b.net)[0]||null;
  return {kind:"extended",revision:approved.revision,approvedAt:approved.approved_at||"",
   current,horizon,months,series,rows,complete,coverage,approvedStart,approvedEnd,
-  totalForecast,futureForecast,planTotal,initialGap,afterApprovalGap,freshness:meta?.freshness||null,
-  delta:futureForecast!==null&&planTotal!==null?round(futureForecast-planTotal):null,
+  totalForecast,futureForecast,planTotal,remainingPlan,initialGap,afterApprovalGap,freshness:meta?.freshness||null,
+  delta:futureForecast!==null&&remainingPlan!==null?round(futureForecast-remainingPlan):null,
   worst:worst?{month:worst.month,net:worst.net}:null,
   risksForMonth:selectedRisks,notes:"Il saldo cumulato è economico, non liquidità bancaria"};
 }
@@ -291,7 +294,7 @@ function monthTone(m,model){
  return "neutral";
 }
 
-const controlUi={period:"ROLLING_12",tab:"SUMMARY",month:null,direction:"EXPENSE",onlyRisks:false,expanded:{},sort:"IMPACT",selectedCategory:null,openHelp:null,sensitivity:"STANDARD",mode:"ALL",modeShowAll:false,boardExpanded:{},boardSort:"NAME",boardSortAscending:true,boardDirection:"EXPENSE",boardNature:"ALL",boardScope:"MONTH",boardView:"L1",boardL1Sort:"NAME",boardL1SortAscending:true,boardL2Sort:"NAME",boardL2SortAscending:true,boardFocusL1:null,chartScope:"MONTH",categoryGraphL1:"",categoryGraphL2:""};
+const controlUi={period:"PLAN",tab:"SUMMARY",month:null,direction:"EXPENSE",onlyRisks:false,expanded:{},sort:"IMPACT",selectedCategory:null,openHelp:null,sensitivity:"STANDARD",mode:"ALL",modeShowAll:false,boardExpanded:{},boardSort:"NAME",boardSortAscending:true,boardDirection:"EXPENSE",boardNature:"ALL",boardScope:"MONTH",boardView:"L1",boardL1Sort:"NAME",boardL1SortAscending:true,boardL2Sort:"NAME",boardL2SortAscending:true,boardFocusL1:null,chartScope:"MONTH",categoryGraphL1:"",categoryGraphL2:""};
 try{const saved=root.localStorage?.getItem("bf-control-sensitivity");if(["HIGH","STANDARD","LOW"].includes(saved))controlUi.sensitivity=saved}catch(e){}
 const sensitivityLimits={HIGH:{eur:15,pct:.05},STANDARD:{eur:30,pct:.10},LOW:{eur:75,pct:.20}};
 function materialDelta(delta,plan){
@@ -305,7 +308,7 @@ function safeClass(n){return n===null?"":n<-.005?"bf-negative":n>.005?"bf-positi
 function humanDelta(n){return n===null?"—":(n>0?"+":"")+money(n)}
 function statusText(s){return s==="APPROVED"?"Target approvato":s==="CLOSED"?"Consuntivo":"Target provvisorio"}
 function showMonth(model,month){
- const m=model.series.find(x=>x.month===month);return m||model.series.find(x=>x.active)||model.series[0];
+ const m=model.series.find(x=>x.month===month);return m||model.series.find(x=>x.month===model.current)||(model.current>model.approvedEnd?model.series[model.series.length-1]:model.series[0]);
 }
 function monthCategory(model,month){
  return model.rows.map(r=>({...r,metric:r.months[month]}))
@@ -732,7 +735,7 @@ function technicalDetails(model){
  '</b>; differenza successiva: <b>'+humanDelta(model.afterApprovalGap)+'</b>.';
  return '<details class="bf-technical-panel"><summary>Approfondimento facoltativo · come funziona la stima tecnica (non validata)</summary>'+
   '<div class="bf-technical-inner"><p>Questa stima <b>non è un Forecast revisionato</b> e non misura automaticamente il peggioramento dopo l’approvazione. Il motore calcola le previsioni L2 tramite le regole della Baseline e gli eventuali override mensili; per il mese corrente usa il maggiore fra previsione e consuntivo registrato. Il saldo tecnico è la somma delle entrate previste meno le uscite previste dei mesi selezionati.</p>'+
-  '<div class="bf-tech-category-compare"><span><b>Piano:</b> '+eur(model.planTotal)+'</span><span><b>Stima:</b> '+eur(model.futureForecast)+'</span><span><b>Differenza:</b> '+humanDelta(model.delta)+'</span></div>'+
+  '<div class="bf-tech-category-compare"><span><b>Piano mesi da confrontare:</b> '+eur(model.remainingPlan)+'</span><span><b>Stima:</b> '+eur(model.futureForecast)+'</span><span><b>Differenza:</b> '+humanDelta(model.delta)+'</span></div>'+
   '<p>'+gap+'</p>'+
   '<p class="bf-control-muted">Le differenze esistenti già all’approvazione non sono spese nuove. Il metodo di proiezione futura non è ancora stato validato statisticamente.</p>'+
   '<h4>Penalizzazioni (aumentano la differenza negativa)</h4>'+
@@ -1168,9 +1171,9 @@ function controlCumulativeSignals(model){
  const start=model.approvedStart;
  if(!start||start>=model.current)return {closedMonths:0,signals:[]};
  let closedMonths=0;
- for(let m=start;m<model.current&&closedMonths<120;m=addMonth(m,1))closedMonths++;
+ for(let m=start;m<model.current&&m<=model.approvedEnd&&closedMonths<120;m=addMonth(m,1))closedMonths++;
  if(closedMonths<3)return {closedMonths,signals:[]};
- const cutoff=addMonth(model.current,-1);
+ const cutoff=addMonth(model.current,-1)<model.approvedEnd?addMonth(model.current,-1):model.approvedEnd;
  const signals=model.rows.filter(r=>r.direction==="EXPENSE").map(r=>{
   const metric=controlRowCumulative(r,cutoff,model);
   if(metric.plan===null||metric.actual===null)return null;
@@ -1206,13 +1209,12 @@ function renderExtended(host,model){
  if(!host||!model||model.error){if(host)host.innerHTML='<p class="bf-control-notice">'+esc(model?.error||"Dati assenti")+'</p>';return}
  const sm=showMonth(model,controlUi.month);
  controlUi.month=sm.month;
- const label=controlUi.period==="CALENDAR"?"Anno "+model.current.slice(0,4):"12 mesi · "+displayMonth(model.months[0])+" – "+displayMonth(model.months[11]);
+ const label="Piano approvato · "+displayMonth(model.approvedStart)+" – "+displayMonth(model.approvedEnd);
  const closed=sm.month<model.current;
  const coveragePct=model.coverage.expected?Math.round(100*model.coverage.approved/model.coverage.expected):0;
  const buttons='<div class="bf-control-buttons">'+
   ["SUMMARY","CATEGORIES","FLOWS"].map((v,i)=>'<button type="button" data-bf-control-tab="'+v+'" class="btn compact '+(controlUi.tab===v?'':'ghost')+'">'+["Sintesi","Categorie","Flussi del Piano"][i]+'</button>').join('')+'</div>';
- const select='<div class="bf-control-buttons">'+
-  ['ROLLING_12','CALENDAR'].map((v,i)=>'<button type="button" data-bf-control-period="'+v+'" class="btn compact '+(controlUi.period===v?'':'ghost')+'">'+['12 mesi rolling','Anno corrente'][i]+'</button>').join('')+'</div>';
+ const select='<span class="bf-control-muted">Periodo del Piano approvato</span>';
  const sensitivity='<div class="bf-control-sensitivity"><label for="bfControlSensitivity">Avvisi</label>'+
   '<select id="bfControlSensitivity" data-bf-control-sensitivity aria-label="Sensibilità dei warning">'+
   [["HIGH","Alta"],["STANDARD","Standard"],["LOW","Bassa"]].map(([val,label])=>
@@ -1226,7 +1228,7 @@ function renderExtended(host,model){
  const expenseTotals=controlDirectionTotals(model,sm.month,"EXPENSE");
  const elapsed=controlMonthProgress(sm.month,model.freshness?.as_of_date);
  const planPanel='<section class="bf-v828-card bf-v828-year">'+
-  '<div class="bf-kpi-caption"><span>Avanzo Piano approvato · '+(controlUi.period==="CALENDAR"?"anno corrente":"12 mesi")+'</span>'+infoButton("outcome")+'</div>'+
+  '<div class="bf-kpi-caption"><span>Avanzo Piano approvato · '+("periodo approvato")+'</span>'+infoButton("outcome")+'</div>'+
   '<strong>'+eur(model.planTotal)+'</strong>'+
   '<p>Riferimento fisso · approvato V'+esc(model.revision)+'</p>'+
   '<div class="bf-v828-updated"><span>Avanzo aggiornato</span><b>—</b><small>Non calcolato: proiezione a finire da validare</small></div></section>';
@@ -1323,6 +1325,7 @@ function riskTable(items){
   items.slice(0,12).map(r=>'<tr><td>'+esc(r.l1Name)+' / '+esc(r.name)+'</td><td>'+money(r.metric.plan)+'</td><td>'+money(r.metric.forecast)+'</td><td class="bf-negative">'+humanDelta(r.metric.delta)+'</td></tr>').join('')+'</tbody></table></div>';
 }
 function renderTracking(host,approved,live,meta){
+ if(currentControlModel?.current&&currentControlModel.current!==live?.expense?.current_month)controlUi.month=null;
  currentControlHost=host;currentControlRecord=approved;currentControlLive=live;currentControlMeta=meta;
  const result=buildControl(approved,live,meta,controlUi.period);
  currentControlModel=result;
@@ -1450,4 +1453,5 @@ const api={annualTotal,monthTotals,categoryRows,fromContinuous,compare,render,bu
 root.BudgetFamilyMonthlyControl=api;
 if(typeof module!=="undefined"&&module.exports)module.exports=api;
 })(typeof window!=="undefined"?window:globalThis);
+
 
