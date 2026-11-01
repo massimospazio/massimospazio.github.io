@@ -635,7 +635,7 @@ function modeRow(row,month,current){
  const rl=row.reliability===null?"Affid. n/d":row.reliability===0?"Non valutata":confidenceLabels[row.reliability];
  return '<details class="bf-mode-row bf-mode-tone-'+row.tone+'"><summary>'+
    '<span class="bf-mode-row-name"><strong>'+esc(row.name)+'</strong><small>'+esc(row.l1Name)+' · '+esc(rl)+'</small></span>'+
-   '<span class="bf-mode-row-num"><small>Piano mese</small><b>'+eur(row.planned)+'</b></span>'+
+   '<span class="bf-mode-row-num"><small>Piano cumulato</small><b>'+eur(row.planned)+'</b></span>'+
    '<span class="bf-mode-row-num"><small>Registrato</small><b>'+eur(row.spent)+'</b></span>'+
    '<span class="bf-mode-row-num"><small>Residuo</small><b>'+eur(row.remaining)+'</b></span>'+
    '<span class="bf-mode-state">'+esc(row.status)+'</span></summary>'+
@@ -771,13 +771,13 @@ function controlBankFreshness(model){
  return banks.map(b=>'<span><b>'+esc(String(b.bank||"Banca"))+'</b>: ultimo movimento '+esc(controlDayLabel(b.last_movement_date))+
    ' · ultimo import '+esc(controlDayLabel(b.last_import_at))+'</span>').join('');
 }
-function controlProgressCard(title,key,data,month){
+function controlProgressCard(title,key,data,month,elapsedPlan){
  const pct=data.ratio,bar=Math.max(0,Math.min(100,pct||0));
- return '<section class="bf-v828-card"><div class="bf-kpi-caption"><span>'+esc(title)+' · '+esc(displayMonth(month))+'</span>'+infoButton(key)+'</div>'+
+ return '<section class="bf-v828-card"><div class="bf-kpi-caption"><span>'+esc(title)+' cumulate · fino a '+esc(displayMonth(month))+'</span>'+infoButton(key)+'</div>'+
   '<div class="bf-v828-values"><div><small>Consuntivo</small><strong>'+eur(data.actual)+'</strong></div>'+
-  '<div><small>Piano mese</small><strong>'+eur(data.plan)+'</strong></div></div>'+
+  '<div><small>Piano cumulato</small><strong>'+eur(data.plan)+'</strong></div></div>'+
   '<div class="bf-v828-meter"><i style="width:'+bar+'%"></i></div>'+
-  '<p><b>'+controlPct(pct)+'</b> del Piano · Residuo '+eur(data.remaining)+'</p></section>';
+  '<p><b>'+controlPct(pct)+'</b> del Piano totale ('+eur(data.periodPlan)+') · <b>tempo trascorso '+controlPct(elapsedPlan)+'</b></p><p>Scostamento cumulato: '+humanDelta(data.actual===null||data.plan===null?null:round(data.actual-data.plan))+'</p><small>Il Piano cumulato include l’intero mese corrente. Le spese programmate non sono uniformi nel tempo.</small></section>';
 }
 function renderNatureProgress(model,month){
  const visible=month<=model.current,scope=controlUi.boardScope;
@@ -1207,7 +1207,7 @@ function renderExpenseTracking(model,month){
 }
 function planLiquidityEstimate(model,balances,today){
  if(!Array.isArray(balances)||!balances.length)return {reason:"Nessun conto disponibile nel perimetro del Piano."};
- if(balances.some(b=>b.balance===null||b.balance===undefined||!Number.isFinite(Number(b.balance))||b.snapshot_date!==today))return {reason:"Inserisci e salva oggi il saldo di ogni conto: devono essere riferiti alla stessa data."};
+ if(balances.some(b=>b.calculated_balance===null||b.calculated_balance===undefined||!Number.isFinite(Number(b.calculated_balance))))return {reason:"Inserisci il saldo iniziale di ogni conto per ricostruire la liquidità."};
  if(!today||today.slice(0,7)!==model.current.slice(0,7))return {reason:"Il mese del Piano e la data attuale non sono allineati: aggiorna i dati."};
  if(model.current>model.approvedEnd)return {reason:"Il Piano è terminato: approva un nuovo Piano per stimare il saldo futuro."};
  if(model.current<model.approvedStart)return {reason:"Il Piano non è ancora iniziato: mancano i flussi tra oggi e l’inizio del Piano."};
@@ -1220,17 +1220,17 @@ function planLiquidityEstimate(model,balances,today){
    if(row.direction==="INCOME")income+=remaining;else if(row.direction==="EXPENSE")expense+=remaining;
   }
  }
- const start=round(balances.reduce((sum,b)=>sum+Number(b.balance),0));
+ const start=round(balances.reduce((sum,b)=>sum+Number(b.calculated_balance),0));
  return {start,income:round(income),expense:round(expense),end:round(start+income-expense)};
 }
 function renderPlanLiquidity(model,meta){
  const balances=Array.isArray(meta?.balances)?meta.balances:[],today=String(meta?.balanceToday||"");
  const result=planLiquidityEstimate(model,balances,today);
- const fields=balances.map(b=>'<div class="balance-row"><div><strong>'+esc(b.bank||"Conto")+' · '+esc(b.account||"")+'</strong><div class="bf-control-muted">Saldo al '+esc(b.snapshot_date||"non inserito")+'</div></div><input type="number" step="0.01" class="input balance-input" data-control-balance-input="'+esc(b.account_id)+'" value="'+(b.balance===null||b.balance===undefined?"":esc(b.balance))+'" aria-label="Saldo '+esc(b.bank||"conto")+'" placeholder="Saldo €"><button type="button" class="btn compact" data-control-balance-save="'+esc(b.account_id)+'">Salva saldo</button></div>').join("");
- return '<section class="bf-panel"><div class="bf-control-section-head"><h3>Liquidità prevista a fine Piano</h3></div><p class="bf-control-muted">Inserisci i saldi disponibili dei conti del perimetro Massimo, riferiti a oggi; includi tutti i movimenti registrati fino a questo momento.</p>'+
+ const fields=balances.map(b=>'<div class="balance-row"><div><strong>'+esc(b.bank||"Conto")+' · '+esc(b.account||"")+'</strong><div class="bf-control-muted">Saldo inserito al '+esc(b.snapshot_date||"non inserito")+' · Ricostruito: '+eur(b.calculated_balance)+'</div></div><input type="number" step="0.01" class="input balance-input" data-control-balance-input="'+esc(b.account_id)+'" value="'+(b.balance===null||b.balance===undefined?"":esc(b.balance))+'" aria-label="Saldo '+esc(b.bank||"conto")+'" placeholder="Saldo €"><button type="button" class="btn compact" data-control-balance-save="'+esc(b.account_id)+'">Salva saldo</button></div>').join("");
+ return '<section class="bf-panel"><div class="bf-control-section-head"><h3>Liquidità prevista a fine Piano</h3></div><p class="bf-control-muted">L’ultimo saldo inserito di ogni conto viene aggiornato con i movimenti successivi importati; verifica gli estratti conto e aggiorna i saldi quando necessario.</p>'+
   (fields||'<p class="bf-control-notice">Nessun conto disponibile.</p>')+'<p data-control-balance-message aria-live="polite"></p>'+
-  (result.reason?'<p class="bf-control-notice">'+esc(result.reason)+'</p>':'<div class="bf-category-compare"><div><small>Saldo conti oggi</small><strong>'+money(result.start)+'</strong></div><div><small>Entrate Piano ancora previste</small><strong>'+money(result.income)+'</strong></div><div><small>Uscite Piano ancora previste</small><strong>'+money(result.expense)+'</strong></div><div><small>Stima al '+esc(displayMonth(model.approvedEnd))+'</small><strong>'+money(result.end)+'</strong></div></div>')+
-  '<p class="bf-control-muted">Stima indicativa basata sul Piano economico: per ogni categoria nel mese in corso usa il Piano meno il consuntivo registrato, con minimo zero; per i mesi successivi usa il Piano approvato. Non aggiunge automaticamente prestiti, investimenti patrimoniali o altri flussi finanziari esclusi dal Piano. Trasferimenti tra i conti non modificano il totale. Verifica che gli import dei movimenti siano aggiornati alla data dei saldi: movimenti mancanti, futuri o successivi al saldo possono alterare la stima.</p></section>';
+  (result.reason?'<p class="bf-control-notice">'+esc(result.reason)+'</p>':'<div class="bf-category-compare"><div><small>Saldo ricostruito oggi</small><strong>'+money(result.start)+'</strong></div><div><small>Entrate Piano ancora previste</small><strong>'+money(result.income)+'</strong></div><div><small>Uscite Piano ancora previste</small><strong>'+money(result.expense)+'</strong></div><div><small>Stima al '+esc(displayMonth(model.approvedEnd))+'</small><strong>'+money(result.end)+'</strong></div></div>')+
+  '<p class="bf-control-muted">Stima indicativa basata sul Piano economico: per ogni categoria nel mese in corso usa il Piano meno il consuntivo registrato, con minimo zero; per i mesi successivi usa il Piano approvato. Non aggiunge automaticamente prestiti, investimenti patrimoniali o altri flussi finanziari esclusi dal Piano. Trasferimenti tra i conti non modificano il totale. Il saldo ricostruito dipende dalla completezza dei movimenti importati; i movimenti nella data del saldo inserito si presumono già inclusi. Un accredito o addebito mancante altera la stima.</p></section>';
 }
 function renderExtended(host,model){
  if(!host||!model||model.error){if(host)host.innerHTML='<p class="bf-control-notice">'+esc(model?.error||"Dati assenti")+'</p>';return}
@@ -1251,8 +1251,18 @@ function renderExtended(host,model){
  const monthlyResidue=closed?"—":sm.missing?"Parziale "+money(sm.planExpense-sm.actualExpense):money(sm.planExpense-sm.actualExpense);
 
 
- const incomeTotals=controlDirectionTotals(model,sm.month,"INCOME");
- const expenseTotals=controlDirectionTotals(model,sm.month,"EXPENSE");
+ const cutoff=model.current>model.approvedEnd?model.approvedEnd:model.current;
+ const cumulativeTotals=direction=>{
+  const rows=model.rows.filter(r=>r.direction===direction),metrics=rows.map(r=>controlRowCumulative(r,cutoff,model));
+  const plan=metrics.every(x=>x.plan!==null)?round(metrics.reduce((n,x)=>n+x.plan,0)):null;
+  const actual=metrics.every(x=>x.actual!==null)?round(metrics.reduce((n,x)=>n+x.actual,0)):null;
+  const all=rows.flatMap(r=>model.months.map(m=>r.months[m].plan));
+  const periodPlan=all.every(x=>x!==null)?round(all.reduce((n,x)=>n+x,0)):null;
+  return {plan,actual,ratio:controlRatio(actual,periodPlan),remaining:plan!==null&&actual!==null?round(plan-actual):null,periodPlan};
+ };
+ const incomeTotals=cumulativeTotals("INCOME"),expenseTotals=cumulativeTotals("EXPENSE");
+ const startDay=Date.parse(model.approvedStart+"T00:00:00Z"),endDay=Date.parse(addMonth(model.approvedEnd,1)+"T00:00:00Z"),todayDay=Date.parse((currentControlMeta?.balanceToday||model.current)+"T00:00:00Z");
+ const elapsedPlan=Math.max(0,Math.min(100,Math.round((todayDay-startDay)/(endDay-startDay)*100)));
  const elapsed=controlMonthProgress(sm.month,model.freshness?.as_of_date);
  const planPanel='<section class="bf-v828-card bf-v828-year">'+
   '<div class="bf-kpi-caption"><span>Avanzo Piano approvato · '+("periodo approvato")+'</span>'+infoButton("outcome")+'</div>'+
@@ -1260,8 +1270,8 @@ function renderExtended(host,model){
   '<p>Riferimento fisso · approvato V'+esc(model.revision)+'</p>'+
   '<div class="bf-v828-updated"><span>Avanzo aggiornato</span><b>—</b><small>Non calcolato: proiezione a finire da validare</small></div></section>';
  const hero='<div class="bf-v828-hero">'+planPanel+
-  controlProgressCard("Entrate","incomeprogress",incomeTotals,sm.month)+
-  controlProgressCard("Uscite","expenseprogress",expenseTotals,sm.month)+'</div>';
+  controlProgressCard("Entrate","incomeprogress",incomeTotals,cutoff,elapsedPlan)+
+  controlProgressCard("Uscite","expenseprogress",expenseTotals,cutoff,elapsedPlan)+'</div>';
  const progressText=sm.month===model.current?"Mese in corso":sm.month<model.current?"Mese chiuso":"Mese futuro";
  const freshness='<section class="bf-v828-freshness"><div><b>'+progressText+' · '+elapsed+'% trascorso</b>'+
   '<span>Confronta questa percentuale con l’avanzamento del Piano: non indica da sola se sei sopra o sotto budget.</span></div>'+
