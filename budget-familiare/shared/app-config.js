@@ -1,7 +1,7 @@
 // Canonical source: massimospazio/budget-familiare; public files are deployed automatically.
 (function(){
-  const APP_VERSION='V74.3.38';
-  const APP_RELEASE='Scontrini dettagliati e prestiti sincronizzati';
+  const APP_VERSION='V74.3.39';
+  const APP_RELEASE='Analisi scontrini con categorie, correzioni e dati visibili';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});
