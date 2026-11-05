@@ -63,4 +63,4 @@ $('status').textContent='Dati conservati solo in questo browser. '+(loans.some(l
 document.querySelectorAll('[data-budget]').forEach(b=>b.addEventListener('click',()=>{$('budget').value=b.dataset.budget;render()}));for(const id of ['budget','discount','inflation','goal','mode'])$(id).addEventListener('change',render);
 $('reset').addEventListener('click',()=>{if(!confirm('Cancellare i dati dei prestiti salvati in questo browser?'))return;localStorage.removeItem(key);loans=structuredClone(initial);renderEditors();render()});
 renderEditors();render();
-</script></body></html>
+</script><script src="../../shared/loan-sync.js?v=1"></script></body></html>
