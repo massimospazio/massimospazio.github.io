@@ -25,7 +25,7 @@ table{width:100%;border-collapse:collapse;font-size:14px}td,th{padding:11px 8px;
 <main>
 <h1>Analisi Scontrini</h1>
 <p>Spesa per categoria, dettaglio alimenti e collegamento ai movimenti bancari. Telegram serve soltanto per caricare e verificare le foto.</p>
-<div class="toolbar"><label>Periodo <input type="month" id="period"></label><button id="refresh">Aggiorna analisi</button></div><p class="kpi-note">I dati di ottobre e novembre sono già salvati: scegli il mese per consultarli. Seleziona “Dettaglio” accanto a uno scontrino per vedere tutti gli articoli.</p>
+<div class="toolbar"><label>Periodo <input type="month" id="period"></label><button id="prevMonth" type="button">← Mese precedente</button><button id="nextMonth" type="button">Mese successivo →</button><button id="refresh">Aggiorna analisi</button></div><p class="kpi-note">I dati di ottobre e novembre sono già salvati: scegli il mese per consultarli. Seleziona “Dettaglio” accanto a uno scontrino per vedere tutti gli articoli.</p>
 <div id="status">Caricamento dati…</div>
 <div class="cards" id="kpis"></div>
 <div class="grid">
@@ -92,5 +92,14 @@ async function refresh(){
 const f=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Rome',year:'numeric',month:'2-digit'}).formatToParts(new Date());
 $('period').value=f.find(x=>x.type==='year').value+'-'+f.find(x=>x.type==='month').value;
 $('refresh').addEventListener('click',refresh);$('period').addEventListener('change',refresh);
+function monthShift(delta){
+ const current=$('period').value;
+ if(!/^20\d{2}-(0[1-9]|1[0-2])$/.test(current))return;
+ const [y,m]=current.split('-').map(Number);
+ const d=new Date(Date.UTC(y,m-1+delta,1));
+ $('period').value=d.toISOString().slice(0,7);refresh();
+}
+$('prevMonth').addEventListener('click',()=>monthShift(-1));
+$('nextMonth').addEventListener('click',()=>monthShift(1));
 (async()=>{const {data:{session}}=await sb.auth.getSession();if(!session){$('status').textContent='Accedi a Budget Familiare prima di aprire questa sezione.';return}await refresh()})();
 </script></body></html>
