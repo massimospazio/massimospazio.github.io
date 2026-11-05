@@ -31,6 +31,16 @@ table{width:100%;border-collapse:collapse;font-size:14px}td,th{padding:11px 8px;
 table th:last-child,table td:last-child{text-align:right}
 #receiptLines td:nth-child(2),#reviewLines td:last-child{text-align:left}
 #status a{margin-left:10px}
+.coverage-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:14px}
+.coverage-head h2{margin:0}.coverage-head select{font:inherit;border:1px solid #d3dce9;border-radius:8px;padding:8px;background:#fff;max-width:100%}
+.coverage-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin:12px 0}
+.coverage-metrics strong{display:block;font-size:24px;color:#1b3255;line-height:1.25}.coverage-metrics small{font-size:12px;color:#64748b}
+.coverage-track{height:18px;display:flex;border-radius:10px;overflow:hidden;background:#e7edf5;margin:12px 0 9px}
+.coverage-track .confirmed{background:#258b69;height:100%;transition:width .2s}
+.coverage-track .suggested{background:#e4a338;height:100%;transition:width .2s}
+.coverage-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:#566579;margin-bottom:10px}
+.coverage-legend b{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px}
+.coverage-detail{font-size:13px;color:#4b5c75;line-height:1.6}
 </style></head>
 <body>
 <header><div><b>Budget Familiare</b> <span class="pill">Analisi Scontrini · MVP</span></div><a href="../index.html">← Torna a Reporting</a></header>
@@ -42,6 +52,32 @@ table th:last-child,table td:last-child{text-align:right}
 <div id="availableMonths" class="month-links"></div>
 <div class="cards" id="kpis"></div>
 <div id="qualityNote" class="notice"></div>
+<section class="section" id="coverageSection">
+ <div class="coverage-head">
+  <h2>Copertura scontrini sui movimenti di spesa</h2>
+  <label for="coverageScope">Tipologia di movimenti
+   <select id="coverageScope">
+    <option value="retail">Acquisti in negozio</option>
+    <option value="supermarket">Solo supermercati</option>
+   </select>
+  </label>
+ </div>
+ <div class="coverage-metrics">
+  <div><small>Copertura effettiva</small><strong id="coverageConfirmed">—</strong><small id="coverageConfirmedCount">Scontrini collegati a movimenti</small></div>
+  <div><small>Copertura potenziale</small><strong id="coveragePotential">—</strong><small id="coverageSuggestedCount">Abbinamenti ancora da confermare</small></div>
+  <div><small>Importi coperti / spesa</small><strong id="coverageAmount">—</strong><small id="coverageAmountPct">Percentuale su importi</small></div>
+ </div>
+ <div class="coverage-track" role="img" aria-label="Copertura dei movimenti" id="coverageTrack">
+  <div class="confirmed" id="coverageBarConfirmed"></div><div class="suggested" id="coverageBarSuggested"></div>
+ </div>
+ <div class="coverage-legend">
+  <span><b style="background:#258b69"></b>Collegati e confermati</span>
+  <span><b style="background:#e4a338"></b>Abbinamenti suggeriti</span>
+  <span><b style="background:#e7edf5;border:1px solid #aebbd0"></b>Non coperti</span>
+ </div>
+ <p class="coverage-detail" id="coverageDetail">Caricamento copertura…</p>
+ <p class="kpi-note" id="coverageScopeNote">La percentuale riguarda movimenti bancari di spesa importati e selezionati per categoria, non tutte le uscite di conto. Uno scontrino suggerito non viene conteggiato nella copertura effettiva.</p>
+</section>
 <section class="section">
 <h2>Voci da classificare <span class="compact-tag" id="reviewCount">—</span></h2>
 <p>Descrizioni ambigue che non vengono assegnate automaticamente. Seleziona la categoria corretta: resta tracciata e non modifica le spese bancarie.</p>
@@ -66,6 +102,7 @@ for(const item of items){const tr=target.insertRow();mapping.forEach(fn=>cell(tr
 function metric(title,value,note){const el=document.createElement('div');el.className='card';const s=document.createElement('small');s.textContent=title;const v=document.createElement('strong');v.textContent=value;const p=document.createElement('p');p.textContent=note;el.append(s,v,p);return el}
 
 let cachedCategories=null;
+let coverageSnapshot=null;
 const contentError=err=>String(err?.message||err||'Errore sconosciuto');
 const niceNumber=value=>new Intl.NumberFormat('it-IT',{maximumFractionDigits:3}).format(Number(value||0));
 
@@ -154,18 +191,52 @@ function showCategories(items){
    cell(tr,euro(x.spent_eur));
  }
 }
+function renderCoverage(){
+ const scope=$('coverageScope').value;
+ const current=coverageSnapshot?.scopes?.[scope]||null;
+ if(!current)return;
+ const total=Number(current.transactions||0),confirmed=Number(current.confirmed||0),suggested=Number(current.suggested||0);
+ const effective=Number(current.confirmed_pct||0),potential=Number(current.potential_pct||0);
+ $('coverageConfirmed').textContent=total?decimal(effective)+'%':'n.d.';
+ $('coveragePotential').textContent=total?decimal(potential)+'%':'n.d.';
+ $('coverageConfirmedCount').textContent=confirmed+' su '+total+' movimenti collegati';
+ $('coverageSuggestedCount').textContent=suggested+' abbinamenti proposti (non confermati)';
+ $('coverageAmount').textContent=euro(current.confirmed_eur)+' / '+euro(current.total_eur);
+ $('coverageAmountPct').textContent=total
+   ? 'Importi: '+decimal(current.confirmed_eur_pct)+'% confermato · '+decimal(current.potential_eur_pct)+'% potenziale'
+   : 'Dati bancari non disponibili per questo perimetro';
+ $('coverageBarConfirmed').style.width=(total?effective:0)+'%';
+ $('coverageBarSuggested').style.width=(total?Math.max(0,potential-effective):0)+'%';
+ $('coverageTrack').setAttribute('aria-label',total
+   ? 'Copertura confermata '+decimal(effective)+'%, suggerita aggiuntiva '+decimal(Math.max(0,potential-effective))+'%'
+   : 'Nessun movimento disponibile nel periodo');
+ $('coverageDetail').textContent=total
+   ? 'Movimenti registrati: '+total+' ('+euro(current.total_eur)+'). '+
+     confirmed+' collegati; '+suggested+' con abbinamento candidato; '+
+     Math.max(0,total-confirmed-suggested)+' senza scontrino né abbinamento univoco. '+
+     'I candidati saranno conteggiati come coperti solo dopo la conferma.'
+   : 'Nessun movimento bancario importato per questa tipologia nel mese selezionato: copertura non calcolabile.';
+ $('coverageScopeNote').textContent=scope==='supermarket'
+   ? 'Perimetro: soltanto movimenti in uscita classificati «Supermercato». Data del movimento bancario; nessuna duplicazione della spesa.'
+   : 'Perimetro: acquisti in uscita classificati Supermercato, Alimentari specializzati, Prodotti casa e persona, Cibo e accessori, Elettronica, Cura personale o Farmacia. Sono escluse altre spese come mutui, utenze e trasferimenti. Gli abbinamenti suggeriti sono univoci per importo, data e negozio, ma non ancora confermati.';
+}
+$('coverageScope').addEventListener('change',renderCoverage);
+
 async function refresh(){
  const month=$('period').value;
  if(!/^20\d{2}-(0[1-9]|1[0-2])$/.test(month))return;
  $('status').textContent='Aggiornamento analisi…';$('refresh').disabled=true;
  try{
-  const [main,summary,quantity,review]=await Promise.all([
+  const [main,summary,quantity,review,coverage]=await Promise.all([
     sb.rpc('dashboard_receipt_analysis_v1',{p_month:month+'-01'}),
     sb.rpc('dashboard_receipt_quality_v1',{p_month:month+'-01'}),
     sb.rpc('dashboard_receipt_quantities_v1',{p_month:month+'-01'}),
-    sb.rpc('dashboard_receipt_review_v1',{p_month:month+'-01'})
+    sb.rpc('dashboard_receipt_review_v1',{p_month:month+'-01'}),
+    sb.rpc('dashboard_receipt_coverage_v2',{p_month:month+'-01'})
   ]);
-  for(const response of [main,summary,quantity,review])if(response.error)throw response.error;
+  for(const response of [main,summary,quantity,review,coverage])if(response.error)throw response.error;
+  coverageSnapshot=coverage.data||null;
+  renderCoverage();
   const data=main.data||{},quality=summary.data||{},q=quality.quality||{};
   const c=data.coverage||{},rs=data.receipts||[],candidates=data.candidates||[];
   await availableCategories();
@@ -177,8 +248,7 @@ async function refresh(){
     metric('Acquisti non alimentari',euro(q.spent_nonfood),'Casa, animali, igiene e altri'),
     metric('Da classificare',euro(q.spent_needing_review),Number(q.lines_needing_review||0)+' descrizioni ambigue'),
     metric('Righe classificate',pct+'%',Number(q.lines_classified||0)+' di '+Number(q.lines_total||0)+' righe'),
-    metric('Copertura movimenti',Number(c.bank_grocery_transactions||0)?decimal(c.movements_coverage_pct)+'%':'n.d.',
-       Number(c.bank_grocery_transactions||0)?c.linked_receipts+' di '+c.bank_grocery_transactions+' movimenti':'Nessun movimento Supermercato nel mese')
+    metric('Abbinamenti da verificare',String(candidates.length),'Proposte, non ancora collegate')
   );
   $('qualityNote').textContent='Gli scontrini verificati sono già consultabili. '+
     (Number(quality.pending_analysis||0)?quality.pending_analysis+' scontrino/i ancora da verificare o analizzare (esclusi dai totali). ':'')+
