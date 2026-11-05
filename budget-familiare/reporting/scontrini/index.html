@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Budget Familiare — Analisi scontrini</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.min.js"></script>
+<script src="../../shared/supabase-client.js"></script>
+<style>
+:root{font-family:Inter,"Segoe UI",system-ui,sans-serif;color:#1e293b;background:#f3f6fa}*{box-sizing:border-box}body{margin:0}
+header{background:#172b4d;color:#fff;padding:20px max(18px,calc((100% - 1200px)/2));display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}header a{color:white}
+main{max-width:1200px;margin:26px auto;padding:0 16px}h1{margin:0 0 5px;font-size:27px}h2{font-size:19px;margin:0 0 15px}p{line-height:1.5;color:#566579}
+.toolbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin:20px 0}
+button,input{font:inherit;border:1px solid #cbd5e1;border-radius:8px;padding:9px 12px;background:white}button{cursor:pointer;background:#2458cf;color:white;border-color:#2458cf}button:hover{background:#1744aa}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(205px,1fr));gap:14px}
+.card,.section{background:white;border:1px solid #e2e8f0;box-shadow:0 2px 12px #0f172a0a;border-radius:13px;padding:21px;margin-bottom:17px}
+.card small{color:#62718a;font-size:13px}.card strong{display:block;font-size:27px;margin-top:8px;color:#142949}.card p{font-size:12px;margin:6px 0 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:15px;margin-top:17px}
+table{width:100%;border-collapse:collapse;font-size:14px}td,th{padding:11px 8px;border-bottom:1px solid #e6ebf2;text-align:left}th{color:#64748b;font-weight:600}td:last-child,th:last-child{text-align:right}.table-scroll{overflow:auto}
+.bar{height:8px;border-radius:10px;background:#e9eef7;margin-top:6px;overflow:hidden}.bar>span{display:block;height:100%;background:#2563eb}
+.kpi-note{font-size:12px;color:#64748b}.muted{color:#64748b}.good{color:#128454;font-weight:600}.warning{color:#a15d14}#status{margin:8px 0;color:#64748b} .pill{border:1px solid #dae5f6;border-radius:20px;padding:4px 9px;font-size:12px;white-space:nowrap;background:#f5f9ff;color:#31547f}
+@media(max-width:500px){h1{font-size:23px}.card,.section{padding:15px}}
+</style></head>
+<body>
+<header><div><b>Budget Familiare</b> <span class="pill">Analisi Scontrini · MVP</span></div><a href="../index.html">← Torna a Reporting</a></header>
+<main>
+<h1>Analisi Scontrini</h1>
+<p>Spesa per categoria, dettaglio alimenti e collegamento ai movimenti bancari. Telegram serve soltanto per caricare e verificare le foto.</p>
+<div class="toolbar"><label>Periodo <input type="month" id="period"></label><button id="refresh">Aggiorna analisi</button></div>
+<div id="status">Caricamento dati…</div>
+<div class="cards" id="kpis"></div>
+<div class="grid">
+<section class="section"><h2>Spesa per categoria</h2><div class="table-scroll"><table><thead><tr><th>Categoria</th><th>Importo</th></tr></thead><tbody id="categories"></tbody></table></div></section>
+<section class="section"><h2>Tipi di alimento</h2><div class="table-scroll"><table><thead><tr><th>Tipo</th><th>Spesa</th></tr></thead><tbody id="types"></tbody></table></div></section>
+</div>
+<section class="section"><h2>Abbinamenti scontrino–movimento da confermare</h2><p>Stesso importo, data vicina e negozio riconosciuto. Sono suggerimenti, non collegamenti automatici. La conferma e la scrittura contabile verranno abilitate dopo il collaudo dei controlli.</p><div class="table-scroll"><table><thead><tr><th>Scontrino</th><th>Movimento bancario</th><th>Importo</th><th>Scarto</th></tr></thead><tbody id="candidates"></tbody></table></div></section>
+<section class="section"><h2>Scontrini verificati</h2><div class="table-scroll"><table><thead><tr><th>Data</th><th>Negozio</th><th>Totale</th><th>Collegamento</th></tr></thead><tbody id="receipts"></tbody></table></div></section>
+<p class="kpi-note">Copertura = movimenti classificati «Supermercato» con uno scontrino verificato collegato / movimenti «Supermercato» del mese. Le categorie degli scontrini sono statistiche di dettaglio, non nuove uscite. La prima release non modifica movimenti né split esistenti.</p>
+</main>
+<script>
+const sb=window.appSupabase;
+const $=id=>document.getElementById(id);
+const euro=n=>new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR'}).format(Number(n||0));
+const decimal=n=>new Intl.NumberFormat('it-IT',{maximumFractionDigits:1}).format(Number(n||0));
+function cell(row,value,cls){const td=document.createElement('td');td.textContent=String(value??'—');if(cls)td.className=cls;row.appendChild(td)}
+function rows(id,items,mapping){const target=$(id);target.replaceChildren();if(!items?.length){let tr=target.insertRow();let td=tr.insertCell();td.colSpan=mapping.length;td.textContent='Nessun dato per il periodo';td.className='muted';return}
+for(const item of items){const tr=target.insertRow();mapping.forEach(fn=>cell(tr,fn(item)))}}
+function metric(title,value,note){const el=document.createElement('div');el.className='card';const s=document.createElement('small');s.textContent=title;const v=document.createElement('strong');v.textContent=value;const p=document.createElement('p');p.textContent=note;el.append(s,v,p);return el}
+async function refresh(){
+ const month=$('period').value;
+ if(!/^20\d{2}-(0[1-9]|1[0-2])$/.test(month))return;
+ $('status').textContent='Aggiornamento analisi…';$('refresh').disabled=true;
+ try{
+  const {data,error}=await sb.rpc('dashboard_receipt_analysis_v1',{p_month:month+'-01'});
+  if(error)throw error;
+  const c=data.coverage||{},rs=data.receipts||[],candidates=data.candidates||[];
+  $('kpis').replaceChildren(
+   metric('Spesa supermercati',euro(c.bank_grocery_eur),Number(c.bank_grocery_transactions||0)+' movimenti del mese'),
+   metric('Copertura movimenti',decimal(c.movements_coverage_pct)+'%',Number(c.linked_receipts||0)+' su '+Number(c.bank_grocery_transactions||0)+' movimenti collegati'),
+   metric('Copertura importi',decimal(c.amount_coverage_pct)+'%',euro(c.covered_eur)+' con scontrino collegato'),
+   metric('Scontrini verificati',String(rs.length),candidates.length+' abbinamenti da valutare')
+  );
+  rows('categories',data.categories||[],[x=>x.group_label,x=>euro(x.spent_eur)]);
+  rows('types',data.types||[],[x=>x.food_type||'Da classificare',x=>euro(x.spent_eur)]);
+  rows('candidates',candidates,[x=>x.receipt_merchant,x=>x.bank_description,x=>euro(x.receipt_total),x=>x.days_apart+' giorni']);
+  rows('receipts',rs,[x=>x.receipt_date,x=>x.merchant_raw,x=>euro(x.total_amount),x=>x.linked_transaction_id?'Collegato':'Da collegare']);
+  $('status').textContent='Dati aggiornati · solo scontrini verificati';
+ }catch(e){$('status').textContent='Non riesco a caricare i dati: '+(e?.message||e)}
+ finally{$('refresh').disabled=false}
+}
+const f=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Rome',year:'numeric',month:'2-digit'}).formatToParts(new Date());
+$('period').value=f.find(x=>x.type==='year').value+'-'+f.find(x=>x.type==='month').value;
+$('refresh').addEventListener('click',refresh);$('period').addEventListener('change',refresh);
+(async()=>{const {data:{session}}=await sb.auth.getSession();if(!session){$('status').textContent='Accedi a Budget Familiare prima di aprire questa sezione.';return}await refresh()})();
+</script></body></html>
