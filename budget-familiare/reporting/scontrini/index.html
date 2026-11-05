@@ -25,7 +25,7 @@ table{width:100%;border-collapse:collapse;font-size:14px}td,th{padding:11px 8px;
 <main>
 <h1>Analisi Scontrini</h1>
 <p>Spesa per categoria, dettaglio alimenti e collegamento ai movimenti bancari. Telegram serve soltanto per caricare e verificare le foto.</p>
-<div class="toolbar"><label>Periodo <input type="month" id="period"></label><button id="refresh">Aggiorna analisi</button></div>
+<div class="toolbar"><label>Periodo <input type="month" id="period"></label><button id="refresh">Aggiorna analisi</button></div><p class="kpi-note">I dati di ottobre e novembre sono già salvati: scegli il mese per consultarli. Seleziona “Dettaglio” accanto a uno scontrino per vedere tutti gli articoli.</p>
 <div id="status">Caricamento dati…</div>
 <div class="cards" id="kpis"></div>
 <div class="grid">
@@ -33,7 +33,7 @@ table{width:100%;border-collapse:collapse;font-size:14px}td,th{padding:11px 8px;
 <section class="section"><h2>Tipi di alimento</h2><div class="table-scroll"><table><thead><tr><th>Tipo</th><th>Spesa</th></tr></thead><tbody id="types"></tbody></table></div></section>
 </div>
 <section class="section"><h2>Abbinamenti scontrino–movimento da confermare</h2><p>Stesso importo, data vicina e negozio riconosciuto. Sono suggerimenti, non collegamenti automatici. La conferma e la scrittura contabile verranno abilitate dopo il collaudo dei controlli.</p><div class="table-scroll"><table><thead><tr><th>Scontrino</th><th>Movimento bancario</th><th>Importo</th><th>Scarto</th></tr></thead><tbody id="candidates"></tbody></table></div></section>
-<section class="section"><h2>Scontrini verificati</h2><div class="table-scroll"><table><thead><tr><th>Data</th><th>Negozio</th><th>Totale</th><th>Collegamento</th></tr></thead><tbody id="receipts"></tbody></table></div></section>
+<section class="section"><h2>Scontrini verificati</h2><div class="table-scroll"><table><thead><tr><th>Data</th><th>Negozio</th><th>Totale</th><th>Collegamento</th><th>Articoli</th></tr></thead><tbody id="receipts"></tbody></table></div><div id="receiptDetail" class="table-scroll" style="margin-top:18px" hidden><h2 id="detailTitle">Dettaglio scontrino</h2><table><thead><tr><th>Articolo</th><th>Categoria</th><th>Quantità</th><th>Importo</th></tr></thead><tbody id="receiptLines"></tbody></table></div></section>
 <p class="kpi-note">Copertura = movimenti classificati «Supermercato» con uno scontrino verificato collegato / movimenti «Supermercato» del mese. Le categorie degli scontrini sono statistiche di dettaglio, non nuove uscite. La prima release non modifica movimenti né split esistenti.</p>
 </main>
 <script>
@@ -45,6 +45,21 @@ function cell(row,value,cls){const td=document.createElement('td');td.textConten
 function rows(id,items,mapping){const target=$(id);target.replaceChildren();if(!items?.length){let tr=target.insertRow();let td=tr.insertCell();td.colSpan=mapping.length;td.textContent='Nessun dato per il periodo';td.className='muted';return}
 for(const item of items){const tr=target.insertRow();mapping.forEach(fn=>cell(tr,fn(item)))}}
 function metric(title,value,note){const el=document.createElement('div');el.className='card';const s=document.createElement('small');s.textContent=title;const v=document.createElement('strong');v.textContent=value;const p=document.createElement('p');p.textContent=note;el.append(s,v,p);return el}
+async function showReceipt(receipt){
+ const box=$('receiptDetail');box.hidden=false;$('detailTitle').textContent='Articoli · '+receipt.merchant_raw+' · '+euro(receipt.total_amount);
+ $('receiptLines').replaceChildren();let loading=$('receiptLines').insertRow().insertCell();loading.textContent='Caricamento articoli…';
+ try{
+  const {data,error}=await sb.rpc('dashboard_receipt_lines_v1',{p_receipt_id:receipt.id});
+  if(error)throw error;
+  rows('receiptLines',data||[],[
+   x=>x.product_name||'Voce senza nome',
+   x=>[x.group_label,x.food_type].filter(Boolean).join(' · '),
+   x=>x.quantity==null?'—':(String(x.quantity)+' '+(x.unit||'')).trim(),
+   x=>euro(x.amount)
+  ]);
+ }catch(e){$('receiptLines').replaceChildren();$('receiptLines').insertRow().insertCell().textContent='Errore dettagli: '+(e?.message||e)}
+ box.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
 async function refresh(){
  const month=$('period').value;
  if(!/^20\d{2}-(0[1-9]|1[0-2])$/.test(month))return;
@@ -62,7 +77,14 @@ async function refresh(){
   rows('categories',data.categories||[],[x=>x.group_label,x=>euro(x.spent_eur)]);
   rows('types',data.types||[],[x=>x.food_type||'Da classificare',x=>euro(x.spent_eur)]);
   rows('candidates',candidates,[x=>x.receipt_merchant,x=>x.bank_description,x=>euro(x.receipt_total),x=>x.days_apart+' giorni']);
-  rows('receipts',rs,[x=>x.receipt_date,x=>x.merchant_raw,x=>euro(x.total_amount),x=>x.linked_transaction_id?'Collegato':'Da collegare']);
+  const receiptsBody=$('receipts');receiptsBody.replaceChildren();$('receiptDetail').hidden=true;
+  if(!rs.length){let tr=receiptsBody.insertRow(),td=tr.insertCell();td.colSpan=5;td.textContent='Nessuno scontrino per questo mese';}
+  for(const receipt of rs){
+    const tr=receiptsBody.insertRow();
+    for(const value of [receipt.receipt_date,receipt.merchant_raw,euro(receipt.total_amount),receipt.linked_transaction_id?'Collegato':'Da collegare'])cell(tr,value);
+    const button=document.createElement('button');button.textContent='Dettaglio';button.type='button';button.addEventListener('click',()=>showReceipt(receipt));
+    tr.insertCell().append(button);
+  }
   $('status').textContent='Dati aggiornati · solo scontrini verificati';
  }catch(e){$('status').textContent='Non riesco a caricare i dati: '+(e?.message||e)}
  finally{$('refresh').disabled=false}
