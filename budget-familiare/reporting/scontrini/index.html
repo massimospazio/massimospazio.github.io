@@ -31,6 +31,13 @@ table{width:100%;border-collapse:collapse;font-size:14px}td,th{padding:11px 8px;
 table th:last-child,table td:last-child{text-align:right}
 #receiptLines td:nth-child(2),#reviewLines td:last-child{text-align:left}
 #status a{margin-left:10px}
+.price-strong{font-variant-numeric:tabular-nums;font-weight:700;color:#174f89;white-space:nowrap}
+.price-note{display:block;font-size:11px;color:#64748b;margin-top:4px}
+.price-warning{color:#9c5d16}
+#unitPricesTable{min-width:720px}
+#receiptLinesTable{min-width:730px}
+.unit-toolbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.unit-toolbar select{background:white;border:1px solid #cbd5e1;border-radius:7px;padding:7px;color:#27425f}
 .coverage-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:14px}
 .coverage-head h2{margin:0}.coverage-head select{font:inherit;border:1px solid #d3dce9;border-radius:8px;padding:8px;background:#fff;max-width:100%}
 .coverage-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin:12px 0}
@@ -87,8 +94,18 @@ table th:last-child,table td:last-child{text-align:right}
 <section class="section"><h2>Spesa per categoria</h2><div class="table-scroll"><table><thead><tr><th>Categoria</th><th>Importo</th></tr></thead><tbody id="categories"></tbody></table></div></section>
 <section class="section"><h2>Tipi di acquisto</h2><div class="table-scroll"><table><thead><tr><th>Tipologia</th><th>Spesa</th><th>Quantità leggibile</th></tr></thead><tbody id="types"></tbody></table></div><p class="kpi-note">Le quantità sono acquisti documentati, non consumi effettivi. “Pezzi/confezioni” non indica necessariamente quante unità contiene una confezione.</p></section>
 </div>
+<section class="section">
+ <h2>Prezzi unitari degli acquisti</h2>
+ <p>Prezzi confrontabili per kg o litro, calcolati dall’importo netto e dalla quantità totale. I formati ambigui letti dall’OCR sono segnalati: verifica prima di confrontare definitivamente.</p>
+ <div class="unit-toolbar">
+  <label>Unità <select id="unitPriceFilter"><option value="all">Kg e litri</option><option value="kg">Solo €/kg</option><option value="l">Solo €/l</option></select></label>
+  <label><input type="checkbox" id="unitPriceReliable"> Solo formati leggibili</label>
+  <span class="kpi-note" id="unitPriceCount"></span>
+ </div>
+ <div class="table-scroll"><table id="unitPricesTable"><thead><tr><th>Articolo</th><th>Negozio</th><th>Quantità totale</th><th>Importo</th><th>Prezzo unitario</th></tr></thead><tbody id="unitPrices"></tbody></table></div>
+</section>
 <section class="section"><h2>Abbinamenti scontrino–movimento da confermare</h2><p>Stesso importo, data vicina e negozio riconosciuto. Sono suggerimenti, non collegamenti automatici. La conferma e la scrittura contabile verranno abilitate dopo il collaudo dei controlli.</p><div class="table-scroll"><table><thead><tr><th>Scontrino</th><th>Movimento bancario</th><th>Importo</th><th>Scarto</th></tr></thead><tbody id="candidates"></tbody></table></div></section>
-<section class="section"><h2>Scontrini verificati</h2><div class="table-scroll"><table><thead><tr><th>Data</th><th>Negozio</th><th>Totale</th><th>Collegamento</th><th>Articoli</th></tr></thead><tbody id="receipts"></tbody></table></div><div id="receiptDetail" class="table-scroll" style="margin-top:18px" hidden><h2 id="detailTitle">Dettaglio scontrino</h2><p class="kpi-note">Puoi correggere la categoria di ogni riga. Il testo originale dello scontrino rimane invariato.</p><table><thead><tr><th>Articolo</th><th>Categoria / correzione</th><th>Quantità</th><th>Importo</th></tr></thead><tbody id="receiptLines"></tbody></table></div></section>
+<section class="section"><h2>Scontrini verificati</h2><div class="table-scroll"><table><thead><tr><th>Data</th><th>Negozio</th><th>Totale</th><th>Collegamento</th><th>Articoli</th></tr></thead><tbody id="receipts"></tbody></table></div><div id="receiptDetail" class="table-scroll" style="margin-top:18px" hidden><h2 id="detailTitle">Dettaglio scontrino</h2><p class="kpi-note">Puoi correggere la categoria di ogni riga. Il testo originale dello scontrino rimane invariato.</p><table id="receiptLinesTable"><thead><tr><th>Articolo</th><th>Categoria / correzione</th><th>Quantità / formato</th><th>Importo</th><th>Prezzo al kg/l</th></tr></thead><tbody id="receiptLines"></tbody></table></div></section>
 <p class="kpi-note">Copertura = movimenti classificati «Supermercato» con uno scontrino verificato collegato / movimenti «Supermercato» del mese. Le categorie degli scontrini sono statistiche di dettaglio, non nuove uscite. La prima release non modifica movimenti né split esistenti.</p>
 </main>
 <script>
@@ -103,6 +120,7 @@ function metric(title,value,note){const el=document.createElement('div');el.clas
 
 let cachedCategories=null;
 let coverageSnapshot=null;
+let unitPriceRows=[];
 const contentError=err=>String(err?.message||err||'Errore sconosciuto');
 const niceNumber=value=>new Intl.NumberFormat('it-IT',{maximumFractionDigits:3}).format(Number(value||0));
 
@@ -144,6 +162,68 @@ function categorySelect(line,currentReceipt=null){
  });
  return el;
 }
+
+function perUnitMoney(amount,unit){
+ if(amount==null||!['kg','l'].includes(unit))return '—';
+ const number=Number(amount);
+ if(!Number.isFinite(number)||number<=0)return '—';
+ const digits=number<1?3:2;
+ return new Intl.NumberFormat('it-IT',{minimumFractionDigits:digits,maximumFractionDigits:digits}).format(number)+' €/'+unit;
+}
+function physicalAmount(line){
+ if(line.comparable_quantity>0&&['kg','l'].includes(line.comparable_unit)){
+  return niceNumber(line.comparable_quantity)+' '+line.comparable_unit;
+ }
+ return '—';
+}
+function describePackaging(line){
+ const count=Number(line.quantity||1),size=Number(line.unit_size||0),sizeUnit=line.unit_size_unit;
+ if(size>0&&['g','kg','ml','l'].includes(sizeUnit)&&['piece','pack'].includes(line.unit)){
+  return (count>1?niceNumber(count)+' × ':'')+niceNumber(size)+' '+sizeUnit+' = '+physicalAmount(line);
+ }
+ if(['g','kg','ml','l'].includes(line.unit)&&line.quantity){return niceNumber(line.quantity)+' '+line.unit;}
+ if(line.quantity){return niceNumber(line.quantity)+' '+(['piece','pack'].includes(line.unit)?'pezzi/confezioni':(line.unit||'unità'));}
+ return '—';
+}
+function pricePresentation(parent,line){
+ if(line.price_per_unit==null||!['kg','l'].includes(line.comparable_unit)){
+  const note=document.createElement('span');note.className='muted';note.textContent='Formato non disponibile';
+  parent.append(note);return;
+ }
+ const price=document.createElement('span');price.className='price-strong';
+ price.textContent=perUnitMoney(line.price_per_unit,line.comparable_unit);parent.append(price);
+ const detail=document.createElement('small');detail.className='price-note';
+ if(line.measure_quality==='format_to_verify'){
+   detail.className+=' price-warning';detail.textContent='⚠ Formato OCR da verificare';
+ }else if(line.price_source==='printed_and_calculated'){
+   detail.textContent='Prezzo stampato: '+perUnitMoney(line.printed_price_per_unit,line.comparable_unit);
+ }else{
+   detail.textContent='Calcolato: '+euro(line.net_amount??line.amount)+' / '+physicalAmount(line);
+ }
+ parent.append(detail);
+}
+function renderUnitPrices(){
+ const unit=$('unitPriceFilter').value,reliable=$('unitPriceReliable').checked;
+ const shown=unitPriceRows.filter(x=>(unit==='all'||x.comparable_unit===unit)&&(!reliable||x.measure_quality!=='format_to_verify'));
+ $('unitPriceCount').textContent=shown.length+' prezzi per kg/l'+(reliable?' (formato leggibile)':'');
+ const target=$('unitPrices');target.replaceChildren();
+ if(!shown.length){
+   const tr=target.insertRow(),td=tr.insertCell();td.colSpan=5;
+   td.textContent='Nessun prezzo confrontabile per il filtro selezionato.';td.className='muted';return;
+ }
+ for(const item of shown){
+   const tr=target.insertRow();
+   const product=tr.insertCell();product.textContent=item.product_name||'Articolo senza descrizione';
+   const sub=document.createElement('small');sub.className='price-note';
+   sub.textContent=String(item.reference_date||'').slice(0,10);product.append(sub);
+   cell(tr,String(item.merchant_raw||'Non riconosciuto').split('\n')[0]);
+   cell(tr,describePackaging(item));cell(tr,euro(item.net_amount));
+   pricePresentation(tr.insertCell(),item);
+ }
+}
+$('unitPriceFilter').addEventListener('change',renderUnitPrices);
+$('unitPriceReliable').addEventListener('change',renderUnitPrices);
+
 async function showReceipt(receipt){
  const box=$('receiptDetail');box.hidden=false;
  $('detailTitle').textContent='Articoli · '+(receipt.merchant_raw?.split('\n')[0]||'Esercente non riconosciuto')+' · '+euro(receipt.total_amount);
@@ -163,8 +243,9 @@ async function showReceipt(receipt){
      const note=document.createElement('small');note.className='compact-tag';note.textContent='Corretta manualmente';td.append(note);
    }
    td.append(categorySelect(line,receipt));
-   cell(tr,line.quantity==null?'—':(niceNumber(line.quantity)+' '+(line.unit==='piece'?'pezzi/confezioni':line.unit||'')).trim());
+   cell(tr,describePackaging(line));
    cell(tr,euro(line.amount));
+   pricePresentation(tr.insertCell(),{...line,net_amount:line.amount});
   }
  }catch(e){body.replaceChildren();body.insertRow().insertCell().textContent='Errore: '+contentError(e)}
  box.scrollIntoView({behavior:'smooth',block:'nearest'});
@@ -227,14 +308,17 @@ async function refresh(){
  if(!/^20\d{2}-(0[1-9]|1[0-2])$/.test(month))return;
  $('status').textContent='Aggiornamento analisi…';$('refresh').disabled=true;
  try{
-  const [main,summary,quantity,review,coverage]=await Promise.all([
+  const [main,summary,quantity,review,coverage,unitPrices]=await Promise.all([
     sb.rpc('dashboard_receipt_analysis_v1',{p_month:month+'-01'}),
     sb.rpc('dashboard_receipt_quality_v1',{p_month:month+'-01'}),
     sb.rpc('dashboard_receipt_quantities_v1',{p_month:month+'-01'}),
     sb.rpc('dashboard_receipt_review_v1',{p_month:month+'-01'}),
-    sb.rpc('dashboard_receipt_coverage_v2',{p_month:month+'-01'})
+    sb.rpc('dashboard_receipt_coverage_v2',{p_month:month+'-01'}),
+    sb.rpc('dashboard_receipt_unit_prices_v1',{p_month:month+'-01'})
   ]);
-  for(const response of [main,summary,quantity,review,coverage])if(response.error)throw response.error;
+  for(const response of [main,summary,quantity,review,coverage,unitPrices])if(response.error)throw response.error;
+  unitPriceRows=Array.isArray(unitPrices.data)?unitPrices.data:[];
+  renderUnitPrices();
   coverageSnapshot=coverage.data||null;
   renderCoverage();
   const data=main.data||{},quality=summary.data||{},q=quality.quality||{};
