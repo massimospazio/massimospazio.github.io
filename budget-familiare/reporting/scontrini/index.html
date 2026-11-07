@@ -48,13 +48,29 @@ table th:last-child,table td:last-child{text-align:right}
 .coverage-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:#566579;margin-bottom:10px}
 .coverage-legend b{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px}
 .coverage-detail{font-size:13px;color:#4b5c75;line-height:1.6}
+.period-select{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.period-select select{font:inherit;background:white;border:1px solid #cbd5e1;border-radius:8px;padding:9px}
+.drill-link{background:none;border:0;color:#205ba4;text-align:left;padding:0;font:inherit;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.drill-link:hover{color:#18386c;background:none}
+.drill-nav{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:0 0 10px}.drill-nav button{background:#eef4ff;color:#285486;border:1px solid #cbdcf5;font-size:13px;padding:7px 10px}.drill-nav button:disabled{opacity:.5;cursor:default}
+.drill-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:space-between}.drill-actions button{font-size:13px;padding:8px 12px}
+.selected-row{background:#edf5ff}.l2-pill{font-size:11px;background:#f1f5f9;color:#46576b;padding:3px 6px;border-radius:8px;white-space:nowrap}
+#productsTable{min-width:790px}.section h2 small{font-size:12px;font-weight:400;color:#64748b}
+@media(max-width:650px){.toolbar{justify-content:flex-start}#availableMonths{overflow:auto}.grid{grid-template-columns:1fr}}
 </style></head>
 <body>
-<header><div><b>Budget Familiare</b> <span class="pill">Analisi Scontrini · MVP</span></div><a href="../index.html">← Torna a Reporting</a></header>
+<header><div><b>Budget Familiare</b> <span class="pill">Analisi Scontrini · Tipi, categorie e L2</span></div><a href="../index.html">← Torna a Reporting</a></header>
 <main>
 <h1>Analisi Scontrini</h1>
 <p>Spesa per categoria, dettaglio alimenti e collegamento ai movimenti bancari. Telegram serve soltanto per caricare e verificare le foto.</p>
-<div class="toolbar"><label>Periodo <input type="month" id="period"></label><button id="prevMonth" type="button">← Mese precedente</button><button id="nextMonth" type="button">Mese successivo →</button><button id="refresh">Aggiorna analisi</button></div><p class="kpi-note">I dati di ottobre e novembre sono già salvati: scegli il mese per consultarli. Seleziona “Dettaglio” accanto a uno scontrino per vedere tutti gli articoli.</p>
+<div class="toolbar">
+ <div class="period-select"><label for="periodMode">Periodo
+ <select id="periodMode"><option value="month">Mese singolo</option><option value="rolling12">Ultimi 12 mesi</option><option value="all">Tutto lo storico</option></select></label>
+ <label id="monthLabel">Mese <input type="month" id="period"></label>
+ <button id="prevMonth" type="button">← Precedente</button><button id="nextMonth" type="button">Successivo →</button>
+ <button id="refresh">Aggiorna analisi</button></div>
+ <span id="periodRange" class="kpi-note"></span>
+</div>
+<p class="kpi-note">Ultimi 12 mesi = mese corrente più gli 11 precedenti. Tutto lo storico = tutti gli scontrini verificati. Seleziona un tipo di acquisto o una categoria per consultare i prodotti e i singoli scontrini.</p>
 <div id="status">Caricamento dati…</div>
 <div id="availableMonths" class="month-links"></div>
 <div class="cards" id="kpis"></div>
@@ -87,13 +103,33 @@ table th:last-child,table td:last-child{text-align:right}
 </section>
 <section class="section">
 <h2>Voci da classificare <span class="compact-tag" id="reviewCount">—</span></h2>
-<p>Le voci riconoscibili vengono classificate automaticamente. Qui rimangono soltanto le descrizioni davvero ambigue o non ancora presenti nel catalogo. Una tua correzione non modifica le spese bancarie.</p>
+<p>Le voci riconoscibili vengono classificate automaticamente. Qui rimangono solo quelle incerte. Le correzioni aggiornano l’analisi; se un movimento è già stato suddiviso, occorre prima annullare lo split per mantenerlo coerente.</p>
 <div class="table-scroll"><table><thead><tr><th>Scontrino</th><th>Descrizione</th><th>Importo</th><th>Categoria da assegnare</th></tr></thead><tbody id="reviewLines"></tbody></table></div>
 </section>
 <div class="grid">
-<section class="section"><h2>Spesa per categoria</h2><div class="table-scroll"><table><thead><tr><th>Categoria</th><th>Importo</th></tr></thead><tbody id="categories"></tbody></table></div></section>
-<section class="section"><h2>Tipi di acquisto</h2><div class="table-scroll"><table><thead><tr><th>Tipologia</th><th>Spesa</th><th>Quantità leggibile</th></tr></thead><tbody id="types"></tbody></table></div><p class="kpi-note">Le quantità sono acquisti documentati, non consumi effettivi. “Pezzi/confezioni” non indica necessariamente quante unità contiene una confezione.</p></section>
+ <section class="section">
+  <h2>1 · Tipo di acquisto <small>Raggruppamento generale</small></h2>
+  <p class="kpi-note">Clicca per vedere categorie e prodotti compresi nel tipo.</p>
+  <div class="table-scroll"><table><thead><tr><th>Tipo di acquisto</th><th>Articoli</th><th>Spesa</th></tr></thead><tbody id="categories"></tbody></table></div>
+ </section>
+ <section class="section">
+  <h2>2 · Categoria <small>Livello di dettaglio</small></h2>
+  <p class="kpi-note" id="categoryFilterHint">Seleziona una categoria per vedere gli acquisti. La L2 è la destinazione nel Budget, non un altro livello di prodotti.</p>
+  <div class="table-scroll"><table><thead><tr><th>Categoria</th><th>Spesa</th><th>Quantità</th><th>L2 Budget</th></tr></thead><tbody id="types"></tbody></table></div>
+ </section>
 </div>
+<section class="section" id="drillSection" hidden>
+ <h2>3 · Prodotti acquistati</h2>
+ <div class="drill-nav" id="drillNav"></div>
+ <p class="kpi-note" id="drillNote">Dettaglio dei prodotti nel periodo selezionato.</p>
+ <div class="table-scroll"><table id="productsTable"><thead><tr><th>Data / negozio</th><th>Prodotto</th><th>Categoria</th><th>Quantità</th><th>Importo</th><th>Prezzo unitario</th><th>Scontrino</th></tr></thead><tbody id="products"></tbody></table></div>
+ <div class="drill-actions"><span class="kpi-note" id="drillCounter"></span><div><button id="drillPrev" type="button">← Precedenti</button> <button id="drillNext" type="button">Successivi →</button></div></div>
+</section>
+<section class="section">
+ <h2>Destinazione contabile L2 <small>Per gli split del movimento</small></h2>
+ <p>La categoria di dettaglio viene ricondotta a una L2 esistente. Gli alimentari restano su Supermercato; casa, animali, igiene ed elettronica vengono scorporati quando l'abbinamento bancario e la classificazione sono verificati.</p>
+ <div class="table-scroll"><table><thead><tr><th>Categoria L2 Budget</th><th>Articoli</th><th>Importo attribuito</th><th>Stato</th></tr></thead><tbody id="l2Summary"></tbody></table></div>
+</section>
 <section class="section">
  <h2>Prezzi unitari degli acquisti</h2>
  <p>Prezzi confrontabili per kg o litro, calcolati dall’importo netto e dalla quantità totale. I formati ambigui letti dall’OCR sono segnalati: verifica prima di confrontare definitivamente.</p>
@@ -104,7 +140,7 @@ table th:last-child,table td:last-child{text-align:right}
  </div>
  <div class="table-scroll"><table id="unitPricesTable"><thead><tr><th>Articolo</th><th>Negozio</th><th>Quantità totale</th><th>Importo</th><th>Prezzo unitario</th></tr></thead><tbody id="unitPrices"></tbody></table></div>
 </section>
-<section class="section"><h2>Abbinamenti scontrino–movimento da confermare</h2><p>Stesso importo, data vicina e negozio riconosciuto. Sono suggerimenti, non collegamenti automatici. La conferma e la scrittura contabile verranno abilitate dopo il collaudo dei controlli.</p><div class="table-scroll"><table><thead><tr><th>Scontrino</th><th>Movimento bancario</th><th>Importo</th><th>Scarto</th></tr></thead><tbody id="candidates"></tbody></table></div></section>
+<section class="section"><h2>Abbinamenti scontrino–movimento da confermare</h2><p>I collegamenti automatici avvengono solo con data d’acquisto certa, importo esatto, esercente riconosciuto, categorie complete e movimento senza split preesistenti. Gli abbinamenti residui sono proposte da verificare e non modificano il movimento.</p><div class="table-scroll"><table><thead><tr><th>Scontrino</th><th>Movimento bancario</th><th>Importo</th><th>Scarto</th></tr></thead><tbody id="candidates"></tbody></table></div></section>
 <section class="section"><h2>Scontrini verificati</h2><div class="table-scroll"><table><thead><tr><th>Data</th><th>Negozio</th><th>Totale</th><th>Collegamento</th><th>Articoli</th><th>Split L2</th></tr></thead><tbody id="receipts"></tbody></table></div><div id="receiptDetail" class="table-scroll" style="margin-top:18px" hidden><h2 id="detailTitle">Dettaglio scontrino</h2><p class="kpi-note">Gemini propone nome e categoria, le nostre regole controllano l’esito. Per correggere uno split già applicato, prima annullalo.</p><div id="receiptL2Summary" style="padding:12px;border:1px solid #d5e0f0;border-radius:10px;margin:12px 0"></div><table id="receiptLinesTable"><thead><tr><th>Articolo</th><th>Categoria / correzione</th><th>Quantità / formato</th><th>Importo</th><th>Prezzo al kg/l</th></tr></thead><tbody id="receiptLines"></tbody></table></div></section>
 <p class="kpi-note">Copertura = movimenti classificati «Supermercato» con uno scontrino verificato collegato / movimenti «Supermercato» del mese. Le categorie degli scontrini sono statistiche di dettaglio, non nuove uscite. Gli split automatici modificano la ripartizione L2 del movimento esistente senza generare nuove spese.</p>
 </main>
@@ -285,26 +321,164 @@ async function showReceipt(receipt){
 }
 function showMonths(months,selected){
  const parent=$('availableMonths');parent.replaceChildren();
- const caption=document.createElement('span');caption.className='muted';caption.textContent='Mesi con scontrini:';
+ const caption=document.createElement('span');caption.className='muted';caption.textContent='Mesi disponibili:';
  parent.append(caption);
  for(const month of months||[]){
-   const b=document.createElement('button');b.type='button';
-   b.textContent=month.split('-').reverse().join('/');b.className=month===selected?'active':'';
-   b.addEventListener('click',()=>{$('period').value=month;refresh()});parent.append(b);
+  const b=document.createElement('button');b.type='button';b.textContent=month.split('-').reverse().join('/');
+  b.className=$('periodMode').value==='month'&&month===selected?'active':'';
+  b.addEventListener('click',()=>{
+    $('periodMode').value='month';$('period').value=month;syncPeriodMode();refresh();
+  });
+  parent.append(b);
  }
 }
-function showCategories(items){
- const target=$('categories');target.replaceChildren();
- const max=Math.max(1,...items.map(x=>Number(x.spent_eur||0)));
- if(!items.length){const tr=target.insertRow();const td=tr.insertCell();td.colSpan=2;td.textContent='Nessun dato disponibile';return}
- for(const x of items){
-   const tr=target.insertRow();
-   const td=tr.insertCell();td.textContent=x.group_label;
-   const meter=document.createElement('div');meter.className='category-bar';
-   const b=document.createElement('div');b.style.width=Math.max(0,Math.min(100,Number(x.spent_eur||0)/max*100))+'%';meter.append(b);td.append(meter);
-   cell(tr,euro(x.spent_eur));
+let currentPeriodData=null;
+let currentQuantities=[];
+let selectedGroup=null,selectedCategory=null;
+let drillOffset=0,drillRequestSequence=0,refreshSequence=0;
+const drillPageSize=100;
+
+function syncPeriodMode(){
+ const isMonth=$('periodMode').value==='month';
+ $('monthLabel').hidden=!isMonth;
+ $('prevMonth').hidden=!isMonth;
+ $('nextMonth').hidden=!isMonth;
+}
+function drillSelectionLabel(){
+ const group=(currentPeriodData?.groups||[]).find(x=>x.group_code===selectedGroup);
+ const leaf=(currentPeriodData?.categories||[]).find(x=>x.group_code===selectedGroup&&x.category_code===selectedCategory);
+ return {group,leaf};
+}
+function productLink(textValue,action){
+ const b=document.createElement('button');b.type='button';b.className='drill-link';
+ b.textContent=textValue;b.addEventListener('click',action);return b;
+}
+function showEmptyTable(target,columnCount,message){
+ const tr=target.insertRow(),td=tr.insertCell();td.colSpan=columnCount;td.className='muted';td.textContent=message;
+}
+function quantityFor(categoryCode){
+ if(!categoryCode)return '—';
+ const matches=currentQuantities.filter(x=>x.category_code===categoryCode);
+ return matches.length
+  ?matches.map(x=>niceNumber(x.quantity)+' '+(x.comparable_unit==='piece'?'pezzi/confezioni':x.comparable_unit)).join(' + ')
+  :'—';
+}
+function renderGroupTables(){
+ const groups=currentPeriodData?.groups||[];
+ const max=Math.max(1,...groups.map(x=>Number(x.spent_eur||0)));
+ const tbody=$('categories');tbody.replaceChildren();
+ if(!groups.length)showEmptyTable(tbody,3,'Nessun scontrino verificato nel periodo.');
+ for(const item of groups){
+  const tr=tbody.insertRow();
+  if(selectedGroup===item.group_code)tr.className='selected-row';
+  const td=tr.insertCell();
+  td.append(productLink(item.group_label||'Da classificare',()=>selectGroup(item.group_code)));
+  const meter=document.createElement('div');meter.className='category-bar';
+  const fill=document.createElement('div');fill.style.width=Math.max(0,Math.min(100,Number(item.spent_eur||0)/max*100))+'%';
+  meter.append(fill);td.append(meter);
+  cell(tr,String(item.lines_count||0));cell(tr,euro(item.spent_eur));
+ }
+ const categories=(currentPeriodData?.categories||[]).filter(x=>!selectedGroup||x.group_code===selectedGroup);
+ const catBody=$('types');catBody.replaceChildren();
+ const selection=drillSelectionLabel();
+ $('categoryFilterHint').textContent=selectedGroup
+   ?'Filtro: '+(selection.group?.group_label||selectedGroup)+'. Seleziona una categoria per vedere soltanto quei prodotti.'
+   :'Seleziona una categoria per vedere gli acquisti. La colonna L2 indica dove viene imputata la spesa nel Budget.';
+ if(!categories.length)showEmptyTable(catBody,4,'Nessuna categoria da mostrare.');
+ for(const item of categories){
+  const tr=catBody.insertRow();
+  if(selectedCategory!==null&&item.category_code===selectedCategory&&item.group_code===selectedGroup)tr.className='selected-row';
+  const td=tr.insertCell();td.append(productLink(item.food_type||'Da classificare',()=>selectCategory(item.group_code,item.category_code)));
+  const sub=document.createElement('small');sub.className='price-note';sub.textContent=item.group_label;td.append(sub);
+  cell(tr,euro(item.spent_eur));cell(tr,quantityFor(item.category_code));
+  const l2=tr.insertCell();const tag=document.createElement('span');tag.className='l2-pill';
+  tag.textContent=item.budget_l2||'Da verificare';l2.append(tag);
  }
 }
+function renderL2Summary(items){
+ const target=$('l2Summary');target.replaceChildren();
+ if(!items.length){showEmptyTable(target,4,'Nessun importo da attribuire nel periodo.');return}
+ const labels={food:'Alimentari',mapped:'Mappata',unmapped:'Mappatura mancante',review:'Da classificare'};
+ for(const item of items){
+  const tr=target.insertRow();
+  cell(tr,item.l2_label);cell(tr,item.lines_count);cell(tr,euro(item.amount_eur));
+  cell(tr,labels[item.mapping_status]||item.mapping_status);
+ }
+}
+function selectGroup(groupCode){
+ selectedGroup=groupCode;selectedCategory=null;drillOffset=0;
+ renderGroupTables();loadDrilldown();
+}
+function selectCategory(groupCode,categoryCode){
+ selectedGroup=groupCode;selectedCategory=categoryCode||null;drillOffset=0;
+ renderGroupTables();loadDrilldown();
+}
+function renderDrillNav(){
+ const nav=$('drillNav');nav.replaceChildren();
+ const all=document.createElement('button');all.type='button';all.textContent='Tutti i tipi';
+ all.addEventListener('click',()=>{
+  selectedGroup=null;selectedCategory=null;drillRequestSequence++;
+  $('drillSection').hidden=true;renderGroupTables();
+ });
+ nav.append(all);
+ const {group,leaf}=drillSelectionLabel();
+ if(group){
+  const g=document.createElement('button');g.type='button';g.textContent='› '+(group.group_label||'Tipo');
+  g.addEventListener('click',()=>selectGroup(group.group_code));nav.append(g);
+ }
+ if(leaf&&selectedCategory){
+  const cat=document.createElement('span');cat.textContent='› '+(leaf.food_type||'Categoria');nav.append(cat);
+ }
+}
+async function loadDrilldown(offset=0){
+ if(!selectedGroup&&!selectedCategory){$('drillSection').hidden=true;return}
+ const seq=++drillRequestSequence;
+ drillOffset=offset;$('drillSection').hidden=false;
+ renderDrillNav();
+ const tbody=$('products');tbody.replaceChildren();showEmptyTable(tbody,7,'Caricamento prodotti…');
+ $('drillCounter').textContent='';
+ try{
+  const {data,error}=await sb.rpc('dashboard_receipt_drilldown_v1',{
+   p_period:$('periodMode').value,p_month:$('period').value+'-01',
+   p_group_code:selectedGroup,p_category_code:selectedCategory,
+   p_offset:offset,p_limit:drillPageSize
+  });
+  if(seq!==drillRequestSequence)return;
+  if(error)throw error;
+  const list=data?.lines||[];tbody.replaceChildren();
+  if(!list.length)showEmptyTable(tbody,7,'Nessun prodotto trovato per questo filtro.');
+  for(const item of list){
+   const tr=tbody.insertRow(),date=tr.insertCell();
+   date.textContent=item.receipt_date||'—';
+   const merchant=document.createElement('small');merchant.className='price-note';
+   merchant.textContent=String(item.merchant_raw||'Negozio non identificato').split('\n')[0];date.append(merchant);
+   const product=tr.insertCell();
+   product.textContent=item.normalized_product_name||item.product_name||'Prodotto non riconosciuto';
+   if(item.normalized_product_name&&item.normalized_product_name!==item.product_name){
+    const raw=document.createElement('small');raw.className='price-note';raw.textContent='Scontrino: '+item.product_name;
+    product.append(raw);
+   }
+   cell(tr,item.food_type||'Da classificare');
+   cell(tr,describePackaging(item));cell(tr,euro(item.net_amount));
+   cell(tr,perUnitMoney(item.price_per_unit,item.comparable_unit));
+   const receiptCell=tr.insertCell();
+   const receipt=currentPeriodData?.receipts?.find(r=>r.id===item.receipt_id);
+   receiptCell.append(productLink('Apri',()=>showReceipt(receipt||{
+    id:item.receipt_id,merchant_raw:item.merchant_raw,total_amount:item.net_amount
+   })));
+  }
+  const total=Number(data?.total||0);
+  $('drillCounter').textContent=total?('Prodotti '+(offset+1)+'–'+(offset+list.length)+' su '+total):'Nessun prodotto';
+  $('drillNote').textContent='Prodotti acquistati nel periodo. Gli importi sono quelli delle righe dello scontrino, non nuove transazioni.';
+  $('drillPrev').disabled=offset<=0;$('drillNext').disabled=offset+list.length>=total;
+ }catch(e){
+  if(seq!==drillRequestSequence)return;
+  tbody.replaceChildren();showEmptyTable(tbody,7,'Errore nel caricamento dei prodotti: '+contentError(e));
+ }
+ $('drillSection').scrollIntoView({behavior:'smooth',block:'start'});
+}
+$('drillPrev').addEventListener('click',()=>loadDrilldown(Math.max(0,drillOffset-drillPageSize)));
+$('drillNext').addEventListener('click',()=>loadDrilldown(drillOffset+drillPageSize));
 function renderCoverage(){
  const scope=$('coverageScope').value;
  const current=coverageSnapshot?.scopes?.[scope]||null;
@@ -329,7 +503,7 @@ function renderCoverage(){
      confirmed+' collegati; '+suggested+' con abbinamento candidato; '+
      Math.max(0,total-confirmed-suggested)+' senza scontrino né abbinamento univoco. '+
      'I candidati saranno conteggiati come coperti solo dopo la conferma.'
-   : 'Nessun movimento bancario importato per questa tipologia nel mese selezionato: copertura non calcolabile.';
+   : 'Nessun movimento bancario importato per questa tipologia nel periodo selezionato: copertura non calcolabile.';
  $('coverageScopeNote').textContent=scope==='supermarket'
    ? 'Perimetro: soltanto movimenti in uscita classificati «Supermercato». Data del movimento bancario; nessuna duplicazione della spesa.'
    : 'Perimetro: acquisti in uscita classificati Supermercato, Alimentari specializzati, Prodotti casa e persona, Cibo e accessori, Elettronica, Cura personale o Farmacia. Sono escluse altre spese come mutui, utenze e trasferimenti. Gli abbinamenti suggeriti sono univoci per importo, data e negozio, ma non ancora confermati.';
@@ -337,90 +511,91 @@ function renderCoverage(){
 $('coverageScope').addEventListener('change',renderCoverage);
 
 async function refresh(){
- const month=$('period').value;
+ const mode=$('periodMode').value,month=$('period').value;
  if(!/^20\d{2}-(0[1-9]|1[0-2])$/.test(month))return;
+ const seq=++refreshSequence;
  $('status').textContent='Aggiornamento analisi…';$('refresh').disabled=true;
  try{
-  const [main,summary,quantity,review,coverage,unitPrices,splitStatus]=await Promise.all([
-    sb.rpc('dashboard_receipt_analysis_v1',{p_month:month+'-01'}),
-    sb.rpc('dashboard_receipt_quality_v1',{p_month:month+'-01'}),
-    sb.rpc('dashboard_receipt_quantities_v1',{p_month:month+'-01'}),
-    sb.rpc('dashboard_receipt_review_v1',{p_month:month+'-01'}),
-    sb.rpc('dashboard_receipt_coverage_v2',{p_month:month+'-01'}),
-    sb.rpc('dashboard_receipt_unit_prices_v1',{p_month:month+'-01'}),
-    sb.rpc('dashboard_receipt_auto_split_status_v1',{p_month:month+'-01'})
+  const args={p_period:mode,p_month:month+'-01'};
+  const [rollup,extras,coverage]=await Promise.all([
+   sb.rpc('dashboard_receipt_period_v2',args),
+   sb.rpc('dashboard_receipt_period_extras_v1',args),
+   sb.rpc('dashboard_receipt_period_coverage_v1',args)
   ]);
-  for(const response of [main,summary,quantity,review,coverage,unitPrices,splitStatus])if(response.error)throw response.error;
-  autoSplitStates=new Map((splitStatus.data||[]).map(x=>[x.receipt_id,x]));
-  unitPriceRows=Array.isArray(unitPrices.data)?unitPrices.data:[];
-  renderUnitPrices();
-  coverageSnapshot=coverage.data||null;
-  renderCoverage();
-  const data=main.data||{},quality=summary.data||{},q=quality.quality||{};
-  const c=data.coverage||{},rs=data.receipts||[],candidates=data.candidates||[];
+  for(const response of [rollup,extras,coverage])if(response.error)throw response.error;
+  if(seq!==refreshSequence)return;
+  const data=rollup.data||{}, extra=extras.data||{},q=data.summary||{};
+  const rs=data.receipts||[],candidates=data.candidates||[];
   await availableCategories();
-  showMonths(quality.available_months||[],month);
-  const pct=q.lines_total?Math.round(100*Number(q.lines_classified||0)/Number(q.lines_total)):0;
+  if(seq!==refreshSequence)return;
+  currentPeriodData=data;
+  currentQuantities=extra.quantities||[];
+  unitPriceRows=extra.unit_prices||[];
+  autoSplitStates=new Map((data.split_status||[]).map(x=>[x.receipt_id,x]));
+  coverageSnapshot=coverage.data||{};
+  selectedGroup=null;selectedCategory=null;drillOffset=0;drillRequestSequence++;
+  $('drillSection').hidden=true;
+  renderUnitPrices();renderCoverage();renderGroupTables();renderL2Summary(data.l2||[]);
+  showMonths(data.months||[],month);
+  const pct=q.lines?Math.round(100*Number(q.classified||0)/Number(q.lines)):0;
+  $('periodRange').textContent=mode==='all'
+   ? 'Tutti gli scontrini verificati fino al '+(data.date_to||'mese corrente')
+   : 'Dal '+data.date_from+' al '+data.date_to+' · importi e quantità aggregati sul periodo';
   $('kpis').replaceChildren(
-    metric('Scontrini verificati',String(rs.length),euro(rs.reduce((n,x)=>n+Number(x.total_amount||0),0))+' acquisiti'),
-    metric('Spesa alimentare',euro(q.spent_food),'Articoli classificati'),
-    metric('Acquisti non alimentari',euro(q.spent_nonfood),'Casa, animali, igiene e altri'),
-    metric('Da classificare',euro(q.spent_needing_review),Number(q.lines_needing_review||0)+' descrizioni ambigue'),
-    metric('Righe classificate',pct+'%',Number(q.lines_classified||0)+' di '+Number(q.lines_total||0)+' righe'),
-    metric('Abbinamenti da verificare',String(candidates.length),'Proposte, non ancora collegate')
+   metric('Scontrini verificati',String(rs.length),euro(rs.reduce((n,x)=>n+Number(x.total_amount||0),0))+' acquisiti'),
+   metric('Spesa alimentare',euro(q.food),'Righe alimentari classificate'),
+   metric('Acquisti non alimentari',euro(q.nonfood),'Casa, animali, igiene e altri'),
+   metric('Da classificare',euro(q.unclassified),Number(q.needs_review||0)+' righe ambigue'),
+   metric('Righe classificate',pct+'%',Number(q.classified||0)+' di '+Number(q.lines||0)+' righe'),
+   metric('Abbinamenti da verificare',String(candidates.length),'Suggerimenti non ancora collegati')
   );
-  $('qualityNote').textContent='Gli scontrini verificati sono già consultabili. '+
-    (Number(quality.pending_analysis||0)?quality.pending_analysis+' scontrino/i ancora da verificare o analizzare (esclusi dai totali). ':'')+
-    'Classificazione e importi non creano nuovi movimenti bancari.';
-  const reviews=Array.isArray(review.data)?review.data:[];
+  $('qualityNote').textContent='Le statistiche si riferiscono a scontrini già verificati nel periodo. '+
+    (Number(data.pending||0)?Number(data.pending)+' documenti da verificare o analizzare, non conteggiati. ':'')+
+    'La classificazione dei prodotti non aggiunge spese bancarie; lo split modifica soltanto la ripartizione L2.';
+  const reviews=data.unclassified||[];
   $('reviewCount').textContent=reviews.length+' voci';
   const body=$('reviewLines');body.replaceChildren();
-  if(!reviews.length){const tr=body.insertRow();const td=tr.insertCell();td.colSpan=4;td.className='muted';td.textContent='Tutti gli articoli verificati del mese sono classificati.'}
-  for(const x of reviews){
-    const tr=body.insertRow();
-    cell(tr,x.receipt_date+' · '+x.merchant);
-    cell(tr,x.product_name);
-    cell(tr,euro(x.net_amount));
-    tr.insertCell().append(categorySelect(x));
+  if(!reviews.length)showEmptyTable(body,4,'Tutti gli articoli verificati nel periodo sono classificati.');
+  for(const item of reviews){
+   const tr=body.insertRow();
+   cell(tr,item.receipt_date+' · '+String(item.merchant||'Negozio non riconosciuto').split('\n')[0]);
+   cell(tr,item.product_name);cell(tr,euro(item.net_amount));
+   tr.insertCell().append(categorySelect(item));
   }
-  showCategories(data.categories||[]);
-  const quantities=Array.isArray(quantity.data)?quantity.data:[];
-  const qtyFor=categoryCode=>{
-    const matches=quantities.filter(x=>x.category_code===categoryCode);
-    if(!matches.length)return '—';
-    return matches.map(x=>niceNumber(x.quantity)+' '+(x.comparable_unit==='piece'?'pezzi/confezioni':x.comparable_unit)).join(' + ');
-  };
-  rows('types',data.types||[],[x=>x.food_type||'Da classificare',x=>euro(x.spent_eur),x=>qtyFor(x.category_code)]);
-  rows('candidates',candidates,[x=>x.receipt_merchant,x=>x.bank_description,x=>euro(x.receipt_total),x=>x.days_apart+' giorni']);
-  const receiptsBody=$('receipts');receiptsBody.replaceChildren();$('receiptDetail').hidden=true;
-  if(!rs.length){const tr=receiptsBody.insertRow();const td=tr.insertCell();td.colSpan=6;td.textContent='Nessuno scontrino verificato per questo mese'}
+  rows('candidates',candidates,[
+   x=>x.receipt_merchant,x=>x.bank_description,x=>euro(x.receipt_total),x=>x.days_apart+' giorni'
+  ]);
+  const receiptsBody=$('receipts');receiptsBody.replaceChildren();
+  $('receiptDetail').hidden=true;
+  if(!rs.length)showEmptyTable(receiptsBody,6,'Nessuno scontrino verificato per questo periodo');
   for(const receipt of rs){
-    const tr=receiptsBody.insertRow();
-    const name=receipt.merchant_raw?.split('\n')[0]||'Esercente non riconosciuto';
-    cell(tr,receipt.receipt_date+(receipt.actual_purchase_date?'':' (caricamento)'));
-    cell(tr,name);
-    cell(tr,euro(receipt.total_amount));
-    cell(tr,receipt.linked_transaction_id?'Collegato':'Da collegare');
-    const b=document.createElement('button');b.type='button';b.textContent='Dettaglio';b.addEventListener('click',()=>showReceipt(receipt));
-    tr.insertCell().append(b);
-    const manager=tr.insertCell(),state=autoSplitStates.get(receipt.id);
-    if(state?.status==='active'){
-      const tag=document.createElement('span');tag.className='compact-tag';
-      tag.textContent=state.split_count+' ripartizioni';manager.append(tag);
-      const undo=document.createElement('button');undo.type='button';undo.textContent='Annulla';
-      undo.style.marginLeft='8px';undo.addEventListener('click',()=>undoReceiptSplit(receipt));manager.append(undo);
-    }else{
-      manager.textContent=state?.status==='reverted'?'Annullato':receipt.linked_transaction_id?'Collegato':'In attesa';
-    }
+   const tr=receiptsBody.insertRow();
+   const name=receipt.merchant_raw?.split('\n')[0]||'Esercente non riconosciuto';
+   cell(tr,receipt.receipt_date+(receipt.actual_purchase_date?'':' (caricamento)'));
+   cell(tr,name);cell(tr,euro(receipt.total_amount));
+   cell(tr,receipt.linked_transaction_id?'Collegato':'Da collegare');
+   const b=document.createElement('button');b.type='button';b.textContent='Dettaglio';
+   b.addEventListener('click',()=>showReceipt(receipt));tr.insertCell().append(b);
+   const manager=tr.insertCell(),state=autoSplitStates.get(receipt.id);
+   if(state?.status==='active'){
+    const tag=document.createElement('span');tag.className='compact-tag';tag.textContent=state.split_count+' ripartizioni';
+    manager.append(tag);
+    const undo=document.createElement('button');undo.type='button';undo.textContent='Annulla';
+    undo.style.marginLeft='8px';undo.addEventListener('click',()=>undoReceiptSplit(receipt));manager.append(undo);
+   }else manager.textContent=state?.status==='reverted'?'Annullato':receipt.linked_transaction_id?'Collegato':'In attesa';
   }
-  $('status').textContent='Dati disponibili · '+month+' · solo scontrini verificati';
+  const label=mode==='month'?month:mode==='rolling12'?'ultimi 12 mesi':'tutto lo storico';
+  $('status').textContent='Dati disponibili · '+label+' · scontrini verificati';
  }catch(e){
-  $('status').textContent='Errore nel caricamento: '+contentError(e)+' · Torna a Reporting ed effettua nuovamente l’accesso se necessario.';
- }finally{$('refresh').disabled=false}
+  if(seq===refreshSequence)
+   $('status').textContent='Errore nel caricamento: '+contentError(e)+' · Verifica l’accesso a Reporting.';
+ }finally{if(seq===refreshSequence)$('refresh').disabled=false}
 }
 const f=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Rome',year:'numeric',month:'2-digit'}).formatToParts(new Date());
 $('period').value=f.find(x=>x.type==='year').value+'-'+f.find(x=>x.type==='month').value;
 $('refresh').addEventListener('click',refresh);$('period').addEventListener('change',refresh);
+$('periodMode').addEventListener('change',()=>{syncPeriodMode();refresh()});
+syncPeriodMode();
 function monthShift(delta){
  const current=$('period').value;
  if(!/^20\d{2}-(0[1-9]|1[0-2])$/.test(current))return;
