@@ -1,7 +1,7 @@
 // Canonical source: massimospazio/budget-familiare; public files are deployed automatically.
 (function(){
-  const APP_VERSION='V74.3.43';
-  const APP_RELEASE='Gemini normalizza prodotti e scontrini generano split L2 sicuri';
+  const APP_VERSION='V74.3.44';
+  const APP_RELEASE='Scontrini: drill-down prodotti, periodi aggregati e mappatura categorie L2';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});
