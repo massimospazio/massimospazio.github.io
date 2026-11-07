@@ -87,7 +87,7 @@ table th:last-child,table td:last-child{text-align:right}
 </section>
 <section class="section">
 <h2>Voci da classificare <span class="compact-tag" id="reviewCount">—</span></h2>
-<p>Descrizioni ambigue che non vengono assegnate automaticamente. Seleziona la categoria corretta: resta tracciata e non modifica le spese bancarie.</p>
+<p>Le voci riconoscibili vengono classificate automaticamente. Qui rimangono soltanto le descrizioni davvero ambigue o non ancora presenti nel catalogo. Una tua correzione non modifica le spese bancarie.</p>
 <div class="table-scroll"><table><thead><tr><th>Scontrino</th><th>Descrizione</th><th>Importo</th><th>Categoria da assegnare</th></tr></thead><tbody id="reviewLines"></tbody></table></div>
 </section>
 <div class="grid">
@@ -135,7 +135,7 @@ function categorySelect(line,currentReceipt=null){
  const el=document.createElement('select');el.className='review-select';
  el.setAttribute('aria-label','Categoria per '+(line.product_name||'articolo'));
  const option=document.createElement('option');option.value='';
- option.textContent='— Classificazione automatica';el.append(option);
+ option.textContent=line.category_code?'— Ripristina classificazione automatica':'— Non classificato: scegli categoria';el.append(option);
  const groups=new Map();
  for(const item of cachedCategories||[]){
    const label=item.parent||item.label;
