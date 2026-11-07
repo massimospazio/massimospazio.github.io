@@ -105,8 +105,8 @@ table th:last-child,table td:last-child{text-align:right}
  <div class="table-scroll"><table id="unitPricesTable"><thead><tr><th>Articolo</th><th>Negozio</th><th>Quantità totale</th><th>Importo</th><th>Prezzo unitario</th></tr></thead><tbody id="unitPrices"></tbody></table></div>
 </section>
 <section class="section"><h2>Abbinamenti scontrino–movimento da confermare</h2><p>Stesso importo, data vicina e negozio riconosciuto. Sono suggerimenti, non collegamenti automatici. La conferma e la scrittura contabile verranno abilitate dopo il collaudo dei controlli.</p><div class="table-scroll"><table><thead><tr><th>Scontrino</th><th>Movimento bancario</th><th>Importo</th><th>Scarto</th></tr></thead><tbody id="candidates"></tbody></table></div></section>
-<section class="section"><h2>Scontrini verificati</h2><div class="table-scroll"><table><thead><tr><th>Data</th><th>Negozio</th><th>Totale</th><th>Collegamento</th><th>Articoli</th></tr></thead><tbody id="receipts"></tbody></table></div><div id="receiptDetail" class="table-scroll" style="margin-top:18px" hidden><h2 id="detailTitle">Dettaglio scontrino</h2><p class="kpi-note">Puoi correggere la categoria di ogni riga. Il testo originale dello scontrino rimane invariato.</p><table id="receiptLinesTable"><thead><tr><th>Articolo</th><th>Categoria / correzione</th><th>Quantità / formato</th><th>Importo</th><th>Prezzo al kg/l</th></tr></thead><tbody id="receiptLines"></tbody></table></div></section>
-<p class="kpi-note">Copertura = movimenti classificati «Supermercato» con uno scontrino verificato collegato / movimenti «Supermercato» del mese. Le categorie degli scontrini sono statistiche di dettaglio, non nuove uscite. La prima release non modifica movimenti né split esistenti.</p>
+<section class="section"><h2>Scontrini verificati</h2><div class="table-scroll"><table><thead><tr><th>Data</th><th>Negozio</th><th>Totale</th><th>Collegamento</th><th>Articoli</th><th>Split L2</th></tr></thead><tbody id="receipts"></tbody></table></div><div id="receiptDetail" class="table-scroll" style="margin-top:18px" hidden><h2 id="detailTitle">Dettaglio scontrino</h2><p class="kpi-note">Gemini propone nome e categoria, le nostre regole controllano l’esito. Per correggere uno split già applicato, prima annullalo.</p><div id="receiptL2Summary" style="padding:12px;border:1px solid #d5e0f0;border-radius:10px;margin:12px 0"></div><table id="receiptLinesTable"><thead><tr><th>Articolo</th><th>Categoria / correzione</th><th>Quantità / formato</th><th>Importo</th><th>Prezzo al kg/l</th></tr></thead><tbody id="receiptLines"></tbody></table></div></section>
+<p class="kpi-note">Copertura = movimenti classificati «Supermercato» con uno scontrino verificato collegato / movimenti «Supermercato» del mese. Le categorie degli scontrini sono statistiche di dettaglio, non nuove uscite. Gli split automatici modificano la ripartizione L2 del movimento esistente senza generare nuove spese.</p>
 </main>
 <script>
 const sb=window.appSupabase;
@@ -121,6 +121,7 @@ function metric(title,value,note){const el=document.createElement('div');el.clas
 let cachedCategories=null;
 let coverageSnapshot=null;
 let unitPriceRows=[];
+let autoSplitStates=new Map();
 const contentError=err=>String(err?.message||err||'Errore sconosciuto');
 const niceNumber=value=>new Intl.NumberFormat('it-IT',{maximumFractionDigits:3}).format(Number(value||0));
 
@@ -224,30 +225,62 @@ function renderUnitPrices(){
 $('unitPriceFilter').addEventListener('change',renderUnitPrices);
 $('unitPriceReliable').addEventListener('change',renderUnitPrices);
 
+async function undoReceiptSplit(receipt){
+ if(!window.confirm('Annullare gli split e il collegamento bancario per '+euro(receipt.total_amount)+'?'))return;
+ try{
+   const {data,error}=await sb.rpc('dashboard_receipt_revert_auto_split_v1',{p_receipt_id:receipt.id});
+   if(error)throw error;if(!data?.reverted)throw new Error('Non confermato');
+   await refresh();$('status').textContent='Split annullato. Non verrà riapplicato senza un nuovo intervento.';
+ }catch(e){$('status').textContent='Errore annullamento split: '+contentError(e)}
+}
 async function showReceipt(receipt){
  const box=$('receiptDetail');box.hidden=false;
  $('detailTitle').textContent='Articoli · '+(receipt.merchant_raw?.split('\n')[0]||'Esercente non riconosciuto')+' · '+euro(receipt.total_amount);
  const body=$('receiptLines');body.replaceChildren();body.insertRow().insertCell().textContent='Caricamento articoli…';
+ const info=$('receiptL2Summary');info.textContent='Caricamento proposte L2…';
  try{
-  await availableCategories();
-  const {data,error}=await sb.rpc('dashboard_receipt_lines_v1',{p_receipt_id:receipt.id});
-  if(error)throw error;
-  body.replaceChildren();
-  if(!data?.length){body.insertRow().insertCell().textContent='Nessuna riga disponibile';return}
-  for(const line of data){
-   const tr=body.insertRow();
-   cell(tr,line.product_name||'Voce senza nome');
-   const td=tr.insertCell();
-   const heading=document.createElement('div');heading.textContent=[line.group_label,line.food_type].filter(Boolean).join(' · ');td.append(heading);
-   if(line.classification_status==='manual'){
-     const note=document.createElement('small');note.className='compact-tag';note.textContent='Corretta manualmente';td.append(note);
+   await availableCategories();
+   const [orig,sem]=await Promise.all([
+     sb.rpc('dashboard_receipt_lines_v1',{p_receipt_id:receipt.id}),
+     sb.rpc('dashboard_receipt_semantic_v1',{p_receipt_id:receipt.id})
+   ]);
+   if(orig.error)throw orig.error;if(sem.error)throw sem.error;
+   const data=orig.data||[],semantic=sem.data||{};
+   const aiByLine=new Map((semantic.lines||[]).map(x=>[Number(x.line_number),x]));
+   const state=autoSplitStates.get(receipt.id);
+   info.replaceChildren();
+   const heading=document.createElement('strong');
+   heading.textContent=state?.status==='active'?'Ripartizione L2 applicata':'Proposta di ripartizione L2';info.append(heading);
+   const amounts=new Map();
+   for(const a of semantic.l2_allocations||[]){
+      const target=a.status==='food'?'Supermercato':a.status==='mapped_nonfood'?a.target_l2:'Da verificare';
+      amounts.set(target,(amounts.get(target)||0)+Number(a.amount||0));
    }
-   td.append(categorySelect(line,receipt));
-   cell(tr,describePackaging(line));
-   cell(tr,euro(line.amount));
-   pricePresentation(tr.insertCell(),{...line,net_amount:line.amount});
-  }
- }catch(e){body.replaceChildren();body.insertRow().insertCell().textContent='Errore: '+contentError(e)}
+   const list=document.createElement('ul');list.style.paddingLeft='20px';
+   for(const [target,value] of amounts){const li=document.createElement('li');li.textContent=target+': '+euro(value);list.append(li)}
+   info.append(list);
+   const hint=document.createElement('small');hint.className='muted';
+   hint.textContent=state?.status==='active'?'Split già presente sul movimento bancario':'La ripartizione rimane indicativa finché lo scontrino non è collegato univocamente al movimento.';
+   info.append(hint);
+   body.replaceChildren();
+   if(!data.length){const td=body.insertRow().insertCell();td.colSpan=5;td.textContent='Nessuna riga disponibile';return}
+   for(const line of data){
+      const tr=body.insertRow(),ai=aiByLine.get(Number(line.line_number));
+      const name=tr.insertCell();name.textContent=line.product_name||'Voce senza nome';
+      if(ai?.normalized_name&&String(ai.normalized_name).trim().toLowerCase()!==String(line.product_name||'').trim().toLowerCase()){
+         const nm=document.createElement('small');nm.className='price-note';nm.textContent='Normalizzato: '+ai.normalized_name;name.append(nm);
+      }
+      const td=tr.insertCell();
+      const label=document.createElement('div');label.textContent=[line.group_label,line.food_type].filter(Boolean).join(' · ');td.append(label);
+      const source=document.createElement('small');source.className='price-note';
+      source.textContent=({manual:'Correzione manuale',gemini:'Gemini',ai_and_rule:'Gemini + regola',code_rule:'Regola',ai_rule_conflict:'Conflitto da verificare'})[ai?.source]||'Non classificato';td.append(source);
+      const selector=categorySelect(line,receipt);
+      if(state?.status==='active'){selector.disabled=true;selector.title='Annulla lo split prima di correggere la categoria';}
+      td.append(selector);
+      cell(tr,describePackaging(line));cell(tr,euro(line.amount));
+      pricePresentation(tr.insertCell(),{...line,net_amount:line.amount});
+   }
+ }catch(e){info.textContent='Dettaglio L2 non disponibile: '+contentError(e);body.replaceChildren();const td=body.insertRow().insertCell();td.colSpan=5;td.textContent='Errore: '+contentError(e)}
  box.scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 function showMonths(months,selected){
@@ -308,15 +341,17 @@ async function refresh(){
  if(!/^20\d{2}-(0[1-9]|1[0-2])$/.test(month))return;
  $('status').textContent='Aggiornamento analisi…';$('refresh').disabled=true;
  try{
-  const [main,summary,quantity,review,coverage,unitPrices]=await Promise.all([
+  const [main,summary,quantity,review,coverage,unitPrices,splitStatus]=await Promise.all([
     sb.rpc('dashboard_receipt_analysis_v1',{p_month:month+'-01'}),
     sb.rpc('dashboard_receipt_quality_v1',{p_month:month+'-01'}),
     sb.rpc('dashboard_receipt_quantities_v1',{p_month:month+'-01'}),
     sb.rpc('dashboard_receipt_review_v1',{p_month:month+'-01'}),
     sb.rpc('dashboard_receipt_coverage_v2',{p_month:month+'-01'}),
-    sb.rpc('dashboard_receipt_unit_prices_v1',{p_month:month+'-01'})
+    sb.rpc('dashboard_receipt_unit_prices_v1',{p_month:month+'-01'}),
+    sb.rpc('dashboard_receipt_auto_split_status_v1',{p_month:month+'-01'})
   ]);
-  for(const response of [main,summary,quantity,review,coverage,unitPrices])if(response.error)throw response.error;
+  for(const response of [main,summary,quantity,review,coverage,unitPrices,splitStatus])if(response.error)throw response.error;
+  autoSplitStates=new Map((splitStatus.data||[]).map(x=>[x.receipt_id,x]));
   unitPriceRows=Array.isArray(unitPrices.data)?unitPrices.data:[];
   renderUnitPrices();
   coverageSnapshot=coverage.data||null;
@@ -358,7 +393,7 @@ async function refresh(){
   rows('types',data.types||[],[x=>x.food_type||'Da classificare',x=>euro(x.spent_eur),x=>qtyFor(x.category_code)]);
   rows('candidates',candidates,[x=>x.receipt_merchant,x=>x.bank_description,x=>euro(x.receipt_total),x=>x.days_apart+' giorni']);
   const receiptsBody=$('receipts');receiptsBody.replaceChildren();$('receiptDetail').hidden=true;
-  if(!rs.length){const tr=receiptsBody.insertRow();const td=tr.insertCell();td.colSpan=5;td.textContent='Nessuno scontrino verificato per questo mese'}
+  if(!rs.length){const tr=receiptsBody.insertRow();const td=tr.insertCell();td.colSpan=6;td.textContent='Nessuno scontrino verificato per questo mese'}
   for(const receipt of rs){
     const tr=receiptsBody.insertRow();
     const name=receipt.merchant_raw?.split('\n')[0]||'Esercente non riconosciuto';
@@ -368,6 +403,15 @@ async function refresh(){
     cell(tr,receipt.linked_transaction_id?'Collegato':'Da collegare');
     const b=document.createElement('button');b.type='button';b.textContent='Dettaglio';b.addEventListener('click',()=>showReceipt(receipt));
     tr.insertCell().append(b);
+    const manager=tr.insertCell(),state=autoSplitStates.get(receipt.id);
+    if(state?.status==='active'){
+      const tag=document.createElement('span');tag.className='compact-tag';
+      tag.textContent=state.split_count+' ripartizioni';manager.append(tag);
+      const undo=document.createElement('button');undo.type='button';undo.textContent='Annulla';
+      undo.style.marginLeft='8px';undo.addEventListener('click',()=>undoReceiptSplit(receipt));manager.append(undo);
+    }else{
+      manager.textContent=state?.status==='reverted'?'Annullato':receipt.linked_transaction_id?'Collegato':'In attesa';
+    }
   }
   $('status').textContent='Dati disponibili · '+month+' · solo scontrini verificati';
  }catch(e){
