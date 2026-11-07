@@ -56,11 +56,35 @@ table th:last-child,table td:last-child{text-align:right}
 .selected-row{background:#edf5ff}.l2-pill{font-size:11px;background:#f1f5f9;color:#46576b;padding:3px 6px;border-radius:8px;white-space:nowrap}
 #productsTable{min-width:790px}.section h2 small{font-size:12px;font-weight:400;color:#64748b}
 @media(max-width:650px){.toolbar{justify-content:flex-start}#availableMonths{overflow:auto}.grid{grid-template-columns:1fr}}
+.admin-header{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.admin-header button{font-size:13px;padding:8px 12px}
+.admin-panel{margin-top:18px;padding:15px;background:#f8fafc;border:1px solid #e1e9f5;border-radius:12px}
+.admin-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:18px}
+.admin-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;margin-top:14px}
+.admin-form label{display:flex;flex-direction:column;font-size:13px;gap:5px}
+.admin-form input,.admin-form select{width:100%;font:inherit;border:1px solid #cbd5e1;border-radius:7px;padding:8px;background:#fff}
+.admin-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 0}
+.admin-controls button,.mini-button{font-size:12px;padding:6px 8px;border-radius:7px}
+.mini-button{background:#eff4fb;color:#24558a;border:1px solid #c9dbf1}
+.mini-button:hover{background:#dceafb}
+.admin-status{font-size:12px;min-height:18px;margin-top:8px}
+.admin-tables{max-height:350px;overflow:auto}
+.admin-tables table{font-size:12px}
+.admin-tables td,.admin-tables th{padding:6px}
+.admin-choice{font:inherit;max-width:170px;width:100%;padding:5px;background:#fff;border:1px solid #cbd5e1}
+.brand-toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.brand-toolbar select{font:inherit;border:1px solid #cbd5e1;border-radius:7px;padding:6px;background:#fff}
+.brand-note{font-size:12px;color:#64748b;margin:7px 0}
+.brand-stats-table{min-width:530px}
+#adminSection summary{font-size:18px;font-weight:650;cursor:pointer;color:#204d79}
+#adminSection summary:hover{color:#15366b}
+@media(max-width:500px){.admin-grid{grid-template-columns:1fr}}
 </style></head>
 <body>
 <header><div><b>Budget Familiare</b> <span class="pill">Analisi Scontrini · Tipi, categorie e L2</span></div><a href="../index.html">← Torna a Reporting</a></header>
 <main>
 <h1>Analisi Scontrini</h1>
+<p class="brand-note"><a href="#adminSection">Gestisci tipi di acquisto, categorie e negozi</a></p>
 <p>Spesa per categoria, dettaglio alimenti e collegamento ai movimenti bancari. Telegram serve soltanto per caricare e verificare le foto.</p>
 <div class="toolbar">
  <div class="period-select"><label for="periodMode">Periodo
@@ -130,6 +154,66 @@ table th:last-child,table td:last-child{text-align:right}
  <p>La categoria di dettaglio viene ricondotta a una L2 esistente. Gli alimentari restano su Supermercato; casa, animali, igiene ed elettronica vengono scorporati quando l'abbinamento bancario e la classificazione sono verificati.</p>
  <div class="table-scroll"><table><thead><tr><th>Categoria L2 Budget</th><th>Articoli</th><th>Importo attribuito</th><th>Stato</th></tr></thead><tbody id="l2Summary"></tbody></table></div>
 </section>
+<section class="section" id="brandAnalysis">
+ <h2>Analisi per insegna commerciale</h2>
+ <p>Raggruppiamo negozi con ragioni sociali diverse sotto un unico brand. I prezzi osservati in €/kg e €/l sono indicativi: per stabilire quale negozio conviene è necessario confrontare <strong>lo stesso prodotto</strong>, con formato e qualità dei dati confrontabili.</p>
+ <div class="table-scroll"><table class="brand-stats-table"><thead><tr><th>Insegna</th><th>Scontrini</th><th>Spesa</th><th>Scontrino medio</th></tr></thead><tbody id="brandStats"></tbody></table></div>
+ <div class="brand-toolbar"><label>Prezzi rilevati per insegna
+ <select id="brandFilter"><option value="all">Tutte le insegne</option></select></label>
+ <span class="kpi-note" id="brandUnitCount"></span></div>
+ <div class="table-scroll"><table><thead><tr><th>Prodotto</th><th>Insegna</th><th>Data</th><th>Prezzo</th><th>Affidabilità</th></tr></thead><tbody id="brandPrices"></tbody></table></div>
+ <p class="brand-note" id="brandCompareNote"></p>
+</section>
+<details class="section" id="adminSection">
+ <summary>Anagrafica · tipi, categorie e negozi</summary>
+ <p>Le etichette sono modificabili, i codici interni rimangono invariati. Le modifiche di destinazione L2 che interessano split bancari già applicati sono protette. Non eliminiamo automaticamente le categorie storiche.</p>
+ <div class="admin-grid">
+  <div class="admin-panel">
+   <h2>Tipi e categorie</h2>
+   <div class="admin-controls"><button type="button" id="addGroup">+ Nuovo tipo</button><button type="button" id="addCategory">+ Nuova categoria</button></div>
+   <div class="admin-tables"><table><thead><tr><th>Tipo / categoria</th><th>Articoli</th><th>L2 Budget</th><th></th></tr></thead><tbody id="taxonomyRows"></tbody></table></div>
+   <form id="taxonomyForm" hidden>
+    <h3 id="taxonomyTitle">Categoria</h3>
+    <input type="hidden" id="taxCode">
+    <div class="admin-form">
+     <label>Livello <select id="taxLevel"><option value="group">Tipo di acquisto</option><option value="category">Categoria</option></select></label>
+     <label id="taxParentWrap">Tipo di acquisto <select id="taxParent"></select></label>
+     <label>Nome <input id="taxName" required maxlength="90" autocomplete="off" placeholder="Es. Prodotti per bambini"></label>
+     <label id="taxFoodWrap">Natura <select id="taxFood"><option value="true">Alimentare</option><option value="false">Non alimentare</option></select></label>
+     <label id="taxL2Wrap">Destinazione L2 Budget <select id="taxL2"></select></label>
+    </div>
+    <p class="brand-note" id="taxHelp"></p>
+    <div class="admin-controls"><button type="submit" id="taxSave">Salva</button><button type="button" id="taxCancel" class="mini-button">Annulla</button></div>
+    <div id="taxStatus" class="admin-status"></div>
+   </form>
+  </div>
+  <div class="admin-panel">
+   <h2>Insegne e alias</h2>
+   <p class="brand-note">Un alias identifica l'insegna anche se la ragione sociale cambia. Puoi correggere una ricevuta senza toccarne il testo originale.</p>
+   <div class="admin-controls"><button type="button" id="addBrand">+ Nuova insegna</button><button type="button" id="addAlias">+ Nuovo alias</button></div>
+   <div class="admin-tables"><table><thead><tr><th>Insegna</th><th>Alias</th><th></th></tr></thead><tbody id="brandAdminRows"></tbody></table></div>
+   <form id="brandForm" hidden>
+    <h3 id="brandTitle">Insegna</h3><input type="hidden" id="brandCode">
+    <div class="admin-form"><label>Nome insegna <input id="brandName" required maxlength="90" placeholder="Es. Conad"></label></div>
+    <div class="admin-controls"><button type="submit">Salva insegna</button><button type="button" id="brandCancel" class="mini-button">Annulla</button></div>
+   </form>
+   <form id="aliasForm" hidden>
+    <h3 id="aliasTitle">Alias insegna</h3><input type="hidden" id="aliasId">
+    <div class="admin-form">
+     <label>Insegna <select id="aliasBrand" required></select></label>
+     <label>Testo riconoscibile <input id="aliasText" required minlength="3" maxlength="120" placeholder="Es. CONAD CUBO"></label>
+     <label>Stato <select id="aliasActive"><option value="true">Attivo</option><option value="false">Disattivato</option></select></label>
+    </div>
+    <p class="brand-note">Usa un testo sufficientemente specifico. Un alias troppo generico potrebbe associare scontrini al negozio sbagliato.</p>
+    <div class="admin-controls"><button type="submit">Salva alias</button><button type="button" id="aliasCancel" class="mini-button">Annulla</button></div>
+   </form>
+   <h3>Alias configurati</h3><div class="admin-tables"><table><thead><tr><th>Testo</th><th>Insegna</th><th>Stato</th><th></th></tr></thead><tbody id="aliasRows"></tbody></table></div>
+   <h3>Associazione scontrini</h3><p class="brand-note">Scegli manualmente l'insegna solo se l'estrazione non permette il riconoscimento automatico o è errata.</p>
+   <div class="admin-tables"><table><thead><tr><th>Scontrino</th><th>Riconoscimento</th><th>Assegna insegna</th></tr></thead><tbody id="brandReceipts"></tbody></table></div>
+   <div id="brandAdminStatus" class="admin-status"></div>
+  </div>
+ </div>
+</details>
 <section class="section">
  <h2>Prezzi unitari degli acquisti</h2>
  <p>Prezzi confrontabili per kg o litro, calcolati dall’importo netto e dalla quantità totale. I formati ambigui letti dall’OCR sono segnalati: verifica prima di confrontare definitivamente.</p>
@@ -147,6 +231,7 @@ table th:last-child,table td:last-child{text-align:right}
 <script>
 const sb=window.appSupabase;
 const $=id=>document.getElementById(id);
+document.querySelector('a[href="#adminSection"]').addEventListener('click',()=>{$('adminSection').open=true});
 const euro=n=>new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR'}).format(Number(n||0));
 const decimal=n=>new Intl.NumberFormat('it-IT',{maximumFractionDigits:1}).format(Number(n||0));
 function cell(row,value,cls){const td=document.createElement('td');td.textContent=String(value??'—');if(cls)td.className=cls;row.appendChild(td)}
@@ -253,7 +338,8 @@ function renderUnitPrices(){
    const product=tr.insertCell();product.textContent=item.product_name||'Articolo senza descrizione';
    const sub=document.createElement('small');sub.className='price-note';
    sub.textContent=String(item.reference_date||'').slice(0,10);product.append(sub);
-   cell(tr,String(item.merchant_raw||'Non riconosciuto').split('\n')[0]);
+   const bm=brandForReceipt(item.receipt_id);
+   cell(tr,bm?.brand_name||String(item.merchant_raw||'Non riconosciuto').split('\n')[0]);
    cell(tr,describePackaging(item));cell(tr,euro(item.net_amount));
    pricePresentation(tr.insertCell(),item);
  }
@@ -271,7 +357,8 @@ async function undoReceiptSplit(receipt){
 }
 async function showReceipt(receipt){
  const box=$('receiptDetail');box.hidden=false;
- $('detailTitle').textContent='Articoli · '+(receipt.merchant_raw?.split('\n')[0]||'Esercente non riconosciuto')+' · '+euro(receipt.total_amount);
+ $('detailTitle').textContent='Articoli · '+(brandForReceipt(receipt.id)?.brand_name||
+    receipt.merchant_raw?.split('\n')[0]||'Esercente non riconosciuto')+' · '+euro(receipt.total_amount);
  const body=$('receiptLines');body.replaceChildren();body.insertRow().insertCell().textContent='Caricamento articoli…';
  const info=$('receiptL2Summary');info.textContent='Caricamento proposte L2…';
  try{
@@ -451,7 +538,9 @@ async function loadDrilldown(offset=0){
    const tr=tbody.insertRow(),date=tr.insertCell();
    date.textContent=item.receipt_date||'—';
    const merchant=document.createElement('small');merchant.className='price-note';
-   merchant.textContent=String(item.merchant_raw||'Negozio non identificato').split('\n')[0];date.append(merchant);
+   const brand=brandForReceipt(item.receipt_id);
+   merchant.textContent=brand?.brand_name||String(item.merchant_raw||'Negozio non identificato').split('\n')[0];
+   date.append(merchant);
    const product=tr.insertCell();
    product.textContent=item.normalized_product_name||item.product_name||'Prodotto non riconosciuto';
    if(item.normalized_product_name&&item.normalized_product_name!==item.product_name){
@@ -510,6 +599,252 @@ function renderCoverage(){
 }
 $('coverageScope').addEventListener('change',renderCoverage);
 
+
+let taxonomyAdminData=null,brandAdminData=null,brandAnalyticsData=null;
+function brandForReceipt(receiptId){
+ return (brandAdminData?.receipts||[]).find(x=>x.id===receiptId)||null;
+}
+const optionAdd=(select,value,label)=>{
+ const el=document.createElement('option');el.value=value;el.textContent=label;select.append(el);return el;
+};
+const minorButton=(label,callback)=>{
+ const b=document.createElement('button');b.type='button';b.className='mini-button';b.textContent=label;b.addEventListener('click',callback);return b;
+};
+function taxGroups(){return (taxonomyAdminData?.items||[]).filter(x=>!x.is_child).sort((a,b)=>(a.sort_order-b.sort_order)||a.label.localeCompare(b.label,'it'))}
+function taxItem(code){return (taxonomyAdminData?.items||[]).find(x=>x.code===code)}
+function taxStatus(message){$('taxStatus').textContent=message}
+function brandStatus(message){$('brandAdminStatus').textContent=message}
+async function reloadAdminData(){
+ const [t,b]=await Promise.all([
+  sb.rpc('dashboard_receipt_taxonomy_v1'),sb.rpc('dashboard_receipt_brands_admin_v1')
+ ]);
+ if(t.error)throw t.error;if(b.error)throw b.error;
+ taxonomyAdminData=t.data||{};brandAdminData=b.data||{};
+ cachedCategories=null;await availableCategories();
+ renderTaxonomyAdmin();renderBrandAdmin();
+}
+function renderTaxonomyAdmin(){
+ const target=$('taxonomyRows');target.replaceChildren();
+ const entries=taxonomyAdminData?.items||[];
+ if(!entries.length){showEmptyTable(target,4,'Nessuna categoria definita');return}
+ for(const group of taxGroups()){
+  const children=entries.filter(c=>c.parent_code===group.code).sort((a,b)=>(a.sort_order-b.sort_order)||a.label.localeCompare(b.label,'it'));
+  for(const item of [group,...children]){
+   const tr=target.insertRow();
+   const desc=tr.insertCell();desc.textContent=(item.is_child?' ↳ ':'')+item.label;
+   if(item.has_active_split){
+    const tag=document.createElement('small');tag.className='price-note';tag.textContent='Split contabile attivo';desc.append(tag);
+   }
+   cell(tr,item.is_child?item.used_lines:item.used_group_lines);
+   cell(tr,item.is_food?'Supermercato':item.l2_label||'Da mappare');
+   tr.insertCell().append(minorButton('Modifica',()=>openTaxonomyEditor(item)));
+  }
+ }
+}
+function refreshTaxFormControls(){
+ const kind=$('taxLevel').value,existing=$('taxCode').value,leaf=kind==='category';
+ const original=existing?taxItem(existing):null;
+ $('taxParentWrap').hidden=!leaf;
+ $('taxFoodWrap').hidden=leaf;
+ $('taxLevel').disabled=Boolean(existing);
+ $('taxFood').disabled=Boolean(existing)||leaf;
+ const parent=$('taxParent');
+ const previous=parent.value;
+ parent.replaceChildren();
+ for(const group of taxGroups()){
+  if(original && leaf && group.is_food!==original.is_food)continue;
+  optionAdd(parent,group.code,group.label);
+ }
+ if([...parent.options].some(o=>o.value===previous))parent.value=previous;
+ else if(original?.parent_code)parent.value=original.parent_code;
+ else if(selectedGroup&&[...parent.options].some(o=>o.value===selectedGroup))parent.value=selectedGroup;
+ const food=leaf?(taxItem(parent.value)?.is_food??true):$('taxFood').value==='true';
+ const l2=$('taxL2');
+ const chosen=l2.value;
+ l2.replaceChildren();optionAdd(l2,'','— Nessuna mappatura L2');
+ for(const v of taxonomyAdminData?.budget_l2||[])optionAdd(l2,v.id,v.label);
+ if(original?.l2_category_id&&[...l2.options].some(o=>o.value===original.l2_category_id))l2.value=original.l2_category_id;
+ else if(chosen&&[...l2.options].some(o=>o.value===chosen))l2.value=chosen;
+ else if(leaf){const g=taxItem(parent.value);if(g?.l2_category_id)l2.value=g.l2_category_id}
+ $('taxL2Wrap').hidden=food;
+ $('taxHelp').textContent=original?.has_active_split
+  ? 'Le etichette si possono rinominare, ma lo spostamento e il cambio L2 che modificano uno split attivo richiedono prima l’annullamento dello split.'
+  : leaf?'La natura alimentare/non alimentare è ereditata dal tipo di acquisto. Il codice interno rimane stabile anche rinominando.'
+   :'Il nome può cambiare. La natura di un tipo esistente resta stabile per preservare storico e contabilità.';
+}
+function openTaxonomyEditor(item=null,kind='group'){
+ $('taxonomyForm').hidden=false;
+ $('taxCode').value=item?.code||'';
+ $('taxName').value=item?.label||'';
+ $('taxLevel').value=item?(item.is_child?'category':'group'):kind;
+ $('taxFood').value=String(item?.is_food??true);
+ $('taxonomyTitle').textContent=item?'Modifica '+(item.is_child?'categoria':'tipo di acquisto'):
+    kind==='group'?'Nuovo tipo di acquisto':'Nuova categoria';
+ $('taxParent').replaceChildren();
+ for(const group of taxGroups())optionAdd($('taxParent'),group.code,group.label);
+ if(item?.parent_code)$('taxParent').value=item.parent_code;
+ else if(selectedGroup)$('taxParent').value=selectedGroup;
+ refreshTaxFormControls();
+ $('taxName').focus();
+}
+$('addGroup').addEventListener('click',()=>openTaxonomyEditor(null,'group'));
+$('addCategory').addEventListener('click',()=>openTaxonomyEditor(null,'category'));
+$('taxLevel').addEventListener('change',refreshTaxFormControls);
+$('taxParent').addEventListener('change',()=>{
+ const p=$('taxParent').value;
+ const g=taxItem(p);
+ $('taxFood').value=String(g?.is_food??true);
+ $('taxL2').value=g?.l2_category_id||'';
+ refreshTaxFormControls();
+});
+$('taxFood').addEventListener('change',refreshTaxFormControls);
+$('taxCancel').addEventListener('click',()=>{$('taxonomyForm').hidden=true;taxStatus('')});
+$('taxonomyForm').addEventListener('submit',async event=>{
+ event.preventDefault();const submit=$('taxSave');submit.disabled=true;
+ const code=$('taxCode').value||null,kind=$('taxLevel').value;
+ const parent=kind==='category'?$('taxParent').value:null;
+ const food=kind==='category'?(taxItem(parent)?.is_food??true):$('taxFood').value==='true';
+ const old=code?taxItem(code):null;
+ const l2=food?null:($('taxL2').value||null);
+ if(old?.parent_code!==undefined&&old?.parent_code!==parent){
+   if(!window.confirm('Spostare la categoria? Cambieranno i raggruppamenti dello storico. Gli split attivi sono protetti dal database.')){submit.disabled=false;return}
+ }
+ try{
+  const {data,error}=await sb.rpc('dashboard_receipt_taxonomy_save_v1',{
+   p_code:code,p_parent_code:parent,p_label:$('taxName').value.trim(),
+   p_is_food:food,p_l2_category_id:l2
+  });
+  if(error)throw error;
+  $('taxonomyForm').hidden=true;await reloadAdminData();await refresh();
+  taxStatus('Salvato: '+data.label+'. Classificazioni storiche conservate.');
+ }catch(e){taxStatus('Errore: '+contentError(e))}
+ finally{submit.disabled=false}
+});
+function openBrandEditor(item=null){
+ $('brandForm').hidden=false;$('aliasForm').hidden=true;
+ $('brandCode').value=item?.code||'';$('brandName').value=item?.label||'';
+ $('brandTitle').textContent=item?'Modifica insegna':'Nuova insegna';
+ $('brandName').focus();
+}
+function openAliasEditor(item=null){
+ $('aliasForm').hidden=false;$('brandForm').hidden=true;
+ $('aliasId').value=item?.id||'';
+ $('aliasText').value=item?.alias_text||'';
+ $('aliasActive').value=String(item?.is_active??true);
+ $('aliasTitle').textContent=item?'Modifica alias':'Nuovo alias';
+ const select=$('aliasBrand');select.replaceChildren();
+ for(const brand of brandAdminData?.brands||[])optionAdd(select,brand.code,brand.label);
+ if(item?.brand_code)select.value=item.brand_code;
+ $('aliasText').focus();
+}
+function renderBrandAdmin(){
+ const brands=brandAdminData?.brands||[],aliases=brandAdminData?.aliases||[];
+ const target=$('brandAdminRows');target.replaceChildren();
+ for(const brand of brands){
+  const tr=target.insertRow();cell(tr,brand.label);
+  cell(tr,aliases.filter(a=>a.brand_code===brand.code&&a.is_active).length);
+  tr.insertCell().append(minorButton('Modifica',()=>openBrandEditor(brand)));
+ }
+ const aBody=$('aliasRows');aBody.replaceChildren();
+ const labels=new Map(brands.map(b=>[b.code,b.label]));
+ for(const alias of aliases){
+  const tr=aBody.insertRow();cell(tr,alias.alias_text);
+  cell(tr,labels.get(alias.brand_code)||'—');
+  cell(tr,alias.is_active?'Attivo':'Non attivo');
+  tr.insertCell().append(minorButton('Modifica',()=>openAliasEditor(alias)));
+ }
+ const receipts=$('brandReceipts');receipts.replaceChildren();
+ for(const r of brandAdminData?.receipts||[]){
+  const tr=receipts.insertRow(),date=tr.insertCell();
+  date.textContent=String(r.created_at||'').slice(0,10);
+  const name=document.createElement('small');name.className='price-note';
+  name.textContent=String(r.merchant_raw||'Nome negozio non leggibile').split('\n')[0];date.append(name);
+  cell(tr,(r.brand_name||'Da riconoscere')+' · '+r.brand_source);
+  const select=document.createElement('select');select.className='admin-choice';
+  optionAdd(select,'','Automatico / senza insegna');
+  for(const brand of brands)optionAdd(select,brand.code,brand.label);
+  select.value=r.brand_source==='manual'?r.brand_code||'':'';
+  select.setAttribute('aria-label','Insegna manuale per lo scontrino '+r.id);
+  select.addEventListener('change',async()=>{
+   select.disabled=true;
+   try{
+    const {error}=await sb.rpc('dashboard_receipt_brand_override_v1',{
+     p_receipt_id:r.id,p_brand_code:select.value||null
+    });
+    if(error)throw error;
+    await reloadAdminData();await refresh();
+    brandStatus('Insegna dello scontrino aggiornata.');
+   }catch(e){brandStatus('Errore: '+contentError(e));select.disabled=false}
+  });
+  tr.insertCell().append(select);
+ }
+}
+$('addBrand').addEventListener('click',()=>openBrandEditor());
+$('addAlias').addEventListener('click',()=>openAliasEditor());
+$('brandCancel').addEventListener('click',()=>{$('brandForm').hidden=true;brandStatus('')});
+$('aliasCancel').addEventListener('click',()=>{$('aliasForm').hidden=true;brandStatus('')});
+$('brandForm').addEventListener('submit',async event=>{
+ event.preventDefault();
+ try{
+  const {data,error}=await sb.rpc('dashboard_receipt_brand_save_v1',{
+   p_code:$('brandCode').value||null,p_label:$('brandName').value.trim()
+  });
+  if(error)throw error;
+  $('brandForm').hidden=true;await reloadAdminData();await refresh();
+  brandStatus('Insegna salvata: '+data.label);
+ }catch(e){brandStatus('Errore: '+contentError(e))}
+});
+$('aliasForm').addEventListener('submit',async event=>{
+ event.preventDefault();
+ try{
+  const {error}=await sb.rpc('dashboard_receipt_alias_save_v1',{
+   p_id:$('aliasId').value?Number($('aliasId').value):null,
+   p_brand_code:$('aliasBrand').value,
+   p_alias_text:$('aliasText').value.trim(),p_is_active:$('aliasActive').value==='true'
+  });
+  if(error)throw error;
+  $('aliasForm').hidden=true;await reloadAdminData();await refresh();
+  brandStatus('Alias salvato. Le ricevute precedenti sono ricalcolate automaticamente per insegna.');
+ }catch(e){brandStatus('Errore: '+contentError(e))}
+});
+function renderBrandAnalytics(){
+ const data=brandAnalyticsData||{},stats=data.brands||[];
+ const t=$('brandStats');t.replaceChildren();
+ if(!stats.length)showEmptyTable(t,4,'Nessuno scontrino verificato in questo periodo.');
+ for(const b of stats){
+  const tr=t.insertRow();
+  const td=tr.insertCell();
+  td.append(productLink(b.brand_name||'Da riconoscere',()=>{
+   $('brandFilter').value=b.brand_code||'unrecognized';renderBrandPrices();
+  }));
+  cell(tr,b.receipts_count);cell(tr,euro(b.spent_eur));cell(tr,euro(b.avg_receipt_eur));
+ }
+ const select=$('brandFilter'),old=select.value;select.replaceChildren();
+ optionAdd(select,'all','Tutte le insegne');
+ for(const b of stats)optionAdd(select,b.brand_code||'unrecognized',b.brand_name||'Da riconoscere');
+ if([...select.options].some(o=>o.value===old))select.value=old;
+ renderBrandPrices();
+}
+function renderBrandPrices(){
+ const data=brandAnalyticsData||{},filter=$('brandFilter').value;
+ const prices=(data.unit_prices||[]).filter(x=>filter==='all'||(x.brand_code||'unrecognized')===filter);
+ const target=$('brandPrices');target.replaceChildren();
+ if(!prices.length)showEmptyTable(target,5,'Nessun prezzo unitario disponibile per questa insegna e periodo.');
+ for(const p of prices.slice(0,120)){
+  const tr=target.insertRow();
+  cell(tr,p.product_name||'Prodotto non riconosciuto');
+  cell(tr,p.brand_name||'Da riconoscere');
+  cell(tr,String(p.reference_date||'').slice(0,10));
+  cell(tr,perUnitMoney(p.price_per_unit,p.comparable_unit));
+  cell(tr,p.measure_quality==='format_to_verify'?'Formato da verificare':'Formato riconosciuto');
+ }
+ $('brandUnitCount').textContent=prices.length+' prezzi al kg/l'+(prices.length>120?' (mostrati i primi 120)':'');
+ const comps=data.comparable_products||[];
+ $('brandCompareNote').textContent=comps.length?
+  comps.length+' prodotti identificati con sicurezza in almeno due insegne: confronti disponibili dopo verifica di marca e confezione.'
+  :'Nessun prodotto identico già confermato presso almeno due insegne: i prezzi sopra sono osservazioni, non una classifica di convenienza. Per confronti corretti serve normalizzare anche identità/marca e formato del prodotto.';
+}
+$('brandFilter').addEventListener('change',renderBrandPrices);
 async function refresh(){
  const mode=$('periodMode').value,month=$('period').value;
  if(!/^20\d{2}-(0[1-9]|1[0-2])$/.test(month))return;
@@ -517,15 +852,22 @@ async function refresh(){
  $('status').textContent='Aggiornamento analisi…';$('refresh').disabled=true;
  try{
   const args={p_period:mode,p_month:month+'-01'};
-  const [rollup,extras,coverage]=await Promise.all([
+  const [rollup,extras,coverage,brands,taxonomy,adminBrands]=await Promise.all([
    sb.rpc('dashboard_receipt_period_v2',args),
    sb.rpc('dashboard_receipt_period_extras_v1',args),
-   sb.rpc('dashboard_receipt_period_coverage_v1',args)
+   sb.rpc('dashboard_receipt_period_coverage_v1',args),
+   sb.rpc('dashboard_receipt_brand_analytics_v1',args),
+   sb.rpc('dashboard_receipt_taxonomy_v1'),
+   sb.rpc('dashboard_receipt_brands_admin_v1')
   ]);
-  for(const response of [rollup,extras,coverage])if(response.error)throw response.error;
+  for(const response of [rollup,extras,coverage,brands,taxonomy,adminBrands])if(response.error)throw response.error;
   if(seq!==refreshSequence)return;
   const data=rollup.data||{}, extra=extras.data||{},q=data.summary||{};
   const rs=data.receipts||[],candidates=data.candidates||[];
+  taxonomyAdminData=taxonomy.data||{};
+  brandAdminData=adminBrands.data||{};
+  brandAnalyticsData=brands.data||{};
+  cachedCategories=null;
   await availableCategories();
   if(seq!==refreshSequence)return;
   currentPeriodData=data;
@@ -536,6 +878,7 @@ async function refresh(){
   selectedGroup=null;selectedCategory=null;drillOffset=0;drillRequestSequence++;
   $('drillSection').hidden=true;
   renderUnitPrices();renderCoverage();renderGroupTables();renderL2Summary(data.l2||[]);
+  renderTaxonomyAdmin();renderBrandAdmin();renderBrandAnalytics();
   showMonths(data.months||[],month);
   const pct=q.lines?Math.round(100*Number(q.classified||0)/Number(q.lines)):0;
   $('periodRange').textContent=mode==='all'
@@ -571,8 +914,13 @@ async function refresh(){
   for(const receipt of rs){
    const tr=receiptsBody.insertRow();
    const name=receipt.merchant_raw?.split('\n')[0]||'Esercente non riconosciuto';
+   const brand=brandForReceipt(receipt.id);
    cell(tr,receipt.receipt_date+(receipt.actual_purchase_date?'':' (caricamento)'));
-   cell(tr,name);cell(tr,euro(receipt.total_amount));
+   const merchant=tr.insertCell();merchant.textContent=brand?.brand_name||name;
+   if(brand?.brand_name&&name!==brand.brand_name){
+     const raw=document.createElement('small');raw.className='price-note';raw.textContent=name;merchant.append(raw);
+   }
+   cell(tr,euro(receipt.total_amount));
    cell(tr,receipt.linked_transaction_id?'Collegato':'Da collegare');
    const b=document.createElement('button');b.type='button';b.textContent='Dettaglio';
    b.addEventListener('click',()=>showReceipt(receipt));tr.insertCell().append(b);
