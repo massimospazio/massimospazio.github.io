@@ -1,7 +1,7 @@
 // Canonical source: massimospazio/budget-familiare; public files are deployed automatically.
 (function(){
-  const APP_VERSION='V74.3.41';
-  const APP_RELEASE='Scontrini: prezzi normalizzati per kg e litro';
+  const APP_VERSION='V74.3.42';
+  const APP_RELEASE='Classificazione scontrini: riconoscimento descrizioni italiane';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});
