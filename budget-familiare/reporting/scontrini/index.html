@@ -76,6 +76,12 @@ table th:last-child,table td:last-child{text-align:right}
 .brand-toolbar select{font:inherit;border:1px solid #cbd5e1;border-radius:7px;padding:6px;background:#fff}
 .brand-note{font-size:12px;color:#64748b;margin:7px 0}
 .brand-stats-table{min-width:530px}
+#linkEditor{margin-top:14px;border:1px solid #bfd6ef;border-radius:12px;padding:18px;background:#f8fbff}
+.link-edit-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:12px 0}
+.link-edit-controls select{max-width:100%;min-width:min(100%,360px);font:inherit;background:white;border:1px solid #cbd5e1;border-radius:8px;padding:9px;flex:1}
+.link-edit-controls button{white-space:nowrap}
+#linkStatus{font-size:13px;color:#4b5873}
+.link-strong{font-weight:600;color:#254f80}
 #adminSection summary{font-size:18px;font-weight:650;cursor:pointer;color:#204d79}
 #adminSection summary:hover{color:#15366b}
 @media(max-width:500px){.admin-grid{grid-template-columns:1fr}}
@@ -224,8 +230,21 @@ table th:last-child,table td:last-child{text-align:right}
  </div>
  <div class="table-scroll"><table id="unitPricesTable"><thead><tr><th>Articolo</th><th>Negozio</th><th>Quantità totale</th><th>Importo</th><th>Prezzo unitario</th></tr></thead><tbody id="unitPrices"></tbody></table></div>
 </section>
-<section class="section"><h2>Abbinamenti scontrino–movimento da confermare</h2><p>I collegamenti automatici avvengono solo con data d’acquisto certa, importo esatto, esercente riconosciuto, categorie complete e movimento senza split preesistenti. Gli abbinamenti residui sono proposte da verificare e non modificano il movimento.</p><div class="table-scroll"><table><thead><tr><th>Scontrino</th><th>Movimento bancario</th><th>Importo</th><th>Scarto</th></tr></thead><tbody id="candidates"></tbody></table></div></section>
-<section class="section"><h2>Scontrini verificati</h2><div class="table-scroll"><table><thead><tr><th>Data</th><th>Negozio</th><th>Totale</th><th>Collegamento</th><th>Articoli</th><th>Split L2</th></tr></thead><tbody id="receipts"></tbody></table></div><div id="receiptDetail" class="table-scroll" style="margin-top:18px" hidden><h2 id="detailTitle">Dettaglio scontrino</h2><p class="kpi-note">Gemini propone nome e categoria, le nostre regole controllano l’esito. Per correggere uno split già applicato, prima annullalo.</p><div id="receiptL2Summary" style="padding:12px;border:1px solid #d5e0f0;border-radius:10px;margin:12px 0"></div><table id="receiptLinesTable"><thead><tr><th>Articolo</th><th>Categoria / correzione</th><th>Quantità / formato</th><th>Importo</th><th>Prezzo al kg/l</th></tr></thead><tbody id="receiptLines"></tbody></table></div></section>
+<section class="section"><h2>Abbinamenti ancora da valutare</h2><p>Lo scontrino viene collegato automaticamente quando c'è un <strong>unico movimento di uscita dello stesso importo</strong> nei 3 giorni precedenti o successivi, con esercente riconosciuto e senza split preesistenti. Se manca la data di acquisto, si considera la data di caricamento. Una categoria ambigua non impedisce il collegamento, ma rinvia lo split. Ogni abbinamento è modificabile dalla tabella sottostante.</p><div class="table-scroll"><table><thead><tr><th>Scontrino</th><th>Movimento bancario</th><th>Importo</th><th>Scarto</th></tr></thead><tbody id="candidates"></tbody></table></div></section>
+<section class="section"><h2>Scontrini verificati</h2>
+<div class="table-scroll"><table><thead><tr><th>Data</th><th>Negozio</th><th>Totale</th><th>Collegamento</th><th>Modifica associazione</th><th>Articoli</th><th>Split L2</th></tr></thead><tbody id="receipts"></tbody></table></div>
+<div id="linkEditor" hidden>
+ <h3 id="linkTitle">Associa al movimento bancario</h3>
+ <p id="linkInfo" class="kpi-note"></p>
+ <label for="linkTransaction">Movimento bancario corrispondente</label>
+ <div class="link-edit-controls">
+  <select id="linkTransaction"></select>
+  <button type="button" id="linkSave">Salva associazione</button>
+  <button type="button" id="linkCancel" class="mini-button">Chiudi</button>
+ </div>
+ <p class="kpi-note">Puoi correggere o rimuovere un collegamento in qualsiasi momento. Se lo split automatico è già attivo, viene annullato in modo controllato e, quando possibile, rigenerato sul nuovo movimento. Gli split modificati manualmente non vengono toccati.</p>
+ <div id="linkStatus" role="status"></div>
+</div><div id="receiptDetail" class="table-scroll" style="margin-top:18px" hidden><h2 id="detailTitle">Dettaglio scontrino</h2><p class="kpi-note">Gemini propone nome e categoria, le nostre regole controllano l’esito. Per correggere uno split già applicato, prima annullalo.</p><div id="receiptL2Summary" style="padding:12px;border:1px solid #d5e0f0;border-radius:10px;margin:12px 0"></div><table id="receiptLinesTable"><thead><tr><th>Articolo</th><th>Categoria / correzione</th><th>Quantità / formato</th><th>Importo</th><th>Prezzo al kg/l</th></tr></thead><tbody id="receiptLines"></tbody></table></div></section>
 <p class="kpi-note">Copertura = movimenti classificati «Supermercato» con uno scontrino verificato collegato / movimenti «Supermercato» del mese. Le categorie degli scontrini sono statistiche di dettaglio, non nuove uscite. Gli split automatici modificano la ripartizione L2 del movimento esistente senza generare nuove spese.</p>
 </main>
 <script>
@@ -346,6 +365,64 @@ function renderUnitPrices(){
 }
 $('unitPriceFilter').addEventListener('change',renderUnitPrices);
 $('unitPriceReliable').addEventListener('change',renderUnitPrices);
+
+
+let linkEditorReceipt=null;
+async function openReceiptLinkEditor(receipt){
+ linkEditorReceipt=receipt;
+ $('linkEditor').hidden=false;
+ $('linkTitle').textContent='Associazione bancaria · '+(brandForReceipt(receipt.id)?.brand_name||
+  String(receipt.merchant_raw||'Scontrino').split('\n')[0])+' · '+euro(receipt.total_amount);
+ $('linkInfo').textContent='Caricamento movimenti compatibili…';
+ $('linkStatus').textContent='';
+ $('linkSave').disabled=true;
+ const select=$('linkTransaction');select.replaceChildren();
+ $('linkEditor').scrollIntoView({behavior:'smooth',block:'center'});
+ try{
+   const {data,error}=await sb.rpc('dashboard_receipt_bank_options_v2',{p_receipt_id:receipt.id});
+   if(error)throw error;
+   if(linkEditorReceipt?.id!==receipt.id)return;
+   optionAdd(select,'none','— Nessun collegamento (scollega)');
+   for(const item of data.options||[]){
+     const txt=[item.transaction_date,euro(Math.abs(item.amount)),
+      item.raw_description||'Descrizione bancaria non disponibile',
+      item.category||'Non classificato',
+      item.days_apart+' gg'+(item.is_current?' · collegamento corrente':'')
+     ].join(' · ');
+     optionAdd(select,item.id,txt);
+   }
+   select.value=data.current_transaction_id||'none';
+   $('linkInfo').textContent=data.options?.length
+    ?'Sono mostrati i movimenti bancari dello stesso importo fino a 31 giorni dalla data dello scontrino'+
+      (data.reference_is_upload_date?' (riferimento: caricamento)':'')+
+      '. Scegli quello corretto.'
+    :'Nessun movimento dello stesso importo nell’intervallo disponibile. Puoi scollegare la ricevuta e rivederla quando avrai importato nuovi movimenti.';
+   $('linkSave').disabled=false;
+ }catch(e){$('linkStatus').textContent='Errore nella ricerca movimenti: '+contentError(e)}
+}
+$('linkCancel').addEventListener('click',()=>{$('linkEditor').hidden=true;linkEditorReceipt=null});
+$('linkSave').addEventListener('click',async()=>{
+ const receipt=linkEditorReceipt;if(!receipt)return;
+ const choice=$('linkTransaction').value;
+ const transactionId=choice==='none'?null:choice;
+ const changing=receipt.linked_transaction_id!==transactionId;
+ if(changing && receipt.linked_transaction_id && !window.confirm(
+   'Modificare il collegamento dello scontrino? Gli eventuali split automatici precedenti saranno annullati e la modifica registrata.'))
+    return;
+ $('linkSave').disabled=true;$('linkStatus').textContent='Aggiornamento associazione…';
+ try{
+   const {data,error}=await sb.rpc('dashboard_receipt_link_set_v2',{
+     p_receipt_id:receipt.id,p_transaction_id:transactionId
+   });
+   if(error)throw error;
+   $('linkEditor').hidden=true;linkEditorReceipt=null;
+   await refresh();
+   $('status').textContent=(data.status==='unlinked'?'Scontrino scollegato.':
+     data.status==='unchanged'?'Associazione invariata.':'Associazione aggiornata.')+
+     ' Modifica tracciata, nessun doppio movimento.';
+ }catch(e){$('linkStatus').textContent='Non è stato possibile aggiornare il movimento: '+contentError(e)}
+ finally{$('linkSave').disabled=false}
+});
 
 async function undoReceiptSplit(receipt){
  if(!window.confirm('Annullare gli split e il collegamento bancario per '+euro(receipt.total_amount)+'?'))return;
@@ -910,7 +987,7 @@ async function refresh(){
   ]);
   const receiptsBody=$('receipts');receiptsBody.replaceChildren();
   $('receiptDetail').hidden=true;
-  if(!rs.length)showEmptyTable(receiptsBody,6,'Nessuno scontrino verificato per questo periodo');
+  if(!rs.length)showEmptyTable(receiptsBody,7,'Nessuno scontrino verificato per questo periodo');
   for(const receipt of rs){
    const tr=receiptsBody.insertRow();
    const name=receipt.merchant_raw?.split('\n')[0]||'Esercente non riconosciuto';
@@ -922,6 +999,8 @@ async function refresh(){
    }
    cell(tr,euro(receipt.total_amount));
    cell(tr,receipt.linked_transaction_id?'Collegato':'Da collegare');
+   const association=tr.insertCell();
+   association.append(minorButton('Modifica',()=>openReceiptLinkEditor(receipt)));
    const b=document.createElement('button');b.type='button';b.textContent='Dettaglio';
    b.addEventListener('click',()=>showReceipt(receipt));tr.insertCell().append(b);
    const manager=tr.insertCell(),state=autoSplitStates.get(receipt.id);
