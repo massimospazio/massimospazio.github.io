@@ -20,6 +20,20 @@ table{width:100%;border-collapse:collapse;font-size:14px}td,th{padding:11px 8px;
 .kpi-note{font-size:12px;color:#64748b}.muted{color:#64748b}.good{color:#128454;font-weight:600}.warning{color:#a15d14}#status{margin:8px 0;color:#64748b} .pill{border:1px solid #dae5f6;border-radius:20px;padding:4px 9px;font-size:12px;white-space:nowrap;background:#f5f9ff;color:#31547f}
 @media(max-width:500px){h1{font-size:23px}.card,.section{padding:15px}}
 .category-bar{height:6px;background:#e9eef7;border-radius:6px;margin-top:6px;overflow:hidden}.category-bar>div{height:100%;background:#468fc1}
+.spend-group-box{border:1px solid #dce4ee;border-radius:10px;padding:15px;margin:15px 0;background:#fff}
+.spend-group-box-header{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.spend-group-box-header h3{margin:0;font-size:16px;color:#1b3556}
+.spend-group-total{text-align:right;display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
+.spend-group-total strong{font-size:21px;color:#1d3556;font-variant-numeric:tabular-nums}
+.spend-group-percentage{font-size:14px;color:#586e88;font-weight:600;white-space:nowrap}
+.spend-group-description{font-size:12px;color:#718097;margin:3px 0 10px}
+.spend-group-box .table-scroll{margin-top:12px}
+.spend-group-box .bar{height:7px;margin-top:10px}
+.spend-group-box .bar>span{background:#47789d}
+.spend-group-empty{font-size:12px;color:#718097}
+.unclassified-groups-note{border-top:1px solid #e6ebf2;padding:12px 0 2px;display:flex;gap:12px;justify-content:space-between;flex-wrap:wrap;font-size:13px;color:#67768e}
+@media(max-width:650px){.spend-group-box{padding:11px}.spend-group-total strong{font-size:19px}}
+
 .notice{margin:12px 0;padding:12px 15px;border:1px solid #d5e0f0;background:#f9fbff;border-radius:10px}
 .notice.warning{border-color:#f1d6a7;background:#fffaf2}
 .compact-tag{font-size:11px;color:#64748b;padding:3px 6px;background:#f2f5f9;border-radius:12px}
@@ -140,8 +154,28 @@ table th:last-child,table td:last-child{text-align:right}
 <div class="grid">
  <section class="section">
   <h2>1 · Tipo di acquisto <small>Raggruppamento generale</small></h2>
-  <p class="kpi-note">Clicca per vedere categorie e prodotti compresi nel tipo.</p>
-  <div class="table-scroll"><table><thead><tr><th>Tipo di acquisto</th><th>Articoli</th><th>Spesa</th></tr></thead><tbody id="categories"></tbody></table></div>
+  <p class="kpi-note">La percentuale è calcolata sulla spesa totale degli scontrini verificati nel periodo. Clicca su un tipo per aprire le categorie e i prodotti.</p>
+  <div class="spend-group-box" id="foodGroupBox">
+   <div class="spend-group-box-header">
+    <h3>Alimentari</h3>
+    <div class="spend-group-total"><strong id="foodGroupTotal">—</strong><span id="foodGroupPct" class="spend-group-percentage">—</span></div>
+   </div>
+   <div class="bar"><span id="foodGroupBar" style="width:0%"></span></div>
+   <div class="table-scroll"><table><thead><tr><th>Tipo alimentare</th><th>Articoli</th><th>Spesa</th></tr></thead><tbody id="categories"></tbody></table></div>
+  </div>
+  <div class="spend-group-box" id="nonFoodGroupBox">
+   <div class="spend-group-box-header">
+    <h3>Non alimentari</h3>
+    <div class="spend-group-total"><strong id="nonFoodGroupTotal">—</strong><span id="nonFoodGroupPct" class="spend-group-percentage">—</span></div>
+   </div>
+   <p class="spend-group-description">Casa, animali, cura personale, elettronica e altre spese non alimentari.</p>
+   <div class="bar"><span id="nonFoodGroupBar" style="width:0%"></span></div>
+   <div class="table-scroll"><table><thead><tr><th>Tipo non alimentare</th><th>Articoli</th><th>Spesa</th></tr></thead><tbody id="nonFoodCategories"></tbody></table></div>
+  </div>
+  <div id="unclassifiedGroups" class="unclassified-groups-note" hidden>
+   <span><button id="unclassifiedGroupOpen" type="button" class="drill-link">Da classificare</button> · non attribuiti ad Alimentari o Non alimentari</span>
+   <strong id="unclassifiedGroupTotal">—</strong>
+  </div>
  </section>
  <section class="section">
   <h2>2 · Categoria <small>Livello di dettaglio</small></h2>
@@ -530,19 +564,44 @@ function quantityFor(categoryCode){
 }
 function renderGroupTables(){
  const groups=currentPeriodData?.groups||[];
- const max=Math.max(1,...groups.map(x=>Number(x.spent_eur||0)));
- const tbody=$('categories');tbody.replaceChildren();
- if(!groups.length)showEmptyTable(tbody,3,'Nessun scontrino verificato nel periodo.');
- for(const item of groups){
-  const tr=tbody.insertRow();
-  if(selectedGroup===item.group_code)tr.className='selected-row';
-  const td=tr.insertCell();
-  td.append(productLink(item.group_label||'Da classificare',()=>selectGroup(item.group_code)));
-  const meter=document.createElement('div');meter.className='category-bar';
-  const fill=document.createElement('div');fill.style.width=Math.max(0,Math.min(100,Number(item.spent_eur||0)/max*100))+'%';
-  meter.append(fill);td.append(meter);
-  cell(tr,String(item.lines_count||0));cell(tr,euro(item.spent_eur));
- }
+ const summary=currentPeriodData?.summary||{};
+ const periodTotal=Number(summary.total||0);
+ const foodGroups=groups.filter(x=>x.is_food===true&&x.group_code!=='unclassified');
+ const nonFoodGroups=groups.filter(x=>x.is_food===false&&x.group_code!=='unclassified');
+ const unknownGroups=groups.filter(x=>x.group_code==='unclassified'||x.is_food===null);
+ const foodTotal=Number(summary.food||0),nonFoodTotal=Number(summary.nonfood||0);
+ const pctValue=value=>periodTotal>0?100*value/periodTotal:0;
+ const pctText=value=>periodTotal>0
+  ?new Intl.NumberFormat('it-IT',{minimumFractionDigits:1,maximumFractionDigits:1}).format(pctValue(value))+'%'
+  :'—';
+ const header=(prefix,value)=>{
+  $(prefix+'Total').textContent=euro(value);
+  $(prefix+'Pct').textContent=pctText(value)+' del totale';
+  $(prefix+'Bar').style.width=Math.min(100,Math.max(0,pctValue(value)))+'%';
+ };
+ header('foodGroup',foodTotal);
+ header('nonFoodGroup',nonFoodTotal);
+ const renderGroupList=(targetId,items)=>{
+   const target=$(targetId);target.replaceChildren();
+   if(!items.length){showEmptyTable(target,3,'Nessun acquisto in questo gruppo nel periodo.');return}
+   const max=Math.max(1,...items.map(x=>Number(x.spent_eur||0)));
+   for(const item of items){
+    const tr=target.insertRow();
+    if(selectedGroup===item.group_code)tr.className='selected-row';
+    const td=tr.insertCell();
+    td.append(productLink(item.group_label||'Tipo non riconosciuto',()=>selectGroup(item.group_code)));
+    const meter=document.createElement('div');meter.className='category-bar';
+    const fill=document.createElement('div');
+    fill.style.width=Math.max(0,Math.min(100,100*Number(item.spent_eur||0)/max))+'%';
+    meter.append(fill);td.append(meter);
+    cell(tr,String(item.lines_count||0));cell(tr,euro(item.spent_eur));
+   }
+ };
+ renderGroupList('categories',foodGroups);
+ renderGroupList('nonFoodCategories',nonFoodGroups);
+ const unclassified=Number(summary.unclassified||0);
+ $('unclassifiedGroups').hidden=!unknownGroups.length&&unclassified<=0;
+ $('unclassifiedGroupTotal').textContent=euro(unclassified)+' · '+pctText(unclassified);
  const categories=(currentPeriodData?.categories||[]).filter(x=>!selectedGroup||x.group_code===selectedGroup);
  const catBody=$('types');catBody.replaceChildren();
  const selection=drillSelectionLabel();
@@ -560,6 +619,7 @@ function renderGroupTables(){
   tag.textContent=item.budget_l2||'Da verificare';l2.append(tag);
  }
 }
+$('unclassifiedGroupOpen').addEventListener('click',()=>selectGroup('unclassified'));
 function renderL2Summary(items){
  const target=$('l2Summary');target.replaceChildren();
  if(!items.length){showEmptyTable(target,4,'Nessun importo da attribuire nel periodo.');return}
