@@ -85,6 +85,7 @@ table th:last-child,table td:last-child{text-align:right}
 #adminSection summary{font-size:18px;font-weight:650;cursor:pointer;color:#204d79}
 #adminSection summary:hover{color:#15366b}
 @media(max-width:500px){.admin-grid{grid-template-columns:1fr}}
+[hidden]{display:none!important}
 </style></head>
 <body>
 <header><div><b>Budget Familiare</b> <span class="pill">Analisi Scontrini · Tipi, categorie e L2</span></div><a href="../index.html">← Torna a Reporting</a></header>
@@ -689,6 +690,11 @@ const minorButton=(label,callback)=>{
 };
 function taxGroups(){return (taxonomyAdminData?.items||[]).filter(x=>!x.is_child).sort((a,b)=>(a.sort_order-b.sort_order)||a.label.localeCompare(b.label,'it'))}
 function taxItem(code){return (taxonomyAdminData?.items||[]).find(x=>x.code===code)}
+function canChangeTaxonomyLevel(item){
+ if(!item)return true;
+ if(item.has_active_split)return false;
+ return item.is_child || !(taxonomyAdminData?.items||[]).some(x=>x.parent_code===item.code);
+}
 function taxStatus(message){$('taxStatus').textContent=message}
 function brandStatus(message){$('brandAdminStatus').textContent=message}
 async function reloadAdminData(){
@@ -723,7 +729,7 @@ function refreshTaxFormControls(){
  const original=existing?taxItem(existing):null;
  $('taxParentWrap').hidden=!leaf;
  $('taxFoodWrap').hidden=leaf;
- $('taxLevel').disabled=Boolean(existing);
+ $('taxLevel').disabled=Boolean(original&&!canChangeTaxonomyLevel(original));
  $('taxFood').disabled=Boolean(existing)||leaf;
  const parent=$('taxParent');
  const previous=parent.value;
@@ -744,10 +750,15 @@ function refreshTaxFormControls(){
  else if(chosen&&[...l2.options].some(o=>o.value===chosen))l2.value=chosen;
  else if(leaf){const g=taxItem(parent.value);if(g?.l2_category_id)l2.value=g.l2_category_id}
  $('taxL2Wrap').hidden=food;
+ const changedLevel=Boolean(original && original.is_child!==leaf);
  $('taxHelp').textContent=original?.has_active_split
-  ? 'Le etichette si possono rinominare, ma lo spostamento e il cambio L2 che modificano uno split attivo richiedono prima l’annullamento dello split.'
+  ? 'Puoi rinominare la voce, ma non modificarne il livello, il gruppo o la L2 finché uno split contabile attivo dipende da essa.'
+  : original&&!canChangeTaxonomyLevel(original)
+  ? 'Questo tipo contiene già categorie: per trasformarlo in categoria occorre prima spostare le categorie figlie.'
+  : changedLevel
+  ? 'Stai cambiando livello: la voce conserva il codice, le associazioni e la L2 selezionata. Lo storico non viene cancellato.'
   : leaf?'La natura alimentare/non alimentare è ereditata dal tipo di acquisto. Il codice interno rimane stabile anche rinominando.'
-   :'Il nome può cambiare. La natura di un tipo esistente resta stabile per preservare storico e contabilità.';
+   :'Puoi anche cambiare il livello in «Categoria» quando non ci sono sottocategorie o split attivi.';
 }
 function openTaxonomyEditor(item=null,kind='group'){
  $('taxonomyForm').hidden=false;
@@ -771,7 +782,8 @@ $('taxParent').addEventListener('change',()=>{
  const p=$('taxParent').value;
  const g=taxItem(p);
  $('taxFood').value=String(g?.is_food??true);
- $('taxL2').value=g?.l2_category_id||'';
+ const original=taxItem($('taxCode').value);
+ $('taxL2').value=original?.l2_category_id||g?.l2_category_id||'';
  refreshTaxFormControls();
 });
 $('taxFood').addEventListener('change',refreshTaxFormControls);
@@ -783,14 +795,25 @@ $('taxonomyForm').addEventListener('submit',async event=>{
  const food=kind==='category'?(taxItem(parent)?.is_food??true):$('taxFood').value==='true';
  const old=code?taxItem(code):null;
  const l2=food?null:($('taxL2').value||null);
- if(old?.parent_code!==undefined&&old?.parent_code!==parent){
-   if(!window.confirm('Spostare la categoria? Cambieranno i raggruppamenti dello storico. Gli split attivi sono protetti dal database.')){submit.disabled=false;return}
+ const levelChanged=Boolean(old && old.is_child!==(kind==='category'));
+ if(levelChanged && !window.confirm(
+   'Cambiare il livello di «'+old.label+'» da '+(old.is_child?'categoria a tipo di acquisto':'tipo di acquisto a categoria')+
+   '? Il codice storico verrà mantenuto e la destinazione L2 verrà conservata.'
+ )){submit.disabled=false;return}
+ if(!levelChanged && old && old.parent_code!==parent &&
+    !window.confirm('Spostare la categoria sotto un altro tipo? Gli importi storici saranno raggruppati nella nuova posizione.')){
+    submit.disabled=false;return
  }
  try{
-  const {data,error}=await sb.rpc('dashboard_receipt_taxonomy_save_v1',{
-   p_code:code,p_parent_code:parent,p_label:$('taxName').value.trim(),
-   p_is_food:food,p_l2_category_id:l2
-  });
+  const rpc=levelChanged?'dashboard_receipt_taxonomy_change_level_v1':'dashboard_receipt_taxonomy_save_v1';
+  const payload=levelChanged?{
+    p_code:code,p_parent_code:parent,p_label:$('taxName').value.trim(),
+    p_l2_category_id:l2
+  }:{
+    p_code:code,p_parent_code:parent,p_label:$('taxName').value.trim(),
+    p_is_food:food,p_l2_category_id:l2
+  };
+  const {data,error}=await sb.rpc(rpc,payload);
   if(error)throw error;
   $('taxonomyForm').hidden=true;await reloadAdminData();await refresh();
   taxStatus('Salvato: '+data.label+'. Classificazioni storiche conservate.');
