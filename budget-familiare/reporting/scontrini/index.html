@@ -100,6 +100,19 @@ table th:last-child,table td:last-child{text-align:right}
 #adminSection summary:hover{color:#15366b}
 @media(max-width:500px){.admin-grid{grid-template-columns:1fr}}
 [hidden]{display:none!important}
+.nova-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin:15px 0}
+.nova-card{background:#fff;border:1px solid #d4deeb;border-radius:10px;padding:15px;text-align:left;display:flex;flex-direction:column;gap:8px;color:#1c3552;min-height:138px}
+.nova-card:hover,.nova-card.active{background:#f0f6ff;border-color:#8daed5}
+.nova-card .nova-label{font-size:14px;font-weight:650}
+.nova-card .nova-eur{font-size:25px;font-weight:750;font-variant-numeric:tabular-nums}
+.nova-card .nova-pct{font-size:13px;color:#526783}
+.nova-aux{display:flex;align-items:center;flex-wrap:wrap;gap:14px;margin:14px 0;font-size:13px}
+.nova-aux button{background:#eef3fb;color:#244f7b;border:1px solid #cad8ea;font-size:13px;padding:7px 10px}
+.nova-aux button.active{background:#d3e5ff}
+.nova-coverage{font-size:12px;color:#677892;line-height:1.5}
+.nova-select{font:inherit;font-size:12px;padding:7px;max-width:210px;background:#fff;color:#20334d;border:1px solid #c4d4e6;border-radius:7px}
+#novaProductsTable{min-width:820px}
+#novaProductsTable small{display:block;font-size:11px;color:#68788d;margin-top:4px}
 </style></head>
 <body>
 <header><div><b>Budget Familiare</b> <span class="pill">Analisi Scontrini · Tipi, categorie e L2</span></div><a href="../index.html">← Torna a Reporting</a></header>
@@ -183,6 +196,35 @@ table th:last-child,table td:last-child{text-align:right}
   <div class="table-scroll"><table><thead><tr><th>Categoria</th><th>Spesa</th><th>Quantità</th><th>L2 Budget</th></tr></thead><tbody id="types"></tbody></table></div>
  </section>
 </div>
+<section class="section" id="novaSection">
+ <h2>Livello di trasformazione degli alimenti <small>Metodo NOVA · analisi indipendente dal Budget</small></h2>
+ <p class="kpi-note">Percentuali sulla <strong>spesa alimentare documentata</strong> del periodo selezionato, non sulle quantità consumate. I prodotti non alimentari sono esclusi. Con il solo nome stampato sullo scontrino alcune classificazioni richiedono ingredienti o una conferma.</p>
+ <div class="nova-cards">
+  <button type="button" class="nova-card" data-nova-group="1">
+   <span class="nova-label">Freschi o minimamente trasformati</span>
+   <span class="nova-eur" id="novaAmount1">—</span><span class="nova-pct" id="novaPct1">—</span>
+  </button>
+  <button type="button" class="nova-card" data-nova-group="3">
+   <span class="nova-label">Trasformati</span>
+   <span class="nova-eur" id="novaAmount3">—</span><span class="nova-pct" id="novaPct3">—</span>
+  </button>
+  <button type="button" class="nova-card" data-nova-group="4">
+   <span class="nova-label">Ultra-trasformati</span>
+   <span class="nova-eur" id="novaAmount4">—</span><span class="nova-pct" id="novaPct4">—</span>
+  </button>
+ </div>
+ <div class="nova-aux">
+  <button type="button" data-nova-group="2">Ingredienti culinari (NOVA 2): <strong id="novaAmount2">—</strong> <span id="novaPct2">—</span></button>
+  <button type="button" data-nova-group="0">Da verificare: <strong id="novaAmount0">—</strong> <span id="novaPct0">—</span></button>
+  <button type="button" id="novaShowAll" class="mini-button">Tutti i prodotti alimentari</button>
+ </div>
+ <div id="novaCoverage" class="nova-coverage"></div>
+ <div class="table-scroll"><table id="novaProductsTable">
+  <thead><tr><th>Data / negozio</th><th>Prodotto</th><th>Categoria</th><th>Importo</th><th>Livello NOVA</th></tr></thead>
+  <tbody id="novaProducts"></tbody>
+ </table></div>
+ <p id="novaEditStatus" class="kpi-note" role="status"></p>
+</section>
 <section class="section" id="drillSection" hidden>
  <h2>3 · Prodotti acquistati</h2>
  <div class="drill-nav" id="drillNav"></div>
@@ -738,6 +780,82 @@ function renderCoverage(){
 $('coverageScope').addEventListener('change',renderCoverage);
 
 
+
+let novaData=null,novaSelectedGroup=null;
+const novaGroupNames={1:'Freschi / minimamente trasformati',2:'Ingredienti culinari',3:'Trasformati',4:'Ultra-trasformati'};
+function renderNova(){
+ const d=novaData||{},groups=d.groups||[],all=d.lines||[];
+ const total=Number(d.food_total||0);
+ for(const id of [1,2,3,4,0]){
+  const g=groups.find(x=>Number(x.group)===id)||{amount:0,lines:0};
+  const amount=Number(g.amount||0);
+  const pct=total>0
+   ?new Intl.NumberFormat('it-IT',{maximumFractionDigits:1,minimumFractionDigits:1}).format(100*amount/total)+'%'
+   :'—';
+  $('novaAmount'+id).textContent=euro(amount);
+  $('novaPct'+id).textContent=pct+' della spesa alimentare · '+g.lines+' prodotti';
+ }
+ const missing=groups.find(x=>Number(x.group)===0)||{amount:0,lines:0};
+ $('novaCoverage').textContent='Classificati '+(all.length-Number(missing.lines||0))+
+  ' su '+all.length+' prodotti alimentari; '+euro(missing.amount||0)+
+  ' ancora da verificare. Un 0% di ultra-trasformati non significa assenza di tali prodotti finché restano voci incerte. Questa analisi non modifica gli split bancari.';
+ document.querySelectorAll('[data-nova-group]').forEach(b=>{
+  b.classList.toggle('active',novaSelectedGroup!==null&&Number(b.dataset.novaGroup)===novaSelectedGroup)
+ });
+ const body=$('novaProducts');body.replaceChildren();
+ const lines=all.filter(x=>novaSelectedGroup===null||
+   (novaSelectedGroup===0?x.nova_group==null:Number(x.nova_group)===novaSelectedGroup));
+ if(!lines.length){showEmptyTable(body,5,'Nessun prodotto alimentare in questo gruppo nel periodo.');return}
+ for(const item of lines){
+  const tr=body.insertRow(),dt=tr.insertCell();
+  dt.textContent=item.receipt_date||'—';
+  const brand=brandForReceipt(item.receipt_id);
+  const merchant=document.createElement('small');
+  merchant.textContent=brand?.brand_name||
+   String(item.merchant_raw||'Esercente non riconosciuto').split('\n')[0];
+  dt.append(merchant);
+  const name=tr.insertCell();
+  name.textContent=item.normalized_product_name||item.product_name||'Senza descrizione';
+  if(item.normalized_product_name&&item.normalized_product_name!==item.product_name){
+   const raw=document.createElement('small');raw.textContent='Scontrino: '+item.product_name;name.append(raw)
+  }
+  cell(tr,item.food_type||'Alimento');
+  cell(tr,euro(item.net_amount));
+  const td=tr.insertCell();
+  const select=document.createElement('select');select.className='nova-select';
+  select.setAttribute('aria-label','Livello NOVA per '+(item.product_name||'prodotto'));
+  optionAdd(select,'','— Da verificare / automatico');
+  for(const id of [1,2,3,4])optionAdd(select,String(id),'NOVA '+id+' · '+novaGroupNames[id]);
+  select.value=item.nova_group==null?'':String(item.nova_group);
+  if(item.nova_source==='manual')select.title='Classificazione confermata manualmente';
+  select.addEventListener('change',async()=>{
+   select.disabled=true;$('novaEditStatus').textContent='Salvataggio del livello NOVA…';
+   try{
+    const group=select.value===''?null:Number(select.value);
+    const {error}=await sb.rpc('dashboard_receipt_nova_update_v1',{
+     p_receipt_line_id:item.receipt_line_id,p_nova_group:group
+    });
+    if(error)throw error;
+    await refresh();
+    $('novaEditStatus').textContent='Classificazione aggiornata. Nessun movimento bancario modificato.';
+   }catch(e){$('novaEditStatus').textContent='Errore: '+contentError(e);select.disabled=false}
+  });
+  td.append(select);
+  const source=document.createElement('small');
+  const sources={manual:'Conferma manuale',conservative_rule:'Regola prudente',
+   gemini_ingredients:'Gemini: ingredienti visibili',needs_review:'Da verificare'};
+  source.textContent=(sources[item.nova_source]||'Da verificare')+
+   (item.nova_reason?' · '+item.nova_reason:'');
+  if(item.nova_group==null&&item.ai_nova_proposal){
+   source.textContent+=' · Gemini propone NOVA '+item.ai_nova_proposal+' (non confermata)';
+  }
+  td.append(source);
+ }
+}
+document.querySelectorAll('[data-nova-group]').forEach(b=>b.addEventListener('click',()=>{
+ novaSelectedGroup=Number(b.dataset.novaGroup);renderNova()
+}));
+$('novaShowAll').addEventListener('click',()=>{novaSelectedGroup=null;renderNova()});
 let taxonomyAdminData=null,brandAdminData=null,brandAnalyticsData=null;
 function brandForReceipt(receiptId){
  return (brandAdminData?.receipts||[]).find(x=>x.id===receiptId)||null;
@@ -1012,21 +1130,23 @@ async function refresh(){
  $('status').textContent='Aggiornamento analisi…';$('refresh').disabled=true;
  try{
   const args={p_period:mode,p_month:month+'-01'};
-  const [rollup,extras,coverage,brands,taxonomy,adminBrands]=await Promise.all([
+  const [rollup,extras,coverage,brands,taxonomy,adminBrands,nova]=await Promise.all([
    sb.rpc('dashboard_receipt_period_v2',args),
    sb.rpc('dashboard_receipt_period_extras_v1',args),
    sb.rpc('dashboard_receipt_period_coverage_v1',args),
    sb.rpc('dashboard_receipt_brand_analytics_v1',args),
    sb.rpc('dashboard_receipt_taxonomy_v1'),
-   sb.rpc('dashboard_receipt_brands_admin_v1')
+   sb.rpc('dashboard_receipt_brands_admin_v1'),
+   sb.rpc('dashboard_receipt_nova_v1',args)
   ]);
-  for(const response of [rollup,extras,coverage,brands,taxonomy,adminBrands])if(response.error)throw response.error;
+  for(const response of [rollup,extras,coverage,brands,taxonomy,adminBrands,nova])if(response.error)throw response.error;
   if(seq!==refreshSequence)return;
   const data=rollup.data||{}, extra=extras.data||{},q=data.summary||{};
   const rs=data.receipts||[],candidates=data.candidates||[];
   taxonomyAdminData=taxonomy.data||{};
   brandAdminData=adminBrands.data||{};
   brandAnalyticsData=brands.data||{};
+  novaData=nova.data||{};
   cachedCategories=null;
   await availableCategories();
   if(seq!==refreshSequence)return;
@@ -1038,7 +1158,7 @@ async function refresh(){
   selectedGroup=null;selectedCategory=null;drillOffset=0;drillRequestSequence++;
   $('drillSection').hidden=true;
   renderUnitPrices();renderCoverage();renderGroupTables();renderL2Summary(data.l2||[]);
-  renderTaxonomyAdmin();renderBrandAdmin();renderBrandAnalytics();
+  renderTaxonomyAdmin();renderBrandAdmin();renderBrandAnalytics();renderNova();
   showMonths(data.months||[],month);
   const pct=q.lines?Math.round(100*Number(q.classified||0)/Number(q.lines)):0;
   $('periodRange').textContent=mode==='all'
