@@ -113,6 +113,17 @@ table th:last-child,table td:last-child{text-align:right}
 .nova-select{font:inherit;font-size:12px;padding:7px;max-width:210px;background:#fff;color:#20334d;border:1px solid #c4d4e6;border-radius:7px}
 #novaProductsTable{min-width:820px}
 #novaProductsTable small{display:block;font-size:11px;color:#68788d;margin-top:4px}
+
+.review-category-cell{min-width:300px}
+.review-category-control{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.review-category-control .review-select{max-width:300px;flex:1}
+.review-category-new{font-size:12px;padding:7px 9px;white-space:nowrap}
+.review-category-editor{display:grid;gap:8px;padding:11px;background:#f7faff;border:1px solid #c6d7ec;border-radius:9px;margin-top:10px}
+.review-category-editor label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:#526783}
+.review-category-editor select,.review-category-editor input{width:100%;padding:8px;font:inherit;border:1px solid #c6d5e6;border-radius:7px;background:#fff}
+.review-category-editor .review-edit-buttons{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.review-category-editor .review-edit-buttons button{padding:7px 10px;font-size:12px}
+.review-category-editor .review-error{font-size:12px;color:#ab3838}
 </style></head>
 <body>
 <header><div><b>Budget Familiare</b> <span class="pill">Analisi Scontrini · Tipi, categorie e L2</span></div><a href="../index.html">← Torna a Reporting</a></header>
@@ -379,6 +390,58 @@ function categorySelect(line,currentReceipt=null){
    }
  });
  return el;
+}
+
+
+function openReviewNewCategory(line,container){
+ const old=container.querySelector('.review-category-editor');
+ if(old){old.remove();return}
+ const form=document.createElement('form');form.className='review-category-editor';
+ const heading=document.createElement('strong');heading.textContent='Nuova categoria per: '+(line.product_name||'Voce da classificare');
+ form.append(heading);
+ const groupLabel=document.createElement('label');groupLabel.textContent='Tipo di acquisto';
+ const groupSelect=document.createElement('select');groupSelect.required=true;
+ optionAdd(groupSelect,'','— Scegli un tipo di acquisto');
+ for(const group of taxGroups())optionAdd(groupSelect,group.code,group.label);
+ const value=String(line.normalized_product_name||line.product_name||'').toUpperCase();
+ const suggestedGroup=/MELAGRAN|MELOGRAN|UVA|CLEMENT|FRUTT|MELA|PERA/.test(value)?'fruit'
+   :/BIO[ -]?SHOPPER|SHOPPER[ -]?ORTOFR|SACCH[.]BIO/.test(value)?'food_accessories':null;
+ if(suggestedGroup&&[...groupSelect.options].some(opt=>opt.value===suggestedGroup)){
+  groupSelect.value=suggestedGroup;
+ }
+ groupLabel.append(groupSelect);form.append(groupLabel);
+ const nameLabel=document.createElement('label');nameLabel.textContent='Nome della nuova categoria';
+ const nameInput=document.createElement('input');nameInput.required=true;nameInput.maxLength=90;
+ nameInput.placeholder='Es. Melagrana';
+ if(/MELAGRAN|MELOGRAN/.test(value))nameInput.value='Melagrana';
+ nameLabel.append(nameInput);form.append(nameLabel);
+ const hint=document.createElement('small');hint.className='muted';
+ hint.textContent='La categoria sarà creata sotto il tipo selezionato e assegnata subito a questo prodotto. Le categorie già esistenti non saranno duplicate.';
+ form.append(hint);
+ const actions=document.createElement('div');actions.className='review-edit-buttons';
+ const save=document.createElement('button');save.type='submit';save.textContent='Crea e assegna';
+ const cancel=document.createElement('button');cancel.type='button';cancel.className='mini-button';cancel.textContent='Annulla';
+ cancel.addEventListener('click',()=>form.remove());actions.append(save,cancel);form.append(actions);
+ const error=document.createElement('div');error.className='review-error';error.setAttribute('role','status');form.append(error);
+ form.addEventListener('submit',async event=>{
+  event.preventDefault();
+  if(!groupSelect.value||!nameInput.value.trim())return;
+  save.disabled=true;error.textContent='Salvataggio…';
+  try{
+   const {data, error:rpcError}=await sb.rpc('dashboard_receipt_review_create_category_v1',{
+    p_receipt_line_id:line.receipt_line_id||line.id,
+    p_parent_code:groupSelect.value,
+    p_label:nameInput.value.trim()
+   });
+   if(rpcError)throw rpcError;
+   await refresh();
+   $('status').textContent='Categoria «'+data.label+'» '+(data.created?'creata':'già presente')+
+      ' e prodotto classificato. Nessun nuovo movimento bancario creato.';
+  }catch(e){error.textContent='Impossibile creare e assegnare: '+contentError(e)}
+  finally{save.disabled=false}
+ });
+ container.append(form);
+ nameInput.focus();
 }
 
 function perUnitMoney(amount,unit){
@@ -1183,7 +1246,11 @@ async function refresh(){
    const tr=body.insertRow();
    cell(tr,item.receipt_date+' · '+String(item.merchant||'Negozio non riconosciuto').split('\n')[0]);
    cell(tr,item.product_name);cell(tr,euro(item.net_amount));
-   tr.insertCell().append(categorySelect(item));
+   const categoryCell=tr.insertCell();categoryCell.className='review-category-cell';
+   const control=document.createElement('div');control.className='review-category-control';
+   control.append(categorySelect(item));
+   const add=minorButton('+ Nuova categoria',()=>openReviewNewCategory(item,categoryCell));
+   add.classList.add('review-category-new');control.append(add);categoryCell.append(control);
   }
   rows('candidates',candidates,[
    x=>x.receipt_merchant,x=>x.bank_description,x=>euro(x.receipt_total),x=>x.days_apart+' giorni'
