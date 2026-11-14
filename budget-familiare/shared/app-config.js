@@ -1,7 +1,7 @@
 // Canonical source: massimospazio/budget-familiare; public files are deployed automatically.
 (function(){
-  const APP_VERSION='V74.3.50';
-  const APP_RELEASE='Prestazioni: ricerca movimenti per controparte';
+  const APP_VERSION='V74.3.51';
+  const APP_RELEASE='Scontrini: nuove categorie in linea e bio shopper ortofrutta';
   window.BudgetFamiliareApp=Object.freeze({version:APP_VERSION,release:APP_RELEASE});
   function apply(){
     document.querySelectorAll('[data-app-version]').forEach(function(el){el.textContent=APP_VERSION});
